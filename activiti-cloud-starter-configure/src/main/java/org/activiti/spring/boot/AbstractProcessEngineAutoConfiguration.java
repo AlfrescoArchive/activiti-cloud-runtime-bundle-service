@@ -26,6 +26,7 @@ import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.UserGroupLookupProxy;
+import org.activiti.engine.impl.persistence.StrongUuidGenerator;
 import org.activiti.spring.ProcessEngineFactoryBean;
 import org.activiti.spring.SpringAsyncExecutor;
 import org.activiti.spring.SpringCallerRunsRejectedJobsHandler;
@@ -115,6 +116,10 @@ public abstract class AbstractProcessEngineAutoConfiguration
 
     if (activitiProperties.getCustomMybatisXMLMappers() != null) {
       conf.setCustomMybatisXMLMappers(new HashSet<String>(activitiProperties.getCustomMybatisXMLMappers()));
+    }
+    
+    if (activitiProperties.isUseStrongUuids()) {
+      conf.setIdGenerator(new StrongUuidGenerator());
     }
     
     if (processEngineConfigurationConfigurer != null) {
