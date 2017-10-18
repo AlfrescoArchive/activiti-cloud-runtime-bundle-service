@@ -13,6 +13,11 @@
   <description>Activiti Cloud :: Runtime Bundle Service Parent</description>
   <packaging>pom</packaging>
 
+  <properties>
+    <version.activiti>7-201710-EA-SNAPSHOT</version.activiti>
+    <version.activiti.cloud>7-201710-EA-SNAPSHOT</version.activiti.cloud>
+  </properties>
+
   <modules>
     <module>activiti-cloud-services-runtime-bundle</module>
     <module>activiti-cloud-starter-configure</module>
