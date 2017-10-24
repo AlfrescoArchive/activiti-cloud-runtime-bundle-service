@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.activiti.cloud</groupId>
     <artifactId>activiti-cloud-services-runtime-bundle</artifactId>
-    <version>7-201711-EA-SNAPSHOT</version>
+    <version>7-201710-EA-lucianoprea_1497_spring_rest_docs-SNAPSHOT</version>
   </parent>
 
   <artifactId>activiti-cloud-services-rest-impl</artifactId>
@@ -80,7 +80,46 @@
       <groupId>org.springframework.data</groupId>
       <artifactId>spring-data-commons</artifactId>
     </dependency>
+
+    <!-- Test scope -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.restdocs</groupId>
+      <artifactId>spring-restdocs-mockmvc</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.asciidoctor</groupId>
+        <artifactId>asciidoctor-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-docs</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>process-asciidoc</goal>
+            </goals>
+            <configuration>
+              <sourceDocumentName>index.adoc</sourceDocumentName>
+              <backend>html</backend>
+              <doctype>book</doctype>
+              <attributes>
+                <snippets>${project.basedir}/target/snippets</snippets>
+              </attributes>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
 
 
 </project>

@@ -1,0 +1,13 @@
+= Activiti Cloud Services Runtime Bundle REST docs
+
+.Request
+include::{snippets}/home/http-request.adoc[]
+include::{snippets}/home/curl-request.adoc[]
+include::{snippets}/home/httpie-request.adoc[]
+
+.Response
+include::{snippets}/home/http-response.adoc[]
+include::{snippets}/home/response-body.adoc[]
+
+.Links
+include::{snippets}/home/links.adoc[]
