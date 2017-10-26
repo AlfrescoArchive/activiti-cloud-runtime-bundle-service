@@ -24,6 +24,7 @@ import java.util.List;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
+import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
 import org.activiti.cloud.services.rest.api.ProcessInstanceController;
 import org.activiti.cloud.services.rest.api.resources.ProcessInstanceResource;
 import org.activiti.engine.ActivitiException;
@@ -43,8 +44,10 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -58,15 +61,25 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     private final ProcessInstanceResourceAssembler resourceAssembler;
 
+    private final SecurityPolicyApplicationService securityService;
+
+    @ExceptionHandler(IllegalAccessException.class) //TODO: use a custom exception type if have to do this - http://blog.sizovs.net/spring-rest-exception-handler/
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public String handleAppException(IllegalAccessException ex) {
+        return ex.getMessage();
+    }
+
     @Autowired
     public ProcessInstanceControllerImpl(ProcessEngineWrapper processEngine,
                                          RepositoryService repositoryService,
                                          ProcessDiagramGenerator processDiagramGenerator,
-                                         ProcessInstanceResourceAssembler resourceAssembler) {
+                                         ProcessInstanceResourceAssembler resourceAssembler,
+                                         SecurityPolicyApplicationService securityPolicyApplicationService) {
         this.processEngine = processEngine;
         this.repositoryService = repositoryService;
         this.processDiagramGenerator = processDiagramGenerator;
         this.resourceAssembler = resourceAssembler;
+        this.securityService = securityPolicyApplicationService;
     }
 
     @Override
@@ -77,7 +90,11 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     }
 
     @Override
-    public Resource<ProcessInstance> startProcess(@RequestBody StartProcessInstanceCmd cmd) {
+    public Resource<ProcessInstance> startProcess(@RequestBody StartProcessInstanceCmd cmd) throws Exception {
+        if (!securityService.canWrite(cmd.getProcessDefinitionId())){
+            //TODO: throw Exception? that has knockons
+
+        }
 
         return resourceAssembler.toResource(processEngine.startProcess(cmd));
     }

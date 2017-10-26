@@ -24,7 +24,7 @@ public interface ProcessInstanceController {
                                                                 PagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler);
 
     @RequestMapping(method = RequestMethod.POST)
-    Resource<ProcessInstance> startProcess(@RequestBody StartProcessInstanceCmd cmd);
+    Resource<ProcessInstance> startProcess(@RequestBody StartProcessInstanceCmd cmd) throws Exception;
 
     @RequestMapping(value = "/{processInstanceId}", method = RequestMethod.GET)
     Resource<ProcessInstance> getProcessInstanceById(@PathVariable String processInstanceId);
