@@ -71,5 +71,12 @@ public class MQServiceTaskIT {
                 .containsEntry("lastName", "Smith")
                 .containsEntry("age", 20);
 
+        //should be able to complete the process
+        //when
+        taskService.complete(tasks.get(0).getId());
+
+        //then
+        List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst.getId()).list();
+        assertThat(processInstances).isEmpty();
     }
 }
