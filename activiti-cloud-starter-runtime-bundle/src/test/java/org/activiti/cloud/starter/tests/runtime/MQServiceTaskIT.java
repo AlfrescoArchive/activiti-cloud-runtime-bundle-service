@@ -79,4 +79,28 @@ public class MQServiceTaskIT {
         List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst.getId()).list();
         assertThat(processInstances).isEmpty();
     }
+
+    @Test
+    public void integrationContextShouldBeDeletedWhenTheTaskIsCancelled() throws Exception {
+        //given
+        ProcessInstance procInst = runtimeService.startProcessInstanceByKey("MQServiceTaskWithBoundaryProcess");
+        List<Task> tasks = taskService.createTaskQuery().processInstanceId(procInst.getProcessInstanceId()).list();
+        assertThat(tasks).isEmpty();
+
+        //when boundary is triggered
+        runtimeService.signalEventReceived("goPlanB");
+
+        //then the exception path is taken
+        tasks = taskService.createTaskQuery().processInstanceId(procInst.getProcessInstanceId()).list();
+        assertThat(tasks).extracting(Task::getName).containsExactly("Execute plan B");
+
+        //when the task related to the exception path is executed
+        taskService.complete(tasks.get(0).getId());
+
+        //the process should finish
+        List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst.getId()).list();
+        assertThat(processInstances).isEmpty();
+
+    }
+
 }
