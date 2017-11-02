@@ -59,7 +59,7 @@ public class MQServiceTaskIT {
 
         //then
         // the execution should arrive in the human tasks which follows the service task
-        Thread.sleep(500);
+        Thread.sleep(600);
         List<Task> tasks = taskService.createTaskQuery().processInstanceId(procInst.getProcessInstanceId()).list();
         assertThat(tasks).isNotNull();
         assertThat(tasks).extracting(Task::getName).containsExactly("Schedule meeting after service");
