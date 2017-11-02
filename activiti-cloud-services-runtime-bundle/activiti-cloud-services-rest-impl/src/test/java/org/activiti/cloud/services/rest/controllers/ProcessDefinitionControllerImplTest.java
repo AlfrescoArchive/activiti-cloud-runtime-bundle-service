@@ -54,7 +54,6 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.response
 import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -92,9 +91,9 @@ public class ProcessDefinitionControllerImplTest {
         when(pageableRepositoryService.getProcessDefinitions(any())).thenReturn(processDefinitions);
 
         this.mockMvc.perform(get("/v1/process-definitions").accept(MediaTypes.HAL_JSON_VALUE))
-                .andDo(print())
+
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
                                 responseFields(subsectionWithPath("page").description("Pagination details."),
                                                subsectionWithPath("links").description("The hypermedia links."),
                                                subsectionWithPath("content").description("The process definitions."))));
@@ -109,9 +108,8 @@ public class ProcessDefinitionControllerImplTest {
 
         this.mockMvc.perform(get("/v1/process-definitions/{id}",
                                  1).accept(MediaTypes.HAL_JSON_VALUE))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/get",
                                 pathParameters(parameterWithName("id").description("The process definition id"))));
     }
 
@@ -123,9 +121,8 @@ public class ProcessDefinitionControllerImplTest {
         this.mockMvc.perform(
                 get("/v1/process-definitions/{id}/xml",
                     1).accept("application/xml"))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/model/get",
                                 pathParameters(parameterWithName("id").description("The process model id"))));
     }
 
@@ -141,9 +138,8 @@ public class ProcessDefinitionControllerImplTest {
         this.mockMvc.perform(
                 get("/v1/process-definitions/{id}/json",
                     1).accept("application/json"))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/bpmn-model/get",
                                 pathParameters(parameterWithName("id").description("The BPMN model id"))));
     }
 
@@ -161,9 +157,8 @@ public class ProcessDefinitionControllerImplTest {
         this.mockMvc.perform(
                 get("/v1/process-definitions/{id}/svg",
                     1).accept("image/svg+xml"))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/diagram",
                                 pathParameters(parameterWithName("id").description("The BPMN model id"))));
     }
 }

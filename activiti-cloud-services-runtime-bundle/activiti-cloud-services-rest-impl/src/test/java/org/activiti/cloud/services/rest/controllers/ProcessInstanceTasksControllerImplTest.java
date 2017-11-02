@@ -44,7 +44,6 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.response
 import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -77,9 +76,8 @@ public class ProcessInstanceTasksControllerImplTest {
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/tasks",
                                  1,
                                  1).accept(MediaTypes.HAL_JSON_VALUE))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id")),
                                 responseFields(subsectionWithPath("page").description("Pagination details."),
                                                subsectionWithPath("links").description("The hypermedia links."),

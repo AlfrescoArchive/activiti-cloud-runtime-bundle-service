@@ -33,7 +33,6 @@ import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuild
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,6 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(HomeControllerImpl.class)
 @AutoConfigureRestDocs(outputDir = "target/snippets")
 public class HomeControllerImplTest {
+
     private static final String DOCUMENTATION_IDENTIFIER = "home";
 
     @Autowired
@@ -49,7 +49,6 @@ public class HomeControllerImplTest {
     @Test
     public void getHomeInfo() throws Exception {
         this.mockMvc.perform(get("/v1/"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Welcome to an instance of the Activiti Process Engine")))
                 .andDo(document(DOCUMENTATION_IDENTIFIER,

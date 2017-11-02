@@ -41,7 +41,6 @@ import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuild
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -67,9 +66,8 @@ public class TaskVariableControllerImplTest {
     public void getVariables() throws Exception {
         this.mockMvc.perform(get("/v1/tasks/{taskId}/variables/",
                                  1))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 
@@ -78,9 +76,8 @@ public class TaskVariableControllerImplTest {
 
         this.mockMvc.perform(get("/v1/tasks/{taskId}/variables/local",
                                  1))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list/local",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 
@@ -89,9 +86,8 @@ public class TaskVariableControllerImplTest {
         this.mockMvc.perform(post("/v1/tasks/{taskId}/variables/",
                                   1).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(new SetTaskVariablesCmd("1",
                                                                                                                                        Collections.emptyMap()))))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/set",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 
@@ -100,9 +96,8 @@ public class TaskVariableControllerImplTest {
         this.mockMvc.perform(post("/v1/tasks/{taskId}/variables/local",
                                   1).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(new SetTaskVariablesCmd("1",
                                                                                                                                        Collections.emptyMap()))))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/set/local",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 }

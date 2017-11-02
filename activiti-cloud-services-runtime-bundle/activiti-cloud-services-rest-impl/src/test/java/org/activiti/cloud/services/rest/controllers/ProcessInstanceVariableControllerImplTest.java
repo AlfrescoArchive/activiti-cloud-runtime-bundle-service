@@ -37,7 +37,6 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -64,9 +63,8 @@ public class ProcessInstanceVariableControllerImplTest {
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/variables",
                                  1,
                                  1).accept(MediaTypes.HAL_JSON_VALUE))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 }

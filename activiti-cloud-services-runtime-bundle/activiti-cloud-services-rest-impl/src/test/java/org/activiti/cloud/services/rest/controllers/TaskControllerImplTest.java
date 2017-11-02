@@ -19,14 +19,12 @@ package org.activiti.cloud.services.rest.controllers;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.activiti.cloud.services.core.model.Task;
 import org.activiti.cloud.services.rest.api.resources.assembler.TaskResourceAssembler;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -78,9 +76,8 @@ public class TaskControllerImplTest {
         when(processEngine.getTasks(any())).thenReturn(tasks);
 
         this.mockMvc.perform(get("/v1/tasks"))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
                                 responseFields(subsectionWithPath("page").description("Pagination details."),
                                                subsectionWithPath("links").description("The hypermedia links."),
                                                subsectionWithPath("content").description("The process definitions."))));
@@ -93,9 +90,8 @@ public class TaskControllerImplTest {
 
         this.mockMvc.perform(get("/v1/tasks/{taskId}",
                                  1))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/get",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 
@@ -107,9 +103,8 @@ public class TaskControllerImplTest {
 
         this.mockMvc.perform(post("/v1/tasks/{taskId}/claim",
                                   1))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/claim",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 
@@ -118,9 +113,8 @@ public class TaskControllerImplTest {
 
         this.mockMvc.perform(post("/v1/tasks/{taskId}/release",
                                   1))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/release",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 
@@ -131,7 +125,7 @@ public class TaskControllerImplTest {
                                   1))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/complete",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 }

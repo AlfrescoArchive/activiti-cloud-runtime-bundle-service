@@ -55,7 +55,6 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.response
 import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -92,9 +91,8 @@ public class ProcessInstanceControllerImplTest {
         when(processEngine.getProcessInstances(any())).thenReturn(processInstances);
 
         this.mockMvc.perform(get("/v1/process-instances"))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
                                 responseFields(subsectionWithPath("page").description("Pagination details."),
                                                subsectionWithPath("links").description("The hypermedia links."),
                                                subsectionWithPath("content").description("The process definitions."))));
@@ -110,9 +108,8 @@ public class ProcessInstanceControllerImplTest {
         this.mockMvc.perform(post("/v1/process-instances")
                                      .contentType(MediaType.APPLICATION_JSON)
                                      .content(mapper.writeValueAsString(cmd)))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER));
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/start"));
     }
 
     @Test
@@ -122,9 +119,8 @@ public class ProcessInstanceControllerImplTest {
 
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}",
                                  1))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/get",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 
@@ -147,9 +143,8 @@ public class ProcessInstanceControllerImplTest {
 
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/svg",
                                  1))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/diagram",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 
@@ -159,18 +154,16 @@ public class ProcessInstanceControllerImplTest {
 
         this.mockMvc.perform(get("/v1/process-instances/signal").contentType(MediaType.APPLICATION_JSON)
                                      .content(mapper.writeValueAsString(cmd)))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER));
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/signal"));
     }
 
     @Test
     public void suspend() throws Exception {
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/suspend",
                                  1))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/suspend",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 
@@ -178,9 +171,8 @@ public class ProcessInstanceControllerImplTest {
     public void activate() throws Exception {
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/activate",
                                  1))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER,
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/activate",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 }
