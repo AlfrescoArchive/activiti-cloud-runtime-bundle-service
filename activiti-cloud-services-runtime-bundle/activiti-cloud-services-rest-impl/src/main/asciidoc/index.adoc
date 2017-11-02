@@ -1,13 +1,96 @@
 = Activiti Cloud Services Runtime Bundle REST docs
 
+== Home 
+
 .Request
 include::{snippets}/home/http-request.adoc[]
-include::{snippets}/home/curl-request.adoc[]
-include::{snippets}/home/httpie-request.adoc[]
 
 .Response
 include::{snippets}/home/http-response.adoc[]
-include::{snippets}/home/response-body.adoc[]
 
 .Links
 include::{snippets}/home/links.adoc[]
+
+== Process definition 
+
+.Request
+include::{snippets}/process-definition/http-request.adoc[]
+
+
+.Response
+include::{snippets}/process-definition/http-response.adoc[]
+
+.Links
+include::{snippets}/process-definition/links.adoc[]
+
+== Process definition metadata 
+
+.Request
+include::{snippets}/process-definition-meta/http-request.adoc[]
+
+
+.Response
+include::{snippets}/process-definition-meta/http-response.adoc[]
+
+.Links
+include::{snippets}/process-definition-meta/links.adoc[]
+
+== Process instance 
+
+.Request
+include::{snippets}/process-instance/http-request.adoc[]
+
+
+.Response
+include::{snippets}/process-instance/http-response.adoc[]
+
+.Links
+include::{snippets}/process-instance/links.adoc[]
+
+== Process instance tasks 
+
+.Request
+include::{snippets}/process-instance-tasks/http-request.adoc[]
+
+
+.Response
+include::{snippets}/process-instance-tasks/http-response.adoc[]
+
+.Links
+include::{snippets}/process-instance-tasks/links.adoc[]
+
+== Process instance variables 
+
+.Request
+include::{snippets}/process-instance-variables/http-request.adoc[]
+
+
+.Response
+include::{snippets}/process-instance-variables/http-response.adoc[]
+
+.Links
+include::{snippets}/process-instance-variables/links.adoc[]
+
+== Task
+
+.Request
+include::{snippets}/task/http-request.adoc[]
+
+
+.Response
+include::{snippets}/task/http-response.adoc[]
+
+.Links
+include::{snippets}/task/links.adoc[]
+
+== Task variable
+
+.Request
+include::{snippets}/task-variable/http-request.adoc[]
+
+
+.Response
+include::{snippets}/task-variable/http-response.adoc[]
+
+.Links
+include::{snippets}/task-variable/links.adoc[]

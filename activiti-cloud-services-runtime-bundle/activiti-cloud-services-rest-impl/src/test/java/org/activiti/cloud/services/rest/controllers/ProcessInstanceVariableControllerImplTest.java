@@ -16,49 +16,57 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
+import java.util.HashMap;
+
+import org.activiti.cloud.services.rest.api.resources.assembler.ProcessVariableResourceAssembler;
+import org.activiti.engine.RuntimeService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.restdocs.payload.JsonFieldType;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.hateoas.MediaTypes;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
-import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
+import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
-import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
-import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
-@WebMvcTest(HomeControllerImpl.class)
+@WebMvcTest(ProcessInstanceVariableControllerImpl.class)
+@EnableSpringDataWebSupport
+@AutoConfigureMockMvc
 @AutoConfigureRestDocs(outputDir = "target/snippets")
-public class HomeControllerImplTest {
-    private static final String DOCUMENTATION_IDENTIFIER = "home";
+public class ProcessInstanceVariableControllerImplTest {
+
+    private static final String DOCUMENTATION_IDENTIFIER = "process-instance-variables";
 
     @Autowired
     private MockMvc mockMvc;
 
+    @MockBean
+    private RuntimeService runtimeService;
+    @MockBean
+    private ProcessVariableResourceAssembler variableResourceAssembler;
+
     @Test
-    public void getHomeInfo() throws Exception {
-        this.mockMvc.perform(get("/v1/"))
+    public void getVariables() throws Exception {
+        when(runtimeService.getVariables("1")).thenReturn(new HashMap<>());
+
+        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/variables",
+                                 1,
+                                 1).accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Welcome to an instance of the Activiti Process Engine")))
                 .andDo(document(DOCUMENTATION_IDENTIFIER,
-                                links(
-                                        linkWithRel("process-definitions").description("The process-definitions"),
-                                        linkWithRel("process-instances").description("The process-instances"),
-                                        linkWithRel("tasks").description("Tasks")),
-                                responseFields(
-                                        fieldWithPath("welcome").type(JsonFieldType.STRING).description("The welcome message"),
-                                        subsectionWithPath("links").description("Other resources"))));
+                                pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 }
