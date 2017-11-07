@@ -41,6 +41,8 @@ include::{snippets}/process-definition/bpmn-model/get/http-request.adoc[]
 .Response
 include::{snippets}/process-definition/bpmn-model/get/http-response.adoc[]
 
+include::{snippets}/process-definition/bpmn-model/get/path-parameters.adoc[]
+
 === Generate process diagram
 .Request
 include::{snippets}/process-definition/diagram/http-request.adoc[]

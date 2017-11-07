@@ -19,10 +19,10 @@ package org.activiti.cloud.services.rest.controllers;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.activiti.cloud.services.core.AuthenticationWrapper;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.activiti.cloud.services.core.model.Task;
 import org.activiti.cloud.services.rest.api.resources.assembler.TaskResourceAssembler;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +64,8 @@ public class TaskControllerImplTest {
     private ProcessEngineWrapper processEngine;
     @MockBean
     private TaskResourceAssembler taskResourceAssembler;
+    @MockBean
+    private AuthenticationWrapper authenticationWrapper;
 
     @Test
     public void getTasks() throws Exception {
@@ -95,11 +97,9 @@ public class TaskControllerImplTest {
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 
-    @Ignore
     @Test
     public void claimTask() throws Exception {
-
-        // todo find a way to mock the Authentication
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("assignee");
 
         this.mockMvc.perform(post("/v1/tasks/{taskId}/claim",
                                   1))
