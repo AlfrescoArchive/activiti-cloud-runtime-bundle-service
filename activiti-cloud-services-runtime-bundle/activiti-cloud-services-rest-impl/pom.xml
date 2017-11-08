@@ -21,7 +21,7 @@
   <parent>
     <groupId>org.activiti.cloud</groupId>
     <artifactId>activiti-cloud-services-runtime-bundle</artifactId>
-    <version>7-201710-EA-salaboy_1524_remove_abstract_types-SNAPSHOT</version>
+    <version>7-201711-EA-salaboy_1524_remove_abstract_types-SNAPSHOT</version>
   </parent>
 
   <artifactId>activiti-cloud-services-rest-impl</artifactId>
@@ -76,7 +76,6 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-autoconfigure</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.springframework.data</groupId>
       <artifactId>spring-data-commons</artifactId>

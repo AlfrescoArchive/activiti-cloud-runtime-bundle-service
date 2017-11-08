@@ -4,18 +4,18 @@
   <parent>
     <groupId>org.activiti.cloud</groupId>
     <artifactId>activiti-cloud-parent</artifactId>
-    <version>7-201710-EA</version>
+    <version>7-201711-EA-SNAPSHOT</version>
   </parent>
 
   <artifactId>activiti-cloud-runtime-bundle-service-parent</artifactId>
-  <version>7-201710-EA-salaboy_1524_remove_abstract_types-SNAPSHOT</version>
+  <version>7-201711-EA-salaboy_1524_remove_abstract_types-SNAPSHOT</version>
   <name>Activiti Cloud :: Runtime Bundle Service Parent</name>
   <description>Activiti Cloud :: Runtime Bundle Service Parent</description>
   <packaging>pom</packaging>
 
   <properties>
-    <version.activiti>${project.version}</version.activiti>
-    <version.activiti.cloud>${project.version}</version.activiti.cloud>
+    <version.activiti>7-201711-EA-SNAPSHOT</version.activiti>
+    <version.activiti.cloud>7-201711-EA-SNAPSHOT</version.activiti.cloud>
   </properties>
 
   <modules>
@@ -24,6 +24,45 @@
     <module>activiti-cloud-starter-runtime-bundle</module>
   </modules>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.activiti.cloud</groupId>
+        <artifactId>activiti-cloud-services-connectors</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti.cloud</groupId>
+        <artifactId>activiti-cloud-services-core</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti.cloud</groupId>
+        <artifactId>activiti-cloud-services-events</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti.cloud</groupId>
+        <artifactId>activiti-cloud-services-rest-api</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti.cloud</groupId>
+        <artifactId>activiti-cloud-services-rest-impl</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti.cloud</groupId>
+        <artifactId>activiti-cloud-starter-configure</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti.cloud</groupId>
+        <artifactId>activiti-cloud-starter-runtime-bundle</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <repositories>
     <repository>
       <id>spring-milestones</id>
