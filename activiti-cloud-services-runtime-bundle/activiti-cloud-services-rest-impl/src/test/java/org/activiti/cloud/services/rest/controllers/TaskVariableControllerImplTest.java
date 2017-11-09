@@ -52,7 +52,7 @@ public class TaskVariableControllerImplTest {
 
     private static final String DOCUMENTATION_IDENTIFIER = "task-variable";
     @MockBean
-    TaskVariableResourceAssembler variableResourceAssembler;
+    private TaskVariableResourceAssembler variableResourceAssembler;
     @Autowired
     private MockMvc mockMvc;
     @MockBean
