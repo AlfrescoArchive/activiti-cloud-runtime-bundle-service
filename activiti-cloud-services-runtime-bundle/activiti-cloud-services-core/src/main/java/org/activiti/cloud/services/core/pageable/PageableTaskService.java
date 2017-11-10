@@ -19,8 +19,8 @@ package org.activiti.cloud.services.core.pageable;
 import java.util.List;
 
 import org.activiti.cloud.services.api.model.Task;
+import org.activiti.cloud.services.api.model.converter.TaskConverter;
 import org.activiti.cloud.services.core.AuthenticationWrapper;
-import org.activiti.cloud.services.core.model.converter.TaskConverter;
 import org.activiti.cloud.services.core.pageable.sort.TaskSortApplier;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.UserGroupLookupProxy;
