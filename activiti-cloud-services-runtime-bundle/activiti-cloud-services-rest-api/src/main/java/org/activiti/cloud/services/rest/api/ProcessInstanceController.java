@@ -29,7 +29,7 @@ public interface ProcessInstanceController {
     @RequestMapping(value = "/{processInstanceId}", method = RequestMethod.GET)
     Resource<ProcessInstance> getProcessInstanceById(@PathVariable String processInstanceId);
 
-    @RequestMapping(value = "/{processInstanceId}",
+    @RequestMapping(value = "/{processInstanceId}/model",
             method = RequestMethod.GET,
             produces = "image/svg+xml",
             consumes="image/svg+xml")

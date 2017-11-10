@@ -23,21 +23,21 @@ public interface ProcessDefinitionController {
             method = RequestMethod.GET)
     ProcessDefinitionResource getProcessDefinition(@PathVariable String id);
 
-    @RequestMapping(value = "/{id}",
+    @RequestMapping(value = "/{id}/model",
             method = RequestMethod.GET,
             produces = "application/xml",
             consumes="application/xml")
     @ResponseBody
     String getProcessModel(@PathVariable String id);
 
-    @RequestMapping(value = "/{id}",
+    @RequestMapping(value = "/{id}/model",
             method = RequestMethod.GET,
             produces = "application/json",
             consumes="application/json")
     @ResponseBody
     String getBpmnModel(@PathVariable String id);
 
-    @RequestMapping(value = "/{id}",
+    @RequestMapping(value = "/{id}/model",
             method = RequestMethod.GET,
             produces = "image/svg+xml",
             consumes="image/svg+xml")

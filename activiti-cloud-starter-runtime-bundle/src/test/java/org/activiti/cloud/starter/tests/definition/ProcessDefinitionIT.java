@@ -181,7 +181,7 @@ public class ProcessDefinitionIT {
         ProcessDefinition aProcessDefinition = getProcessDefinition(PROCESS_POOL_LANE);
 
         //when
-        String responseData = executeRequest(PROCESS_DEFINITIONS_URL + aProcessDefinition.getId(),
+        String responseData = executeRequest(PROCESS_DEFINITIONS_URL + aProcessDefinition.getId() + "/model",
                 HttpMethod.GET,
                 "application/xml");
 
@@ -197,7 +197,7 @@ public class ProcessDefinitionIT {
         ProcessDefinition aProcessDefinition = getProcessDefinition(PROCESS_WITH_VARIABLES_2);
 
         //when
-        String responseData = executeRequest(PROCESS_DEFINITIONS_URL + aProcessDefinition.getId(),
+        String responseData = executeRequest(PROCESS_DEFINITIONS_URL + aProcessDefinition.getId() + "/model",
                 HttpMethod.GET,
                 "application/json");
 
@@ -228,7 +228,7 @@ public class ProcessDefinitionIT {
         ProcessDefinition aProcessDefinition = getProcessDefinition(PROCESS_POOL_LANE);
 
         //when
-        String responseData = executeRequest(PROCESS_DEFINITIONS_URL + aProcessDefinition.getId(),
+        String responseData = executeRequest(PROCESS_DEFINITIONS_URL + aProcessDefinition.getId() + "/model",
                 HttpMethod.GET,
                 "image/svg+xml");
 

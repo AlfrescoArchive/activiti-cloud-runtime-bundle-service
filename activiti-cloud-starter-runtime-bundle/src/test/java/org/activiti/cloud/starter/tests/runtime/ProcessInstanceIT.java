@@ -139,7 +139,7 @@ public class ProcessInstanceIT {
         //when
         String responseData = executeRequest(
                 PROCESS_INSTANCES_RELATIVE_URL + startedProcessEntity.getBody()
-                        .getId(),
+                        .getId() + "/model",
                 HttpMethod.GET,
                 "image/svg+xml");
 
