@@ -5,15 +5,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
-import org.activiti.cloud.services.api.commands.ClaimTaskCmd;
 import org.activiti.cloud.services.api.commands.Command;
-import org.activiti.cloud.services.api.commands.CompleteTaskCmd;
-import org.activiti.cloud.services.api.commands.ReleaseTaskCmd;
-import org.activiti.cloud.services.api.commands.SetTaskVariablesCmd;
-import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
-import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
-import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
