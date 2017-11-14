@@ -23,8 +23,8 @@ import java.util.List;
 
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.bpmn.model.Process;
-import org.activiti.cloud.services.core.model.ProcessDefinition;
-import org.activiti.cloud.services.core.model.converter.ProcessDefinitionConverter;
+import org.activiti.cloud.services.api.model.ProcessDefinition;
+import org.activiti.cloud.services.api.model.converter.ProcessDefinitionConverter;
 import org.activiti.cloud.services.core.pageable.PageableRepositoryService;
 import org.activiti.cloud.services.rest.api.ProcessDefinitionMetaController;
 import org.activiti.cloud.services.rest.api.resources.assembler.ProcessDefinitionResourceAssembler;

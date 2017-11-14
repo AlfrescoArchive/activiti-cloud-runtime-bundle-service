@@ -19,9 +19,9 @@ package org.activiti.cloud.services.rest.controllers;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.services.core.AuthenticationWrapper;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
-import org.activiti.cloud.services.core.model.Task;
 import org.activiti.cloud.services.rest.api.resources.assembler.TaskResourceAssembler;
 import org.junit.Test;
 import org.junit.runner.RunWith;
