@@ -4,7 +4,8 @@
   <parent>
     <groupId>org.activiti.cloud</groupId>
     <artifactId>activiti-cloud-parent</artifactId>
-    <version>7-201711-EA-SNAPSHOT</version>
+    <!-- TODO revert back to the default snapshot when the dependent PR is merged-->
+    <version>7-201711-EA-salaboy_1560_parent_deps_link-SNAPSHOT</version>
   </parent>
 
   <artifactId>activiti-cloud-runtime-bundle-service-parent</artifactId>
@@ -14,9 +15,11 @@
   <packaging>pom</packaging>
 
   <properties>
-    <version.activiti>7-201711-EA-SNAPSHOT</version.activiti>
-    <version.activiti.cloud>${project.version}</version.activiti.cloud>
-    <version.activiti.cloud.service-common>7-201711-EA-SNAPSHOT</version.activiti.cloud.service-common>
+    <!--
+    Override property from activiti-cloud-parent that's set to the default snapshot version.
+    This allow to easily create feature branches with a different Maven version.
+    -->
+    <version.activiti.cloud.runtime-bundle>${project.version}</version.activiti.cloud.runtime-bundle>
   </properties>
 
   <modules>
