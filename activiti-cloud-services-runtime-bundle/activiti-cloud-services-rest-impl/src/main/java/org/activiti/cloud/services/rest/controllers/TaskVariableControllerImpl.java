@@ -23,7 +23,6 @@ import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.activiti.cloud.services.api.commands.SetTaskVariablesCmd;
 import org.activiti.cloud.services.rest.api.TaskVariableController;
 import org.activiti.cloud.services.rest.api.resources.assembler.TaskVariableResourceAssembler;
-import org.activiti.engine.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;

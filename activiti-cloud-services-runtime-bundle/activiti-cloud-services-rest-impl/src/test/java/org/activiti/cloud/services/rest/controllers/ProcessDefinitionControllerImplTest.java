@@ -44,6 +44,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -119,8 +120,8 @@ public class ProcessDefinitionControllerImplTest {
         when(repositoryService.getProcessModel("1")).thenReturn(xml);
 
         this.mockMvc.perform(
-                get("/v1/process-definitions/{id}/xml",
-                    1).accept("application/xml"))
+                get("/v1/process-definitions/{id}/model",
+                    1).contentType(MediaType.APPLICATION_XML))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/model/get",
                                 pathParameters(parameterWithName("id").description("The process model id"))));
@@ -136,8 +137,8 @@ public class ProcessDefinitionControllerImplTest {
         when(repositoryService.getBpmnModel("1")).thenReturn(bpmnModel);
 
         this.mockMvc.perform(
-                get("/v1/process-definitions/{id}/json",
-                    1).accept("application/json"))
+                get("/v1/process-definitions/{id}/model",
+                    1).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/bpmn-model/get",
                                 pathParameters(parameterWithName("id").description("The BPMN model id"))));
@@ -155,8 +156,8 @@ public class ProcessDefinitionControllerImplTest {
                 .thenReturn(img);
 
         this.mockMvc.perform(
-                get("/v1/process-definitions/{id}/svg",
-                    1).accept("image/svg+xml"))
+                get("/v1/process-definitions/{id}/model",
+                    1).contentType("image/svg+xml"))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/diagram",
                                 pathParameters(parameterWithName("id").description("The BPMN model id"))));

@@ -141,8 +141,8 @@ public class ProcessInstanceControllerImplTest {
                                                      processDiagramGenerator.getDefaultLabelFontName(),
                                                      processDiagramGenerator.getDefaultAnnotationFontName())).thenReturn(diagram);
 
-        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/svg",
-                                 1))
+        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/model",
+                                 1).contentType("image/svg+xml"))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/diagram",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
