@@ -4,8 +4,7 @@
   <parent>
     <groupId>org.activiti.cloud</groupId>
     <artifactId>activiti-cloud-parent</artifactId>
-    <!-- TODO revert back to the default snapshot when the dependent PR is merged-->
-    <version>7-201711-EA-salaboy_1560_parent_deps_link-SNAPSHOT</version>
+    <version>7-201711-EA-SNAPSHOT</version>
   </parent>
 
   <artifactId>activiti-cloud-runtime-bundle-service-parent</artifactId>
