@@ -16,7 +16,9 @@
 
 package org.activiti.services.connectors.behavior;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.activiti.bpmn.model.ServiceTask;
 import org.activiti.engine.delegate.DelegateExecution;
@@ -57,15 +59,16 @@ public class MQServiceTaskBehavior extends AbstractBpmnActivityBehavior implemen
         IntegrationContextEntity integrationContext = buildIntegrationContext(execution);
         integrationContextManager.insert(integrationContext);
 
-//        System.out.println(">>> Inserting Integration Context for executionId: " + integrationContext.getExecutionId());
-        Message<IntegrationRequestEvent> message = currentCommandContext.getGenericAttribute(IntegrationProducerCommandContextCloseListener.PROCESS_ENGINE_INTEGRATION_EVENTS);
-        if (message == null) {
+        List<Message<IntegrationRequestEvent>> messages = currentCommandContext.getGenericAttribute(IntegrationProducerCommandContextCloseListener.PROCESS_ENGINE_INTEGRATION_EVENTS);
+        if (messages != null) {
+            messages.add(buildMessage(execution,
+                                      integrationContext));
+        }else {
+            messages = new ArrayList<>();
+            messages.add(buildMessage(execution,
+                                      integrationContext));
             currentCommandContext.addAttribute(IntegrationProducerCommandContextCloseListener.PROCESS_ENGINE_INTEGRATION_EVENTS,
-                                               buildMessage(execution,
-                                                            integrationContext));
-        }else{
-//            System.out.println("Error here: there is already a message for this transaction... we shouldn't get this far");
-            throw new IllegalStateException("Message already exist for this transaction. ");
+                                               messages);
         }
 
         if (!currentCommandContext.hasCloseListener(IntegrationProducerCommandContextCloseListener.class)) {

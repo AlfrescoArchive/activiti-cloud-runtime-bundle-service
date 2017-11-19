@@ -1,5 +1,7 @@
 package org.activiti.services.connectors.behavior;
 
+import java.util.List;
+
 import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.interceptor.CommandContextCloseListener;
@@ -24,11 +26,13 @@ public class IntegrationProducerCommandContextCloseListener implements CommandCo
     @Override
     public void closed(CommandContext commandContext) {
         CommandContext currentCommandContext = Context.getCommandContext();
-        Message<IntegrationRequestEvent> message = currentCommandContext
+        List<Message<IntegrationRequestEvent>> messages = currentCommandContext
                 .getGenericAttribute(PROCESS_ENGINE_INTEGRATION_EVENTS);
-        System.out.println("Sending Message for executionId: " + message.getPayload().getExecutionId());
-        if (message != null) {
-            producer.integrationEventsProducer().send(message);
+
+        if (messages != null && messages.size() > 0) {
+            for (Message<IntegrationRequestEvent> m : messages) {
+                producer.integrationEventsProducer().send(m);
+            }
         }
     }
 
