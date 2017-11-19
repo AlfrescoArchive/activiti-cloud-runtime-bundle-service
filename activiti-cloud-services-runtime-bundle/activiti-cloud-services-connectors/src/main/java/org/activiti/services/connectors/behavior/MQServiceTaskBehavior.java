@@ -21,7 +21,9 @@ import java.util.Date;
 import org.activiti.bpmn.model.ServiceTask;
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.impl.bpmn.behavior.AbstractBpmnActivityBehavior;
+import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.delegate.TriggerableActivityBehavior;
+import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
 import org.activiti.services.connectors.channel.ProcessEngineIntegrationChannels;
@@ -37,22 +39,40 @@ public class MQServiceTaskBehavior extends AbstractBpmnActivityBehavior implemen
     private static final String CONNECTOR_TYPE = "connectorType";
     private final ProcessEngineIntegrationChannels channels;
     private final IntegrationContextManager integrationContextManager;
+    private final IntegrationProducerCommandContextCloseListener contextCloseListener;
 
     @Autowired
     public MQServiceTaskBehavior(ProcessEngineIntegrationChannels channels,
-                                 IntegrationContextManager integrationContextManager) {
+                                 IntegrationContextManager integrationContextManager,
+                                 IntegrationProducerCommandContextCloseListener contextCloseListener) {
         this.channels = channels;
         this.integrationContextManager = integrationContextManager;
+        this.contextCloseListener = contextCloseListener;
     }
 
     @Override
     public void execute(DelegateExecution execution) {
+        CommandContext currentCommandContext = Context.getCommandContext();
+
         IntegrationContextEntity integrationContext = buildIntegrationContext(execution);
         integrationContextManager.insert(integrationContext);
 
-        Message<IntegrationRequestEvent> message = buildMessage(execution,
-                                                                integrationContext);
-        channels.integrationEventsProducer().send(message);
+//        System.out.println(">>> Inserting Integration Context for executionId: " + integrationContext.getExecutionId());
+        Message<IntegrationRequestEvent> message = currentCommandContext.getGenericAttribute(IntegrationProducerCommandContextCloseListener.PROCESS_ENGINE_INTEGRATION_EVENTS);
+        if (message == null) {
+            currentCommandContext.addAttribute(IntegrationProducerCommandContextCloseListener.PROCESS_ENGINE_INTEGRATION_EVENTS,
+                                               buildMessage(execution,
+                                                            integrationContext));
+        }else{
+//            System.out.println("Error here: there is already a message for this transaction... we shouldn't get this far");
+            throw new IllegalStateException("Message already exist for this transaction. ");
+        }
+
+        if (!currentCommandContext.hasCloseListener(IntegrationProducerCommandContextCloseListener.class)) {
+            currentCommandContext.addCloseListener(contextCloseListener);
+        }
+
+
     }
 
     private Message<IntegrationRequestEvent> buildMessage(DelegateExecution execution,

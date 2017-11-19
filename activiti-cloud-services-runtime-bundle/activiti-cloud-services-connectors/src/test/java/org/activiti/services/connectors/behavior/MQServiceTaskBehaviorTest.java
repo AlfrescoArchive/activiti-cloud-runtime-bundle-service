@@ -50,6 +50,9 @@ public class MQServiceTaskBehaviorTest {
     private IntegrationContextManager integrationContextManager;
 
     @Mock
+    private IntegrationProducerCommandContextCloseListener contextCloseListener;
+
+    @Mock
     private MessageChannel messageChannel;
 
     @Captor
