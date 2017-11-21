@@ -28,7 +28,6 @@ import org.activiti.engine.impl.delegate.TriggerableActivityBehavior;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
-import org.activiti.services.connectors.channel.ProcessEngineIntegrationChannels;
 import org.activiti.services.connectors.model.IntegrationRequestEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.Message;
@@ -39,15 +38,12 @@ import org.springframework.stereotype.Component;
 public class MQServiceTaskBehavior extends AbstractBpmnActivityBehavior implements TriggerableActivityBehavior {
 
     private static final String CONNECTOR_TYPE = "connectorType";
-    private final ProcessEngineIntegrationChannels channels;
     private final IntegrationContextManager integrationContextManager;
     private final IntegrationProducerCommandContextCloseListener contextCloseListener;
 
     @Autowired
-    public MQServiceTaskBehavior(ProcessEngineIntegrationChannels channels,
-                                 IntegrationContextManager integrationContextManager,
+    public MQServiceTaskBehavior(IntegrationContextManager integrationContextManager,
                                  IntegrationProducerCommandContextCloseListener contextCloseListener) {
-        this.channels = channels;
         this.integrationContextManager = integrationContextManager;
         this.contextCloseListener = contextCloseListener;
     }
@@ -63,7 +59,7 @@ public class MQServiceTaskBehavior extends AbstractBpmnActivityBehavior implemen
         if (messages != null) {
             messages.add(buildMessage(execution,
                                       integrationContext));
-        }else {
+        } else {
             messages = new ArrayList<>();
             messages.add(buildMessage(execution,
                                       integrationContext));
@@ -74,8 +70,6 @@ public class MQServiceTaskBehavior extends AbstractBpmnActivityBehavior implemen
         if (!currentCommandContext.hasCloseListener(IntegrationProducerCommandContextCloseListener.class)) {
             currentCommandContext.addCloseListener(contextCloseListener);
         }
-
-
     }
 
     private Message<IntegrationRequestEvent> buildMessage(DelegateExecution execution,

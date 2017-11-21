@@ -35,14 +35,6 @@ public class IntegrationResultEvent {
         this.id = UUID.randomUUID().toString();
     }
 
-    public IntegrationResultEvent(String id,
-                                  String executionId,
-                                  Map<String, Object> variables) {
-        this.id = id;
-        this.executionId = executionId;
-        this.variables = variables;
-    }
-
     public IntegrationResultEvent(String executionId,
                                   Map<String, Object> variables) {
         this();

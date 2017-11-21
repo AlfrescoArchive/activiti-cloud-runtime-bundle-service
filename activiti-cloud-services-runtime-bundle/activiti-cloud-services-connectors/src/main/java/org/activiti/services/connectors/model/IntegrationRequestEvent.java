@@ -40,18 +40,6 @@ public class IntegrationRequestEvent {
         this.id = UUID.randomUUID().toString();
     }
 
-    public IntegrationRequestEvent(String id,
-                                   String processInstanceId,
-                                   String processDefinitionId,
-                                   String executionId,
-                                   Map<String, Object> variables) {
-        this.id = id;
-        this.processInstanceId = processInstanceId;
-        this.processDefinitionId = processDefinitionId;
-        this.executionId = executionId;
-        this.variables = variables;
-    }
-
     public IntegrationRequestEvent(String processInstanceId,
                                    String processDefinitionId,
                                    String executionId,
