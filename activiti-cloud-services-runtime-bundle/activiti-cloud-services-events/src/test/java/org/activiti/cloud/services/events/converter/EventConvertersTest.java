@@ -16,31 +16,28 @@
 
 package org.activiti.cloud.services.events.converter;
 
+import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.api.model.converter.ListConverter;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
 import org.activiti.cloud.services.api.model.converter.TaskConverter;
+import org.activiti.cloud.services.events.ActivityCancelledEvent;
 import org.activiti.cloud.services.events.ActivityCompletedEventImpl;
 import org.activiti.cloud.services.events.ProcessCancelledEvent;
 import org.activiti.cloud.services.events.ProcessCompletedEvent;
 import org.activiti.cloud.services.events.ProcessStartedEvent;
 import org.activiti.cloud.services.events.TaskAssignedEvent;
 import org.activiti.cloud.services.events.VariableCreatedEvent;
-import org.activiti.cloud.services.events.VariableCreatedEventImpl;
 import org.activiti.engine.delegate.event.ActivitiActivityCancelledEvent;
 import org.activiti.engine.delegate.event.ActivitiActivityEvent;
 import org.activiti.engine.delegate.event.ActivitiEntityEvent;
 import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.ActivitiProcessStartedEvent;
 import org.activiti.engine.delegate.event.impl.ActivitiEntityEventImpl;
-import org.activiti.engine.delegate.event.impl.ActivitiEventImpl;
 import org.activiti.engine.delegate.event.impl.ActivitiProcessCancelledEventImpl;
 import org.activiti.engine.delegate.event.impl.ActivitiVariableEventImpl;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntityImpl;
 import org.activiti.engine.impl.variable.StringType;
-import org.activiti.engine.impl.variable.VariableType;
 import org.activiti.engine.task.Task;
-import org.activiti.cloud.services.api.events.ProcessEngineEvent;
-import org.activiti.cloud.services.events.ActivityCancelledEvent;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -225,7 +222,5 @@ public class EventConvertersTest {
         assertThat(((VariableCreatedEvent) pee).getVariableName()).isEqualTo("myVar");
         assertThat(((VariableCreatedEvent) pee).getVariableType()).isEqualTo("string");
         assertThat(((VariableCreatedEvent) pee).getVariableValue()).isEqualTo("");
-
-
     }
 }
