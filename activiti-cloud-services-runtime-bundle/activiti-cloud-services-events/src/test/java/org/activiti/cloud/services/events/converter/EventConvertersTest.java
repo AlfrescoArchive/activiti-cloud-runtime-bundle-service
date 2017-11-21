@@ -24,14 +24,20 @@ import org.activiti.cloud.services.events.ProcessCancelledEvent;
 import org.activiti.cloud.services.events.ProcessCompletedEvent;
 import org.activiti.cloud.services.events.ProcessStartedEvent;
 import org.activiti.cloud.services.events.TaskAssignedEvent;
+import org.activiti.cloud.services.events.VariableCreatedEvent;
+import org.activiti.cloud.services.events.VariableCreatedEventImpl;
 import org.activiti.engine.delegate.event.ActivitiActivityCancelledEvent;
 import org.activiti.engine.delegate.event.ActivitiActivityEvent;
 import org.activiti.engine.delegate.event.ActivitiEntityEvent;
 import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.ActivitiProcessStartedEvent;
 import org.activiti.engine.delegate.event.impl.ActivitiEntityEventImpl;
+import org.activiti.engine.delegate.event.impl.ActivitiEventImpl;
 import org.activiti.engine.delegate.event.impl.ActivitiProcessCancelledEventImpl;
+import org.activiti.engine.delegate.event.impl.ActivitiVariableEventImpl;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntityImpl;
+import org.activiti.engine.impl.variable.StringType;
+import org.activiti.engine.impl.variable.VariableType;
 import org.activiti.engine.task.Task;
 import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.events.ActivityCancelledEvent;
@@ -193,5 +199,33 @@ public class EventConvertersTest {
         assertThat(pee.getProcessInstanceId()).isEqualTo("1");
         assertThat(pee.getProcessDefinitionId()).isEqualTo("myProcessDef");
         assertThat(((TaskAssignedEvent) pee).getTask().getId()).isEqualTo(task.getId());
+    }
+
+    @Test
+    public void internalVariableEventToExternalConvertion() throws Exception {
+        //given
+        ActivitiVariableEventImpl activitiEvent = mock(ActivitiVariableEventImpl.class);
+        given(activitiEvent.getType()).willReturn(ActivitiEventType.VARIABLE_CREATED);
+        given(activitiEvent.getExecutionId()).willReturn("1");
+        given(activitiEvent.getProcessInstanceId()).willReturn("1");
+        given(activitiEvent.getProcessDefinitionId()).willReturn("myProcessDef");
+        given(activitiEvent.getTaskId()).willReturn("1");
+        given(activitiEvent.getVariableName()).willReturn("myVar");
+        given(activitiEvent.getVariableType()).willReturn(new StringType(255));
+        given(activitiEvent.getVariableValue()).willReturn(null);
+
+        ProcessEngineEvent pee = new VariableCreatedEventConverter().from(activitiEvent);
+
+        //then
+        assertThat(pee).isInstanceOf(VariableCreatedEvent.class);
+        assertThat(pee.getExecutionId()).isEqualTo("1");
+        assertThat(pee.getProcessInstanceId()).isEqualTo("1");
+        assertThat(pee.getProcessDefinitionId()).isEqualTo("myProcessDef");
+        assertThat(((VariableCreatedEvent) pee).getTaskId()).isEqualTo("1");
+        assertThat(((VariableCreatedEvent) pee).getVariableName()).isEqualTo("myVar");
+        assertThat(((VariableCreatedEvent) pee).getVariableType()).isEqualTo("string");
+        assertThat(((VariableCreatedEvent) pee).getVariableValue()).isEqualTo("");
+
+
     }
 }

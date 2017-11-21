@@ -37,7 +37,7 @@ public class VariableCreatedEventConverter extends AbstractEventConverter {
                                             event.getProcessDefinitionId(),
                                             event.getProcessInstanceId(),
                                             variableEvent.getVariableName(),
-                                            String.valueOf(variableEvent.getVariableValue()),
+                                            (variableEvent.getVariableValue() != null) ? String.valueOf(variableEvent.getVariableValue()) : "",
                                             (variableEvent.getVariableType() != null) ? variableEvent.getVariableType().getTypeName() : "",
                                             variableEvent.getTaskId());
     }
