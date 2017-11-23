@@ -25,11 +25,10 @@ public class IntegrationProducerCommandContextCloseListener implements CommandCo
 
     @Override
     public void closed(CommandContext commandContext) {
-        CommandContext currentCommandContext = Context.getCommandContext();
-        List<Message<IntegrationRequestEvent>> messages = currentCommandContext
+        List<Message<IntegrationRequestEvent>> messages = commandContext
                 .getGenericAttribute(PROCESS_ENGINE_INTEGRATION_EVENTS);
 
-        if (messages != null && messages.size() > 0) {
+        if (messages != null) {
             for (Message<IntegrationRequestEvent> m : messages) {
                 producer.integrationEventsProducer().send(m);
             }
