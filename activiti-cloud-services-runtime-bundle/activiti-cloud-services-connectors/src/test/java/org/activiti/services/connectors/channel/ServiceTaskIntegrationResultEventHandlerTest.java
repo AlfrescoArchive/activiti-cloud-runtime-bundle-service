@@ -60,8 +60,7 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
         given(integrationContextService.findIntegrationContextByExecutionId(executionId)).willReturn(integrationContext);
         Map<String, Object> variables = Collections.singletonMap("var1",
                                                                  "v");
-        IntegrationResultEvent integrationResultEvent = new IntegrationResultEvent("resultId",
-                                                                                   executionId,
+        IntegrationResultEvent integrationResultEvent = new IntegrationResultEvent(executionId,
                                                                                    variables);
 
         //when
