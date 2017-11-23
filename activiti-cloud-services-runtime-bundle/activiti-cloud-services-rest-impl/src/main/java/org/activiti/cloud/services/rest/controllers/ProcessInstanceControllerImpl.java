@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.cloud.services.SecurityPolicy;
+import org.activiti.cloud.services.SecurityPolicyService;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
@@ -101,13 +103,17 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     @Override
     public Resource<ProcessInstance> getProcessInstanceById(@PathVariable String processInstanceId) {
-        return resourceAssembler.toResource(processEngine.getProcessInstanceById(processInstanceId));
+        ProcessInstance processInstance = processEngine.getProcessInstanceById(processInstanceId);
+        if(processInstance == null || !securityService.canRead(processInstance.getProcessDefinitionId())){
+            throw new ActivitiException("Unable to find process definition for the given id:'" + processInstanceId + "'");
+        }
+        return resourceAssembler.toResource(processInstance);
     }
 
     @Override
     public String getProcessDiagram(@PathVariable String processInstanceId) {
         ProcessInstance processInstance = processEngine.getProcessInstanceById(processInstanceId);
-        if (processInstance == null) {
+        if (processInstance == null || !securityService.canRead(processInstance.getProcessDefinitionId())) {
             throw new ActivitiException("Unable to find process instance for the given id:'" + processInstanceId + "'");
         }
         List<String> activityIds = processEngine.getActiveActivityIds(processInstanceId);
@@ -132,18 +138,40 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     @Override
     public ResponseEntity<Void> sendSignal(@RequestBody SignalProcessInstancesCmd cmd) {
+
+        //TODO: what to do about this?
         processEngine.signal(cmd);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @Override
     public ResponseEntity<Void> suspend(@PathVariable String processInstanceId) {
+        ProcessInstance processInstance = processEngine.getProcessInstanceById(processInstanceId);
+
+        if (processInstance == null){
+            throw new ActivitiException("Unable to find process instance for the given id:'" + processInstanceId + "'");
+        }
+
+        if (!securityService.canWrite(processInstance.getProcessDefinitionId())) {
+            throw new ActivitiForbiddenException("Operation not permitted");
+        }
+
         processEngine.suspend(new SuspendProcessInstanceCmd(processInstanceId));
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @Override
     public ResponseEntity<Void> activate(@PathVariable String processInstanceId) {
+        ProcessInstance processInstance = processEngine.getProcessInstanceById(processInstanceId);
+
+        if (processInstance == null){
+            throw new ActivitiException("Unable to find process instance for the given id:'" + processInstanceId + "'");
+        }
+
+        if (!securityService.canWrite(processInstance.getProcessDefinitionId())) {
+            throw new ActivitiForbiddenException("Operation not permitted");
+        }
+
         processEngine.activate(new ActivateProcessInstanceCmd(processInstanceId));
         return new ResponseEntity<>(HttpStatus.OK);
     }

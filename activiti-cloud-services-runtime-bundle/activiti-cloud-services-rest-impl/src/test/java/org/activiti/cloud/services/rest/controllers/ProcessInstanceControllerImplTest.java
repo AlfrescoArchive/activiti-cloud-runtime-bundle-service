@@ -137,6 +137,7 @@ public class ProcessInstanceControllerImplTest {
     public void getProcessInstanceById() throws Exception {
         ProcessInstance processInstance = mock(ProcessInstance.class);
         when(processEngine.getProcessInstanceById("1")).thenReturn(processInstance);
+        when(securityPolicyApplicationService.canRead(processInstance.getProcessDefinitionId())).thenReturn(true);
 
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}",
                                  1))
@@ -153,6 +154,7 @@ public class ProcessInstanceControllerImplTest {
         InputStream diagram = new ByteArrayInputStream("diagram".getBytes());
         BpmnModel bpmnModel = mock(BpmnModel.class);
         when(repositoryService.getBpmnModel(processInstance.getProcessDefinitionId())).thenReturn(bpmnModel);
+        when(securityPolicyApplicationService.canRead(processInstance.getProcessDefinitionId())).thenReturn(true);
         List<String> activitiIds = new ArrayList<>();
         when(processEngine.getActiveActivityIds("1")).thenReturn(activitiIds);
 
@@ -182,6 +184,9 @@ public class ProcessInstanceControllerImplTest {
 
     @Test
     public void suspend() throws Exception {
+        ProcessInstance processInstance = mock(ProcessInstance.class);
+        when(processEngine.getProcessInstanceById("1")).thenReturn(processInstance);
+        when(securityPolicyApplicationService.canWrite(processInstance.getProcessDefinitionId())).thenReturn(true);
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/suspend",
                                  1))
                 .andExpect(status().isOk())
@@ -191,6 +196,9 @@ public class ProcessInstanceControllerImplTest {
 
     @Test
     public void activate() throws Exception {
+        ProcessInstance processInstance = mock(ProcessInstance.class);
+        when(processEngine.getProcessInstanceById("1")).thenReturn(processInstance);
+        when(securityPolicyApplicationService.canWrite(processInstance.getProcessDefinitionId())).thenReturn(true);
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/activate",
                                  1))
                 .andExpect(status().isOk())
