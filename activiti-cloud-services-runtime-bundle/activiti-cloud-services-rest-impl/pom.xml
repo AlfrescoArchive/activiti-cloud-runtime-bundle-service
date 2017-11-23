@@ -21,11 +21,7 @@
   <parent>
     <groupId>org.activiti.cloud</groupId>
     <artifactId>activiti-cloud-services-runtime-bundle</artifactId>
-<<<<<<< HEAD
-    <version>7-201711-EA-SNAPSHOT</version>
-=======
-    <version>7-201710-EA-ryan_1493_applysecurity-SNAPSHOT</version>
->>>>>>> updating poms for ryan_1493_applysecurity version
+    <version>7-201711-EA-ryan_1493_applysecurity-SNAPSHOT</version>
   </parent>
 
   <artifactId>activiti-cloud-services-rest-impl</artifactId>
@@ -48,7 +44,6 @@
     <dependency>
       <groupId>org.activiti.cloud</groupId>
       <artifactId>activiti-cloud-services-core</artifactId>
-      <version>7-201710-EA-ryan_1493_applysecurity-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.activiti.cloud</groupId>
