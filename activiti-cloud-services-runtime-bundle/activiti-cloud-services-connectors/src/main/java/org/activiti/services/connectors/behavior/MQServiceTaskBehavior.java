@@ -50,7 +50,7 @@ public class MQServiceTaskBehavior extends AbstractBpmnActivityBehavior implemen
 
     @Override
     public void execute(DelegateExecution execution) {
-        CommandContext currentCommandContext = Context.getCommandContext();
+        CommandContext currentCommandContext = getCurrentCommandContext();
 
         IntegrationContextEntity integrationContext = buildIntegrationContext(execution);
         integrationContextManager.insert(integrationContext);
@@ -70,6 +70,10 @@ public class MQServiceTaskBehavior extends AbstractBpmnActivityBehavior implemen
         if (!currentCommandContext.hasCloseListener(IntegrationProducerCommandContextCloseListener.class)) {
             currentCommandContext.addCloseListener(contextCloseListener);
         }
+    }
+
+    protected CommandContext getCurrentCommandContext() {
+        return Context.getCommandContext();
     }
 
     private Message<IntegrationRequestEvent> buildMessage(DelegateExecution execution,
