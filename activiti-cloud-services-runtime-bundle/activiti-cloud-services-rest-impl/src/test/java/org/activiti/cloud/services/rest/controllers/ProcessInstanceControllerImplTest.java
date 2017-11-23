@@ -24,10 +24,12 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.cloud.services.SecurityPolicyService;
 import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
+import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
 import org.activiti.cloud.services.rest.api.resources.assembler.ProcessInstanceResourceAssembler;
 import org.activiti.engine.RepositoryService;
 import org.activiti.image.ProcessDiagramGenerator;
@@ -70,6 +72,8 @@ public class ProcessInstanceControllerImplTest {
     private MockMvc mockMvc;
 
     @MockBean
+    private SecurityPolicyApplicationService securityPolicyApplicationService;
+    @MockBean
     private ProcessEngineWrapper processEngine;
     @MockBean
     private RepositoryService repositoryService;
@@ -103,12 +107,29 @@ public class ProcessInstanceControllerImplTest {
         ProcessInstance processInstance = mock(ProcessInstance.class);
         StartProcessInstanceCmd cmd = new StartProcessInstanceCmd("1");
 
+        when(securityPolicyApplicationService.canWrite("1")).thenReturn(true);
         when(processEngine.startProcess(cmd)).thenReturn(processInstance);
 
         this.mockMvc.perform(post("/v1/process-instances")
                                      .contentType(MediaType.APPLICATION_JSON)
                                      .content(mapper.writeValueAsString(cmd)))
                 .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/start"));
+    }
+
+
+    @Test
+    public void startProcessForbidden() throws Exception {
+        ProcessInstance processInstance = mock(ProcessInstance.class);
+        StartProcessInstanceCmd cmd = new StartProcessInstanceCmd("1");
+
+        when(securityPolicyApplicationService.canWrite("1")).thenReturn(false);
+        when(processEngine.startProcess(cmd)).thenReturn(processInstance);
+
+        this.mockMvc.perform(post("/v1/process-instances")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(cmd)))
+                .andExpect(status().isForbidden())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/start"));
     }
 
@@ -123,6 +144,7 @@ public class ProcessInstanceControllerImplTest {
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/get",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
+
 
     @Test
     public void getProcessDiagram() throws Exception {

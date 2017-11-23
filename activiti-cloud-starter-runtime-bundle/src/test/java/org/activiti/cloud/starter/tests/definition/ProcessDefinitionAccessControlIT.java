@@ -16,15 +16,7 @@
 
 package org.activiti.cloud.starter.tests.definition;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.activiti.bpmn.converter.BpmnXMLConverter;
-import org.activiti.bpmn.converter.util.InputStreamProvider;
-import org.activiti.bpmn.model.BpmnModel;
-import org.activiti.bpmn.model.FlowElement;
-import org.activiti.cloud.services.core.model.ProcessDefinition;
-import org.activiti.cloud.services.core.model.ProcessDefinitionMeta;
-import org.activiti.cloud.starter.tests.util.TestResourceUtil;
-import org.activiti.editor.language.json.converter.BpmnJsonConverter;
+import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.image.ProcessDiagramGenerator;
 import org.junit.Test;
@@ -41,10 +33,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.ResponseExtractor;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Iterator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.cloud.services.api.model.ProcessInstance;
+import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
 import org.activiti.cloud.services.rest.api.ProcessInstanceController;
@@ -63,9 +64,9 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     private final SecurityPolicyApplicationService securityService;
 
-    @ExceptionHandler(IllegalAccessException.class) //TODO: use a custom exception type if have to do this - http://blog.sizovs.net/spring-rest-exception-handler/
+    @ExceptionHandler(ActivitiForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public String handleAppException(IllegalAccessException ex) {
+    public String handleAppException(ActivitiForbiddenException ex) {
         return ex.getMessage();
     }
 
@@ -74,12 +75,12 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
                                          RepositoryService repositoryService,
                                          ProcessDiagramGenerator processDiagramGenerator,
                                          ProcessInstanceResourceAssembler resourceAssembler,
-                                         SecurityPolicyApplicationService securityPolicyApplicationService) {
+                                         SecurityPolicyApplicationService securityService) {
         this.processEngine = processEngine;
         this.repositoryService = repositoryService;
         this.processDiagramGenerator = processDiagramGenerator;
         this.resourceAssembler = resourceAssembler;
-        this.securityService = securityPolicyApplicationService;
+        this.securityService = securityService;
     }
 
     @Override
@@ -90,10 +91,9 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     }
 
     @Override
-    public Resource<ProcessInstance> startProcess(@RequestBody StartProcessInstanceCmd cmd) throws Exception {
+    public Resource<ProcessInstance> startProcess(@RequestBody StartProcessInstanceCmd cmd) {
         if (!securityService.canWrite(cmd.getProcessDefinitionId())){
-            //TODO: throw Exception? that has knockons
-
+            throw new ActivitiForbiddenException("Operation not permitted");
         }
 
         return resourceAssembler.toResource(processEngine.startProcess(cmd));

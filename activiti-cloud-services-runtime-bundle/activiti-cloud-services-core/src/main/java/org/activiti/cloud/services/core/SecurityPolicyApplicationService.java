@@ -22,12 +22,9 @@ public class SecurityPolicyApplicationService {
 
     private AuthenticationWrapper authenticationWrapper = new AuthenticationWrapper();
 
-    private final SecurityPolicyService securityPolicyService;
-
     @Autowired
-    public SecurityPolicyApplicationService(SecurityPolicyService securityPolicyService){
-        this.securityPolicyService = securityPolicyService;
-    }
+    private SecurityPolicyService securityPolicyService;
+
 
     public ProcessDefinitionQuery processDefQuery(ProcessDefinitionQuery query, SecurityPolicy securityPolicy){
 
@@ -75,4 +72,5 @@ public class SecurityPolicyApplicationService {
         }
         return false;
     }
+
 }
