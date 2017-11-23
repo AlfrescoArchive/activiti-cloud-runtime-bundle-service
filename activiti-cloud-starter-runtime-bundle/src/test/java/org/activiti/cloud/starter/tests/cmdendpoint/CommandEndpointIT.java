@@ -56,7 +56,7 @@ import static org.assertj.core.api.Assertions.*;
 @RunWith(SpringRunner.class)
 @ActiveProfiles(CommandEndPointITStreamHandler.COMMAND_ENDPOINT_IT)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource("classpath:application-test.properties")
+@TestPropertySource({"classpath:application-test.properties", "classpath:access-control.properties"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class CommandEndpointIT {
 
@@ -196,6 +196,40 @@ public class CommandEndpointIT {
         assertThat(streamHandler.getClaimedTaskAck()).isTrue();
         assertThat(streamHandler.getReleasedTaskAck()).isTrue();
         assertThat(streamHandler.getCompletedTaskAck()).isTrue();
+    }
+
+
+    @Test
+    public void shouldNotStartWithoutWriteAccess() throws Exception {
+        keycloakSecurityContextClientRequestInterceptor.setKeycloaktestuser("testuser");
+
+
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("hey",
+                "one");
+
+        startProcessInstanceCmd = new StartProcessInstanceCmd(processDefinitionIds.get(SIMPLE_PROCESS),
+                vars);
+
+        //given
+        clientStream.myCmdProducer().send(MessageBuilder.withPayload(startProcessInstanceCmd).build());
+
+        WaitUtil.waitFor(streamHandler.getStartedProcessInstanceAck(),
+                3000);
+
+        //when
+        ResponseEntity<PagedResources<ProcessInstance>> processInstancesPage = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "?page={page}&size={size}",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<PagedResources<ProcessInstance>>() {
+                },
+                "0",
+                "2");
+
+        //then
+        assertThat(processInstancesPage).isNotNull();
+        assertThat(processInstancesPage.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(processInstancesPage.getBody().getContent().size()).isEqualTo(0);
     }
 
     private void completeTask(Task task) throws InterruptedException {
