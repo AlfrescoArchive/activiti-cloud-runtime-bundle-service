@@ -94,9 +94,6 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     @Override
     public Resource<ProcessInstance> startProcess(@RequestBody StartProcessInstanceCmd cmd) {
-        if (!securityService.canWrite(cmd.getProcessDefinitionId())){
-            throw new ActivitiForbiddenException("Operation not permitted");
-        }
 
         return resourceAssembler.toResource(processEngine.startProcess(cmd));
     }
@@ -104,7 +101,7 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     @Override
     public Resource<ProcessInstance> getProcessInstanceById(@PathVariable String processInstanceId) {
         ProcessInstance processInstance = processEngine.getProcessInstanceById(processInstanceId);
-        if(processInstance == null || !securityService.canRead(processInstance.getProcessDefinitionId())){
+        if(processInstance == null || !securityService.canRead(processEngine.getProcessDefinitionKeyById(processInstance.getProcessDefinitionId()))){
             throw new ActivitiException("Unable to find process definition for the given id:'" + processInstanceId + "'");
         }
         return resourceAssembler.toResource(processInstance);
@@ -113,7 +110,7 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     @Override
     public String getProcessDiagram(@PathVariable String processInstanceId) {
         ProcessInstance processInstance = processEngine.getProcessInstanceById(processInstanceId);
-        if (processInstance == null || !securityService.canRead(processInstance.getProcessDefinitionId())) {
+        if (processInstance == null || !securityService.canRead(processEngine.getProcessDefinitionKeyById(processInstance.getProcessDefinitionId()))) {
             throw new ActivitiException("Unable to find process instance for the given id:'" + processInstanceId + "'");
         }
         List<String> activityIds = processEngine.getActiveActivityIds(processInstanceId);
@@ -139,39 +136,19 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     @Override
     public ResponseEntity<Void> sendSignal(@RequestBody SignalProcessInstancesCmd cmd) {
 
-        //TODO: what to do about this?
+        //TODO: what to do about security on this?
         processEngine.signal(cmd);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @Override
     public ResponseEntity<Void> suspend(@PathVariable String processInstanceId) {
-        ProcessInstance processInstance = processEngine.getProcessInstanceById(processInstanceId);
-
-        if (processInstance == null){
-            throw new ActivitiException("Unable to find process instance for the given id:'" + processInstanceId + "'");
-        }
-
-        if (!securityService.canWrite(processInstance.getProcessDefinitionId())) {
-            throw new ActivitiForbiddenException("Operation not permitted");
-        }
-
         processEngine.suspend(new SuspendProcessInstanceCmd(processInstanceId));
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @Override
     public ResponseEntity<Void> activate(@PathVariable String processInstanceId) {
-        ProcessInstance processInstance = processEngine.getProcessInstanceById(processInstanceId);
-
-        if (processInstance == null){
-            throw new ActivitiException("Unable to find process instance for the given id:'" + processInstanceId + "'");
-        }
-
-        if (!securityService.canWrite(processInstance.getProcessDefinitionId())) {
-            throw new ActivitiForbiddenException("Operation not permitted");
-        }
-
         processEngine.activate(new ActivateProcessInstanceCmd(processInstanceId));
         return new ResponseEntity<>(HttpStatus.OK);
     }

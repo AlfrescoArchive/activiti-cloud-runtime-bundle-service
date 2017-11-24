@@ -70,7 +70,7 @@ public class ProcessInstanceControllerImplTest {
         ProcessInstance processInstance = mock(ProcessInstance.class);
         when(processEngineWrapper.getProcessInstanceById("7")).thenReturn(processInstance);
         when(securityPolicyApplicationService.canWrite(processInstance.getProcessDefinitionId())).thenReturn(true);
-        
+
         //when
         controller.activate(processInstanceId);
 

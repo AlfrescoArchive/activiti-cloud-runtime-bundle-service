@@ -17,8 +17,8 @@
 package org.activiti.cloud.starter.tests.definition;
 
 import org.activiti.cloud.services.api.model.ProcessDefinition;
+import org.activiti.cloud.services.identity.keycloak.interceptor.KeycloakSecurityContextClientRequestInterceptor;
 import org.activiti.engine.impl.util.IoUtil;
-import org.activiti.image.ProcessDiagramGenerator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +46,7 @@ public class ProcessDefinitionAccessControlIT {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private ProcessDiagramGenerator processDiagramGenerator;
+    private KeycloakSecurityContextClientRequestInterceptor keycloakSecurityContextClientRequestInterceptor;
 
     public static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
     private static final String PROCESS_WITH_VARIABLES_2 = "ProcessWithVariables2";
@@ -60,13 +60,22 @@ public class ProcessDefinitionAccessControlIT {
         //when
         ResponseEntity<PagedResources<ProcessDefinition>> entity = getProcessDefinitions();
 
-        //then
+        //then - should only see process defs visible to this user (testuser)
         assertThat(entity).isNotNull();
         assertThat(entity.getBody()).isNotNull();
         assertThat(entity.getBody().getContent()).extracting(ProcessDefinition::getName).contains(
                 "ProcessWithVariables",
                 PROCESS_POOL_LANE);
         assertThat(entity.getBody().getContent()).extracting(ProcessDefinition::getName).doesNotContain(
+                PROCESS_WITH_VARIABLES_2,
+                "SimpleProcess",
+                "ProcessWithBoundarySignal");
+
+        keycloakSecurityContextClientRequestInterceptor.setKeycloaktestuser("hruser");
+
+        //but hruser should see everything
+        entity = getProcessDefinitions();
+        assertThat(entity.getBody().getContent()).extracting(ProcessDefinition::getName).contains(
                 PROCESS_WITH_VARIABLES_2,
                 "SimpleProcess",
                 "ProcessWithBoundarySignal");

@@ -18,6 +18,8 @@ import org.activiti.cloud.services.api.model.converter.TaskConverter;
 import org.activiti.cloud.services.core.pageable.PageableProcessInstanceService;
 import org.activiti.cloud.services.core.pageable.PageableTaskService;
 import org.activiti.cloud.services.events.MessageProducerActivitiEventListener;
+import org.activiti.engine.ActivitiException;
+import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.runtime.ProcessInstanceBuilder;
@@ -35,6 +37,8 @@ public class ProcessEngineWrapper {
     private final TaskService taskService;
     private final TaskConverter taskConverter;
     private final PageableTaskService pageableTaskService;
+    private final SecurityPolicyApplicationService securityService;
+    private final RepositoryService repositoryService;
 
     @Autowired
     public ProcessEngineWrapper(ProcessInstanceConverter processInstanceConverter,
@@ -43,7 +47,9 @@ public class ProcessEngineWrapper {
                                 TaskService taskService,
                                 TaskConverter taskConverter,
                                 PageableTaskService pageableTaskService,
-                                MessageProducerActivitiEventListener listener) {
+                                MessageProducerActivitiEventListener listener,
+                                SecurityPolicyApplicationService securityService,
+                                RepositoryService repositoryService) {
         this.processInstanceConverter = processInstanceConverter;
         this.runtimeService = runtimeService;
         this.pageableProcessInstanceService = pageableProcessInstanceService;
@@ -51,6 +57,8 @@ public class ProcessEngineWrapper {
         this.taskConverter = taskConverter;
         this.pageableTaskService = pageableTaskService;
         this.runtimeService.addEventListener(listener);
+        this.securityService = securityService;
+        this.repositoryService = repositoryService;
     }
 
     public Page<ProcessInstance> getProcessInstances(Pageable pageable) {
@@ -58,6 +66,11 @@ public class ProcessEngineWrapper {
     }
 
     public ProcessInstance startProcess(StartProcessInstanceCmd cmd) {
+
+        if (!securityService.canWrite(getProcessDefinitionKeyById(cmd.getProcessDefinitionId()))){
+            throw new ActivitiForbiddenException("Operation not permitted");
+        }
+
         ProcessInstanceBuilder builder = runtimeService.createProcessInstanceBuilder();
         builder.processDefinitionId(cmd.getProcessDefinitionId());
         builder.variables(cmd.getVariables());
@@ -70,10 +83,29 @@ public class ProcessEngineWrapper {
     }
 
     public void suspend(SuspendProcessInstanceCmd suspendProcessInstanceCmd) {
+        ProcessInstance processInstance = getProcessInstanceById(suspendProcessInstanceCmd.getProcessInstanceId());
+
+        verifyCanModifyProcessInstance(processInstance, "Unable to find process instance for the given id:'" + suspendProcessInstanceCmd.getProcessInstanceId() + "'", getProcessDefinitionKeyById(processInstance.getProcessDefinitionId()));
         runtimeService.suspendProcessInstanceById(suspendProcessInstanceCmd.getProcessInstanceId());
     }
 
+    public String getProcessDefinitionKeyById(String id){
+        return repositoryService.getProcessDefinition(id).getKey();
+    }
+
+    private void verifyCanModifyProcessInstance(ProcessInstance processInstance, String message, String processDefinitionId) {
+        if (processInstance == null) {
+            throw new ActivitiException(message);
+        }
+        if (!securityService.canWrite(processDefinitionId)) {
+            throw new ActivitiForbiddenException("Operation not permitted");
+        }
+    }
+
     public void activate(ActivateProcessInstanceCmd activateProcessInstanceCmd) {
+        ProcessInstance processInstance = getProcessInstanceById(activateProcessInstanceCmd.getProcessInstanceId());
+
+        verifyCanModifyProcessInstance(processInstance, "Unable to find process instance for the given id:'" + activateProcessInstanceCmd.getProcessInstanceId() + "'", getProcessDefinitionKeyById(processInstance.getProcessDefinitionId()));
         runtimeService.activateProcessInstanceById(activateProcessInstanceCmd.getProcessInstanceId());
     }
 

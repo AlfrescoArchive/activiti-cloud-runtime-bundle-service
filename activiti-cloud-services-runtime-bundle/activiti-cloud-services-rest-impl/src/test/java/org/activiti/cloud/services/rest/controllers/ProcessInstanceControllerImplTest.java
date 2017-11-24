@@ -24,10 +24,10 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.bpmn.model.BpmnModel;
-import org.activiti.cloud.services.SecurityPolicyService;
 import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
+import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
 import org.activiti.cloud.services.rest.api.resources.assembler.ProcessInstanceResourceAssembler;
@@ -107,7 +107,6 @@ public class ProcessInstanceControllerImplTest {
         ProcessInstance processInstance = mock(ProcessInstance.class);
         StartProcessInstanceCmd cmd = new StartProcessInstanceCmd("1");
 
-        when(securityPolicyApplicationService.canWrite("1")).thenReturn(true);
         when(processEngine.startProcess(cmd)).thenReturn(processInstance);
 
         this.mockMvc.perform(post("/v1/process-instances")
@@ -117,14 +116,11 @@ public class ProcessInstanceControllerImplTest {
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/start"));
     }
 
-
     @Test
     public void startProcessForbidden() throws Exception {
-        ProcessInstance processInstance = mock(ProcessInstance.class);
         StartProcessInstanceCmd cmd = new StartProcessInstanceCmd("1");
 
-        when(securityPolicyApplicationService.canWrite("1")).thenReturn(false);
-        when(processEngine.startProcess(cmd)).thenReturn(processInstance);
+        when(processEngine.startProcess(any())).thenThrow(new ActivitiForbiddenException("Not permitted"));
 
         this.mockMvc.perform(post("/v1/process-instances")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -186,7 +182,7 @@ public class ProcessInstanceControllerImplTest {
     public void suspend() throws Exception {
         ProcessInstance processInstance = mock(ProcessInstance.class);
         when(processEngine.getProcessInstanceById("1")).thenReturn(processInstance);
-        when(securityPolicyApplicationService.canWrite(processInstance.getProcessDefinitionId())).thenReturn(true);
+
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/suspend",
                                  1))
                 .andExpect(status().isOk())
@@ -198,7 +194,7 @@ public class ProcessInstanceControllerImplTest {
     public void activate() throws Exception {
         ProcessInstance processInstance = mock(ProcessInstance.class);
         when(processEngine.getProcessInstanceById("1")).thenReturn(processInstance);
-        when(securityPolicyApplicationService.canWrite(processInstance.getProcessDefinitionId())).thenReturn(true);
+
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/activate",
                                  1))
                 .andExpect(status().isOk())
