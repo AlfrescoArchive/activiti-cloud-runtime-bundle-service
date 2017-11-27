@@ -29,7 +29,7 @@ public class SecurityPolicyApplicationService {
 
     public ProcessDefinitionQuery processDefQuery(ProcessDefinitionQuery query, SecurityPolicy securityPolicy){
 
-        if (!securityPolicyService.policiesDefined() || authenticationWrapper.getAuthenticatedUserId()== null){
+        if (noSecurityPoliciesOrNoUser()){
             return query;
         }
 
@@ -39,6 +39,10 @@ public class SecurityPolicyApplicationService {
             query = query.processDefinitionKeys(keys);
         }
         return query;
+    }
+
+    private boolean noSecurityPoliciesOrNoUser() {
+        return !securityPolicyService.policiesDefined() || authenticationWrapper.getAuthenticatedUserId()== null;
     }
 
     private Set<String> definitionKeysAllowedForPolicy(SecurityPolicy securityPolicy) {
@@ -53,7 +57,7 @@ public class SecurityPolicyApplicationService {
     }
 
     public ProcessInstanceQuery processInstQuery(ProcessInstanceQuery query, SecurityPolicy securityPolicy){
-        if (!securityPolicyService.policiesDefined() || authenticationWrapper.getAuthenticatedUserId()== null){
+        if (noSecurityPoliciesOrNoUser()){
             return query;
         }
 

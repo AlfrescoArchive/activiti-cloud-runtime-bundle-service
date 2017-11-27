@@ -24,6 +24,7 @@ import java.util.List;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.cloud.services.SecurityPolicy;
 import org.activiti.cloud.services.SecurityPolicyService;
+import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
@@ -33,6 +34,7 @@ import org.activiti.cloud.services.rest.api.resources.ProcessInstanceResource;
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.impl.util.IoUtil;
+import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.image.ProcessDiagramGenerator;
 
 import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
@@ -135,8 +137,6 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     @Override
     public ResponseEntity<Void> sendSignal(@RequestBody SignalProcessInstancesCmd cmd) {
-
-        //TODO: what to do about security on this?
         processEngine.signal(cmd);
         return new ResponseEntity<>(HttpStatus.OK);
     }

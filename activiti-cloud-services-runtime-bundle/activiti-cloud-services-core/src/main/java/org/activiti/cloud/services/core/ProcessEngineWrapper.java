@@ -3,6 +3,7 @@ package org.activiti.cloud.services.core;
 import java.util.List;
 import java.util.Map;
 
+import org.activiti.cloud.services.SecurityPolicy;
 import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.ClaimTaskCmd;
 import org.activiti.cloud.services.api.commands.CompleteTaskCmd;
@@ -22,6 +23,7 @@ import org.activiti.engine.ActivitiException;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
+import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstanceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -78,8 +80,19 @@ public class ProcessEngineWrapper {
     }
 
     public void signal(SignalProcessInstancesCmd signalProcessInstancesCmd) {
-        runtimeService.signalEventReceived(signalProcessInstancesCmd.getName(),
-                                           signalProcessInstancesCmd.getInputVariables());
+        //TODO: ideally we'd restrict signalling to just the process defs that the user has access to
+        // but that would require overloading RuntimeService.signalEventReceived within the engine (see SignalEventReceivedCmd)
+        // so that we could pass a query restriction parameter down to the engine
+        // for now we instead just check that user has write access to at least one of the process definitions in the RB
+
+        ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery();
+        query = securityService.processDefQuery(query, SecurityPolicy.WRITE);
+
+        if(query.count()>0) {
+            runtimeService.signalEventReceived(signalProcessInstancesCmd.getName(),
+                    signalProcessInstancesCmd.getInputVariables());
+        }
+
     }
 
     public void suspend(SuspendProcessInstanceCmd suspendProcessInstanceCmd) {
