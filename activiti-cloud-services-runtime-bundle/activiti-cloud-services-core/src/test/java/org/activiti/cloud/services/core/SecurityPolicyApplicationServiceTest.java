@@ -9,6 +9,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -54,5 +60,47 @@ public class SecurityPolicyApplicationServiceTest {
         when(authenticationWrapper.getAuthenticatedUserId()).thenReturn(null);
 
         assertThat(securityPolicyApplicationService.processDefQuery(query, SecurityPolicy.READ)).isEqualTo(query);
+    }
+
+    @Test
+    public void shouldRestrictQueryWhenGroupsAndPoliciesAvailable(){
+        ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
+
+        when(securityPolicyService.policiesDefined()).thenReturn(true);
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
+
+        when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(Arrays.asList("hr"));
+
+        securityPolicyApplicationService.processDefQuery(query, SecurityPolicy.READ);
+
+        verify(query).processDefinitionKeys(anySet());
+
+    }
+
+    @Test
+    public void shouldHavePermissionWhenDefIsInPolicy(){
+        List<String> groups = Arrays.asList("hr");
+
+        when(securityPolicyService.policiesDefined()).thenReturn(true);
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
+        when(userRoleLookupProxy.isAdmin("bob")).thenReturn(false);
+
+        when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(groups);
+        when(securityPolicyService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.WRITE)).thenReturn(new HashSet<>(Arrays.asList("key")));
+        when(securityPolicyService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.READ)).thenReturn(new HashSet<>(Arrays.asList("key")));
+
+        assertThat(securityPolicyApplicationService.canWrite("key")).isTrue();
+        assertThat(securityPolicyApplicationService.canRead("key")).isTrue();
+    }
+
+    @Test
+    public void shouldHavePermissionWhenAdmin(){
+
+        when(securityPolicyService.policiesDefined()).thenReturn(true);
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("admin");
+        when(userRoleLookupProxy.isAdmin("admin")).thenReturn(true);
+
+        assertThat(securityPolicyApplicationService.canWrite("key")).isTrue();
+        assertThat(securityPolicyApplicationService.canRead("key")).isTrue();
     }
 }
