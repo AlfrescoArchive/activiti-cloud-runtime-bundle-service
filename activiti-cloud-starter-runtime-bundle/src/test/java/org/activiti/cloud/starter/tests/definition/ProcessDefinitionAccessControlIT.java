@@ -18,7 +18,6 @@ package org.activiti.cloud.starter.tests.definition;
 
 import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.identity.keycloak.interceptor.KeycloakSecurityContextClientRequestInterceptor;
-import org.activiti.engine.impl.util.IoUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +27,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.client.ResponseExtractor;
-
-import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -92,18 +87,4 @@ public class ProcessDefinitionAccessControlIT {
     }
 
 
-    private String executeRequest(String url, HttpMethod method) {
-        return restTemplate.execute(url,
-                method,
-                null,
-                new ResponseExtractor<String>() {
-
-                    @Override
-                    public String extractData(ClientHttpResponse response)
-                            throws IOException {
-                        return new String(IoUtil.readInputStream(response.getBody(),
-                                null), "UTF-8");
-                    }
-                });
-    }
 }
