@@ -5,6 +5,7 @@ import org.activiti.cloud.services.SecurityPolicyService;
 import org.activiti.engine.UserGroupLookupProxy;
 import org.activiti.engine.UserRoleLookupProxy;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
+import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -102,5 +103,22 @@ public class SecurityPolicyApplicationServiceTest {
 
         assertThat(securityPolicyApplicationService.canWrite("key")).isTrue();
         assertThat(securityPolicyApplicationService.canRead("key")).isTrue();
+    }
+
+    @Test
+    public void shouldRestrictQueryWhenKeysFromPolicy(){
+        List<String> groups = Arrays.asList("hr");
+
+        when(securityPolicyService.policiesDefined()).thenReturn(true);
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
+        when(userRoleLookupProxy.isAdmin("bob")).thenReturn(false);
+
+        when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(groups);
+        when(securityPolicyService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.READ)).thenReturn(new HashSet<>(Arrays.asList("key")));
+
+        ProcessInstanceQuery query = mock(ProcessInstanceQuery.class);
+        securityPolicyApplicationService.processInstQuery(query,SecurityPolicy.READ);
+
+        verify(query).processDefinitionKeys(anySet());
     }
 }

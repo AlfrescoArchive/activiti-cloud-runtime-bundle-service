@@ -12,6 +12,7 @@ import org.activiti.cloud.services.api.commands.SetTaskVariablesCmd;
 import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
+import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
@@ -25,6 +26,7 @@ import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.engine.runtime.ProcessInstanceBuilder;
+import org.activiti.engine.runtime.ProcessInstanceQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -88,7 +90,7 @@ public class ProcessEngineWrapper {
         ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery();
         query = securityService.processDefQuery(query, SecurityPolicy.WRITE);
 
-        if(query.count()>0) {
+        if(query!=null && query.count()>0) {
             runtimeService.signalEventReceived(signalProcessInstancesCmd.getName(),
                     signalProcessInstancesCmd.getInputVariables());
         }
@@ -103,7 +105,11 @@ public class ProcessEngineWrapper {
     }
 
     public String getProcessDefinitionKeyById(String id){
-        return repositoryService.getProcessDefinition(id).getKey();
+        org.activiti.engine.repository.ProcessDefinition definition = repositoryService.getProcessDefinition(id);
+        if(definition == null){
+            return null;
+        }
+        return definition.getKey();
     }
 
     private void verifyCanModifyProcessInstance(ProcessInstance processInstance, String message, String processDefinitionId) {
@@ -123,8 +129,9 @@ public class ProcessEngineWrapper {
     }
 
     public ProcessInstance getProcessInstanceById(String processInstanceId) {
-        org.activiti.engine.runtime.ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
-                .processInstanceId(processInstanceId).singleResult();
+        ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+        query = query.processInstanceId(processInstanceId);
+        org.activiti.engine.runtime.ProcessInstance processInstance = query.singleResult();
         return processInstanceConverter.from(processInstance);
     }
 
