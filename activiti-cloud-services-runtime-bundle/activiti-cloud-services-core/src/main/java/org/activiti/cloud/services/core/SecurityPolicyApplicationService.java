@@ -29,7 +29,7 @@ public class SecurityPolicyApplicationService {
 
     public ProcessDefinitionQuery processDefQuery(ProcessDefinitionQuery query, SecurityPolicy securityPolicy){
 
-        if (!securityPolicyService.policiesDefined()){
+        if (!securityPolicyService.policiesDefined() || authenticationWrapper.getAuthenticatedUserId()== null){
             return query;
         }
 
@@ -43,7 +43,8 @@ public class SecurityPolicyApplicationService {
 
     private Set<String> definitionKeysAllowedForPolicy(SecurityPolicy securityPolicy) {
         List<String> groups = null;
-        if(userGroupLookupProxy!=null){
+
+        if(userGroupLookupProxy!=null && authenticationWrapper.getAuthenticatedUserId()!=null){
             groups = userGroupLookupProxy.getGroupsForCandidateUser(authenticationWrapper.getAuthenticatedUserId());
         }
 
@@ -52,7 +53,7 @@ public class SecurityPolicyApplicationService {
     }
 
     public ProcessInstanceQuery processInstQuery(ProcessInstanceQuery query, SecurityPolicy securityPolicy){
-        if (!securityPolicyService.policiesDefined()){
+        if (!securityPolicyService.policiesDefined() || authenticationWrapper.getAuthenticatedUserId()== null){
             return query;
         }
 
@@ -73,11 +74,12 @@ public class SecurityPolicyApplicationService {
     }
 
     private boolean hasPermission(String processDefId, SecurityPolicy securityPolicy){
-        if(userRoleLookupProxy != null && userRoleLookupProxy.isAdmin(authenticationWrapper.getAuthenticatedUserId())){
+
+        if (!securityPolicyService.policiesDefined() || userGroupLookupProxy == null || authenticationWrapper.getAuthenticatedUserId() == null){
             return true;
         }
 
-        if (!securityPolicyService.policiesDefined() || userGroupLookupProxy ==null){
+        if(userRoleLookupProxy != null && userRoleLookupProxy.isAdmin(authenticationWrapper.getAuthenticatedUserId())){
             return true;
         }
 
