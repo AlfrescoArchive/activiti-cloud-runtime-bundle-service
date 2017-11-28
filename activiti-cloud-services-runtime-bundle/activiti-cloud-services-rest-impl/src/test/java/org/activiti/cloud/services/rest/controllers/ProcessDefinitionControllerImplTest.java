@@ -108,7 +108,7 @@ public class ProcessDefinitionControllerImplTest {
     public void getProcessDefinition() throws Exception {
         ProcessDefinitionQuery processDefinitionQuery = mock(ProcessDefinitionQuery.class);
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(processDefinitionQuery);
-        when(securityPoliciesApplicationService.processDefQuery(processDefinitionQuery, SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
+        when(securityPoliciesApplicationService.restrictProcessDefQuery(processDefinitionQuery, SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
         when(processDefinitionQuery.processDefinitionId("1")).thenReturn(processDefinitionQuery);
         when(processDefinitionQuery.singleResult()).thenReturn(new ProcessDefinitionEntityImpl());
 
@@ -125,7 +125,7 @@ public class ProcessDefinitionControllerImplTest {
         when(repositoryService.getProcessModel("1")).thenReturn(xml);
         ProcessDefinitionQuery processDefinitionQuery = mock(ProcessDefinitionQuery.class);
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(processDefinitionQuery);
-        when(securityPoliciesApplicationService.processDefQuery(processDefinitionQuery, SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
+        when(securityPoliciesApplicationService.restrictProcessDefQuery(processDefinitionQuery, SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
         when(processDefinitionQuery.processDefinitionId("1")).thenReturn(processDefinitionQuery);
         when(processDefinitionQuery.singleResult()).thenReturn(new ProcessDefinitionEntityImpl());
 
@@ -147,7 +147,7 @@ public class ProcessDefinitionControllerImplTest {
         when(repositoryService.getBpmnModel("1")).thenReturn(bpmnModel);
         ProcessDefinitionQuery processDefinitionQuery = mock(ProcessDefinitionQuery.class);
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(processDefinitionQuery);
-        when(securityPoliciesApplicationService.processDefQuery(processDefinitionQuery, SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
+        when(securityPoliciesApplicationService.restrictProcessDefQuery(processDefinitionQuery, SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
         when(processDefinitionQuery.processDefinitionId("1")).thenReturn(processDefinitionQuery);
         when(processDefinitionQuery.singleResult()).thenReturn(new ProcessDefinitionEntityImpl());
 
@@ -165,7 +165,7 @@ public class ProcessDefinitionControllerImplTest {
         when(repositoryService.getBpmnModel("1")).thenReturn(bpmnModel);
         ProcessDefinitionQuery processDefinitionQuery = mock(ProcessDefinitionQuery.class);
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(processDefinitionQuery);
-        when(securityPoliciesApplicationService.processDefQuery(processDefinitionQuery, SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
+        when(securityPoliciesApplicationService.restrictProcessDefQuery(processDefinitionQuery, SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
         when(processDefinitionQuery.processDefinitionId("1")).thenReturn(processDefinitionQuery);
         when(processDefinitionQuery.singleResult()).thenReturn(new ProcessDefinitionEntityImpl());
         InputStream img = new ByteArrayInputStream("img".getBytes());

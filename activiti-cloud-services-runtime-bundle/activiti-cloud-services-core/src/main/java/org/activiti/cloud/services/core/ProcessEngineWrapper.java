@@ -112,7 +112,7 @@ public class ProcessEngineWrapper {
 
     private void verifyCanWriteToProcessInstance(ProcessInstance processInstance, String message) {
 
-        org.activiti.engine.repository.ProcessDefinition definition = repositoryService.getProcessDefinition(processInstance.getProcessDefinitionId());
+        ProcessDefinition definition = repositoryService.getProcessDefinition(processInstance.getProcessDefinitionId());
 
         if (processInstance == null || definition == null) {
             throw new ActivitiException(message);

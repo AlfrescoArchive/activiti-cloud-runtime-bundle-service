@@ -32,7 +32,6 @@ import org.mockito.Mock;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -92,7 +91,7 @@ public class ProcessEngineWrapperTest {
     public void shouldSignal(){
         ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(query);
-        when(securityService.processDefQuery(query, SecurityPolicy.WRITE)).thenReturn(query);
+        when(securityService.restrictProcessDefQuery(query, SecurityPolicy.WRITE)).thenReturn(query);
         when(query.count()).thenReturn(1L);
         processEngineWrapper.signal(mock(SignalProcessInstancesCmd.class));
         verify(runtimeService).signalEventReceived(any(),anyMap());

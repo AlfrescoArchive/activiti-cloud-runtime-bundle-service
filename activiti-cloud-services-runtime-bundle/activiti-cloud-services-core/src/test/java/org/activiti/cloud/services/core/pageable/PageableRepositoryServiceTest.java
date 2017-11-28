@@ -43,10 +43,10 @@ public class PageableRepositoryServiceTest {
         Pageable pageable = mock(Pageable.class);
         ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(query);
-        when(securityService.processDefQuery(query, SecurityPolicy.READ)).thenReturn(query);
+        when(securityService.restrictProcessDefQuery(query, SecurityPolicy.READ)).thenReturn(query);
 
         pageableRepositoryService.getProcessDefinitions(pageable);
 
-        verify(securityService).processDefQuery(query,SecurityPolicy.READ);
+        verify(securityService).restrictProcessDefQuery(query,SecurityPolicy.READ);
     }
 }

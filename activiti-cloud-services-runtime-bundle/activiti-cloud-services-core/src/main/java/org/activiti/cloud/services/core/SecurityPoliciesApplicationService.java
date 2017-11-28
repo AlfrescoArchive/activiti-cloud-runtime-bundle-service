@@ -28,7 +28,7 @@ public class SecurityPoliciesApplicationService {
     private SecurityPoliciesService securityPoliciesService;
 
 
-    public ProcessDefinitionQuery processDefQuery(ProcessDefinitionQuery query, SecurityPolicy securityPolicy){
+    public ProcessDefinitionQuery restrictProcessDefQuery(ProcessDefinitionQuery query, SecurityPolicy securityPolicy){
 
         if (noSecurityPoliciesOrNoUser()){
             return query;
@@ -37,7 +37,7 @@ public class SecurityPoliciesApplicationService {
         Set<String> keys = definitionKeysAllowedForPolicy(securityPolicy);
 
         if(keys != null){ //restrict query to only these keys
-            query = query.processDefinitionKeys(keys);
+            return query.processDefinitionKeys(keys);
         }
         return query;
     }
@@ -65,7 +65,7 @@ public class SecurityPoliciesApplicationService {
         Set<String> keys = definitionKeysAllowedForPolicy(securityPolicy);
 
         if(keys != null){
-            query = query.processDefinitionKeys(keys);
+            return query.processDefinitionKeys(keys);
         }
         return query;
     }
@@ -90,10 +90,7 @@ public class SecurityPoliciesApplicationService {
 
         Set<String> keys = definitionKeysAllowedForPolicy(securityPolicy);
 
-        if (keys != null && keys.contains(processDefId)){
-            return true;
-        }
-        return false;
+        return (keys != null && keys.contains(processDefId));
     }
 
 }

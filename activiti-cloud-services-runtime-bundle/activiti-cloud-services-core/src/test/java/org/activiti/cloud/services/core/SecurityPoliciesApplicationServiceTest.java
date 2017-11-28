@@ -50,7 +50,7 @@ public class SecurityPoliciesApplicationServiceTest {
         when(securityPoliciesService.policiesDefined()).thenReturn(false);
         when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
 
-        assertThat(securityPoliciesApplicationService.processDefQuery(query, SecurityPolicy.READ)).isEqualTo(query);
+        assertThat(securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ)).isEqualTo(query);
     }
 
     @Test
@@ -60,7 +60,7 @@ public class SecurityPoliciesApplicationServiceTest {
         when(securityPoliciesService.policiesDefined()).thenReturn(true);
         when(authenticationWrapper.getAuthenticatedUserId()).thenReturn(null);
 
-        assertThat(securityPoliciesApplicationService.processDefQuery(query, SecurityPolicy.READ)).isEqualTo(query);
+        assertThat(securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ)).isEqualTo(query);
     }
 
     @Test
@@ -72,7 +72,7 @@ public class SecurityPoliciesApplicationServiceTest {
 
         when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(Arrays.asList("hr"));
 
-        securityPoliciesApplicationService.processDefQuery(query, SecurityPolicy.READ);
+        securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
 
         verify(query).processDefinitionKeys(anySet());
 

@@ -57,7 +57,7 @@ public class PageableRepositoryService {
     public Page<ProcessDefinition> getProcessDefinitions(Pageable pageable) {
 
         ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery();
-        query = securityService.processDefQuery(query, SecurityPolicy.READ);
+        query = securityService.restrictProcessDefQuery(query, SecurityPolicy.READ);
 
         sortApplier.applySort(query,
                               pageable);

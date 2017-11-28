@@ -101,7 +101,7 @@ public class ProcessDefinitionControllerImpl implements ProcessDefinitionControl
     private org.activiti.engine.repository.ProcessDefinition retrieveProcessDefinition(String id) {
         ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionId(id);
-        query = securityService.processDefQuery(query, SecurityPolicy.READ);
+        query = securityService.restrictProcessDefQuery(query, SecurityPolicy.READ);
         org.activiti.engine.repository.ProcessDefinition processDefinition = query.singleResult();
         if (processDefinition == null) {
             throw new ActivitiObjectNotFoundException("Unable to find process definition for the given id:'" + id + "'");
