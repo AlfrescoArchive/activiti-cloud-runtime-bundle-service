@@ -12,9 +12,6 @@ import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
 import org.activiti.cloud.services.api.model.converter.TaskConverter;
-import org.activiti.cloud.services.core.pageable.PageableProcessInstanceService;
-import org.activiti.cloud.services.core.pageable.PageableTaskService;
-import org.activiti.cloud.services.events.listeners.MessageProducerActivitiEventListener;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
@@ -29,13 +26,11 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.assertj.core.api.Assertions.*;
 
 public class ProcessEngineWrapperTest {
 
@@ -47,25 +42,20 @@ public class ProcessEngineWrapperTest {
     @Mock
     private RuntimeService runtimeService;
     @Mock
-    private PageableProcessInstanceService pageableProcessInstanceService;
-    @Mock
     private TaskService taskService;
     @Mock
     private TaskConverter taskConverter;
     @Mock
-    private PageableTaskService pageableTaskService;
-    @Mock
     private SecurityPoliciesApplicationService securityService;
     @Mock
     private RepositoryService repositoryService;
-    @Mock
-    private MessageProducerActivitiEventListener messageProducerActivitiEventListener;
     @Mock
     private AuthenticationWrapper authenticationWrapper;
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("anonymous");
     }
 
     @Test
