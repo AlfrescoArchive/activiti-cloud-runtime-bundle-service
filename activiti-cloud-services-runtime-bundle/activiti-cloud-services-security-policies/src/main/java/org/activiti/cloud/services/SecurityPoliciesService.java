@@ -12,12 +12,12 @@ import java.util.Map;
 import java.util.Set;
 
 @Component
-public class SecurityPolicyService {
+public class SecurityPoliciesService {
 
     private SecurityProperties securityProperties;
 
     @Autowired
-    public SecurityPolicyService(SecurityProperties securityProperties){
+    public SecurityPoliciesService(SecurityProperties securityProperties){
         this.securityProperties = securityProperties;
     }
 

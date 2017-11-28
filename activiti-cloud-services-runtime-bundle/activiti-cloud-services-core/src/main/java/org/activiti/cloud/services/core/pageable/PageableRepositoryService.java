@@ -19,7 +19,7 @@ import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.converter.ProcessDefinitionConverter;
 import org.activiti.cloud.services.core.pageable.sort.ProcessDefinitionSortApplier;
 import org.activiti.cloud.services.SecurityPolicy;
-import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
+import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,14 +39,14 @@ public class PageableRepositoryService {
 
     private final ProcessDefinitionSortApplier sortApplier;
 
-    private final SecurityPolicyApplicationService securityService;
+    private final SecurityPoliciesApplicationService securityService;
 
     @Autowired
     public PageableRepositoryService(RepositoryService repositoryService,
                                      PageRetriever pageRetriever,
                                      ProcessDefinitionConverter processDefinitionConverter,
                                      ProcessDefinitionSortApplier sortApplier,
-                                     SecurityPolicyApplicationService securityPolicyApplicationService) {
+                                     SecurityPoliciesApplicationService securityPolicyApplicationService) {
         this.repositoryService = repositoryService;
         this.pageRetriever = pageRetriever;
         this.processDefinitionConverter = processDefinitionConverter;

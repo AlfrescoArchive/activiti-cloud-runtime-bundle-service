@@ -56,11 +56,13 @@ public class ProcessEngineWrapperTest {
     @Mock
     private PageableTaskService pageableTaskService;
     @Mock
-    private SecurityPolicyApplicationService securityService;
+    private SecurityPoliciesApplicationService securityService;
     @Mock
     private RepositoryService repositoryService;
     @Mock
     private MessageProducerActivitiEventListener messageProducerActivitiEventListener;
+    @Mock
+    private AuthenticationWrapper authenticationWrapper;
 
     @Before
     public void setUp() throws Exception {
@@ -70,6 +72,7 @@ public class ProcessEngineWrapperTest {
     @Test
     public void shouldNotStartWithoutPermission(){
         when(securityService.canWrite(any())).thenReturn(false);
+        when(repositoryService.getProcessDefinition(any())).thenReturn(mock(ProcessDefinition.class));
         assertThatExceptionOfType(ActivitiForbiddenException.class).isThrownBy(() -> processEngineWrapper.startProcess(mock(StartProcessInstanceCmd.class)));
     }
     @Test
@@ -81,19 +84,12 @@ public class ProcessEngineWrapperTest {
         when(builder.start()).thenReturn(engineInst);
         ProcessInstance instance = mock(ProcessInstance.class);
         when(processInstanceConverter.from(engineInst)).thenReturn(instance);
+        when(repositoryService.getProcessDefinition(any())).thenReturn(mock(ProcessDefinition.class));
         assertThat(processEngineWrapper.startProcess(mock(StartProcessInstanceCmd.class))).isEqualTo(instance);
     }
+
     @Test
-    public void shouldNotSignalWithoutPermission(){
-        ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
-        when(repositoryService.createProcessDefinitionQuery()).thenReturn(query);
-        when(securityService.processDefQuery(query, SecurityPolicy.WRITE)).thenReturn(query);
-        when(query.count()).thenReturn(0L);
-        processEngineWrapper.signal(mock(SignalProcessInstancesCmd.class));
-        verify(runtimeService,never()).signalEventReceived(any(),anyMap());
-    }
-    @Test
-    public void shouldSignalWithPermission(){
+    public void shouldSignal(){
         ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(query);
         when(securityService.processDefQuery(query, SecurityPolicy.WRITE)).thenReturn(query);

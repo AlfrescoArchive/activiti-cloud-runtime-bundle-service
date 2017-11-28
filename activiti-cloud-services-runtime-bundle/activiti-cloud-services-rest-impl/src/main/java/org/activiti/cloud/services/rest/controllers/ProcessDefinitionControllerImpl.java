@@ -24,9 +24,10 @@ import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.converter.ProcessDefinitionConverter;
 import org.activiti.cloud.services.SecurityPolicy;
-import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
+import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.editor.language.json.converter.BpmnJsonConverter;
 import org.activiti.engine.ActivitiException;
+import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
@@ -40,7 +41,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.PagedResources;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -56,7 +60,13 @@ public class ProcessDefinitionControllerImpl implements ProcessDefinitionControl
 
     private final PageableRepositoryService pageableRepositoryService;
 
-    private final SecurityPolicyApplicationService securityService;
+    private final SecurityPoliciesApplicationService securityService;
+
+    @ExceptionHandler(ActivitiObjectNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String handleAppException(ActivitiObjectNotFoundException ex) {
+        return ex.getMessage();
+    }
 
     @Autowired
     public ProcessDefinitionControllerImpl(RepositoryService repositoryService,
@@ -64,13 +74,13 @@ public class ProcessDefinitionControllerImpl implements ProcessDefinitionControl
                                            ProcessDefinitionConverter processDefinitionConverter,
                                            ProcessDefinitionResourceAssembler resourceAssembler,
                                            PageableRepositoryService pageableRepositoryService,
-                                           SecurityPolicyApplicationService securityPolicyApplicationService) {
+                                           SecurityPoliciesApplicationService securityPoliciesApplicationService) {
         this.repositoryService = repositoryService;
         this.processDiagramGenerator = processDiagramGenerator;
         this.processDefinitionConverter = processDefinitionConverter;
         this.resourceAssembler = resourceAssembler;
         this.pageableRepositoryService = pageableRepositoryService;
-        this.securityService = securityPolicyApplicationService;
+        this.securityService = securityPoliciesApplicationService;
     }
 
     @Override
@@ -94,7 +104,7 @@ public class ProcessDefinitionControllerImpl implements ProcessDefinitionControl
         query = securityService.processDefQuery(query, SecurityPolicy.READ);
         org.activiti.engine.repository.ProcessDefinition processDefinition = query.singleResult();
         if (processDefinition == null) {
-            throw new ActivitiException("Unable to find process definition for the given id:'" + id + "'");
+            throw new ActivitiObjectNotFoundException("Unable to find process definition for the given id:'" + id + "'");
         }
         return processDefinition;
     }

@@ -20,7 +20,7 @@ import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
-import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
+import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.cloud.services.rest.controllers.ProcessInstanceControllerImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class ProcessInstanceControllerImplTest {
     @Mock
     private ProcessEngineWrapper processEngineWrapper;
     @Mock
-    private SecurityPolicyApplicationService securityPolicyApplicationService;
+    private SecurityPoliciesApplicationService securityPoliciesApplicationService;
 
     @Before
     public void setUp() throws Exception {
@@ -54,7 +54,7 @@ public class ProcessInstanceControllerImplTest {
         String processInstanceId = "7";
         ProcessInstance processInstance = mock(ProcessInstance.class);
         when(processEngineWrapper.getProcessInstanceById("7")).thenReturn(processInstance);
-        when(securityPolicyApplicationService.canWrite(processInstance.getProcessDefinitionId())).thenReturn(true);
+        when(securityPoliciesApplicationService.canWrite(processInstance.getProcessDefinitionId())).thenReturn(true);
 
         //when
         controller.suspend(processInstanceId);
@@ -69,7 +69,7 @@ public class ProcessInstanceControllerImplTest {
         String processInstanceId = "7";
         ProcessInstance processInstance = mock(ProcessInstance.class);
         when(processEngineWrapper.getProcessInstanceById("7")).thenReturn(processInstance);
-        when(securityPolicyApplicationService.canWrite(processInstance.getProcessDefinitionId())).thenReturn(true);
+        when(securityPoliciesApplicationService.canWrite(processInstance.getProcessDefinitionId())).thenReturn(true);
 
         //when
         controller.activate(processInstanceId);

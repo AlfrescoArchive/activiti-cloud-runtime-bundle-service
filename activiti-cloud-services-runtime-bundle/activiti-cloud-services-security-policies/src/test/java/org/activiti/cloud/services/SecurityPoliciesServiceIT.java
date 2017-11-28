@@ -16,21 +16,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @TestPropertySource("classpath:propstest.properties")
-public class SecurityPolicyServiceIT {
+public class SecurityPoliciesServiceIT {
 
     @Autowired
-    private SecurityPolicyService securityPolicyService;
+    private SecurityPoliciesService securityPoliciesService;
 
     @Test
     public void shouldBePoliciesDefined() throws Exception {
-        assertThat(securityPolicyService.policiesDefined()).isTrue();
+        assertThat(securityPoliciesService.policiesDefined()).isTrue();
     }
 
 
     @Test
     public void shouldGetProcessDefsByUserAndPolicies() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys("jEff",null, Arrays.asList(SecurityPolicy.WRITE,SecurityPolicy.READ));
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys("jEff",null, Arrays.asList(SecurityPolicy.WRITE,SecurityPolicy.READ));
 
         assertThat(keys).hasSize(1);
         assertThat(keys).contains("SimpleProcess");
@@ -39,13 +39,13 @@ public class SecurityPolicyServiceIT {
     @Test
     public void shouldGetProcessDefsByUserAndMinPolicy() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys("jEff",null, SecurityPolicy.READ);
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys("jEff",null, SecurityPolicy.READ);
 
         assertThat(keys).hasSize(1);
         assertThat(keys).contains("SimpleProcess");
         
         //write as min policy should work too for this case
-        keys = securityPolicyService.getProcessDefinitionKeys("jEff",null, SecurityPolicy.WRITE);
+        keys = securityPoliciesService.getProcessDefinitionKeys("jEff",null, SecurityPolicy.WRITE);
 
         assertThat(keys).contains("SimpleProcess");
     }
@@ -53,7 +53,7 @@ public class SecurityPolicyServiceIT {
     @Test
     public void shouldGetProcessDefsByGroupAndPolicies() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys(null,Arrays.asList("finance"), Arrays.asList(SecurityPolicy.READ));
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys(null,Arrays.asList("finance"), Arrays.asList(SecurityPolicy.READ));
 
         assertThat(keys).hasSize(2);
         assertThat(keys).contains("SimpleProcess1","SimpleProcess2");
@@ -62,7 +62,7 @@ public class SecurityPolicyServiceIT {
     @Test
     public void shouldGetProcessDefsByGroupsAndMinPolicy() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys(null,Arrays.asList("finance","nonexistent"), SecurityPolicy.READ);
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys(null,Arrays.asList("finance","nonexistent"), SecurityPolicy.READ);
 
         assertThat(keys).hasSize(2);
         assertThat(keys).contains("SimpleProcess1","SimpleProcess2");
@@ -71,7 +71,7 @@ public class SecurityPolicyServiceIT {
     @Test
     public void shouldNotGetProcessDefsForGroupWithoutDefs() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys(null,Arrays.asList("hrbitlikerealgroupbutnot","nonexistent"), SecurityPolicy.READ);
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys(null,Arrays.asList("hrbitlikerealgroupbutnot","nonexistent"), SecurityPolicy.READ);
 
         assertThat(keys).isEmpty();
     }
@@ -79,7 +79,7 @@ public class SecurityPolicyServiceIT {
     @Test
     public void shouldNotGetProcessDefsWithoutUserOrGroup() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys(null,null, Arrays.asList(SecurityPolicy.WRITE));
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys(null,null, Arrays.asList(SecurityPolicy.WRITE));
 
         assertThat(keys).isEmpty();
     }
@@ -87,7 +87,7 @@ public class SecurityPolicyServiceIT {
     @Test
     public void shouldNotGetProcessDefsWithoutPolicyLevels() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys(null,Arrays.asList("finance"), new HashSet<>());
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys(null,Arrays.asList("finance"), new HashSet<>());
 
         assertThat(keys).isEmpty();
     }
@@ -95,14 +95,14 @@ public class SecurityPolicyServiceIT {
     @Test
     public void shouldNotGetProcessDefsWhenEntryMissingPolicyLevels() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys("fredslinehasanerror", null, SecurityPolicy.READ);
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys("fredslinehasanerror", null, SecurityPolicy.READ);
         assertThat(keys).isEmpty();
     }
 
     @Test
     public void shouldNotGetProcessDefsWhenEntryMissingProcDefKeys() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys("jimhasnothing", null, SecurityPolicy.READ);
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys("jimhasnothing", null, SecurityPolicy.READ);
         assertThat(keys).isEmpty();
     }
 
@@ -110,7 +110,7 @@ public class SecurityPolicyServiceIT {
     @Test
     public void shouldGetProcessDefsByUserAndPoliciesYml() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys("bOb",null, Arrays.asList(SecurityPolicy.WRITE,SecurityPolicy.READ));
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys("bOb",null, Arrays.asList(SecurityPolicy.WRITE,SecurityPolicy.READ));
 
         assertThat(keys).hasSize(1);
         assertThat(keys).contains("TestProcess");
@@ -120,7 +120,7 @@ public class SecurityPolicyServiceIT {
     @Test
     public void shouldGetProcessDefsByGroupAndPoliciesYml() throws Exception {
 
-        Collection<String> keys = securityPolicyService.getProcessDefinitionKeys(null,Arrays.asList("hr"), Arrays.asList(SecurityPolicy.READ));
+        Collection<String> keys = securityPoliciesService.getProcessDefinitionKeys(null,Arrays.asList("hr"), Arrays.asList(SecurityPolicy.READ));
 
         assertThat(keys).hasSize(2);
         assertThat(keys).contains("SimpleProcessYML1");

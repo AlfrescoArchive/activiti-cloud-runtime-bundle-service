@@ -18,7 +18,7 @@ package org.activiti.cloud.services.core.pageable;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
 import org.activiti.cloud.services.SecurityPolicy;
-import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
+import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.cloud.services.core.pageable.sort.ProcessInstanceSortApplier;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
@@ -39,14 +39,14 @@ public class PageableProcessInstanceService {
 
     private ProcessInstanceConverter processInstanceConverter;
 
-    private final SecurityPolicyApplicationService securityService;
+    private final SecurityPoliciesApplicationService securityService;
 
     @Autowired
     public PageableProcessInstanceService(PageRetriever pageRetriever,
                                           RuntimeService runtimeService,
                                           ProcessInstanceSortApplier sortApplier,
                                           ProcessInstanceConverter processInstanceConverter,
-                                          SecurityPolicyApplicationService securityPolicyApplicationService) {
+                                          SecurityPoliciesApplicationService securityPolicyApplicationService) {
         this.pageRetriever = pageRetriever;
         this.runtimeService = runtimeService;
         this.sortApplier = sortApplier;
@@ -57,7 +57,7 @@ public class PageableProcessInstanceService {
     public Page<ProcessInstance> getProcessInstances(Pageable pageable) {
 
         ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
-        query = securityService.processInstQuery(query, SecurityPolicy.READ);
+        query = securityService.restrictProcessInstQuery(query, SecurityPolicy.READ);
 
         sortApplier.applySort(query,
                               pageable);

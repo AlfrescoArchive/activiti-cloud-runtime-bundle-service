@@ -2,7 +2,7 @@ package org.activiti.cloud.services.core.pageable;
 
 import org.activiti.cloud.services.SecurityPolicy;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
-import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
+import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.cloud.services.core.pageable.sort.ProcessInstanceSortApplier;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
@@ -36,7 +36,7 @@ public class PageableProcessInstanceServiceTest {
     private ProcessInstanceConverter processInstanceConverter;
 
     @Mock
-    private SecurityPolicyApplicationService securityService;
+    private SecurityPoliciesApplicationService securityService;
 
     @Before
     public void setUp() throws Exception {
@@ -48,10 +48,10 @@ public class PageableProcessInstanceServiceTest {
         Pageable pageable = mock(Pageable.class);
         ProcessInstanceQuery query = mock(ProcessInstanceQuery.class);
         when(runtimeService.createProcessInstanceQuery()).thenReturn(query);
-        when(securityService.processInstQuery(query, SecurityPolicy.READ)).thenReturn(query);
+        when(securityService.restrictProcessInstQuery(query, SecurityPolicy.READ)).thenReturn(query);
 
         pageableProcessInstanceService.getProcessInstances(pageable);
 
-        verify(securityService).processInstQuery(query,SecurityPolicy.READ);
+        verify(securityService).restrictProcessInstQuery(query,SecurityPolicy.READ);
     }
 }

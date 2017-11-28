@@ -22,19 +22,16 @@ import java.util.Collections;
 import java.util.List;
 
 import org.activiti.bpmn.model.BpmnModel;
-import org.activiti.cloud.services.SecurityPolicy;
-import org.activiti.cloud.services.SecurityPolicyService;
-import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
-import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
+import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.cloud.services.rest.api.ProcessInstanceController;
 import org.activiti.cloud.services.rest.api.resources.ProcessInstanceResource;
 import org.activiti.engine.ActivitiException;
+import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.impl.util.IoUtil;
-import org.activiti.engine.repository.ProcessDefinitionQuery;
 import org.activiti.image.ProcessDiagramGenerator;
 
 import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
@@ -66,11 +63,18 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     private final ProcessInstanceResourceAssembler resourceAssembler;
 
-    private final SecurityPolicyApplicationService securityService;
+    private final SecurityPoliciesApplicationService securityService;
 
     @ExceptionHandler(ActivitiForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public String handleAppException(ActivitiForbiddenException ex) {
+        return ex.getMessage();
+    }
+
+
+    @ExceptionHandler(ActivitiObjectNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public String handleAppException(ActivitiObjectNotFoundException ex) {
         return ex.getMessage();
     }
 
@@ -79,7 +83,7 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
                                          RepositoryService repositoryService,
                                          ProcessDiagramGenerator processDiagramGenerator,
                                          ProcessInstanceResourceAssembler resourceAssembler,
-                                         SecurityPolicyApplicationService securityService) {
+                                         SecurityPoliciesApplicationService securityService) {
         this.processEngine = processEngine;
         this.repositoryService = repositoryService;
         this.processDiagramGenerator = processDiagramGenerator;
@@ -103,8 +107,8 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     @Override
     public Resource<ProcessInstance> getProcessInstanceById(@PathVariable String processInstanceId) {
         ProcessInstance processInstance = processEngine.getProcessInstanceById(processInstanceId);
-        if(processInstance == null || !securityService.canRead(processEngine.getProcessDefinitionKeyById(processInstance.getProcessDefinitionId()))){
-            throw new ActivitiException("Unable to find process definition for the given id:'" + processInstanceId + "'");
+        if(processInstance == null || !securityService.canRead(processInstance.getProcessDefinitionKey())){
+            throw new ActivitiObjectNotFoundException("Unable to find process definition for the given id:'" + processInstanceId + "'");
         }
         return resourceAssembler.toResource(processInstance);
     }
@@ -112,8 +116,8 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     @Override
     public String getProcessDiagram(@PathVariable String processInstanceId) {
         ProcessInstance processInstance = processEngine.getProcessInstanceById(processInstanceId);
-        if (processInstance == null || !securityService.canRead(processEngine.getProcessDefinitionKeyById(processInstance.getProcessDefinitionId()))) {
-            throw new ActivitiException("Unable to find process instance for the given id:'" + processInstanceId + "'");
+        if (processInstance == null || !securityService.canRead(processInstance.getProcessDefinitionKey())) {
+            throw new ActivitiObjectNotFoundException("Unable to find process instance for the given id:'" + processInstanceId + "'");
         }
         List<String> activityIds = processEngine.getActiveActivityIds(processInstanceId);
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processInstance.getProcessDefinitionId());

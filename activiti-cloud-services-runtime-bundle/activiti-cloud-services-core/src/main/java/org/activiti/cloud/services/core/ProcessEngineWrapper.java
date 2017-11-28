@@ -3,7 +3,6 @@ package org.activiti.cloud.services.core;
 import java.util.List;
 import java.util.Map;
 
-import org.activiti.cloud.services.SecurityPolicy;
 import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.ClaimTaskCmd;
 import org.activiti.cloud.services.api.commands.CompleteTaskCmd;
@@ -12,7 +11,6 @@ import org.activiti.cloud.services.api.commands.SetTaskVariablesCmd;
 import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
-import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
@@ -21,12 +19,15 @@ import org.activiti.cloud.services.core.pageable.PageableProcessInstanceService;
 import org.activiti.cloud.services.core.pageable.PageableTaskService;
 import org.activiti.cloud.services.events.MessageProducerActivitiEventListener;
 import org.activiti.engine.ActivitiException;
+import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
-import org.activiti.engine.repository.ProcessDefinitionQuery;
+import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.ProcessInstanceBuilder;
 import org.activiti.engine.runtime.ProcessInstanceQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,8 +42,11 @@ public class ProcessEngineWrapper {
     private final TaskService taskService;
     private final TaskConverter taskConverter;
     private final PageableTaskService pageableTaskService;
-    private final SecurityPolicyApplicationService securityService;
+    private final SecurityPoliciesApplicationService securityService;
     private final RepositoryService repositoryService;
+    private final AuthenticationWrapper authenticationWrapper;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessEngineWrapper.class);
 
     @Autowired
     public ProcessEngineWrapper(ProcessInstanceConverter processInstanceConverter,
@@ -52,8 +56,9 @@ public class ProcessEngineWrapper {
                                 TaskConverter taskConverter,
                                 PageableTaskService pageableTaskService,
                                 MessageProducerActivitiEventListener listener,
-                                SecurityPolicyApplicationService securityService,
-                                RepositoryService repositoryService) {
+                                SecurityPoliciesApplicationService securityService,
+                                RepositoryService repositoryService,
+                                AuthenticationWrapper authenticationWrapper) {
         this.processInstanceConverter = processInstanceConverter;
         this.runtimeService = runtimeService;
         this.pageableProcessInstanceService = pageableProcessInstanceService;
@@ -63,6 +68,7 @@ public class ProcessEngineWrapper {
         this.runtimeService.addEventListener(listener);
         this.securityService = securityService;
         this.repositoryService = repositoryService;
+        this.authenticationWrapper = authenticationWrapper;
     }
 
     public Page<ProcessInstance> getProcessInstances(Pageable pageable) {
@@ -71,8 +77,15 @@ public class ProcessEngineWrapper {
 
     public ProcessInstance startProcess(StartProcessInstanceCmd cmd) {
 
-        if (!securityService.canWrite(getProcessDefinitionKeyById(cmd.getProcessDefinitionId()))){
-            throw new ActivitiForbiddenException("Operation not permitted");
+        ProcessDefinition definition = repositoryService.getProcessDefinition(cmd.getProcessDefinitionId());
+
+        if(definition == null){
+            throw new ActivitiObjectNotFoundException("Unable to find process definition for the given id:'" + cmd.getProcessDefinitionId() + "'");
+        }
+
+        if (!securityService.canWrite(definition.getKey())){
+            LOGGER.debug("User "+authenticationWrapper.getAuthenticatedUserId()+" not permitted to access definition "+definition.getKey());
+            throw new ActivitiForbiddenException("Operation not permitted for "+definition.getKey());
         }
 
         ProcessInstanceBuilder builder = runtimeService.createProcessInstanceBuilder();
@@ -82,49 +95,38 @@ public class ProcessEngineWrapper {
     }
 
     public void signal(SignalProcessInstancesCmd signalProcessInstancesCmd) {
-        //TODO: ideally we'd restrict signalling to just the process defs that the user has access to
-        // but that would require overloading RuntimeService.signalEventReceived within the engine (see SignalEventReceivedCmd)
-        // so that we could pass a query restriction parameter down to the engine
-        // for now we instead just check that user has write access to at least one of the process definitions in the RB
+        //TODO: plan is to restrict access to events using a new security policy on events
+        // - that's another piece of work though so for now no security here
 
-        ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery();
-        query = securityService.processDefQuery(query, SecurityPolicy.WRITE);
-
-        if(query!=null && query.count()>0) {
-            runtimeService.signalEventReceived(signalProcessInstancesCmd.getName(),
+        runtimeService.signalEventReceived(signalProcessInstancesCmd.getName(),
                     signalProcessInstancesCmd.getInputVariables());
-        }
 
     }
 
     public void suspend(SuspendProcessInstanceCmd suspendProcessInstanceCmd) {
         ProcessInstance processInstance = getProcessInstanceById(suspendProcessInstanceCmd.getProcessInstanceId());
 
-        verifyCanModifyProcessInstance(processInstance, "Unable to find process instance for the given id:'" + suspendProcessInstanceCmd.getProcessInstanceId() + "'", getProcessDefinitionKeyById(processInstance.getProcessDefinitionId()));
+        verifyCanWriteToProcessInstance(processInstance, "Unable to find process instance for the given id:'" + suspendProcessInstanceCmd.getProcessInstanceId() + "'");
         runtimeService.suspendProcessInstanceById(suspendProcessInstanceCmd.getProcessInstanceId());
     }
 
-    public String getProcessDefinitionKeyById(String id){
-        org.activiti.engine.repository.ProcessDefinition definition = repositoryService.getProcessDefinition(id);
-        if(definition == null){
-            return null;
-        }
-        return definition.getKey();
-    }
+    private void verifyCanWriteToProcessInstance(ProcessInstance processInstance, String message) {
 
-    private void verifyCanModifyProcessInstance(ProcessInstance processInstance, String message, String processDefinitionId) {
-        if (processInstance == null) {
+        org.activiti.engine.repository.ProcessDefinition definition = repositoryService.getProcessDefinition(processInstance.getProcessDefinitionId());
+
+        if (processInstance == null || definition == null) {
             throw new ActivitiException(message);
         }
-        if (!securityService.canWrite(processDefinitionId)) {
-            throw new ActivitiForbiddenException("Operation not permitted");
+        if (!securityService.canWrite(definition.getKey())) {
+            LOGGER.debug("User "+authenticationWrapper.getAuthenticatedUserId()+" not permitted to access definition "+definition.getKey());
+            throw new ActivitiForbiddenException("Operation not permitted for "+definition.getKey());
         }
     }
 
     public void activate(ActivateProcessInstanceCmd activateProcessInstanceCmd) {
         ProcessInstance processInstance = getProcessInstanceById(activateProcessInstanceCmd.getProcessInstanceId());
 
-        verifyCanModifyProcessInstance(processInstance, "Unable to find process instance for the given id:'" + activateProcessInstanceCmd.getProcessInstanceId() + "'", getProcessDefinitionKeyById(processInstance.getProcessDefinitionId()));
+        verifyCanWriteToProcessInstance(processInstance, "Unable to find process instance for the given id:'" + activateProcessInstanceCmd.getProcessInstanceId() + "'");
         runtimeService.activateProcessInstanceById(activateProcessInstanceCmd.getProcessInstanceId());
     }
 

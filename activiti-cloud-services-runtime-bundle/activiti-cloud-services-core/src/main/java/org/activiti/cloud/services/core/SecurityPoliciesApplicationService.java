@@ -1,7 +1,7 @@
 package org.activiti.cloud.services.core;
 
 import org.activiti.cloud.services.SecurityPolicy;
-import org.activiti.cloud.services.SecurityPolicyService;
+import org.activiti.cloud.services.SecurityPoliciesService;
 import org.activiti.engine.UserGroupLookupProxy;
 import org.activiti.engine.UserRoleLookupProxy;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @Component
-public class SecurityPolicyApplicationService {
+public class SecurityPoliciesApplicationService {
 
     @Autowired(required = false)
     private UserGroupLookupProxy userGroupLookupProxy;
@@ -21,10 +21,11 @@ public class SecurityPolicyApplicationService {
     @Autowired(required = false)
     private UserRoleLookupProxy userRoleLookupProxy;
 
-    private AuthenticationWrapper authenticationWrapper = new AuthenticationWrapper();
+    @Autowired
+    private AuthenticationWrapper authenticationWrapper;
 
     @Autowired
-    private SecurityPolicyService securityPolicyService;
+    private SecurityPoliciesService securityPoliciesService;
 
 
     public ProcessDefinitionQuery processDefQuery(ProcessDefinitionQuery query, SecurityPolicy securityPolicy){
@@ -42,7 +43,7 @@ public class SecurityPolicyApplicationService {
     }
 
     private boolean noSecurityPoliciesOrNoUser() {
-        return !securityPolicyService.policiesDefined() || authenticationWrapper.getAuthenticatedUserId()== null;
+        return !securityPoliciesService.policiesDefined() || authenticationWrapper.getAuthenticatedUserId()== null;
     }
 
     private Set<String> definitionKeysAllowedForPolicy(SecurityPolicy securityPolicy) {
@@ -52,11 +53,11 @@ public class SecurityPolicyApplicationService {
             groups = userGroupLookupProxy.getGroupsForCandidateUser(authenticationWrapper.getAuthenticatedUserId());
         }
 
-        return securityPolicyService.getProcessDefinitionKeys(authenticationWrapper.getAuthenticatedUserId(),
+        return securityPoliciesService.getProcessDefinitionKeys(authenticationWrapper.getAuthenticatedUserId(),
                 groups, securityPolicy);
     }
 
-    public ProcessInstanceQuery processInstQuery(ProcessInstanceQuery query, SecurityPolicy securityPolicy){
+    public ProcessInstanceQuery restrictProcessInstQuery(ProcessInstanceQuery query, SecurityPolicy securityPolicy){
         if (noSecurityPoliciesOrNoUser()){
             return query;
         }
@@ -79,7 +80,7 @@ public class SecurityPolicyApplicationService {
 
     private boolean hasPermission(String processDefId, SecurityPolicy securityPolicy){
 
-        if (!securityPolicyService.policiesDefined() || userGroupLookupProxy == null || authenticationWrapper.getAuthenticatedUserId() == null){
+        if (!securityPoliciesService.policiesDefined() || userGroupLookupProxy == null || authenticationWrapper.getAuthenticatedUserId() == null){
             return true;
         }
 

@@ -2,7 +2,7 @@ package org.activiti.cloud.services.core.pageable;
 
 import org.activiti.cloud.services.SecurityPolicy;
 import org.activiti.cloud.services.api.model.converter.ProcessDefinitionConverter;
-import org.activiti.cloud.services.core.SecurityPolicyApplicationService;
+import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.cloud.services.core.pageable.sort.ProcessDefinitionSortApplier;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
@@ -31,7 +31,7 @@ public class PageableRepositoryServiceTest {
     @Mock
     private ProcessDefinitionSortApplier sortApplier;
     @Mock
-    private SecurityPolicyApplicationService securityService;
+    private SecurityPoliciesApplicationService securityService;
 
     @Before
     public void setUp() throws Exception {
