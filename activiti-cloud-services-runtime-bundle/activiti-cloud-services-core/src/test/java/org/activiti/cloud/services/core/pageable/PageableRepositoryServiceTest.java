@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import static org.mockito.Mockito.mock;
@@ -44,9 +45,11 @@ public class PageableRepositoryServiceTest {
         ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(query);
         when(securityService.restrictProcessDefQuery(query, SecurityPolicy.READ)).thenReturn(query);
+        when(pageRetriever.loadPage(query, pageable, processDefinitionConverter)).thenReturn(Page.empty());
 
         pageableRepositoryService.getProcessDefinitions(pageable);
 
         verify(securityService).restrictProcessDefQuery(query,SecurityPolicy.READ);
+        verify(sortApplier).applySort(query, pageable);
     }
 }
