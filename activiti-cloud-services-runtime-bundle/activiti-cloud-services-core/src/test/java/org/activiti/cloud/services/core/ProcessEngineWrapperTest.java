@@ -14,7 +14,7 @@ import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
 import org.activiti.cloud.services.api.model.converter.TaskConverter;
 import org.activiti.cloud.services.core.pageable.PageableProcessInstanceService;
 import org.activiti.cloud.services.core.pageable.PageableTaskService;
-import org.activiti.cloud.services.events.MessageProducerActivitiEventListener;
+import org.activiti.cloud.services.events.listeners.MessageProducerActivitiEventListener;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
