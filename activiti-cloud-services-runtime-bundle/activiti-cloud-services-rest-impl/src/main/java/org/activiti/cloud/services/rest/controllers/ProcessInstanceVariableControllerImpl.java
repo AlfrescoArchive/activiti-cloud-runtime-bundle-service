@@ -18,7 +18,7 @@ package org.activiti.cloud.services.rest.controllers;
 import java.util.Map;
 
 import org.activiti.cloud.services.api.model.ProcessInstanceVariables;
-import org.activiti.cloud.services.rest.api.resources.assembler.ProcessVariableResourceAssembler;
+import org.activiti.cloud.services.rest.assemblers.ProcessVariableResourceAssembler;
 import org.activiti.engine.RuntimeService;
 
 import org.activiti.cloud.services.rest.api.ProcessInstanceVariableController;
