@@ -18,7 +18,8 @@
     Override property from activiti-cloud-parent that's set to the default snapshot version.
     This allow to easily create feature branches with a different Maven version.
     -->
-    <version.activiti.cloud.runtime-bundle>${project.version}</version.activiti.cloud.runtime-bundle>
+    <version.activiti>7-201712-EA-SNAPSHOT</version.activiti>
+    <version.activiti.cloud>7-201712-EA-SNAPSHOT</version.activiti.cloud>
   </properties>
 
   <modules>
