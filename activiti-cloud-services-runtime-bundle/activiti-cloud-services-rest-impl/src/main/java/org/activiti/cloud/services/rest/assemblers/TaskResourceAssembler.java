@@ -42,7 +42,7 @@ public class TaskResourceAssembler extends ResourceAssemblerSupport<Task, TaskRe
     public TaskResource toResource(Task task) {
         List<Link> links = new ArrayList<>();
         links.add(linkTo(methodOn(TaskControllerImpl.class).getTaskById(task.getId())).withSelfRel());
-        if (!task.getStatus().equals(Task.TaskStatus.ASSIGNED.name())) {
+        if (!Task.TaskStatus.ASSIGNED.name().equals(task.getStatus())) {
             links.add(linkTo(methodOn(TaskControllerImpl.class).claimTask(task.getId())).withRel("claim"));
         } else {
             links.add(linkTo(methodOn(TaskControllerImpl.class).releaseTask(task.getId())).withRel("release"));
