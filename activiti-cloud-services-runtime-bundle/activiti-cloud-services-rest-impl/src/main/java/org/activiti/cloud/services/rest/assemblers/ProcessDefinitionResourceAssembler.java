@@ -21,9 +21,9 @@ import org.activiti.cloud.services.rest.controllers.HomeControllerImpl;
 import org.activiti.cloud.services.rest.controllers.ProcessDefinitionControllerImpl;
 import org.activiti.cloud.services.rest.controllers.ProcessInstanceControllerImpl;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import org.springframework.stereotype.Component;
+
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
@@ -38,7 +38,7 @@ public class ProcessDefinitionResourceAssembler extends ResourceAssemblerSupport
     @Override
     public ProcessDefinitionResource toResource(ProcessDefinition processDefinition) {
         Link selfRel = linkTo(methodOn(ProcessDefinitionControllerImpl.class).getProcessDefinition(processDefinition.getId())).withSelfRel();
-        Link startProcessLink = ControllerLinkBuilder.linkTo(methodOn(ProcessInstanceControllerImpl.class).startProcess(null)).withRel("startProcess");
+        Link startProcessLink = linkTo(methodOn(ProcessInstanceControllerImpl.class).startProcess(null)).withRel("startProcess");
         Link homeLink = linkTo(HomeControllerImpl.class).withRel("home");
         return new ProcessDefinitionResource(processDefinition,
                                              selfRel,

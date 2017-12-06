@@ -7,7 +7,6 @@ import org.activiti.cloud.services.rest.controllers.ProcessDefinitionControllerI
 import org.activiti.cloud.services.rest.controllers.ProcessDefinitionMetaControllerImpl;
 import org.activiti.cloud.services.rest.controllers.ProcessInstanceControllerImpl;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import org.springframework.stereotype.Component;
 
@@ -27,7 +26,7 @@ public class ProcessDefinitionMetaResourceAssembler extends ResourceAssemblerSup
 
         Link metadata = linkTo(methodOn(ProcessDefinitionMetaControllerImpl.class).getProcessDefinitionMetadata(processDefinitionMeta.getId())).withRel("meta");
         Link selfRel = linkTo(methodOn(ProcessDefinitionControllerImpl.class).getProcessDefinition(processDefinitionMeta.getId())).withSelfRel();
-        Link startProcessLink = ControllerLinkBuilder.linkTo(methodOn(ProcessInstanceControllerImpl.class).startProcess(null)).withRel("startProcess");
+        Link startProcessLink = linkTo(methodOn(ProcessInstanceControllerImpl.class).startProcess(null)).withRel("startProcess");
         Link homeLink = linkTo(HomeControllerImpl.class).withRel("home");
 
         return new ProcessDefinitionMetaResource(processDefinitionMeta,

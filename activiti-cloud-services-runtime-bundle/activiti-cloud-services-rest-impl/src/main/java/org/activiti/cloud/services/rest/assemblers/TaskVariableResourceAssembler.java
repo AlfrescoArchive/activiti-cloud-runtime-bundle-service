@@ -22,7 +22,6 @@ import org.activiti.cloud.services.rest.controllers.HomeControllerImpl;
 import org.activiti.cloud.services.rest.controllers.TaskControllerImpl;
 import org.activiti.cloud.services.rest.controllers.TaskVariableControllerImpl;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +44,7 @@ public class TaskVariableResourceAssembler extends ResourceAssemblerSupport<Task
         } else {
             selfRel = linkTo(methodOn(TaskVariableControllerImpl.class).getVariablesLocal(taskVariables.getTaskId())).withSelfRel();
         }
-        Link taskRel = ControllerLinkBuilder.linkTo(methodOn(TaskControllerImpl.class).getTaskById(taskVariables.getTaskId())).withRel("task");
+        Link taskRel = linkTo(methodOn(TaskControllerImpl.class).getTaskById(taskVariables.getTaskId())).withRel("task");
         Link homeLink = linkTo(HomeControllerImpl.class).withRel("home");
         return new VariablesResource(taskVariables.getVariables(),
                                      selfRel,

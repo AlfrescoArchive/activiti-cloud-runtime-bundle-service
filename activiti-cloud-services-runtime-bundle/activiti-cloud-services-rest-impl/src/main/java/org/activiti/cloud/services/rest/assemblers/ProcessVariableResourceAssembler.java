@@ -21,7 +21,6 @@ import org.activiti.cloud.services.rest.controllers.HomeControllerImpl;
 import org.activiti.cloud.services.rest.controllers.ProcessInstanceControllerImpl;
 import org.activiti.cloud.services.rest.controllers.ProcessInstanceVariableControllerImpl;
 import org.springframework.hateoas.Link;
-import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 import org.springframework.stereotype.Component;
 
@@ -39,7 +38,7 @@ public class ProcessVariableResourceAssembler extends ResourceAssemblerSupport<P
     @Override
     public VariablesResource toResource(ProcessInstanceVariables processInstanceVariables) {
         Link selfRel = linkTo(methodOn(ProcessInstanceVariableControllerImpl.class).getVariables(processInstanceVariables.getProcessInstanceId())).withSelfRel();
-        Link processInstanceRel = ControllerLinkBuilder.linkTo(methodOn(ProcessInstanceControllerImpl.class).getProcessInstanceById(processInstanceVariables.getProcessInstanceId())).withRel("processInstance");
+        Link processInstanceRel = linkTo(methodOn(ProcessInstanceControllerImpl.class).getProcessInstanceById(processInstanceVariables.getProcessInstanceId())).withRel("processInstance");
         Link homeLink = linkTo(HomeControllerImpl.class).withRel("home");
         return new VariablesResource(processInstanceVariables.getVariables(),
                                      selfRel,
