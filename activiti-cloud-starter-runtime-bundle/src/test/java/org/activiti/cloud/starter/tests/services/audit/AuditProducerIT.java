@@ -44,7 +44,7 @@ public class AuditProducerIT {
     @Autowired
     private AuditConsumerStreamHandler streamHandler;
 
-    @Value("${keycloak-test-user}")
+    @Value("${activiti.keycloak.test-user}")
     protected String keycloakTestUser;
 
     private Map<String, String> processDefinitionIds = new HashMap<>();
