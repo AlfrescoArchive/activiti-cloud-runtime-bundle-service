@@ -77,7 +77,7 @@ public class ProcessEngineWrapper {
     public ProcessInstance startProcess(StartProcessInstanceCmd cmd) {
 
         String processDefinitionKey = null;
-        if (cmd.getProcessDefinitionId() == null) {
+        if (cmd.getProcessDefinitionKey() != null) {
             long count = repositoryService.createProcessDefinitionQuery().processDefinitionKey(cmd.getProcessDefinitionKey()).count();
             if(count == 0){
                 throw new ActivitiObjectNotFoundException("Unable to find process definition for the given key:'" + cmd.getProcessDefinitionKey() + "'");
