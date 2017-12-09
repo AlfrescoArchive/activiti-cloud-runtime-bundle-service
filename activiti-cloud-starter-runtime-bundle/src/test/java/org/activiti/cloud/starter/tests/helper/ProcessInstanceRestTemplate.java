@@ -43,10 +43,17 @@ public class ProcessInstanceRestTemplate {
     private TestRestTemplate testRestTemplate;
 
 
-    public ResponseEntity<ProcessInstance> startProcess(String processDefinitionId,
-                                                        Map<String, Object> variables) {
-        StartProcessInstanceCmd cmd = new StartProcessInstanceCmd(processDefinitionId,
-                variables);
+    private ResponseEntity<ProcessInstance> startProcess(String processDefinitionKey,
+                                                        String processDefinitionId,
+                                                        Map<String, Object> variables,
+                                                        String businessKey,
+                                                        String processInstanceName) {
+
+        StartProcessInstanceCmd cmd = new StartProcessInstanceCmd(processDefinitionKey,
+                                                                  processDefinitionId,
+                                                                  variables,
+                                                                  businessKey,
+                                                                  processInstanceName);
 
         HttpEntity<StartProcessInstanceCmd> requestEntity = new HttpEntity<>(cmd);
 
@@ -60,10 +67,44 @@ public class ProcessInstanceRestTemplate {
         return responseEntity;
     }
 
-    public ResponseEntity<ProcessInstance> startProcess(String processDefinitionKey) {
+    public ResponseEntity<ProcessInstance> startProcess(String processDefinitionId) {
 
-        return startProcess(processDefinitionKey,
+        return startProcess(processDefinitionId,
+                null,
+                null,
                 null);
+    }
+
+    public ResponseEntity<ProcessInstance> startProcess(String processDefinitionId,
+                                                        Map<String, Object> variables) {
+
+        return startProcess(processDefinitionId,
+                            variables,
+                            null,
+                            null);
+    }
+
+    public ResponseEntity<ProcessInstance> startProcess(String processDefinitionId,
+                                                        Map<String, Object> variables,
+                                                        String businessKey,
+                                                        String processInstanceName) {
+        
+        return startProcess(null,
+                            processDefinitionId,
+                            variables,
+                            businessKey,
+                            processInstanceName);
+    }
+
+    public ResponseEntity<ProcessInstance> startProcessByKey(String processDefinitionKey,
+                                                        Map<String, Object> variables,
+                                                        String businessKey,
+                                                        String processInstanceName) {
+        return startProcess(processDefinitionKey,
+                            null,
+                            variables,
+                            businessKey,
+                            processInstanceName);
     }
 
     public ResponseEntity<PagedResources<Task>> getTasks(ResponseEntity<ProcessInstance> processInstanceEntity) {

@@ -24,14 +24,30 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class StartProcessInstanceCmd implements Command {
 
     private final String id;
+    private String processDefinitionKey;
     private String processDefinitionId;
     private Map<String, Object> variables;
+    private String businessKey;
+    private String processInstanceName;
 
     public StartProcessInstanceCmd() {
         this.id = UUID.randomUUID().toString();
     }
 
     @JsonCreator
+    public StartProcessInstanceCmd(@JsonProperty("processDefinitionKey") String processDefinitionKey,
+                                   @JsonProperty("processDefinitionId") String processDefinitionId,
+                                   @JsonProperty("variables") Map<String, Object> variables,
+                                   @JsonProperty("businessKey") String businessKey,
+                                   @JsonProperty("processInstanceName") String processInstanceName) {
+        this();
+        this.processDefinitionKey = processDefinitionKey;
+        this.processDefinitionId = processDefinitionId;
+        this.variables = variables;
+        this.businessKey = businessKey;
+        this.processInstanceName = processInstanceName;
+    }
+
     public StartProcessInstanceCmd(@JsonProperty("processDefinitionId") String processDefinitionId,
                                    @JsonProperty("variables") Map<String, Object> variables) {
         this();
@@ -49,11 +65,23 @@ public class StartProcessInstanceCmd implements Command {
         return id;
     }
 
+    public String getProcessDefinitionKey() {
+        return processDefinitionKey;
+    }
+
     public String getProcessDefinitionId() {
         return processDefinitionId;
     }
 
     public Map<String, Object> getVariables() {
         return variables;
+    }
+
+    public String getBusinessKey() {
+        return businessKey;
+    }
+
+    public String getProcessInstanceName() {
+        return processInstanceName;
     }
 }

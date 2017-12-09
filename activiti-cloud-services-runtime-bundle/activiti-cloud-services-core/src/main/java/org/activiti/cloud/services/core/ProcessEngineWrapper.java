@@ -76,20 +76,35 @@ public class ProcessEngineWrapper {
 
     public ProcessInstance startProcess(StartProcessInstanceCmd cmd) {
 
-        ProcessDefinition definition = repositoryService.getProcessDefinition(cmd.getProcessDefinitionId());
-
-        if(definition == null){
-            throw new ActivitiObjectNotFoundException("Unable to find process definition for the given id:'" + cmd.getProcessDefinitionId() + "'");
+        String processDefinitionKey = null;
+        if (cmd.getProcessDefinitionId() == null) {
+            long count = repositoryService.createProcessDefinitionQuery().processDefinitionKey(cmd.getProcessDefinitionKey()).count();
+            if(count == 0){
+                throw new ActivitiObjectNotFoundException("Unable to find process definition for the given key:'" + cmd.getProcessDefinitionKey() + "'");
+            }
+            processDefinitionKey = cmd.getProcessDefinitionKey();
+        } else {
+            ProcessDefinition definition = repositoryService.getProcessDefinition(cmd.getProcessDefinitionId());
+            if(definition == null){
+                throw new ActivitiObjectNotFoundException("Unable to find process definition for the given id:'" + cmd.getProcessDefinitionId() + "'");
+            }
+            processDefinitionKey = definition.getKey();
         }
 
-        if (!securityService.canWrite(definition.getKey())){
-            LOGGER.debug("User "+authenticationWrapper.getAuthenticatedUserId()+" not permitted to access definition "+definition.getKey());
-            throw new ActivitiForbiddenException("Operation not permitted for "+definition.getKey());
+        if (!securityService.canWrite(processDefinitionKey)){
+            LOGGER.debug("User "+authenticationWrapper.getAuthenticatedUserId()+" not permitted to access definition "+processDefinitionKey);
+            throw new ActivitiForbiddenException("Operation not permitted for "+processDefinitionKey);
         }
 
         ProcessInstanceBuilder builder = runtimeService.createProcessInstanceBuilder();
-        builder.processDefinitionId(cmd.getProcessDefinitionId());
+        if (cmd.getProcessDefinitionId() == null) {
+            builder.processDefinitionKey(cmd.getProcessDefinitionKey());
+        } else {
+            builder.processDefinitionId(cmd.getProcessDefinitionId());
+        }
         builder.variables(cmd.getVariables());
+        builder.businessKey(cmd.getBusinessKey());
+        builder.name(cmd.getProcessInstanceName());
         return processInstanceConverter.from(builder.start());
     }
 
