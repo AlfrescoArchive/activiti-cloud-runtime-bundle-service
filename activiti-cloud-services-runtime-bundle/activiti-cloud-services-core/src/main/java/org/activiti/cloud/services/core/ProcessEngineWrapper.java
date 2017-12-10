@@ -97,7 +97,7 @@ public class ProcessEngineWrapper {
         }
 
         ProcessInstanceBuilder builder = runtimeService.createProcessInstanceBuilder();
-        if (cmd.getProcessDefinitionId() == null) {
+        if (cmd.getProcessDefinitionKey() != null) {
             builder.processDefinitionKey(cmd.getProcessDefinitionKey());
         } else {
             builder.processDefinitionId(cmd.getProcessDefinitionId());
