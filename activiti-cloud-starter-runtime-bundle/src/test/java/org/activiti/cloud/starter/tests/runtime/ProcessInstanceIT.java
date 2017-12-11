@@ -106,8 +106,7 @@ public class ProcessInstanceIT {
         //when
         ResponseEntity<ProcessInstance> entity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS),
                                                                                           null,
-                                                                                          "business_key",
-                                                                                          "Test process instance name");
+                                                                                          "business_key");
 
         //then
         assertThat(entity).isNotNull();
@@ -118,7 +117,6 @@ public class ProcessInstanceIT {
         assertThat(returnedProcInst.getInitiator()).isNotNull();
         assertThat(returnedProcInst.getInitiator()).isEqualTo(keycloaktestuser);//will only match if using username not id
         assertThat(returnedProcInst.getBusinessKey()).isEqualTo("business_key");
-        assertThat(returnedProcInst.getName()).isEqualTo("Test process instance name");
     }
 
     @Test
@@ -126,8 +124,7 @@ public class ProcessInstanceIT {
         //when
         ResponseEntity<ProcessInstance> entity = processInstanceRestTemplate.startProcessByKey(SIMPLE_PROCESS,
                                                                                           null,
-                                                                                          "business_key",
-                                                                                          "Test process instance name");
+                                                                                          "business_key");
 
         //then
         assertThat(entity).isNotNull();
@@ -138,7 +135,6 @@ public class ProcessInstanceIT {
         assertThat(returnedProcInst.getInitiator()).isNotNull();
         assertThat(returnedProcInst.getInitiator()).isEqualTo(keycloaktestuser);//will only match if using username not id
         assertThat(returnedProcInst.getBusinessKey()).isEqualTo("business_key");
-        assertThat(returnedProcInst.getName()).isEqualTo("Test process instance name");
     }
 
     @Test
