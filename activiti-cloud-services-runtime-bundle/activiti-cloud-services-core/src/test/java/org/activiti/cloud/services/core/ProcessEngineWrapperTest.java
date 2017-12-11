@@ -85,7 +85,7 @@ public class ProcessEngineWrapperTest {
         ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(query);
         when(query.processDefinitionKey(any())).thenReturn(query);
-        StartProcessInstanceCmd cmd = new StartProcessInstanceCmd("processDefKey", null, null, null, null);
+        StartProcessInstanceCmd cmd = new StartProcessInstanceCmd("processDefKey", null, null, null);
         assertThatExceptionOfType(ActivitiObjectNotFoundException.class).isThrownBy(() -> processEngineWrapper.startProcess(cmd));
     }
 
@@ -103,7 +103,7 @@ public class ProcessEngineWrapperTest {
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(query);
         when(query.processDefinitionKey(any())).thenReturn(query);
         when(query.count()).thenReturn(1L);
-        StartProcessInstanceCmd cmd = new StartProcessInstanceCmd("processDefKey", null, null, null, null);
+        StartProcessInstanceCmd cmd = new StartProcessInstanceCmd("processDefKey", null, null, null);
         processEngineWrapper.startProcess(cmd);
         assertThat(builder.getProcessDefinitionKey()).isEqualTo("processDefKey");
     }

@@ -104,7 +104,6 @@ public class ProcessEngineWrapper {
         }
         builder.variables(cmd.getVariables());
         builder.businessKey(cmd.getBusinessKey());
-        builder.name(cmd.getProcessInstanceName());
         return processInstanceConverter.from(builder.start());
     }
 

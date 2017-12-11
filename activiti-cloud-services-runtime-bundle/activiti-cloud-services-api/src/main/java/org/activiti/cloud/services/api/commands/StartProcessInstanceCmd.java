@@ -28,7 +28,6 @@ public class StartProcessInstanceCmd implements Command {
     private String processDefinitionId;
     private Map<String, Object> variables;
     private String businessKey;
-    private String processInstanceName;
 
     public StartProcessInstanceCmd() {
         this.id = UUID.randomUUID().toString();
@@ -38,14 +37,12 @@ public class StartProcessInstanceCmd implements Command {
     public StartProcessInstanceCmd(@JsonProperty("processDefinitionKey") String processDefinitionKey,
                                    @JsonProperty("processDefinitionId") String processDefinitionId,
                                    @JsonProperty("variables") Map<String, Object> variables,
-                                   @JsonProperty("businessKey") String businessKey,
-                                   @JsonProperty("processInstanceName") String processInstanceName) {
+                                   @JsonProperty("businessKey") String businessKey) {
         this();
         this.processDefinitionKey = processDefinitionKey;
         this.processDefinitionId = processDefinitionId;
         this.variables = variables;
         this.businessKey = businessKey;
-        this.processInstanceName = processInstanceName;
     }
 
     public StartProcessInstanceCmd(@JsonProperty("processDefinitionId") String processDefinitionId,
@@ -79,9 +76,5 @@ public class StartProcessInstanceCmd implements Command {
 
     public String getBusinessKey() {
         return businessKey;
-    }
-
-    public String getProcessInstanceName() {
-        return processInstanceName;
     }
 }
