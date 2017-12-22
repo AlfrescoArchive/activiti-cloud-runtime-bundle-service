@@ -126,7 +126,6 @@ public class CommandEndpointIT {
         Collection<Task> tasks = responseEntity.getBody().getContent();
         assertThat(tasks).extracting(Task::getName).contains("Perform action");
         assertThat(tasks).extracting(Task::getStatus).contains(Task.TaskStatus.CREATED.name());
-        assertThat(tasks.size()).isEqualTo(1);
 
         Task task = tasks.iterator().next();
 
@@ -144,7 +143,9 @@ public class CommandEndpointIT {
 
         responseEntity = getTasks();
         tasks = responseEntity.getBody().getContent();
-        assertThat(tasks.size()).isEqualTo(0);
+        assertThat(tasks)
+                .filteredOn(t -> t.getId().equals(task.getId()))
+                .isEmpty();
 
         // Checking that the process is finished
         ResponseEntity<PagedResources<ProcessInstance>> processInstancesPage = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "?page={page}&size={size}",
@@ -155,7 +156,9 @@ public class CommandEndpointIT {
                                                                                                      "0",
                                                                                                      "2");
 
-        assertThat(processInstancesPage.getBody().getContent()).filteredOn(processInstance -> processInstance.getId().equals(processInstanceId)).isEmpty();
+        assertThat(processInstancesPage.getBody().getContent())
+                .filteredOn(processInstance -> processInstance.getId().equals(processInstanceId))
+                .isEmpty();
 
         assertThat(streamHandler.getStartedProcessInstanceAck()).isTrue();
         assertThat(streamHandler.getSuspendedProcessInstanceAck()).isTrue();
@@ -178,24 +181,18 @@ public class CommandEndpointIT {
     }
 
     private void releaseTask(Task task) throws InterruptedException {
-        ResponseEntity<PagedResources<Task>> responseEntity;
-        Collection<Task> tasks;
         ReleaseTaskCmd releaseTaskCmd = new ReleaseTaskCmd(task.getId());
         String cmdId = UUID.randomUUID().toString();
         clientStream.myCmdProducer().send(MessageBuilder.withPayload(releaseTaskCmd).setHeader("cmdId",
                                                                                 cmdId).build());
         WaitUtil.waitFor(streamHandler.getReleasedTaskAck(),
                          1000);
-        responseEntity = getTasks();
-        tasks = responseEntity.getBody().getContent();
-        assertThat(tasks).extracting(Task::getName).contains("Perform action");
-        assertThat(tasks).extracting(Task::getStatus).contains(Task.TaskStatus.CREATED.name());
-        assertThat(tasks.size()).isEqualTo(1);
+
+        assertThatTaskHasStatus(task.getId(),
+                                Task.TaskStatus.CREATED);
     }
 
     private void claimTask(Task task) throws InterruptedException {
-        ResponseEntity<PagedResources<Task>> responseEntity;
-        Collection<Task> tasks;
         ClaimTaskCmd claimTaskCmd = new ClaimTaskCmd(task.getId(),
                                                      "hruser");
         String cmdId = UUID.randomUUID().toString();
@@ -205,11 +202,16 @@ public class CommandEndpointIT {
         WaitUtil.waitFor(streamHandler.getClaimedTaskAck(),
                          1000);
 
-        responseEntity = getTasks();
-        tasks = responseEntity.getBody().getContent();
-        assertThat(tasks).extracting(Task::getName).contains("Perform action");
-        assertThat(tasks).extracting(Task::getStatus).contains(Task.TaskStatus.ASSIGNED.name());
-        assertThat(tasks.size()).isEqualTo(1);
+        assertThatTaskHasStatus(task.getId(),
+                                Task.TaskStatus.ASSIGNED
+        );
+    }
+
+    private void assertThatTaskHasStatus(String taskId,
+                                         Task.TaskStatus status) {
+        ResponseEntity<Task> responseEntity = getTask(taskId);
+        Task retrievedTask = responseEntity.getBody();
+        assertThat(retrievedTask.getStatus()).isEqualTo(status.name());
     }
 
     private void activateProcessInstance(String processDefinitionId,
@@ -289,6 +291,16 @@ public class CommandEndpointIT {
                                      HttpMethod.GET,
                                      null,
                                      PAGED_TASKS_RESPONSE_TYPE);
+    }
+
+    private ResponseEntity<Task> getTask(String taskId) {
+        ResponseEntity<Task> responseEntity = restTemplate.exchange(TASKS_URL + taskId,
+                                                              HttpMethod.GET,
+                                                              null,
+                                                              new ParameterizedTypeReference<Task>() {
+                                                              });
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return responseEntity;
     }
 
     private ResponseEntity<PagedResources<ProcessDefinition>> getProcessDefinitions() {
