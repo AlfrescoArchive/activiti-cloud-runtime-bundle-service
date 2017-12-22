@@ -44,7 +44,6 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -69,20 +68,16 @@ public class CommandEndpointIT {
     @Autowired
     private CommandEndPointITStreamHandler streamHandler;
 
-    public static final ParameterizedTypeReference<PagedResources<Task>> PAGED_TASKS_RESPONSE_TYPE = new ParameterizedTypeReference<PagedResources<Task>>() {
+    private static final ParameterizedTypeReference<PagedResources<Task>> PAGED_TASKS_RESPONSE_TYPE = new ParameterizedTypeReference<PagedResources<Task>>() {
     };
 
     private Map<String, String> processDefinitionIds = new HashMap<>();
 
-    public static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
-    public static final String PROCESS_INSTANCES_RELATIVE_URL = "/v1/process-instances/";
+    private static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
+    private static final String PROCESS_INSTANCES_RELATIVE_URL = "/v1/process-instances/";
     private static final String TASKS_URL = "/v1/tasks/";
 
     private static final String SIMPLE_PROCESS = "SimpleProcess";
-
-    private StartProcessInstanceCmd startProcessInstanceCmd;
-
-    private SuspendProcessInstanceCmd suspendProcessInstanceCmd;
 
     @Autowired
     private KeycloakSecurityContextClientRequestInterceptor keycloakSecurityContextClientRequestInterceptor;
@@ -104,49 +99,22 @@ public class CommandEndpointIT {
     @Test
     public void eventBasedStartProcessTests() throws Exception {
 
-        //record what instances there were before starting this one - should be none but will check this later
-        ResponseEntity<PagedResources<ProcessInstance>> processInstancesPageBefore = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "?page={page}&size={size}",
-                                                                                                           HttpMethod.GET,
-                                                                                                           null,
-                                                                                                           new ParameterizedTypeReference<PagedResources<ProcessInstance>>() {
-                                                                                                           },
-                                                                                                           "0",
-                                                                                                           "2");
         Map<String, Object> vars = new HashMap<>();
         vars.put("hey",
                  "one");
 
-        startProcessInstanceCmd = new StartProcessInstanceCmd(processDefinitionIds.get(SIMPLE_PROCESS),
-                                                              vars);
+        String simpleProcessDefinitionId = processDefinitionIds.get(SIMPLE_PROCESS);
+        StartProcessInstanceCmd startProcessInstanceCmd = new StartProcessInstanceCmd(simpleProcessDefinitionId,
+                                                                                      vars);
 
-        // Start a Process Instance sending a message
-        String processInstanceId = startProcessInstance(processDefinitionIds.get(SIMPLE_PROCESS),
-                                                        processInstancesPageBefore);
+        String processInstanceId = startProcessInstance(startProcessInstanceCmd);
 
-        suspendProcessInstanceCmd = new SuspendProcessInstanceCmd(streamHandler.getProcessInstanceId());
-        // Suspending a Process Instance sending a message
-        suspendProcessInstance(processDefinitionIds.get(SIMPLE_PROCESS));
+        SuspendProcessInstanceCmd suspendProcessInstanceCmd = new SuspendProcessInstanceCmd(processInstanceId);
+        suspendProcessInstance(suspendProcessInstanceCmd);
 
-        // Activating a Process Instance sending a message
-        activateProcessInstance(processDefinitionIds.get(SIMPLE_PROCESS),
+        activateProcessInstance(simpleProcessDefinitionId,
                                 processInstanceId);
 
-        ResponseEntity<PagedResources<ProcessInstance>> processInstancesPage = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "?page={page}&size={size}",
-                                                                                                     HttpMethod.GET,
-                                                                                                     null,
-                                                                                                     new ParameterizedTypeReference<PagedResources<ProcessInstance>>() {
-                                                                                                     },
-                                                                                                     "0",
-                                                                                                     "2");
-
-        //should have only started one
-        assertThat(processInstancesPage.getBody().getContent().size() - processInstancesPageBefore.getBody().getContent().size()).isEqualTo(1);
-
-        //expecting we started with none
-        assertThat(processInstancesPageBefore.getBody().getContent()).hasSize(0);
-
-        assertThat(processInstancesPage.getBody().getContent()).hasSize(1);
-        assertThat(processInstancesPage.getBody().getMetadata().getTotalPages()).isEqualTo(1);
 
         // Get Tasks
 
@@ -179,16 +147,15 @@ public class CommandEndpointIT {
         assertThat(tasks.size()).isEqualTo(0);
 
         // Checking that the process is finished
-        processInstancesPage = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "?page={page}&size={size}",
-                                                     HttpMethod.GET,
-                                                     null,
-                                                     new ParameterizedTypeReference<PagedResources<ProcessInstance>>() {
-                                                     },
-                                                     "0",
-                                                     "2");
+        ResponseEntity<PagedResources<ProcessInstance>> processInstancesPage = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "?page={page}&size={size}",
+                                                                                                     HttpMethod.GET,
+                                                                                                     null,
+                                                                                                     new ParameterizedTypeReference<PagedResources<ProcessInstance>>() {
+                                                                                                     },
+                                                                                                     "0",
+                                                                                                     "2");
 
-        assertThat(processInstancesPage.getBody().getContent()).hasSize(0);
-        assertThat(processInstancesPage.getBody().getMetadata().getTotalPages()).isEqualTo(0);
+        assertThat(processInstancesPage.getBody().getContent()).filteredOn(processInstance -> processInstance.getId().equals(processInstanceId)).isEmpty();
 
         assertThat(streamHandler.getStartedProcessInstanceAck()).isTrue();
         assertThat(streamHandler.getSuspendedProcessInstanceAck()).isTrue();
@@ -247,8 +214,7 @@ public class CommandEndpointIT {
 
     private void activateProcessInstance(String processDefinitionId,
                                          String processInstanceId) throws InterruptedException {
-        ResponseEntity<PagedResources<ProcessInstance>> processInstancesPage;
-        Collection<ProcessInstance> instances;//given
+        //given
         ActivateProcessInstanceCmd activateProcessInstanceCmd = new ActivateProcessInstanceCmd(processInstanceId);
         String cmdId = UUID.randomUUID().toString();
         clientStream.myCmdProducer().send(MessageBuilder.withPayload(activateProcessInstanceCmd).setHeader("cmdId",
@@ -257,96 +223,65 @@ public class CommandEndpointIT {
         WaitUtil.waitFor(streamHandler.getActivatedProcessInstanceAck(),
                          1000);
         //when
-        processInstancesPage = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "?page={page}&size={size}",
-                                                     HttpMethod.GET,
-                                                     null,
-                                                     new ParameterizedTypeReference<PagedResources<ProcessInstance>>() {
-                                                     },
-                                                     "0",
-                                                     "2");
+        ProcessInstance processInstance = executeGetProcessInstanceRequest(processInstanceId);
 
         //then
-        assertThat(processInstancesPage).isNotNull();
-        assertThat(processInstancesPage.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(processInstancesPage.getBody().getContent().size()).isEqualTo(1);
 
-        instances = processInstancesPage.getBody().getContent();
-        ProcessInstance instance = instances.iterator().next();
-        assertThat(instance.getProcessDefinitionId()).isEqualTo(processDefinitionId);
-        assertThat(instance.getId()).isNotNull();
-        assertThat(instance.getStartDate()).isNotNull();
-        assertThat(instance.getStatus()).isEqualToIgnoringCase(ProcessInstance.ProcessInstanceStatus.RUNNING.name());
+        assertThat(processInstance.getProcessDefinitionId()).isEqualTo(processDefinitionId);
+        assertThat(processInstance.getId()).isNotNull();
+        assertThat(processInstance.getStartDate()).isNotNull();
+        assertThat(processInstance.getStatus()).isEqualToIgnoringCase(ProcessInstance.ProcessInstanceStatus.RUNNING.name());
     }
 
-    private void suspendProcessInstance(String processDefinitionid) throws InterruptedException {
-        ResponseEntity<PagedResources<ProcessInstance>> processInstancesPage;
-        Collection<ProcessInstance> instances;//given
+    private void suspendProcessInstance(SuspendProcessInstanceCmd suspendProcessInstanceCmd) throws InterruptedException {
+        //given
 
         clientStream.myCmdProducer().send(MessageBuilder.withPayload(suspendProcessInstanceCmd).build());
 
         WaitUtil.waitFor(streamHandler.getSuspendedProcessInstanceAck(),
                          3000);
         //when
-        processInstancesPage = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "?page={page}&size={size}",
-                                                     HttpMethod.GET,
-                                                     null,
-                                                     new ParameterizedTypeReference<PagedResources<ProcessInstance>>() {
-                                                     },
-                                                     "0",
-                                                     "2");
+        ProcessInstance processInstance = executeGetProcessInstanceRequest(suspendProcessInstanceCmd.getProcessInstanceId());
 
         //then
-        assertThat(processInstancesPage).isNotNull();
-        assertThat(processInstancesPage.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(processInstancesPage.getBody().getContent().size()).isEqualTo(1);
-
-        instances = processInstancesPage.getBody().getContent();
-        ProcessInstance instance = instances.iterator().next();
-        assertThat(instance.getProcessDefinitionId()).isEqualTo(processDefinitionid);
-        assertThat(instance.getId()).isNotNull();
-        assertThat(instance.getStartDate()).isNotNull();
-        assertThat(instance.getStatus()).isEqualToIgnoringCase(ProcessInstance.ProcessInstanceStatus.SUSPENDED.name());
+        assertThat(processInstance.getId()).isEqualTo(suspendProcessInstanceCmd.getProcessInstanceId());
+        assertThat(processInstance.getStartDate()).isNotNull();
+        assertThat(processInstance.getStatus()).isEqualToIgnoringCase(ProcessInstance.ProcessInstanceStatus.SUSPENDED.name());
     }
 
-    private String startProcessInstance(String processDefinitionId,
-                                        ResponseEntity<PagedResources<ProcessInstance>> processInstancesPageBefore) throws InterruptedException {
+    private String startProcessInstance(StartProcessInstanceCmd startProcessInstanceCmd) throws InterruptedException {
         //given
         clientStream.myCmdProducer().send(MessageBuilder.withPayload(startProcessInstanceCmd).build());
 
         WaitUtil.waitFor(streamHandler.getStartedProcessInstanceAck(),
                          3000);
+        String processInstanceId = streamHandler.getProcessInstanceId();
 
         //when
-        ResponseEntity<PagedResources<ProcessInstance>> processInstancesPage = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "?page={page}&size={size}",
-                                                                                                     HttpMethod.GET,
-                                                                                                     null,
-                                                                                                     new ParameterizedTypeReference<PagedResources<ProcessInstance>>() {
-                                                                                                     },
-                                                                                                     "0",
-                                                                                                     "2");
+        ProcessInstance processInstance = executeGetProcessInstanceRequest(processInstanceId);
 
         //then
-        assertThat(processInstancesPage).isNotNull();
-        assertThat(processInstancesPage.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(processInstancesPage.getBody().getContent().size()).isEqualTo(1);
+        assertThat(processInstance.getProcessDefinitionId()).isEqualTo(startProcessInstanceCmd.getProcessDefinitionId());
+        assertThat(processInstance.getId()).isNotNull();
+        assertThat(processInstance.getStartDate()).isNotNull();
+        assertThat(processInstance.getStatus()).isEqualToIgnoringCase(ProcessInstance.ProcessInstanceStatus.RUNNING.name());
+        return processInstance.getId();
+    }
 
-        Collection<ProcessInstance> instances = processInstancesPage.getBody().getContent();
-        ProcessInstance instance = instances.iterator().next();
+    private ProcessInstance executeGetProcessInstanceRequest(String processInstanceId) {
+        ResponseEntity<ProcessInstance> processInstanceResponseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "{processInstanceId}",
+                                                                                              HttpMethod.GET,
+                                                                                              null,
+                                                                                              new ParameterizedTypeReference<ProcessInstance>() {
+                                                                                                     },
+                                                                                              processInstanceId);
 
-        assertThat(instance.getProcessDefinitionId()).isEqualTo(processDefinitionId);
-        assertThat(instance.getId()).isNotNull();
-        assertThat(instance.getStartDate()).isNotNull();
-        assertThat(instance.getStatus()).isEqualToIgnoringCase(ProcessInstance.ProcessInstanceStatus.RUNNING.name());
+        assertThat(processInstanceResponseEntity).isNotNull();
+        assertThat(processInstanceResponseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        //should have only started one
-        assertThat(processInstancesPage.getBody().getContent().size() - processInstancesPageBefore.getBody().getContent().size()).isEqualTo(1);
-
-        //expecting we started with none
-        assertThat(processInstancesPageBefore.getBody().getContent()).hasSize(0);
-
-        assertThat(processInstancesPage.getBody().getContent()).hasSize(1);
-        assertThat(processInstancesPage.getBody().getMetadata().getTotalPages()).isGreaterThanOrEqualTo(1);
-        return instance.getId();
+        ProcessInstance processInstance = processInstanceResponseEntity.getBody();
+        assertThat(processInstance).isNotNull();
+        return processInstance;
     }
 
     private ResponseEntity<PagedResources<Task>> getTasks() {
