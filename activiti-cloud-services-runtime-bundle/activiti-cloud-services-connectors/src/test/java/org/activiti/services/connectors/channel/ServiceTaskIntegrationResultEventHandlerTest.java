@@ -141,21 +141,6 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
         assertThat(integrationResultReceivedEvent.getProcessDefinitionId()).isEqualTo(PROC_DEF_ID);
     }
 
-    @Test
-    public void receiveShouldThrowAnExceptionWhenNoRelatedIntegrationContextIsFound() throws Exception {
-        //given
-        String executionId = "execId";
-
-        given(integrationContextService.findIntegrationContextByExecutionId(executionId)).willReturn(null);
-        IntegrationResultEvent integrationResultEvent = new IntegrationResultEvent(executionId,
-                                                                                   null);
-
-        //then
-        Assertions.assertThatExceptionOfType(IllegalStateException.class).isThrownBy(
-                //when
-                () -> handler.receive(integrationResultEvent)
-        ).withMessageContaining("No task is waiting for integration result with execution id");
-    }
 
     @Test
     public void retrieveShouldNotSentAuditEventWhenIntegrationAuditEventsAreDisabled() throws Exception {
