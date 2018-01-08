@@ -23,8 +23,7 @@ public class IntegrationRequestSender extends TransactionSynchronizationAdapter 
     private final IntegrationContextEntity integrationContextEntity;
     private final DelegateExecution execution;
 
-    public IntegrationRequestSender(IntegrationContextManager integrationContextManager,
-                                    ProcessEngineIntegrationChannels processEngineIntegrationChannels,
+    public IntegrationRequestSender(ProcessEngineIntegrationChannels processEngineIntegrationChannels,
                                     RuntimeBundleProperties runtimeBundleProperties,
                                     ProcessEngineChannels processEngineChannels,
                                     IntegrationContextEntity integrationContextEntity,

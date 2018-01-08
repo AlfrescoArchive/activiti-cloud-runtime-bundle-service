@@ -27,8 +27,6 @@ import org.activiti.engine.impl.persistence.entity.integration.IntegrationContex
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
 import org.activiti.services.connectors.IntegrationRequestSender;
 import org.activiti.services.connectors.channel.ProcessEngineIntegrationChannels;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -38,7 +36,7 @@ public class MQServiceTaskBehavior extends AbstractBpmnActivityBehavior implemen
 
     private final IntegrationContextManager integrationContextManager;
     private final ProcessEngineIntegrationChannels integrationChannels;
-    private static final Logger LOGGER = LoggerFactory.getLogger(IntegrationRequestSender.class);
+
     private final RuntimeBundleProperties runtimeBundleProperties;
     private final ProcessEngineChannels processEngineChannels;
 
@@ -58,7 +56,7 @@ public class MQServiceTaskBehavior extends AbstractBpmnActivityBehavior implemen
     public void execute(DelegateExecution execution) {
         IntegrationContextEntity integrationContext = storeIntegrationContext(execution);
 
-        IntegrationRequestSender integrationRequestSender = new IntegrationRequestSender(integrationContextManager, integrationChannels, runtimeBundleProperties, processEngineChannels, integrationContext, execution);
+        IntegrationRequestSender integrationRequestSender = new IntegrationRequestSender( integrationChannels, runtimeBundleProperties, processEngineChannels, integrationContext, execution);
         registerTransactionSynchronization(integrationRequestSender);
     }
 

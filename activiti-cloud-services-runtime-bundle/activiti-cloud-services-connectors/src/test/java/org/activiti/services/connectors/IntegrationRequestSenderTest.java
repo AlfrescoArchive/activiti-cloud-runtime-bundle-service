@@ -20,7 +20,6 @@ import org.mockito.Mock;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 
-import java.util.Collections;
 
 import static org.mockito.Mockito.when;
 import static org.assertj.core.api.Assertions.*;
@@ -58,15 +57,6 @@ public class IntegrationRequestSenderTest {
     private RuntimeBundleProperties.RuntimeBundleEventsProperties eventsProperties;
 
     @Mock
-    private Message<IntegrationRequestEvent> firstIntegration;
-
-    @Mock
-    private Message<IntegrationRequestEvent> secondIntegration;
-
-    @Mock
-    private IntegrationContextManager integrationContextManager;
-
-    @Mock
     private IntegrationContextEntity integrationContextEntity;
 
     @Mock
@@ -86,7 +76,7 @@ public class IntegrationRequestSenderTest {
         serviceTask = new ServiceTask();
         serviceTask.setImplementation(CONNECTOR_TYPE);
         when(delegateExecution.getCurrentFlowElement()).thenReturn(serviceTask);
-        integrationRequestSender = new IntegrationRequestSender(integrationContextManager,integrationChannels,runtimeBundleProperties,processEngineChannels,integrationContextEntity,delegateExecution);
+        integrationRequestSender = new IntegrationRequestSender(integrationChannels,runtimeBundleProperties,processEngineChannels,integrationContextEntity,delegateExecution);
 
         when(delegateExecution.getProcessDefinitionId()).thenReturn(PROC_DEF_ID);
         when(delegateExecution.getProcessInstanceId()).thenReturn(PROC_INST_ID);
