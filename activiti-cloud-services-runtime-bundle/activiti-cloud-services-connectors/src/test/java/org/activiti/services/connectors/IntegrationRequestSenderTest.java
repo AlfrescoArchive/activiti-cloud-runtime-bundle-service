@@ -6,11 +6,8 @@ import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.events.integration.IntegrationRequestSentEvent;
 import org.activiti.engine.delegate.DelegateExecution;
-import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
-import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
 import org.activiti.services.connectors.channel.ProcessEngineIntegrationChannels;
-import org.activiti.services.connectors.model.IntegrationRequestEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -62,8 +59,6 @@ public class IntegrationRequestSenderTest {
     @Mock
     private DelegateExecution delegateExecution;
 
-    private ServiceTask serviceTask;
-
     @Captor
     private ArgumentCaptor<Message<ProcessEngineEvent[]>> messageArgumentCaptor;
 
@@ -73,7 +68,7 @@ public class IntegrationRequestSenderTest {
         when(integrationChannels.integrationEventsProducer()).thenReturn(integrationProducerChannel);
         when(processEngineChannels.auditProducer()).thenReturn(auditProducerChannel);
         when(runtimeBundleProperties.getEventsProperties()).thenReturn(eventsProperties);
-        serviceTask = new ServiceTask();
+        ServiceTask serviceTask = new ServiceTask();
         serviceTask.setImplementation(CONNECTOR_TYPE);
         when(delegateExecution.getCurrentFlowElement()).thenReturn(serviceTask);
         integrationRequestSender = new IntegrationRequestSender(integrationChannels,runtimeBundleProperties,processEngineChannels,integrationContextEntity,delegateExecution);
