@@ -30,7 +30,7 @@ public class IntegrationRequestSenderTest {
     private static final String PROC_INST_ID = "procInstId";
     private static final String PROC_DEF_ID = "procDefId";
     private static final String INTEGRATION_CONTEXT_ID = "intContextId";
-    private static final String FLOW_NOPE_ID = "myServiceTask";
+    private static final String FLOW_NODE_ID = "myServiceTask";
     private static final String APP_NAME = "myApp";
 
     private IntegrationRequestSender integrationRequestSender;
@@ -76,7 +76,7 @@ public class IntegrationRequestSenderTest {
         when(delegateExecution.getProcessInstanceId()).thenReturn(PROC_INST_ID);
         when(integrationContextEntity.getExecutionId()).thenReturn(EXECUTION_ID);
         when(integrationContextEntity.getId()).thenReturn(INTEGRATION_CONTEXT_ID);
-        when(integrationContextEntity.getFlowNodeId()).thenReturn(FLOW_NOPE_ID);
+        when(integrationContextEntity.getFlowNodeId()).thenReturn(FLOW_NODE_ID);
     }
 
     @Test
@@ -93,7 +93,7 @@ public class IntegrationRequestSenderTest {
         assertThat(integrationRequestEvent.getProcessInstanceId()).isEqualTo(PROC_INST_ID);
         assertThat(integrationRequestEvent.getExecutionId()).isEqualTo(EXECUTION_ID);
         assertThat(integrationRequestEvent.getIntegrationContextId()).isEqualTo(INTEGRATION_CONTEXT_ID);
-        assertThat(integrationRequestEvent.getFlowNodeId()).isEqualTo(FLOW_NOPE_ID);
+        assertThat(integrationRequestEvent.getFlowNodeId()).isEqualTo(FLOW_NODE_ID);
 
         assertThat(integrationRequestEventMessage.getHeaders().get(IntegrationRequestSender.CONNECTOR_TYPE)).isEqualTo(CONNECTOR_TYPE);
 
