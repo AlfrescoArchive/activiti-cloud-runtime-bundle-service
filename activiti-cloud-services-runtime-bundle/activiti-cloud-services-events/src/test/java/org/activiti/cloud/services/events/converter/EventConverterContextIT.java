@@ -64,6 +64,8 @@ public class EventConverterContextIT {
                                                            ActivitiEventType.ACTIVITY_STARTED,
                                                            ActivitiEventType.PROCESS_CANCELLED,
                                                            ActivitiEventType.PROCESS_COMPLETED,
+                                                           ActivitiEventType.ENTITY_SUSPENDED, // originally designed to work with process def and instances
+                                                           ActivitiEventType.ENTITY_ACTIVATED, // originally designed to work with process def and instances
                                                            ActivitiEventType.PROCESS_STARTED,
                                                            ActivitiEventType.SEQUENCEFLOW_TAKEN,
                                                            ActivitiEventType.TASK_ASSIGNED,

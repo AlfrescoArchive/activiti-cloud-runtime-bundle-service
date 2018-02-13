@@ -19,14 +19,14 @@ package org.activiti.cloud.services.events;
 
 import org.activiti.cloud.services.api.model.ProcessInstance;
 
-public class ProcessCompletedEventImpl extends AbstractProcessEngineEvent implements ProcessCompletedEvent {
+public class ProcessActivatedEventImpl extends AbstractProcessEngineEvent implements ProcessActivatedEvent {
 
     private ProcessInstance processInstance;
 
-    public ProcessCompletedEventImpl() {
+    public ProcessActivatedEventImpl() {
     }
 
-    public ProcessCompletedEventImpl(String applicationName,
+    public ProcessActivatedEventImpl(String applicationName,
                                      String executionId,
                                      String processDefinitionId,
                                      String processInstanceId,
@@ -44,6 +44,6 @@ public class ProcessCompletedEventImpl extends AbstractProcessEngineEvent implem
 
     @Override
     public String getEventType() {
-        return "ProcessCompletedEvent";
+        return "ProcessActivatedEvent";
     }
 }

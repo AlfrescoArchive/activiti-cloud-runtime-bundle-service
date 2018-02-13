@@ -16,33 +16,35 @@
 
 package org.activiti.cloud.services.events.converter;
 
+import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
+import org.activiti.cloud.services.events.ProcessCompletedEventImpl;
+import org.activiti.cloud.services.events.ProcessSuspendedEventImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.delegate.event.ActivitiEntityEvent;
 import org.activiti.engine.delegate.event.ActivitiEvent;
 import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntityImpl;
-import org.activiti.cloud.services.api.events.ProcessEngineEvent;
-import org.activiti.cloud.services.events.ProcessCompletedEventImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import static org.activiti.engine.delegate.event.ActivitiEventType.ENTITY_SUSPENDED;
 import static org.activiti.engine.delegate.event.ActivitiEventType.PROCESS_COMPLETED;
 
 @Component
-public class ProcessCompletedEventConverter extends AbstractEventConverter {
+public class ProcessSuspendedEventConverter extends AbstractEventConverter {
 
     private final ProcessInstanceConverter processInstanceConverter;
 
     @Autowired
-    public ProcessCompletedEventConverter(ProcessInstanceConverter processInstanceConverter, RuntimeBundleProperties runtimeBundleProperties) {
+    public ProcessSuspendedEventConverter(ProcessInstanceConverter processInstanceConverter, RuntimeBundleProperties runtimeBundleProperties) {
         super(runtimeBundleProperties);
         this.processInstanceConverter = processInstanceConverter;
     }
 
     @Override
     public ProcessEngineEvent from(ActivitiEvent event) {
-        return new ProcessCompletedEventImpl(getApplicationName(),
+        return new ProcessSuspendedEventImpl(getApplicationName(),
                                              event.getExecutionId(),
                                              event.getProcessDefinitionId(),
                                              event.getProcessInstanceId(),
@@ -51,6 +53,6 @@ public class ProcessCompletedEventConverter extends AbstractEventConverter {
 
     @Override
     public ActivitiEventType handledType() {
-        return PROCESS_COMPLETED;
+        return ENTITY_SUSPENDED;
     }
 }
