@@ -17,40 +17,40 @@
 package org.activiti.cloud.services.events.converter;
 
 import org.activiti.cloud.services.api.events.ProcessEngineEvent;
-import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
-import org.activiti.cloud.services.events.ProcessSuspendedEventImpl;
+import org.activiti.cloud.services.api.model.converter.TaskConverter;
+import org.activiti.cloud.services.events.TaskSuspendedEventImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.engine.delegate.event.ActivitiEntityEvent;
 import org.activiti.engine.delegate.event.ActivitiEvent;
-import org.activiti.engine.impl.persistence.entity.ExecutionEntityImpl;
+import org.activiti.engine.delegate.event.impl.ActivitiEntityEventImpl;
+import org.activiti.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static org.activiti.engine.delegate.event.ActivitiEventType.ENTITY_SUSPENDED;
 
 @Component
-public class ProcessSuspendedEventConverter extends AbstractEventConverter {
+public class TaskSuspendedEventConverter extends AbstractEventConverter {
 
-    private final ProcessInstanceConverter processInstanceConverter;
+    private final TaskConverter taskConverter;
 
     @Autowired
-    public ProcessSuspendedEventConverter(ProcessInstanceConverter processInstanceConverter,
-                                          RuntimeBundleProperties runtimeBundleProperties) {
+    public TaskSuspendedEventConverter(TaskConverter taskConverter,
+                                       RuntimeBundleProperties runtimeBundleProperties) {
         super(runtimeBundleProperties);
-        this.processInstanceConverter = processInstanceConverter;
+        this.taskConverter = taskConverter;
     }
 
     @Override
     public ProcessEngineEvent from(ActivitiEvent event) {
-        return new ProcessSuspendedEventImpl(getApplicationName(),
-                                             event.getExecutionId(),
-                                             event.getProcessDefinitionId(),
-                                             event.getProcessInstanceId(),
-                                             processInstanceConverter.from(((ExecutionEntityImpl) ((ActivitiEntityEvent) event).getEntity()).getProcessInstance()));
+            return new TaskSuspendedEventImpl(getApplicationName(),
+                                              event.getExecutionId(),
+                                              event.getProcessDefinitionId(),
+                                              event.getProcessInstanceId(),
+                                              taskConverter.from((Task) ((ActivitiEntityEventImpl) event).getEntity()));
     }
 
     @Override
     public String handledType() {
-        return "ProcessInstance:" + ENTITY_SUSPENDED;
+        return "Task:" + ENTITY_SUSPENDED.toString();
     }
 }

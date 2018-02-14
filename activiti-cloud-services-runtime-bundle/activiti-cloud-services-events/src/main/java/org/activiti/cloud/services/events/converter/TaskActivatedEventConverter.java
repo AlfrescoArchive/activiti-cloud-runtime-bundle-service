@@ -17,40 +17,40 @@
 package org.activiti.cloud.services.events.converter;
 
 import org.activiti.cloud.services.api.events.ProcessEngineEvent;
-import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
-import org.activiti.cloud.services.events.ProcessActivatedEventImpl;
+import org.activiti.cloud.services.api.model.converter.TaskConverter;
+import org.activiti.cloud.services.events.TaskActivatedEventImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.engine.delegate.event.ActivitiEntityEvent;
 import org.activiti.engine.delegate.event.ActivitiEvent;
-import org.activiti.engine.impl.persistence.entity.ExecutionEntityImpl;
+import org.activiti.engine.delegate.event.impl.ActivitiEntityEventImpl;
+import org.activiti.engine.task.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import static org.activiti.engine.delegate.event.ActivitiEventType.ENTITY_ACTIVATED;
 
 @Component
-public class ProcessActivatedEventConverter extends AbstractEventConverter {
+public class TaskActivatedEventConverter extends AbstractEventConverter {
 
-    private final ProcessInstanceConverter processInstanceConverter;
+    private final TaskConverter taskConverter;
 
     @Autowired
-    public ProcessActivatedEventConverter(ProcessInstanceConverter processInstanceConverter,
-                                          RuntimeBundleProperties runtimeBundleProperties) {
+    public TaskActivatedEventConverter(TaskConverter taskConverter,
+                                       RuntimeBundleProperties runtimeBundleProperties) {
         super(runtimeBundleProperties);
-        this.processInstanceConverter = processInstanceConverter;
+        this.taskConverter = taskConverter;
     }
 
     @Override
     public ProcessEngineEvent from(ActivitiEvent event) {
-        return new ProcessActivatedEventImpl(getApplicationName(),
-                                             event.getExecutionId(),
-                                             event.getProcessDefinitionId(),
-                                             event.getProcessInstanceId(),
-                                             processInstanceConverter.from(((ExecutionEntityImpl) ((ActivitiEntityEvent) event).getEntity()).getProcessInstance()));
+        return new TaskActivatedEventImpl(getApplicationName(),
+                                          event.getExecutionId(),
+                                          event.getProcessDefinitionId(),
+                                          event.getProcessInstanceId(),
+                                          taskConverter.from((Task) ((ActivitiEntityEventImpl) event).getEntity()));
     }
 
     @Override
     public String handledType() {
-        return "ProcessInstance:" + ENTITY_ACTIVATED.toString();
+        return "Task:" + ENTITY_ACTIVATED;
     }
 }

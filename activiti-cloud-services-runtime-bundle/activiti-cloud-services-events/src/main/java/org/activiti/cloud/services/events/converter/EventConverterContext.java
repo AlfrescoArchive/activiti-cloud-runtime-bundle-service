@@ -22,9 +22,11 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.activiti.engine.delegate.event.ActivitiEvent;
-import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.cloud.services.api.events.ProcessEngineEvent;
+import org.activiti.engine.delegate.event.ActivitiEntityEvent;
+import org.activiti.engine.delegate.event.ActivitiEvent;
+import org.activiti.engine.runtime.ProcessInstance;
+import org.activiti.engine.task.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +37,9 @@ public class EventConverterContext {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EventConverterContext.class);
 
-    private Map<ActivitiEventType, EventConverter> convertersMap;
+    private Map<String, EventConverter> convertersMap;
 
-    public EventConverterContext(Map<ActivitiEventType, EventConverter> convertersMap) {
+    public EventConverterContext(Map<String, EventConverter> convertersMap) {
         this.convertersMap = convertersMap;
     }
 
@@ -47,12 +49,14 @@ public class EventConverterContext {
                                                                           Function.identity()));
     }
 
-    Map<ActivitiEventType, EventConverter> getConvertersMap() {
+    Map<String, EventConverter> getConvertersMap() {
         return Collections.unmodifiableMap(convertersMap);
     }
 
     public ProcessEngineEvent from(ActivitiEvent activitiEvent) {
-        EventConverter converter = convertersMap.get(activitiEvent.getType());
+        System.out.println("Activiti Event: " + activitiEvent);
+        EventConverter converter = convertersMap.get(getPrefix(activitiEvent) + activitiEvent.getType());
+
         ProcessEngineEvent newEvent = null;
         if (converter != null) {
             newEvent = converter.from(activitiEvent);
@@ -60,5 +64,20 @@ public class EventConverterContext {
             LOGGER.debug(">> Ommited Event Type: " + activitiEvent.getClass().getCanonicalName());
         }
         return newEvent;
+    }
+
+    public static String getPrefix(ActivitiEvent activitiEvent) {
+        if (activitiEvent instanceof ActivitiEntityEvent) {
+            Object entity = ((ActivitiEntityEvent) activitiEvent).getEntity();
+            if (entity != null) {
+                if (entity instanceof ProcessInstance) {
+                    System.out.println("Entity: " + entity);
+                    return "ProcessInstance:";
+                } else if (entity instanceof Task) {
+                    return "Task:";
+                }
+            }
+        }
+        return "";
     }
 }

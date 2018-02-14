@@ -19,7 +19,6 @@ package org.activiti.cloud.services.events.converter;
 import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
-import org.activiti.cloud.services.events.ProcessCompletedEvent;
 import org.activiti.cloud.services.events.ProcessSuspendedEvent;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.delegate.event.ActivitiEntityEvent;
@@ -30,13 +29,13 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import static org.activiti.cloud.services.events.converter.EventConverterContext.getPrefix;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class ProcessSuspendedEventConverterTest {
-
 
     @InjectMocks
     private ProcessSuspendedEventConverter processSuspendedEventConverter;
@@ -86,10 +85,14 @@ public class ProcessSuspendedEventConverterTest {
     @Test
     public void handledTypeShouldReturnProcessSuspended() throws Exception {
         //when
-        ActivitiEventType activitiEventType = processSuspendedEventConverter.handledType();
-
+        String activitiEventType = processSuspendedEventConverter.handledType();
+        ActivitiEntityEvent activitiEvent = mock(ActivitiEntityEvent.class);
+        given(activitiEvent.getType()).willReturn(ActivitiEventType.ENTITY_SUSPENDED);
+        ExecutionEntityImpl executionEntity = mock(ExecutionEntityImpl.class);
+        ExecutionEntityImpl internalProcessInstance = mock(ExecutionEntityImpl.class);
+        given(activitiEvent.getEntity()).willReturn(executionEntity);
+        given(executionEntity.getProcessInstance()).willReturn(internalProcessInstance);
         //then
-        assertThat(activitiEventType).isEqualTo(ActivitiEventType.ENTITY_SUSPENDED);
+        assertThat(activitiEventType).isEqualTo(getPrefix(activitiEvent) + ActivitiEventType.ENTITY_SUSPENDED);
     }
-
 }

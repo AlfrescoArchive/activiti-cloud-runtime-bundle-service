@@ -46,4 +46,16 @@ public class ProcessSuspendedEventImpl extends AbstractProcessEngineEvent implem
     public String getEventType() {
         return "ProcessSuspendedEvent";
     }
+
+    @Override
+    public String toString() {
+        return "ProcessSuspendedEventImpl{" +
+                    "processInstance=" + processInstance +
+                    "applicationName='" + getApplicationName() + '\'' +
+                    ", executionId='" + getExecutionId() + '\'' +
+                    ", processDefinitionId='" + getProcessDefinitionId() + '\'' +
+                    ", processInstanceId='" + getProcessInstanceId() + '\'' +
+                    ", timestamp=" + getTimestamp() +
+                '}';
+    }
 }

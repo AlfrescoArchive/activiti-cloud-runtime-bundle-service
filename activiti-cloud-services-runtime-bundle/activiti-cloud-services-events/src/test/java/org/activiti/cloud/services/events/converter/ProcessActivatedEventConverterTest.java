@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import static org.activiti.cloud.services.events.converter.EventConverterContext.getPrefix;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -84,9 +85,15 @@ public class ProcessActivatedEventConverterTest {
     @Test
     public void handledTypeShouldReturnProcessActivated() throws Exception {
         //when
-        ActivitiEventType activitiEventType = processActivatedEventConverter.handledType();
+        String activitiEventType = processActivatedEventConverter.handledType();
+        ActivitiEntityEvent activitiEvent = mock(ActivitiEntityEvent.class);
+        given(activitiEvent.getType()).willReturn(ActivitiEventType.ENTITY_ACTIVATED);
+        ExecutionEntityImpl executionEntity = mock(ExecutionEntityImpl.class);
+        ExecutionEntityImpl internalProcessInstance = mock(ExecutionEntityImpl.class);
+        given(activitiEvent.getEntity()).willReturn(executionEntity);
+        given(executionEntity.getProcessInstance()).willReturn(internalProcessInstance);
 
         //then
-        assertThat(activitiEventType).isEqualTo(ActivitiEventType.ENTITY_ACTIVATED);
+        assertThat(activitiEventType).isEqualTo(getPrefix(activitiEvent) + ActivitiEventType.ENTITY_ACTIVATED);
     }
 }
