@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.engine.delegate.event.ActivitiEntityEvent;
 import org.activiti.engine.delegate.event.ActivitiEvent;
+import org.activiti.engine.delegate.event.ActivitiEventType;
+import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
 import org.slf4j.Logger;
@@ -54,7 +56,6 @@ public class EventConverterContext {
     }
 
     public ProcessEngineEvent from(ActivitiEvent activitiEvent) {
-        System.out.println("Activiti Event: " + activitiEvent);
         EventConverter converter = convertersMap.get(getPrefix(activitiEvent) + activitiEvent.getType());
 
         ProcessEngineEvent newEvent = null;
@@ -70,8 +71,15 @@ public class EventConverterContext {
         if (activitiEvent instanceof ActivitiEntityEvent) {
             Object entity = ((ActivitiEntityEvent) activitiEvent).getEntity();
             if (entity != null) {
-                if (entity instanceof ProcessInstance) {
-                    System.out.println("Entity: " + entity);
+                if (ProcessInstance.class.isAssignableFrom(entity.getClass())) {
+                    if (activitiEvent.getType().equals(ActivitiEventType.ENTITY_SUSPENDED) || activitiEvent.getType().equals(ActivitiEventType.ENTITY_ACTIVATED)) {
+                        ExecutionEntity executionEntity = (ExecutionEntity) entity;
+                        if (executionEntity.isProcessInstanceType()) {
+                            return "ProcessInstance:";
+                        } else {
+                            return "";
+                        }
+                    }
                     return "ProcessInstance:";
                 } else if (entity instanceof Task) {
                     return "Task:";

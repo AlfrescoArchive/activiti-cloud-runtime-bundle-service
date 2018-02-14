@@ -92,6 +92,7 @@ public class ProcessActivatedEventConverterTest {
         ExecutionEntityImpl internalProcessInstance = mock(ExecutionEntityImpl.class);
         given(activitiEvent.getEntity()).willReturn(executionEntity);
         given(executionEntity.getProcessInstance()).willReturn(internalProcessInstance);
+        given(executionEntity.isProcessInstanceType()).willReturn(true);
 
         //then
         assertThat(activitiEventType).isEqualTo(getPrefix(activitiEvent) + ActivitiEventType.ENTITY_ACTIVATED);

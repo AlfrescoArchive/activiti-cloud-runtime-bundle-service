@@ -23,6 +23,7 @@ import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.events.ActivityCompletedEventImpl;
 import org.activiti.cloud.services.events.ActivityStartedEventImpl;
 import org.activiti.cloud.services.events.ProcessActivatedEvent;
+import org.activiti.cloud.services.events.ProcessActivatedEventImpl;
 import org.activiti.cloud.services.events.ProcessStartedEventImpl;
 import org.activiti.cloud.services.events.ProcessSuspendedEventImpl;
 import org.activiti.cloud.services.events.SequenceFlowTakenEventImpl;
@@ -80,10 +81,6 @@ public class MessageProducerActivitiEventActivateSuspendIT {
 
         ProcessEngineEvent[] events = (ProcessEngineEvent[]) MockMessageChannel.messageResult.getPayload();
 
-        for (ProcessEngineEvent e : events) {
-            System.out.println(e);
-        }
-
         assertThat(events.length).isEqualTo(6);
         assertThat(events[0].getClass()).isEqualTo(ProcessStartedEventImpl.class);
         assertThat(events[1].getClass()).isEqualTo(ActivityStartedEventImpl.class);
@@ -105,12 +102,9 @@ public class MessageProducerActivitiEventActivateSuspendIT {
 
         processEngine.getRuntimeService().activateProcessInstanceById(processInstance.getId());
         events = (ProcessEngineEvent[]) MockMessageChannel.messageResult.getPayload();
-        for (ProcessEngineEvent e : events) {
-            System.out.println(e);
-        }
 
         assertThat(events.length).isEqualTo(2);
-        assertThat(events[0].getClass()).isEqualTo(ProcessActivatedEvent.class);
+        assertThat(events[0].getClass()).isEqualTo(ProcessActivatedEventImpl.class);
         assertThat(events[1].getClass()).isEqualTo(TaskActivatedEventImpl.class);
 
     }
