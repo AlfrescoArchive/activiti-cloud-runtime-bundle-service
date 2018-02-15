@@ -72,7 +72,7 @@ public class MessageProducerActivitiEventActivateSuspendIT {
         ProcessEngine processEngine = ProcessEngineConfiguration.createStandaloneInMemProcessEngineConfiguration()
                 .setDatabaseSchemaUpdate(ProcessEngineConfigurationImpl.DB_SCHEMA_UPDATE_DROP_CREATE)
                 .buildProcessEngine();
-        deploy("simpleUserTaskProcess",
+        deploy("SimpleUserTaskProcess",
                processEngine);
 
         processEngine.getRuntimeService().addEventListener(eventListener);
