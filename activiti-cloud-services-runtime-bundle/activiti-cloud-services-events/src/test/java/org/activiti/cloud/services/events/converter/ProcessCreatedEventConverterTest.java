@@ -20,6 +20,8 @@ import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
 import org.activiti.cloud.services.events.ProcessCompletedEvent;
+import org.activiti.cloud.services.events.ProcessCreatedEvent;
+import org.activiti.cloud.services.events.ProcessCreatedEventImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.delegate.event.ActivitiEntityEvent;
 import org.activiti.engine.delegate.event.ActivitiEventType;
@@ -38,7 +40,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 public class ProcessCreatedEventConverterTest {
 
     @InjectMocks
-    private ProcessCompletedEventConverter processCompletedEventConverter;
+    private ProcessCreatedEventConverter processCreatedEventConverter;
 
     @Mock
     private ProcessInstanceConverter processInstanceConverter;
@@ -52,7 +54,7 @@ public class ProcessCreatedEventConverterTest {
     }
 
     @Test
-    public void fromShouldConvertInternalProcessCompletedEventToExternalEvent() throws Exception {
+    public void fromShouldConvertInternalProcessCreatedEventToExternalEvent() throws Exception {
         //given
         ActivitiEntityEvent activitiEvent = mock(ActivitiEntityEvent.class);
         given(activitiEvent.getType()).willReturn(ActivitiEventType.ENTITY_CREATED);
@@ -71,28 +73,29 @@ public class ProcessCreatedEventConverterTest {
         given(processInstanceConverter.from(internalProcessInstance)).willReturn(externalProcessInstance);
 
         //when
-        ProcessEngineEvent pee = processCompletedEventConverter.from(activitiEvent);
+        ProcessEngineEvent pee = processCreatedEventConverter.from(activitiEvent);
 
         //then
-        assertThat(pee).isInstanceOf(ProcessCompletedEvent.class);
+        assertThat(pee).isInstanceOf(ProcessCreatedEvent.class);
         assertThat(pee.getExecutionId()).isEqualTo("1");
         assertThat(pee.getProcessInstanceId()).isEqualTo("1");
         assertThat(pee.getProcessDefinitionId()).isEqualTo("myProcessDef");
         assertThat(pee.getApplicationName()).isEqualTo("myApp");
-        assertThat(((ProcessCompletedEvent) pee).getProcessInstance()).isEqualTo(externalProcessInstance);
+        assertThat(((ProcessCreatedEvent) pee).getProcessInstance()).isEqualTo(externalProcessInstance);
     }
 
     @Test
     public void handledTypeShouldReturnProcessCompleted() throws Exception {
         //when
-        String activitiEventType = processCompletedEventConverter.handledType();
+        String activitiEventType = processCreatedEventConverter.handledType();
         ActivitiEntityEvent activitiEvent = mock(ActivitiEntityEvent.class);
-        given(activitiEvent.getType()).willReturn(ActivitiEventType.PROCESS_COMPLETED);
+        given(activitiEvent.getType()).willReturn(ActivitiEventType.ENTITY_CREATED);
         ExecutionEntityImpl executionEntity = mock(ExecutionEntityImpl.class);
         ExecutionEntityImpl internalProcessInstance = mock(ExecutionEntityImpl.class);
         given(activitiEvent.getEntity()).willReturn(executionEntity);
         given(executionEntity.getProcessInstance()).willReturn(internalProcessInstance);
+        given(executionEntity.isProcessInstanceType()).willReturn(true);
         //then
-        assertThat(activitiEventType).isEqualTo(getPrefix(activitiEvent) + ActivitiEventType.PROCESS_COMPLETED);
+        assertThat(activitiEventType).isEqualTo(getPrefix(activitiEvent) + ActivitiEventType.ENTITY_CREATED);
     }
 }

@@ -19,7 +19,7 @@ package org.activiti.cloud.services.events;
 
 import org.activiti.cloud.services.api.model.ProcessInstance;
 
-public class ProcessCreatedEventImpl extends AbstractProcessEngineEvent implements ProcessCompletedEvent {
+public class ProcessCreatedEventImpl extends AbstractProcessEngineEvent implements ProcessCreatedEvent {
 
     private ProcessInstance processInstance;
 
