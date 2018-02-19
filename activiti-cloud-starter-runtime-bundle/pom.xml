@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.activiti.cloud</groupId>
     <artifactId>activiti-cloud-runtime-bundle-service-parent</artifactId>
-    <version>7-201802-EA-daisuke_1687_signal_cloud-SNAPSHOT</version>
+    <version>7-201802-EA-SNAPSHOT</version>
   </parent>
 
   <artifactId>activiti-cloud-starter-runtime-bundle</artifactId>
@@ -52,7 +52,7 @@
     <dependency>
       <groupId>org.activiti.cloud</groupId>
       <artifactId>activiti-cloud-services-subscriptions</artifactId>
-      <version>7-201802-EA-daisuke_1687_signal_cloud-SNAPSHOT</version>
+      <version>7-201802-EA-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
