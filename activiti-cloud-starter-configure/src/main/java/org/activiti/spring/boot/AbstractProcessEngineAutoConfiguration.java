@@ -27,17 +27,21 @@ import org.activiti.engine.TaskService;
 import org.activiti.engine.UserGroupLookupProxy;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
 import org.activiti.engine.integration.IntegrationContextService;
+import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.activiti.engine.impl.jobexecutor.JobHandler;
 import org.activiti.engine.impl.persistence.StrongUuidGenerator;
 import org.activiti.spring.ProcessEngineFactoryBean;
 import org.activiti.spring.SpringAsyncExecutor;
 import org.activiti.spring.SpringCallerRunsRejectedJobsHandler;
 import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.activiti.spring.SpringRejectedJobsHandler;
+import org.activiti.spring.bpmn.parser.CloudActivityBehaviorFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.io.support.SpringFactoriesLoader;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -118,6 +122,12 @@ public abstract class AbstractProcessEngineAutoConfiguration
     if (activitiProperties.isUseStrongUuids()) {
       conf.setIdGenerator(new StrongUuidGenerator());
     }
+    
+    ((ProcessEngineConfigurationImpl) conf).setActivityBehaviorFactory(new CloudActivityBehaviorFactory());
+    
+    ClassLoader classLoader=Thread.currentThread().getContextClassLoader();
+    List<JobHandler> customJobHandlers = SpringFactoriesLoader.loadFactories(JobHandler.class, classLoader);
+    conf.setCustomJobHandlers(customJobHandlers);
     
     if (processEngineConfigurationConfigurer != null) {
     	processEngineConfigurationConfigurer.configure(conf);

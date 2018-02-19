@@ -1,0 +1,5 @@
+org.activiti.spring.bpmn.parser.CloudActivityBehaviorFactoryInterceptor =\
+    org.activiti.services.subscriptions.behavior.BroadcastSignalEventActivityBehaviorInterceptor
+
+org.activiti.engine.impl.jobexecutor.JobHandler =\
+    org.activiti.services.subscriptions.impl.jobexecutor.BroadcastSignalJobHandler

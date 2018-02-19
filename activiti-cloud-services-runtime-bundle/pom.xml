@@ -19,5 +19,6 @@
     <module>activiti-cloud-services-rest-api</module>
     <module>activiti-cloud-services-rest-impl</module>
     <module>activiti-cloud-services-security-policies</module>
+    <module>activiti-cloud-services-subscriptions</module>
   </modules>
 </project>
