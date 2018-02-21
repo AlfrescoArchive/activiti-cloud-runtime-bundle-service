@@ -73,6 +73,7 @@ public class EventConverterContextIT {
                                                            "Task:" + ActivitiEventType.TASK_ASSIGNED.toString(),
                                                            "Task:" + ActivitiEventType.TASK_COMPLETED.toString(),
                                                            "Task:" + ActivitiEventType.TASK_CREATED.toString(),
+                                                           "TaskCandidateUser:" + ActivitiEventType.ENTITY_CREATED.toString(),
                                                            ActivitiEventType.SEQUENCEFLOW_TAKEN.toString(),
                                                            ActivitiEventType.VARIABLE_CREATED.toString(),
                                                            ActivitiEventType.VARIABLE_DELETED.toString(),
