@@ -14,11 +14,22 @@ public class MockTaskCandidateUserEvent extends MockProcessEngineEvent {
     public static ProcessEngineEvent[] aTaskCandidateUserAddedEvent(long timestamp,
                                                          TaskCandidateUser taskCandidateUser,
                                                          String processInstanceId) {
-        MockTaskCandidateUserEvent taskCreatedEvent = new MockTaskCandidateUserEvent(timestamp,
+        MockTaskCandidateUserEvent taskCandidateUserAddedEvent = new MockTaskCandidateUserEvent(timestamp,
                 "TaskCandidateUserAddedEvent");
-        taskCreatedEvent.setTaskCandidateUser(taskCandidateUser);
-        taskCreatedEvent.setProcessInstanceId(processInstanceId);
-        ProcessEngineEvent[] events = {taskCreatedEvent};
+        taskCandidateUserAddedEvent.setTaskCandidateUser(taskCandidateUser);
+        taskCandidateUserAddedEvent.setProcessInstanceId(processInstanceId);
+        ProcessEngineEvent[] events = {taskCandidateUserAddedEvent};
+        return events;
+    }
+
+    public static ProcessEngineEvent[] aTaskCandidateUserRemovedEvent(long timestamp,
+                                                                    TaskCandidateUser taskCandidateUser,
+                                                                    String processInstanceId) {
+        MockTaskCandidateUserEvent taskCandidateUserRemovedEvent = new MockTaskCandidateUserEvent(timestamp,
+                "TaskCandidateUserRemovedEvent");
+        taskCandidateUserRemovedEvent.setTaskCandidateUser(taskCandidateUser);
+        taskCandidateUserRemovedEvent.setProcessInstanceId(processInstanceId);
+        ProcessEngineEvent[] events = {taskCandidateUserRemovedEvent};
         return events;
     }
 
