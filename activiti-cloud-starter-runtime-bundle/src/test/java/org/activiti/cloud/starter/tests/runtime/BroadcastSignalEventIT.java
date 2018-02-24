@@ -39,4 +39,22 @@ public class BroadcastSignalEventIT {
         List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();
         assertThat(processInstances).isEmpty();
     }
+
+    @Test
+    public void shouldBroadcastSignalsByListener() throws Exception {
+        //when
+        ProcessInstance procInst1 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+        ProcessInstance procInst2 = runtimeService.startProcessInstanceByKey("broadcastSignalEventProcessByListener");
+        assertThat(procInst1).isNotNull();
+        assertThat(procInst2).isNotNull();
+
+        await("Broadcast Signals").untilAsserted(() -> {
+            List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();
+            assertThat(processInstances).isEmpty();
+        });
+
+        //then
+        List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();
+        assertThat(processInstances).isEmpty();
+    }
 }

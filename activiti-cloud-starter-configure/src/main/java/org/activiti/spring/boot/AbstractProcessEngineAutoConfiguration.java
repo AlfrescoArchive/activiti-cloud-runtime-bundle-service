@@ -36,6 +36,7 @@ import org.activiti.spring.SpringCallerRunsRejectedJobsHandler;
 import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.activiti.spring.SpringRejectedJobsHandler;
 import org.activiti.spring.bpmn.parser.CloudActivityBehaviorFactory;
+import org.activiti.spring.bpmn.parser.CloudListenerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -124,6 +125,8 @@ public abstract class AbstractProcessEngineAutoConfiguration
     }
     
     ((ProcessEngineConfigurationImpl) conf).setActivityBehaviorFactory(new CloudActivityBehaviorFactory());
+
+    ((ProcessEngineConfigurationImpl) conf).setListenerFactory(new CloudListenerFactory());
     
     ClassLoader classLoader=Thread.currentThread().getContextClassLoader();
     List<JobHandler> customJobHandlers = SpringFactoriesLoader.loadFactories(JobHandler.class, classLoader);
