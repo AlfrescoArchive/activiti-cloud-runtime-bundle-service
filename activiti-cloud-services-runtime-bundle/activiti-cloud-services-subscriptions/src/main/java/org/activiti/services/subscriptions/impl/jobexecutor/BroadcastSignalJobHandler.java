@@ -34,6 +34,6 @@ public class BroadcastSignalJobHandler implements JobHandler {
         String signalName = cfgJson.getString(JOB_HANDLER_CFG_SIGNAL_NAME);
         boolean isSignalAsync = cfgJson.getBoolean(JOB_HANDLER_CFG_IS_SIGNAL_ASYNC);
 
-        eventHandler.broadcastSignals(new BroadcastSignalEvent(signalName, isSignalAsync));
+        eventHandler.broadcastSignal(new BroadcastSignalEvent(signalName, isSignalAsync));
     }
 }

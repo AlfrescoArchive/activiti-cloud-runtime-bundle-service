@@ -29,7 +29,7 @@ public class BroadcastSignaEventHandler {
         }
     }
 
-    public void broadcastSignals(BroadcastSignalEvent event) {
+    public void broadcastSignal(BroadcastSignalEvent event) {
         Message<BroadcastSignalEvent> message = MessageBuilder.withPayload(event).build();
         resolver.resolveDestination("signalEvent").send(message);
     }

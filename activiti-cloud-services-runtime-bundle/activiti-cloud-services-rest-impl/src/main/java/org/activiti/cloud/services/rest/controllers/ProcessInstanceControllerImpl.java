@@ -30,11 +30,13 @@ import org.activiti.cloud.services.rest.api.ProcessInstanceController;
 import org.activiti.cloud.services.rest.api.resources.ProcessInstanceResource;
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.ActivitiObjectNotFoundException;
+import org.activiti.engine.ManagementService;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.image.ProcessDiagramGenerator;
 
 import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
+import org.activiti.cloud.services.api.commands.BroadcastSignalCmd;
 import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
@@ -65,6 +67,8 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     private final SecurityPoliciesApplicationService securityService;
 
+    private final ManagementService managementService;
+
     @ExceptionHandler(ActivitiForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public String handleAppException(ActivitiForbiddenException ex) {
@@ -83,12 +87,14 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
                                          RepositoryService repositoryService,
                                          ProcessDiagramGenerator processDiagramGenerator,
                                          ProcessInstanceResourceAssembler resourceAssembler,
-                                         SecurityPoliciesApplicationService securityService) {
+                                         SecurityPoliciesApplicationService securityService,
+                                         ManagementService managementService) {
         this.processEngine = processEngine;
         this.repositoryService = repositoryService;
         this.processDiagramGenerator = processDiagramGenerator;
         this.resourceAssembler = resourceAssembler;
         this.securityService = securityService;
+        this.managementService = managementService;
     }
 
     @Override
@@ -142,6 +148,12 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     @Override
     public ResponseEntity<Void> sendSignal(@RequestBody SignalProcessInstancesCmd cmd) {
         processEngine.signal(cmd);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<Void> broadcastSignal(@RequestBody BroadcastSignalCmd cmd) {
+        managementService.executeCommand(new org.activiti.services.subscription.impl.cmd.BroadcastSignalCmd(cmd.getName(), cmd.isSignalAsync(), null));
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

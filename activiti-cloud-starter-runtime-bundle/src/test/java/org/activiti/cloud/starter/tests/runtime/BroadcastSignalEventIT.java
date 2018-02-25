@@ -7,8 +7,10 @@ import java.util.List;
 
 import org.activiti.engine.ManagementService;
 import org.activiti.engine.RuntimeService;
+import org.activiti.engine.impl.interceptor.Command;
+import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.runtime.ProcessInstance;
-import org.activiti.services.subscription.impl.cmd.BroadcastSignalsCmd;
+import org.activiti.services.subscription.impl.cmd.BroadcastSignalCmd;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +70,29 @@ public class BroadcastSignalEventIT {
         //when
         ProcessInstance procInst1 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
         assertThat(procInst1).isNotNull();
-        managemenService.executeCommand(new BroadcastSignalsCmd("Test", false));
+        managemenService.executeCommand(new BroadcastSignalCmd("Test", false, null));
+
+        await("Broadcast Signals").untilAsserted(() -> {
+            List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();
+            assertThat(processInstances).isEmpty();
+        });
+
+        //then
+        List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();
+        assertThat(processInstances).isEmpty();
+    }
+
+    @Test
+    public void shouldBroadcastSignalsByCmdAsnc() throws Exception {
+        //when
+        ProcessInstance procInst1 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+        assertThat(procInst1).isNotNull();
+        managemenService.executeCommand(new Command<Void>() {
+            public Void execute(CommandContext commandContext) {
+                commandContext.getProcessEngineConfiguration().getCommandExecutor().execute(new BroadcastSignalCmd("Test", false, null));
+                return null;
+            }
+        });
 
         await("Broadcast Signals").untilAsserted(() -> {
             List<ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();

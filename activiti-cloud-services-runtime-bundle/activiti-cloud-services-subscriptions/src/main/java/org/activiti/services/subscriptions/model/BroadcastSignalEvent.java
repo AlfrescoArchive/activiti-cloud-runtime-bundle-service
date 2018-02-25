@@ -30,6 +30,5 @@ public class BroadcastSignalEvent {
     private String signalName;
 
     private boolean isSignalAsync;
-
 }
 

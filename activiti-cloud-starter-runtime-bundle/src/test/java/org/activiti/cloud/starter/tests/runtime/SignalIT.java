@@ -16,6 +16,7 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
+import org.activiti.cloud.services.api.commands.BroadcastSignalCmd;
 import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
 import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.ProcessInstance;
@@ -45,6 +46,7 @@ import java.util.Map;
 
 import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -114,6 +116,31 @@ public class SignalIT {
         ResponseEntity<Resource<Map<String, Object>>> variablesEntity = processInstanceRestTemplate.getVariables(startProcessEntity);
         assertThat(variablesEntity.getBody().getContent()).containsEntry("myVar",
                 "myContent");
+    }
+
+    @Test
+    public void shouldBroadcastSignals() throws Exception {
+        //given
+        ResponseEntity<ProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIGNAL_PROCESS));
+        BroadcastSignalCmd broadcastSignalCmd = new BroadcastSignalCmd("go", false);
+
+        //when
+        ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/broadcast-signal",
+                HttpMethod.POST,
+                new HttpEntity(broadcastSignalCmd),
+                new ParameterizedTypeReference<Void>() {
+                });
+
+        //then
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        await("Broadcast Signals").untilAsserted(() -> {
+            ResponseEntity<PagedResources<Task>> taskEntity = processInstanceRestTemplate.getTasks(startProcessEntity);
+            assertThat(taskEntity.getBody().getContent()).extracting(Task::getName).containsExactly("Boundary target");
+        });
+
+        ResponseEntity<PagedResources<Task>> taskEntity = processInstanceRestTemplate.getTasks(startProcessEntity);
+        assertThat(taskEntity.getBody().getContent()).extracting(Task::getName).containsExactly("Boundary target");
     }
 
     private ResponseEntity<PagedResources<ProcessDefinition>> getProcessDefinitions() {
