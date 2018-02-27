@@ -27,6 +27,7 @@ import org.activiti.engine.TaskService;
 import org.activiti.engine.UserGroupLookupProxy;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
 import org.activiti.engine.integration.IntegrationContextService;
+import org.activiti.engine.impl.bpmn.parser.factory.ActivityBehaviorFactory;
 import org.activiti.engine.impl.persistence.StrongUuidGenerator;
 import org.activiti.spring.ProcessEngineFactoryBean;
 import org.activiti.spring.SpringAsyncExecutor;
@@ -51,6 +52,8 @@ public abstract class AbstractProcessEngineAutoConfiguration
         extends AbstractProcessEngineConfiguration {
 
   protected ActivitiProperties activitiProperties;
+  
+  private ActivityBehaviorFactory activityBehaviorFactory;
 
   @Autowired
   private ResourcePatternResolver resourceLoader;
@@ -118,6 +121,10 @@ public abstract class AbstractProcessEngineAutoConfiguration
       conf.setIdGenerator(new StrongUuidGenerator());
     }
     
+    if (activityBehaviorFactory != null) {
+      conf.setActivityBehaviorFactory(activityBehaviorFactory);
+    }
+    
     if (processEngineConfigurationConfigurer != null) {
     	processEngineConfigurationConfigurer.configure(conf);
     }
@@ -152,6 +159,14 @@ public abstract class AbstractProcessEngineAutoConfiguration
 
   protected ActivitiProperties getActivitiProperties() {
     return this.activitiProperties;
+  }
+  
+  public void setActivityBehaviorFactory(ActivityBehaviorFactory activityBehaviorFactory) {
+    this.activityBehaviorFactory = activityBehaviorFactory;
+  }
+  
+  public ActivityBehaviorFactory getActivityBehaviorFactory() {
+    return this.activityBehaviorFactory;
   }
 
 
