@@ -15,16 +15,19 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import org.activiti.cloud.services.api.model.ProcessInstanceVariables;
+import org.activiti.cloud.services.rest.api.ProcessInstanceVariableController;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceVariablesResourceAssembler;
 import org.activiti.engine.RuntimeService;
-
-import org.activiti.cloud.services.rest.api.ProcessInstanceVariableController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Resource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -48,5 +51,23 @@ public class ProcessInstanceVariableControllerImpl implements ProcessInstanceVar
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
         return variableResourceBuilder.toResource(new ProcessInstanceVariables(processInstanceId,
                                                                                variables));
+    }
+
+    @Override
+    public ResponseEntity<Void> setVariables(@PathVariable String processInstanceId,
+                                             @RequestBody ProcessInstanceVariables variables) {
+        this.runtimeService.setVariables(processInstanceId,
+                                         variables.getVariables());
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<Void> removeVariables(@PathVariable String processInstanceId,
+                                                @RequestBody ArrayList<String> variablesNames) {
+        this.runtimeService.removeVariables(processInstanceId,
+                                            variablesNames);
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }
