@@ -34,6 +34,7 @@ import org.activiti.spring.SpringAsyncExecutor;
 import org.activiti.spring.SpringCallerRunsRejectedJobsHandler;
 import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.activiti.spring.SpringRejectedJobsHandler;
+import org.activiti.spring.integration.RuntimeBundleActivityBehaviorFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
@@ -123,6 +124,8 @@ public abstract class AbstractProcessEngineAutoConfiguration
     
     if (activityBehaviorFactory != null) {
       conf.setActivityBehaviorFactory(activityBehaviorFactory);
+    } else {
+      conf.setActivityBehaviorFactory(new RuntimeBundleActivityBehaviorFactory());
     }
     
     if (processEngineConfigurationConfigurer != null) {
