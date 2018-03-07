@@ -16,9 +16,11 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
-import org.activiti.cloud.services.api.commands.CompleteTaskCmd;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.activiti.cloud.services.api.model.ProcessDefinition;
-import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.services.identity.keycloak.interceptor.KeycloakSecurityContextClientRequestInterceptor;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
@@ -30,18 +32,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.PagedResources;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,12 +49,9 @@ public class AdminTasksIT {
 
     private static final String ADMIN_TASKS_URL = "/admin/v1/tasks/";
     private static final String SIMPLE_PROCESS = "SimpleProcess";
-    private static final ParameterizedTypeReference<Task> TASK_RESPONSE_TYPE = new ParameterizedTypeReference<Task>() {
-    };
-    public static final ParameterizedTypeReference<PagedResources<Task>> PAGED_TASKS_RESPONSE_TYPE = new ParameterizedTypeReference<PagedResources<Task>>() {
+    private static final ParameterizedTypeReference<PagedResources<Task>> PAGED_TASKS_RESPONSE_TYPE = new ParameterizedTypeReference<PagedResources<Task>>() {
     };
     public static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
-
 
     @Autowired
     private TestRestTemplate testRestTemplate;
@@ -71,18 +64,17 @@ public class AdminTasksIT {
 
     private Map<String, String> processDefinitionIds = new HashMap<>();
 
-
     @Before
-    public void setUp() throws Exception{
+    public void setUp() throws Exception {
         keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hruser");
-
 
         ResponseEntity<PagedResources<ProcessDefinition>> processDefinitions = getProcessDefinitions();
         assertThat(processDefinitions.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         assertThat(processDefinitions.getBody().getContent()).isNotNull();
-        for(ProcessDefinition pd : processDefinitions.getBody().getContent()){
-            processDefinitionIds.put(pd.getName(), pd.getId());
+        for (ProcessDefinition pd : processDefinitions.getBody().getContent()) {
+            processDefinitionIds.put(pd.getName(),
+                                     pd.getId());
         }
     }
 
@@ -106,9 +98,9 @@ public class AdminTasksIT {
 
     private ResponseEntity<PagedResources<Task>> executeRequestGetTasks() {
         return testRestTemplate.exchange(ADMIN_TASKS_URL,
-                HttpMethod.GET,
-                null,
-                PAGED_TASKS_RESPONSE_TYPE);
+                                         HttpMethod.GET,
+                                         null,
+                                         PAGED_TASKS_RESPONSE_TYPE);
     }
 
     private ResponseEntity<PagedResources<ProcessDefinition>> getProcessDefinitions() {
@@ -116,8 +108,8 @@ public class AdminTasksIT {
         };
 
         return testRestTemplate.exchange(PROCESS_DEFINITIONS_URL,
-                HttpMethod.GET,
-                null,
-                responseType);
+                                         HttpMethod.GET,
+                                         null,
+                                         responseType);
     }
 }

@@ -8,7 +8,6 @@ import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.impl.ActivitiEntityEventImpl;
 import org.activiti.engine.task.IdentityLink;
 import org.activiti.engine.task.IdentityLinkType;
-import org.activiti.engine.task.Task;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -78,5 +77,4 @@ public class TaskCandidateUserAddedEventConverterTest {
         //then
         assertThat(activitiEventType).isEqualTo(getPrefix(activitiEvent) + ActivitiEventType.ENTITY_CREATED);
     }
-
 }
