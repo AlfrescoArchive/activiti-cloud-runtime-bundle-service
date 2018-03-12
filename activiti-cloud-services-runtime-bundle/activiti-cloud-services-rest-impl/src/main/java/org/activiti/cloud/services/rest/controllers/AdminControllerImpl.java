@@ -16,7 +16,6 @@
 package org.activiti.cloud.services.rest.controllers;
 
 import org.activiti.cloud.services.api.model.Task;
-import org.activiti.cloud.services.core.AuthenticationWrapper;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.activiti.cloud.services.rest.api.AdminController;
 import org.activiti.cloud.services.rest.api.resources.TaskResource;
@@ -35,13 +34,9 @@ public class AdminControllerImpl implements AdminController {
 
     private final TaskResourceAssembler taskResourceAssembler;
 
-    private AuthenticationWrapper authenticationWrapper;
-
     @Autowired
     public AdminControllerImpl(ProcessEngineWrapper processEngine,
-                               TaskResourceAssembler taskResourceAssembler,
-                               AuthenticationWrapper authenticationWrapper) {
-        this.authenticationWrapper = authenticationWrapper;
+                               TaskResourceAssembler taskResourceAssembler) {
         this.processEngine = processEngine;
         this.taskResourceAssembler = taskResourceAssembler;
     }
@@ -54,11 +49,4 @@ public class AdminControllerImpl implements AdminController {
                                                   taskResourceAssembler);
     }
 
-    public AuthenticationWrapper getAuthenticationWrapper() {
-        return authenticationWrapper;
-    }
-
-    public void setAuthenticationWrapper(AuthenticationWrapper authenticationWrapper) {
-        this.authenticationWrapper = authenticationWrapper;
-    }
 }
