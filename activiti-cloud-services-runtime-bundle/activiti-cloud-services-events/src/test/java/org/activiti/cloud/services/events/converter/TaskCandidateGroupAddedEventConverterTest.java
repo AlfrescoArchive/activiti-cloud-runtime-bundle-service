@@ -22,10 +22,10 @@ import static org.mockito.MockitoAnnotations.initMocks;
 public class TaskCandidateGroupAddedEventConverterTest {
 
     @InjectMocks
-    private TaskCandidateGroupAddedEventConverter taskCandidateUserAddedEventConverter;
+    private TaskCandidateGroupAddedEventConverter taskCandidateGroupAddedEventConverter;
 
     @Mock
-    private TaskCandidateGroupConverter taskCandidateUserConverter;
+    private TaskCandidateGroupConverter taskCandidateGroupConverter;
 
     @Mock
     private RuntimeBundleProperties runtimeBundleProperties;
@@ -48,12 +48,12 @@ public class TaskCandidateGroupAddedEventConverterTest {
         given(activitiEvent.getEntity()).willReturn(internalIdentityLink);
 
         org.activiti.cloud.services.api.model.TaskCandidateGroup externalTaskCandidateGroup = mock(org.activiti.cloud.services.api.model.TaskCandidateGroup.class);
-        given(taskCandidateUserConverter.from(internalIdentityLink)).willReturn(externalTaskCandidateGroup);
+        given(taskCandidateGroupConverter.from(internalIdentityLink)).willReturn(externalTaskCandidateGroup);
 
         given(runtimeBundleProperties.getName()).willReturn("myApp");
 
         //when
-        ProcessEngineEvent pee = taskCandidateUserAddedEventConverter.from(activitiEvent);
+        ProcessEngineEvent pee = taskCandidateGroupAddedEventConverter.from(activitiEvent);
 
         //then
         assertThat(pee).isInstanceOf(TaskCandidateGroupAddedEvent.class);
@@ -64,11 +64,12 @@ public class TaskCandidateGroupAddedEventConverterTest {
         assertThat(((TaskCandidateGroupAddedEvent) pee).getTaskCandidateGroup()).isEqualTo(externalTaskCandidateGroup);
     }
 
+
     @Test
     public void handledTypeShouldReturnTaskCandidateGroup() throws Exception {
         //when
-        String activitiEventType = taskCandidateUserAddedEventConverter.handledType();
-        TaskCandidateGroupAddedEvent activitiEvent = mock(TaskCandidateGroupAddedEvent.class);
+        String activitiEventType = taskCandidateGroupAddedEventConverter.handledType();
+        ActivitiEntityEventImpl activitiEvent = mock(ActivitiEntityEventImpl.class);
         given(activitiEvent.getType()).willReturn(ActivitiEventType.ENTITY_CREATED);
         IdentityLink internalIdentityLink = mock(IdentityLink.class);
         given(activitiEvent.getEntity()).willReturn(internalIdentityLink);

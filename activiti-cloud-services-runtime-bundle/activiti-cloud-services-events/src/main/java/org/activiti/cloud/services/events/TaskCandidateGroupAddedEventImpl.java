@@ -1,7 +1,6 @@
 package org.activiti.cloud.services.events;
 
 import org.activiti.cloud.services.api.model.TaskCandidateGroup;
-import org.activiti.engine.delegate.event.ActivitiEventType;
 
 public class TaskCandidateGroupAddedEventImpl extends AbstractProcessEngineEvent implements TaskCandidateGroupAddedEvent {
 
@@ -31,13 +30,4 @@ public class TaskCandidateGroupAddedEventImpl extends AbstractProcessEngineEvent
         return "TaskCandidateGroupAddedEvent";
     }
 
-    @Override
-    public Object getEntity() {
-        return taskCandidateGroup;
-    }
-
-    @Override
-    public ActivitiEventType getType() {
-        return ActivitiEventType.ENTITY_CREATED;
-    }
 }

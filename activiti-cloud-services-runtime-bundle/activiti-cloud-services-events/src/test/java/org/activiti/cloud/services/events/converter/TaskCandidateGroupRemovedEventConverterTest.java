@@ -22,10 +22,10 @@ import static org.mockito.MockitoAnnotations.initMocks;
 public class TaskCandidateGroupRemovedEventConverterTest {
 
     @InjectMocks
-    private TaskCandidateGroupRemovedEventConverter taskCandidateUserRemovedEventConverter;
+    private TaskCandidateGroupRemovedEventConverter taskCandidateGroupRemovedEventConverter;
 
     @Mock
-    private TaskCandidateGroupConverter taskCandidateUserConverter;
+    private TaskCandidateGroupConverter taskCandidateGroupConverter;
 
     @Mock
     private RuntimeBundleProperties runtimeBundleProperties;
@@ -48,12 +48,12 @@ public class TaskCandidateGroupRemovedEventConverterTest {
         given(activitiEvent.getEntity()).willReturn(internalIdentityLink);
 
         org.activiti.cloud.services.api.model.TaskCandidateGroup externalTaskCandidateGroup = mock(org.activiti.cloud.services.api.model.TaskCandidateGroup.class);
-        given(taskCandidateUserConverter.from(internalIdentityLink)).willReturn(externalTaskCandidateGroup);
+        given(taskCandidateGroupConverter.from(internalIdentityLink)).willReturn(externalTaskCandidateGroup);
 
         given(runtimeBundleProperties.getName()).willReturn("myApp");
 
         //when
-        ProcessEngineEvent pee = taskCandidateUserRemovedEventConverter.from(activitiEvent);
+        ProcessEngineEvent pee = taskCandidateGroupRemovedEventConverter.from(activitiEvent);
 
         //then
         assertThat(pee).isInstanceOf(TaskCandidateGroupRemovedEvent.class);
@@ -67,8 +67,8 @@ public class TaskCandidateGroupRemovedEventConverterTest {
     @Test
     public void handledTypeShouldReturnTaskCandidateGroup() throws Exception {
         //when
-        String activitiEventType = taskCandidateUserRemovedEventConverter.handledType();
-        TaskCandidateGroupRemovedEvent activitiEvent = mock(TaskCandidateGroupRemovedEvent.class);
+        String activitiEventType = taskCandidateGroupRemovedEventConverter.handledType();
+        ActivitiEntityEventImpl activitiEvent = mock(ActivitiEntityEventImpl.class);
         given(activitiEvent.getType()).willReturn(ActivitiEventType.ENTITY_DELETED);
         IdentityLink internalIdentityLink = mock(IdentityLink.class);
         given(activitiEvent.getEntity()).willReturn(internalIdentityLink);
@@ -77,5 +77,4 @@ public class TaskCandidateGroupRemovedEventConverterTest {
         //then
         assertThat(activitiEventType).isEqualTo(getPrefix(activitiEvent) + ActivitiEventType.ENTITY_DELETED);
     }
-
 }

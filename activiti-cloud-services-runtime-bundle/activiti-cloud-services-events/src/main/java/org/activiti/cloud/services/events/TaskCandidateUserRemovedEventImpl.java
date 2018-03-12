@@ -31,13 +31,4 @@ public class TaskCandidateUserRemovedEventImpl extends AbstractProcessEngineEven
         return "TaskCandidateUserRemovedEvent";
     }
 
-    @Override
-    public Object getEntity() {
-        return taskCandidateUser;
-    }
-
-    @Override
-    public ActivitiEventType getType() {
-        return ActivitiEventType.ENTITY_DELETED;
-    }
 }

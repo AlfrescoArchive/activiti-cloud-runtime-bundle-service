@@ -31,13 +31,4 @@ public class TaskCandidateGroupRemovedEventImpl extends AbstractProcessEngineEve
         return "TaskCandidateGroupRemovedEvent";
     }
 
-    @Override
-    public Object getEntity() {
-        return taskCandidateGroup;
-    }
-
-    @Override
-    public ActivitiEventType getType() {
-        return ActivitiEventType.ENTITY_DELETED;
-    }
 }

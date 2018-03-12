@@ -64,11 +64,13 @@ public class TaskCandidateUserRemovedEventConverterTest {
         assertThat(((TaskCandidateUserRemovedEvent) pee).getTaskCandidateUser()).isEqualTo(externalTaskCandidateUser);
     }
 
+
+
     @Test
     public void handledTypeShouldReturnTaskCandidateUser() throws Exception {
         //when
         String activitiEventType = taskCandidateUserRemovedEventConverter.handledType();
-        TaskCandidateUserRemovedEvent activitiEvent = mock(TaskCandidateUserRemovedEvent.class);
+        ActivitiEntityEventImpl activitiEvent = mock(ActivitiEntityEventImpl.class);
         given(activitiEvent.getType()).willReturn(ActivitiEventType.ENTITY_DELETED);
         IdentityLink internalIdentityLink = mock(IdentityLink.class);
         given(activitiEvent.getEntity()).willReturn(internalIdentityLink);
