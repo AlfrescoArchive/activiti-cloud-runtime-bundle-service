@@ -16,6 +16,11 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
 import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.junit.Test;
@@ -33,11 +38,6 @@ import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
 
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
@@ -57,7 +57,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ComponentScan(basePackages = {"org.activiti.cloud.services.rest.assemblers", "org.activiti.cloud.alfresco"})
 public class AdminControllerImplIT {
 
-    private static final String DOCUMENTATION_IDENTIFIER = "task";
+    private static final String DOCUMENTATION_IDENTIFIER = "task-admin";
 
     @Autowired
     private MockMvc mockMvc;
