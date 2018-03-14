@@ -1,13 +1,13 @@
 package org.activiti.cloud.services.api.converter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.activiti.cloud.services.api.model.TaskCandidateUser;
 import org.activiti.cloud.services.api.model.converter.ListConverter;
 import org.activiti.cloud.services.api.model.converter.TaskCandidateUserConverter;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -17,11 +17,9 @@ public class TaskCandidateUserConverterTest {
 
     private TaskCandidateUserConverter taskCandidateUserConverter;
 
-    private ListConverter listConverter;
-
     @Before
     public void setUp() throws Exception {
-        listConverter = new ListConverter();
+        ListConverter listConverter = new ListConverter();
         taskCandidateUserConverter = new TaskCandidateUserConverter(listConverter);
     }
 

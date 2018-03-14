@@ -1,7 +1,6 @@
 package org.activiti.cloud.services.events;
 
 import org.activiti.cloud.services.api.model.TaskCandidateGroup;
-import org.activiti.engine.delegate.event.ActivitiEventType;
 
 public class TaskCandidateGroupRemovedEventImpl extends AbstractProcessEngineEvent implements TaskCandidateGroupRemovedEvent {
 
@@ -16,9 +15,9 @@ public class TaskCandidateGroupRemovedEventImpl extends AbstractProcessEngineEve
                                               String processInstanceId,
                                               TaskCandidateGroup taskCandidateGroup) {
         super(applicationName,
-                executionId,
-                processDefinitionId,
-                processInstanceId);
+              executionId,
+              processDefinitionId,
+              processInstanceId);
         this.taskCandidateGroup = taskCandidateGroup;
     }
 
@@ -30,5 +29,4 @@ public class TaskCandidateGroupRemovedEventImpl extends AbstractProcessEngineEve
     public String getEventType() {
         return "TaskCandidateGroupRemovedEvent";
     }
-
 }
