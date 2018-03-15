@@ -3,6 +3,7 @@ package org.activiti.cloud.services.rest.api;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.activiti.cloud.services.api.commands.SetProcessVariablesCmd;
 import org.activiti.cloud.services.api.model.ProcessInstanceVariables;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.Resource;
@@ -21,7 +22,7 @@ public interface ProcessInstanceVariableController {
 
     @RequestMapping(method = RequestMethod.POST)
     ResponseEntity<Void> setVariables(@PathVariable String processInstanceId,
-                                      @RequestBody ProcessInstanceVariables variables);
+                                      @RequestBody(required = true) SetProcessVariablesCmd setTaskVariablesCmd);
 
     @RequestMapping(method = RequestMethod.DELETE)
     ResponseEntity<Void> removeVariables(@PathVariable String processInstanceId,
