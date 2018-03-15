@@ -16,6 +16,8 @@
 
 package org.activiti.cloud.starter.tests.helper;
 
+import org.activiti.cloud.services.api.commands.SetProcessVariablesCmd;
+import org.activiti.cloud.services.api.commands.SetTaskVariablesCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.Task;
@@ -129,6 +131,21 @@ public class ProcessInstanceRestTemplate {
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<ProcessInstance>() {
+                });
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return responseEntity;
+    }
+
+    public ResponseEntity<Void> setVariables(String processId, Map<String, Object> variables) {
+        SetProcessVariablesCmd processVariablesCmd = new SetProcessVariablesCmd(processId, variables);
+
+        HttpEntity<SetProcessVariablesCmd> requestEntity = new HttpEntity<>(
+                processVariablesCmd,
+                null);
+        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + processId + "/variables/",
+                HttpMethod.POST,
+                requestEntity,
+                new ParameterizedTypeReference<Void>() {
                 });
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
