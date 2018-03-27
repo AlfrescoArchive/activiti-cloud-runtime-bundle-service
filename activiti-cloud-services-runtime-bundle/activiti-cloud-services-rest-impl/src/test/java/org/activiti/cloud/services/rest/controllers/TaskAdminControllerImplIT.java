@@ -50,12 +50,12 @@ import static org.springframework.restdocs.payload.PayloadDocumentation.subsecti
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
-@WebMvcTest(AdminControllerImpl.class)
+@WebMvcTest(TaskAdminControllerImpl.class)
 @EnableSpringDataWebSupport
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs(outputDir = "target/snippets")
 @ComponentScan(basePackages = {"org.activiti.cloud.services.rest.assemblers", "org.activiti.cloud.alfresco"})
-public class AdminControllerImplIT {
+public class TaskAdminControllerImplIT {
 
     private static final String DOCUMENTATION_IDENTIFIER = "task-admin";
 
