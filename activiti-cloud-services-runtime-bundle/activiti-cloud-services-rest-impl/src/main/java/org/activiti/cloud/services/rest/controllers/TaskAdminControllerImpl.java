@@ -16,12 +16,9 @@
 package org.activiti.cloud.services.rest.controllers;
 
 import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
-import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.activiti.cloud.services.rest.api.TaskAdminController;
-import org.activiti.cloud.services.rest.api.resources.ProcessDefinitionResource;
-import org.activiti.cloud.services.rest.api.resources.ProcessInstanceResource;
 import org.activiti.cloud.services.rest.api.resources.TaskResource;
 import org.activiti.cloud.services.rest.assemblers.TaskResourceAssembler;
 import org.springframework.beans.factory.annotation.Autowired;

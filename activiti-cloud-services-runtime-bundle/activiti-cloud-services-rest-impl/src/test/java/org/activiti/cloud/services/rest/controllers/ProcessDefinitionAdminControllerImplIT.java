@@ -16,18 +16,8 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import org.activiti.bpmn.model.BpmnModel;
-import org.activiti.bpmn.model.Process;
 import org.activiti.cloud.services.api.model.ProcessDefinition;
-import org.activiti.cloud.services.api.model.converter.ProcessDefinitionConverter;
-import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.cloud.services.core.pageable.PageableRepositoryService;
-import org.activiti.cloud.services.rest.api.ProcessDefinitionMetaController;
-import org.activiti.cloud.services.security.SecurityPolicy;
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntityImpl;
-import org.activiti.engine.repository.ProcessDefinitionQuery;
-import org.activiti.image.ProcessDiagramGenerator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,8 +36,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -55,11 +43,8 @@ import java.util.UUID;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
-import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.processDefinitionFields;
-import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.processDefinitionIdParameter;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.halLinks;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
@@ -87,22 +72,8 @@ public class ProcessDefinitionAdminControllerImplIT {
     private MockMvc mockMvc;
 
     @MockBean
-    private SecurityPoliciesApplicationService securityPoliciesApplicationService;
-
-    @MockBean
-    private RepositoryService repositoryService;
-
-    @MockBean
-    private ProcessDiagramGenerator processDiagramGenerator;
-
-    @MockBean
-    private ProcessDefinitionConverter processDefinitionConverter;
-
-    @MockBean
     private PageableRepositoryService pageableRepositoryService;
 
-    @MockBean
-    private ProcessDefinitionMetaController processDefinitionMetaController;
 
     @Test
     public void getProcessDefinitions() throws Exception {
