@@ -86,6 +86,26 @@ public class SecurityPoliciesApplicationServiceTest {
     }
 
     @Test
+    public void shouldNotRestrictQueryWhenPolicyIsWildcard(){
+        ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
+
+        when(securityPoliciesService.policiesDefined()).thenReturn(true);
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
+
+        when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(Arrays.asList("hr"));
+        when(securityPoliciesService.getWildcard()).thenReturn("*");
+
+        Map<String,Set<String>> map = new HashMap<String,Set<String>>();
+        map.put("rb1",new HashSet(Arrays.asList(securityPoliciesService.getWildcard())));
+        when(securityPoliciesService.getProcessDefinitionKeys(any(),any(),any(SecurityPolicy.class))).thenReturn(map);
+
+        securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
+
+        assertThat(securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ)).isEqualTo(query);
+
+    }
+
+    @Test
     public void shouldHavePermissionWhenDefIsInPolicy(){
         List<String> groups = Arrays.asList("hr");
 
@@ -96,6 +116,25 @@ public class SecurityPoliciesApplicationServiceTest {
         when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(groups);
         Map<String,Set<String>> map = new HashMap<String,Set<String>>();
         map.put("rb1",new HashSet(Arrays.asList("key")));
+        when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.WRITE)).thenReturn(map);
+        when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.READ)).thenReturn(map);
+
+        assertThat(securityPoliciesApplicationService.canWrite("key")).isTrue();
+        assertThat(securityPoliciesApplicationService.canRead("key")).isTrue();
+    }
+
+    @Test
+    public void shouldHavePermissionWhenDefIsIsCoveredByWildcard(){
+        List<String> groups = Arrays.asList("hr");
+
+        when(securityPoliciesService.policiesDefined()).thenReturn(true);
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
+        when(userRoleLookupProxy.isAdmin("bob")).thenReturn(false);
+        when(securityPoliciesService.getWildcard()).thenReturn("*");
+
+        when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(groups);
+        Map<String,Set<String>> map = new HashMap<String,Set<String>>();
+        map.put("rb1",new HashSet(Arrays.asList(securityPoliciesService.getWildcard())));
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.WRITE)).thenReturn(map);
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.READ)).thenReturn(map);
 

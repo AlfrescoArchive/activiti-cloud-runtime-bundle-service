@@ -38,7 +38,14 @@ public class SecurityPoliciesApplicationService {
 
         Set<String> keys = definitionKeysAllowedForRBPolicy(securityPolicy);
 
-        if(keys != null && !keys.isEmpty()){ //restrict query to only these keys
+
+        if(keys != null && !keys.isEmpty()){
+
+            if(keys.contains(securityPoliciesService.getWildcard())){
+                return query;
+            }
+
+            //restrict query to only these keys
             return query.processDefinitionKeys(keys);
         }
         if((keys != null || !keys.isEmpty()) && securityPoliciesService.policiesDefined()){
@@ -83,6 +90,11 @@ public class SecurityPoliciesApplicationService {
         Set<String> keys = definitionKeysAllowedForRBPolicy(securityPolicy);
 
         if(keys != null && !keys.isEmpty()){
+
+            if(keys.contains(securityPoliciesService.getWildcard())){
+                return query;
+            }
+
             return query.processDefinitionKeys(keys);
         }
 
@@ -114,7 +126,7 @@ public class SecurityPoliciesApplicationService {
 
         Set<String> keys = definitionKeysAllowedForRBPolicy(securityPolicy);
 
-        return (keys != null && keys.contains(processDefId));
+        return (keys != null && (keys.contains(processDefId) || keys.contains(securityPoliciesService.getWildcard()) ));
     }
 
 }
