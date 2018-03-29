@@ -7,7 +7,8 @@
     <artifactId>activiti-cloud-runtime-bundle-service-parent</artifactId>
     <version>7-201803-EA-SNAPSHOT</version>
   </parent>
-  <artifactId>activiti-spring-boot-stareter-basic</artifactId>
+  <groupId>org.activiti</groupId>
+  <artifactId>activiti-spring-boot-starter-basic</artifactId>
   <name>Activiti Cloud Starter :: Runtime Bundle</name>
   <dependencies>
     <dependency>
