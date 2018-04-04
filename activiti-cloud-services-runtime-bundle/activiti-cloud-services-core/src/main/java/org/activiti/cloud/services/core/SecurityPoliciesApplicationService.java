@@ -88,6 +88,7 @@ public class SecurityPoliciesApplicationService {
             return restrictionApplier.restrictToKeys(query, keys);
         }
 
+        //policies are in place but if we've got here then none for this user
         if(keys != null && securityPoliciesService.policiesDefined()) {
             restrictionApplier.denyAll(query);
         }
