@@ -20,7 +20,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.activiti.engine.runtime.ProcessInstanceQuery;
+import org.springframework.stereotype.Component;
 
+@Component
 public class SecurityPoliciesProcessInstanceRestrictionApplier implements SecurityPoliciesRestrictionApplier<ProcessInstanceQuery> {
 
     @Override
