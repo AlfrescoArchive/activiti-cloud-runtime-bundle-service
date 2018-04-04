@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.security.SecurityPoliciesService;
 import org.activiti.cloud.services.security.SecurityPolicy;
 import org.activiti.engine.UserGroupLookupProxy;
@@ -50,6 +51,9 @@ public class SecurityPoliciesApplicationServiceTest {
     @Mock
     private SecurityPoliciesProcessInstanceRestrictionApplier processInstanceRestrictionApplier;
 
+    @Mock
+    private RuntimeBundleProperties runtimeBundleProperties;
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -76,7 +80,7 @@ public class SecurityPoliciesApplicationServiceTest {
     }
 
     @Test
-    public void shouldRestrictQueryWhenGroupsAndPoliciesAvailable(){
+    public void shouldRestrictQueryWhenGroupsAndPoliciesAvailableForRB(){
         ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
 
         when(securityPoliciesService.policiesDefined()).thenReturn(true);
@@ -86,11 +90,50 @@ public class SecurityPoliciesApplicationServiceTest {
         Map<String,Set<String>> map = new HashMap<>();
         map.put("rb1", Collections.singleton("key"));
         when(securityPoliciesService.getProcessDefinitionKeys(any(),any(),any(SecurityPolicy.class))).thenReturn(map);
+        when(runtimeBundleProperties.getName()).thenReturn("rb1");
 
         securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
 
         verify(processDefinitionRestrictionApplier).restrictToKeys(any(), anySet());
 
+    }
+
+
+    @Test
+    public void shouldRestrictQueryWhenGroupsAndPoliciesAvailableAndHaveNoRBName(){
+        ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
+
+        when(securityPoliciesService.policiesDefined()).thenReturn(true);
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
+
+        when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(Arrays.asList("hr"));
+        Map<String,Set<String>> map = new HashMap<>();
+        map.put("rb1", Collections.singleton("key"));
+        when(securityPoliciesService.getProcessDefinitionKeys(any(),any(),any(SecurityPolicy.class))).thenReturn(map);
+        when(runtimeBundleProperties.getName()).thenReturn(null);
+
+        securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
+
+        verify(processDefinitionRestrictionApplier).restrictToKeys(any(), anySet());
+
+    }
+
+    @Test
+    public void shouldOnlyUsePoliciesForThisRB(){
+        ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
+
+        when(securityPoliciesService.policiesDefined()).thenReturn(true);
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
+
+        when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(Arrays.asList("hr"));
+        Map<String,Set<String>> map = new HashMap<>();
+        map.put("rb1", Collections.singleton("key"));
+        when(securityPoliciesService.getProcessDefinitionKeys(any(),any(),any(SecurityPolicy.class))).thenReturn(map);
+        when(runtimeBundleProperties.getName()).thenReturn("rb2");
+
+        securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
+
+        verify(processDefinitionRestrictionApplier).denyAll(any());
     }
 
     @Test

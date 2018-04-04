@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.security.SecurityPoliciesService;
 import org.activiti.cloud.services.security.SecurityPolicy;
 import org.activiti.engine.UserGroupLookupProxy;
@@ -37,6 +38,9 @@ public class SecurityPoliciesApplicationService {
     @Autowired
     private SecurityPoliciesProcessInstanceRestrictionApplier processInstanceRestrictionApplier;
 
+    @Autowired(required = false)
+    private RuntimeBundleProperties runtimeBundleProperties;
+
     public ProcessDefinitionQuery restrictProcessDefQuery(ProcessDefinitionQuery query, SecurityPolicy securityPolicy){
 
         return restrictQuery(query, processDefinitionRestrictionApplier, securityPolicy);
@@ -47,12 +51,14 @@ public class SecurityPoliciesApplicationService {
     }
 
     private Set<String> definitionKeysAllowedForRBPolicy(SecurityPolicy securityPolicy) {
-        //this is an RB restriction and for RB we don't care about appName, just aggregate all the keys
         Map<String,Set<String>> restrictions = definitionKeysAllowedForPolicy(securityPolicy);
         Set<String> keys = new HashSet<>();
 
         for(String appName:restrictions.keySet()) {
-            keys.addAll(restrictions.get(appName));
+            //if we don't know our own appName (just being defensive) then don't filter but if we do then only take policies for this app
+            if((runtimeBundleProperties==null || runtimeBundleProperties.getName()==null) || (appName!=null && appName.replace("-","").equalsIgnoreCase(runtimeBundleProperties.getName().replace("-","")))) {
+                keys.addAll(restrictions.get(appName));
+            }
         }
         return keys;
     }
