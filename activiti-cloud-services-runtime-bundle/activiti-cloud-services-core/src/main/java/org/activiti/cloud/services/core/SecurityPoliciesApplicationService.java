@@ -55,8 +55,11 @@ public class SecurityPoliciesApplicationService {
         Set<String> keys = new HashSet<>();
 
         for(String appName:restrictions.keySet()) {
-            //if we don't know our own appName (just being defensive) then don't filter but if we do then only take policies for this app
-            if((runtimeBundleProperties==null || runtimeBundleProperties.getName()==null) || (appName!=null && appName.replace("-","").equalsIgnoreCase(runtimeBundleProperties.getName().replace("-","")))) {
+            //only take policies for this app
+            //or if we don't know our own appName (just being defensive) then include everything
+            //ignore hyphens and case due to values getting set via env vars
+            if((runtimeBundleProperties==null || runtimeBundleProperties.getName()==null) ||
+                    (appName!=null && appName.replace("-","").equalsIgnoreCase(runtimeBundleProperties.getName().replace("-","")))) {
                 keys.addAll(restrictions.get(appName));
             }
         }
