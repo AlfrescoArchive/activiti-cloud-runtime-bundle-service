@@ -1,7 +1,14 @@
 package org.activiti.cloud.services.core;
 
-import org.activiti.cloud.services.security.SecurityPolicy;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.activiti.cloud.services.security.SecurityPoliciesService;
+import org.activiti.cloud.services.security.SecurityPolicy;
 import org.activiti.engine.UserGroupLookupProxy;
 import org.activiti.engine.UserRoleLookupProxy;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
@@ -11,17 +18,12 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anySet;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class SecurityPoliciesApplicationServiceTest {
@@ -41,6 +43,12 @@ public class SecurityPoliciesApplicationServiceTest {
 
     @Mock
     private AuthenticationWrapper authenticationWrapper;
+
+    @Mock
+    private SecurityPoliciesProcessDefinitionRestrictionApplier processDefinitionRestrictionApplier;
+
+    @Mock
+    private SecurityPoliciesProcessInstanceRestrictionApplier processInstanceRestrictionApplier;
 
     @Before
     public void setUp() throws Exception {
@@ -75,13 +83,13 @@ public class SecurityPoliciesApplicationServiceTest {
         when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
 
         when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(Arrays.asList("hr"));
-        Map<String,Set<String>> map = new HashMap<String,Set<String>>();
-        map.put("rb1",new HashSet(Arrays.asList("key")));
+        Map<String,Set<String>> map = new HashMap<>();
+        map.put("rb1", Collections.singleton("key"));
         when(securityPoliciesService.getProcessDefinitionKeys(any(),any(),any(SecurityPolicy.class))).thenReturn(map);
 
         securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
 
-        verify(query).processDefinitionKeys(anySet());
+        verify(processDefinitionRestrictionApplier).restrictToKeys(any(), anySet());
 
     }
 
@@ -95,8 +103,8 @@ public class SecurityPoliciesApplicationServiceTest {
         when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(Arrays.asList("hr"));
         when(securityPoliciesService.getWildcard()).thenReturn("*");
 
-        Map<String,Set<String>> map = new HashMap<String,Set<String>>();
-        map.put("rb1",new HashSet(Arrays.asList(securityPoliciesService.getWildcard())));
+        Map<String,Set<String>> map = new HashMap<>();
+        map.put("rb1", Collections.singleton(securityPoliciesService.getWildcard()));
         when(securityPoliciesService.getProcessDefinitionKeys(any(),any(),any(SecurityPolicy.class))).thenReturn(map);
 
         securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
@@ -114,8 +122,8 @@ public class SecurityPoliciesApplicationServiceTest {
         when(userRoleLookupProxy.isAdmin("bob")).thenReturn(false);
 
         when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(groups);
-        Map<String,Set<String>> map = new HashMap<String,Set<String>>();
-        map.put("rb1",new HashSet(Arrays.asList("key")));
+        Map<String,Set<String>> map = new HashMap<>();
+        map.put("rb1", Collections.singleton("key"));
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.WRITE)).thenReturn(map);
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.READ)).thenReturn(map);
 
@@ -133,8 +141,8 @@ public class SecurityPoliciesApplicationServiceTest {
         when(securityPoliciesService.getWildcard()).thenReturn("*");
 
         when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(groups);
-        Map<String,Set<String>> map = new HashMap<String,Set<String>>();
-        map.put("rb1",new HashSet(Arrays.asList(securityPoliciesService.getWildcard())));
+        Map<String,Set<String>> map = new HashMap<>();
+        map.put("rb1",Collections.singleton(securityPoliciesService.getWildcard()));
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.WRITE)).thenReturn(map);
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.READ)).thenReturn(map);
 
@@ -162,14 +170,14 @@ public class SecurityPoliciesApplicationServiceTest {
         when(userRoleLookupProxy.isAdmin("bob")).thenReturn(false);
 
         when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(groups);
-        Map<String,Set<String>> map = new HashMap<String,Set<String>>();
-        map.put("rb1",new HashSet(Arrays.asList("key")));
+        Map<String,Set<String>> map = new HashMap<>();
+        map.put("rb1",Collections.singleton("key"));
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.READ)).thenReturn(map);
 
         ProcessInstanceQuery query = mock(ProcessInstanceQuery.class);
         securityPoliciesApplicationService.restrictProcessInstQuery(query,SecurityPolicy.READ);
 
-        verify(query,times(1)).processDefinitionKeys(anySet());
+        verify(processInstanceRestrictionApplier).restrictToKeys(any(), anySet());
     }
 
     @Test
@@ -180,14 +188,14 @@ public class SecurityPoliciesApplicationServiceTest {
         when(userRoleLookupProxy.isAdmin("intruder")).thenReturn(false);
 
         when(userGroupLookupProxy.getGroupsForCandidateUser("intruder")).thenReturn(null);
-        Map<String,Set<String>> map = new HashMap<String,Set<String>>();
+        Map<String,Set<String>> map = new HashMap<>();
         when(securityPoliciesService.getProcessDefinitionKeys("intruder",null,SecurityPolicy.READ)).thenReturn(map);
 
         ProcessInstanceQuery query = mock(ProcessInstanceQuery.class);
         when(query.processDefinitionId(any())).thenReturn(query);
         securityPoliciesApplicationService.restrictProcessInstQuery(query,SecurityPolicy.READ);
 
-        verify(query,times(2)).processDefinitionId(any());
+        verify(processInstanceRestrictionApplier).denyAll(any());
     }
 
 
@@ -199,13 +207,13 @@ public class SecurityPoliciesApplicationServiceTest {
         when(userRoleLookupProxy.isAdmin("intruder")).thenReturn(false);
 
         when(userGroupLookupProxy.getGroupsForCandidateUser("intruder")).thenReturn(null);
-        Map<String,Set<String>> map = new HashMap<String,Set<String>>();
+        Map<String,Set<String>> map = new HashMap<>();
         when(securityPoliciesService.getProcessDefinitionKeys("intruder",null,SecurityPolicy.READ)).thenReturn(map);
 
         ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
         when(query.processDefinitionId(any())).thenReturn(query);
         securityPoliciesApplicationService.restrictProcessDefQuery(query,SecurityPolicy.READ);
 
-        verify(query,times(2)).processDefinitionId(any());
+        verify(processDefinitionRestrictionApplier).denyAll(any());
     }
 }

@@ -1,18 +1,19 @@
 package org.activiti.cloud.services.core;
 
-import org.activiti.cloud.services.security.SecurityPolicy;
-import org.activiti.cloud.services.security.SecurityPoliciesService;
-import org.activiti.engine.UserGroupLookupProxy;
-import org.activiti.engine.UserRoleLookupProxy;
-import org.activiti.engine.repository.ProcessDefinitionQuery;
-import org.activiti.engine.runtime.ProcessInstanceQuery;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.activiti.cloud.services.security.SecurityPoliciesService;
+import org.activiti.cloud.services.security.SecurityPolicy;
+import org.activiti.engine.UserGroupLookupProxy;
+import org.activiti.engine.UserRoleLookupProxy;
+import org.activiti.engine.query.Query;
+import org.activiti.engine.repository.ProcessDefinitionQuery;
+import org.activiti.engine.runtime.ProcessInstanceQuery;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 @Component
 public class SecurityPoliciesApplicationService {
@@ -30,30 +31,15 @@ public class SecurityPoliciesApplicationService {
     @Autowired
     private SecurityPoliciesService securityPoliciesService;
 
+    @Autowired
+    private SecurityPoliciesProcessDefinitionRestrictionApplier processDefinitionRestrictionApplier;
+
+    @Autowired
+    private SecurityPoliciesProcessInstanceRestrictionApplier processInstanceRestrictionApplier;
+
     public ProcessDefinitionQuery restrictProcessDefQuery(ProcessDefinitionQuery query, SecurityPolicy securityPolicy){
 
-        if (noSecurityPoliciesOrNoUser()){
-            return query;
-        }
-
-        Set<String> keys = definitionKeysAllowedForRBPolicy(securityPolicy);
-
-
-        if(keys != null && !keys.isEmpty()){
-
-            if(keys.contains(securityPoliciesService.getWildcard())){
-                return query;
-            }
-
-            //restrict query to only these keys
-            return query.processDefinitionKeys(keys);
-        }
-        if((keys != null || !keys.isEmpty()) && securityPoliciesService.policiesDefined()){
-            //user should not see anything so give unsatisfiable condition
-            query.processDefinitionId("1").processDefinitionId("2");
-        }
-
-        return query;
+        return restrictQuery(query, processDefinitionRestrictionApplier, securityPolicy);
     }
 
     private boolean noSecurityPoliciesOrNoUser() {
@@ -63,7 +49,7 @@ public class SecurityPoliciesApplicationService {
     private Set<String> definitionKeysAllowedForRBPolicy(SecurityPolicy securityPolicy) {
         //this is an RB restriction and for RB we don't care about appName, just aggregate all the keys
         Map<String,Set<String>> restrictions = definitionKeysAllowedForPolicy(securityPolicy);
-        Set<String> keys = new HashSet<String>();
+        Set<String> keys = new HashSet<>();
 
         for(String appName:restrictions.keySet()) {
             keys.addAll(restrictions.get(appName));
@@ -83,6 +69,10 @@ public class SecurityPoliciesApplicationService {
     }
 
     public ProcessInstanceQuery restrictProcessInstQuery(ProcessInstanceQuery query, SecurityPolicy securityPolicy){
+        return restrictQuery(query, processInstanceRestrictionApplier, securityPolicy);
+    }
+
+    private  <T extends Query<?,?>> T restrictQuery(T query, SecurityPoliciesRestrictionApplier<T> restrictionApplier, SecurityPolicy securityPolicy){
         if (noSecurityPoliciesOrNoUser()){
             return query;
         }
@@ -95,12 +85,11 @@ public class SecurityPoliciesApplicationService {
                 return query;
             }
 
-            return query.processDefinitionKeys(keys);
+            return restrictionApplier.restrictToKeys(query, keys);
         }
 
         if((keys != null || !keys.isEmpty()) && securityPoliciesService.policiesDefined()){
-            //user should not see anything so give unsatisfiable condition
-            query.processDefinitionId("1").processDefinitionId("2");
+            restrictionApplier.denyAll(query);
         }
 
         return query;
