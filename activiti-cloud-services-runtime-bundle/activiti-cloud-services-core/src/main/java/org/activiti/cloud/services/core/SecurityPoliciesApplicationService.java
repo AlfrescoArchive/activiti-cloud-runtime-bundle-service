@@ -88,7 +88,7 @@ public class SecurityPoliciesApplicationService {
             return restrictionApplier.restrictToKeys(query, keys);
         }
 
-        if((keys != null || !keys.isEmpty()) && securityPoliciesService.policiesDefined()){
+        if(keys != null && securityPoliciesService.policiesDefined()) {
             restrictionApplier.denyAll(query);
         }
 
