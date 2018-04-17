@@ -23,11 +23,16 @@ import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.events.ActivityCompletedEventImpl;
 import org.activiti.cloud.services.events.ActivityStartedEventImpl;
 import org.activiti.cloud.services.events.ProcessCompletedEventImpl;
+import org.activiti.cloud.services.events.ProcessCreatedEventImpl;
 import org.activiti.cloud.services.events.ProcessStartedEventImpl;
 import org.activiti.cloud.services.events.SequenceFlowTakenEventImpl;
+import org.activiti.cloud.services.events.TaskAssignedEventImpl;
+import org.activiti.cloud.services.events.TaskCreatedEventImpl;
 import org.activiti.cloud.services.events.tests.util.MockMessageChannel;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.ProcessEngineConfiguration;
+import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.activiti.engine.task.Task;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +66,8 @@ public class MessageProducerActivitiEventListenerIT {
 
     @Test
     public void executeListener() throws Exception {
-        ProcessEngine processEngine = ProcessEngineConfiguration.createStandaloneInMemProcessEngineConfiguration().buildProcessEngine();
+        ProcessEngine processEngine = ProcessEngineConfiguration.createStandaloneInMemProcessEngineConfiguration()
+                .setDatabaseSchemaUpdate(ProcessEngineConfigurationImpl.DB_SCHEMA_UPDATE_DROP_CREATE).buildProcessEngine();
         deploy("SimpleProcess", processEngine);
         deploy("RollbackProcess", processEngine);
         deploy("AsyncErrorProcess", processEngine);
@@ -69,14 +75,15 @@ public class MessageProducerActivitiEventListenerIT {
         processEngine.getRuntimeService().startProcessInstanceByKey("simpleProcess");
 
         ProcessEngineEvent[] events = (ProcessEngineEvent[]) MockMessageChannel.messageResult.getPayload();
-        assertThat(events.length).isEqualTo(7);
-        assertThat(events[0].getClass()).isEqualTo(ProcessStartedEventImpl.class);
-        assertThat(events[1].getClass()).isEqualTo(ActivityStartedEventImpl.class);
-        assertThat(events[2].getClass()).isEqualTo(ActivityCompletedEventImpl.class);
-        assertThat(events[3].getClass()).isEqualTo(SequenceFlowTakenEventImpl.class);
-        assertThat(events[4].getClass()).isEqualTo(ActivityStartedEventImpl.class);
-        assertThat(events[5].getClass()).isEqualTo(ActivityCompletedEventImpl.class);
-        assertThat(events[6].getClass()).isEqualTo(ProcessCompletedEventImpl.class);
+        assertThat(events.length).isEqualTo(8);
+        assertThat(events[0].getClass()).isEqualTo(ProcessCreatedEventImpl.class);
+        assertThat(events[1].getClass()).isEqualTo(ProcessStartedEventImpl.class);
+        assertThat(events[2].getClass()).isEqualTo(ActivityStartedEventImpl.class);
+        assertThat(events[3].getClass()).isEqualTo(ActivityCompletedEventImpl.class);
+        assertThat(events[4].getClass()).isEqualTo(SequenceFlowTakenEventImpl.class);
+        assertThat(events[5].getClass()).isEqualTo(ActivityStartedEventImpl.class);
+        assertThat(events[6].getClass()).isEqualTo(ActivityCompletedEventImpl.class);
+        assertThat(events[7].getClass()).isEqualTo(ProcessCompletedEventImpl.class);
 
         MockMessageChannel.messageResult = null;
         try {
@@ -94,11 +101,44 @@ public class MessageProducerActivitiEventListenerIT {
         }
         assertThat(MockMessageChannel.messageResult).isNotNull();
         events = (ProcessEngineEvent[]) MockMessageChannel.messageResult.getPayload();
-        assertThat(events.length).isEqualTo(4);
-        assertThat(events[0].getClass()).isEqualTo(ProcessStartedEventImpl.class);
-        assertThat(events[1].getClass()).isEqualTo(ActivityStartedEventImpl.class);
-        assertThat(events[2].getClass()).isEqualTo(ActivityCompletedEventImpl.class);
-        assertThat(events[3].getClass()).isEqualTo(SequenceFlowTakenEventImpl.class);
+        assertThat(events.length).isEqualTo(5);
+        assertThat(events[0].getClass()).isEqualTo(ProcessCreatedEventImpl.class);
+        assertThat(events[1].getClass()).isEqualTo(ProcessStartedEventImpl.class);
+        assertThat(events[2].getClass()).isEqualTo(ActivityStartedEventImpl.class);
+        assertThat(events[3].getClass()).isEqualTo(ActivityCompletedEventImpl.class);
+        assertThat(events[4].getClass()).isEqualTo(SequenceFlowTakenEventImpl.class);
+    }
+
+    /**
+     * This test is here for the default behavior of the engine when a new standalone task is created
+     * First is send the TASK_ASSIGNED event then the TASK_CREATED event
+     * Note: If it's decided to change the behavior this test should fail
+     * @throws Exception
+     */
+    @Test
+    public void executeListenerForTaskCreated() throws Exception {
+        // given
+        ProcessEngine processEngine = ProcessEngineConfiguration.createStandaloneInMemProcessEngineConfiguration()
+                .setDatabaseSchemaUpdate(ProcessEngineConfigurationImpl.DB_SCHEMA_UPDATE_DROP_CREATE).buildProcessEngine();
+        processEngine.getRuntimeService().addEventListener(eventListener);
+
+        // when
+        final Task newTask = processEngine.getTaskService().newTask();
+        newTask.setName("new-task");
+        newTask.setDescription("new-task-description");
+        newTask.setAssignee("huser");
+        try {
+            processEngine.getTaskService().saveTask(newTask);
+        } catch (Exception e) {
+            // nothing to do
+        }
+
+        // then
+        ProcessEngineEvent[] events = (ProcessEngineEvent[]) MockMessageChannel.messageResult.getPayload();
+        assertThat(events.length).isEqualTo(2);
+        assertThat(events[0].getClass()).isEqualTo(TaskAssignedEventImpl.class);
+        assertThat(events[1].getClass()).isEqualTo(TaskCreatedEventImpl.class);
+
     }
 
     public static void deploy(final String processDefinitionKey, ProcessEngine processEngine) throws IOException {
