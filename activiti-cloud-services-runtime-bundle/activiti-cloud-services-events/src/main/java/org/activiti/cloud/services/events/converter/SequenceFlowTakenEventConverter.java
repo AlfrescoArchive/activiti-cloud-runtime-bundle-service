@@ -20,6 +20,7 @@ import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.events.SequenceFlowTakenEventImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.delegate.event.ActivitiEvent;
+import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.impl.ActivitiSequenceFlowTakenEventImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -50,7 +51,7 @@ public class SequenceFlowTakenEventConverter extends AbstractEventConverter {
     }
 
     @Override
-    public String handledType() {
-        return SEQUENCEFLOW_TAKEN.toString();
+    public ActivitiEventType handledType() {
+        return SEQUENCEFLOW_TAKEN;
     }
 }

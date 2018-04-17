@@ -21,13 +21,11 @@ import org.activiti.cloud.services.events.ProcessStartedEvent;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.ActivitiProcessStartedEvent;
-import org.activiti.engine.impl.persistence.entity.ExecutionEntityImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import static org.activiti.cloud.services.events.converter.EventConverterContext.getPrefix;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -77,14 +75,9 @@ public class ProcessStartedEventConverterTest {
     @Test
     public void handledTypeShouldReturnProcessStarted() throws Exception {
         //when
-        String activitiEventType = converter.handledType();
-        ActivitiProcessStartedEvent activitiEvent = mock(ActivitiProcessStartedEvent.class);
-        given(activitiEvent.getType()).willReturn(ActivitiEventType.PROCESS_STARTED);
-        ExecutionEntityImpl executionEntity = mock(ExecutionEntityImpl.class);
-        ExecutionEntityImpl internalProcessInstance = mock(ExecutionEntityImpl.class);
-        given(activitiEvent.getEntity()).willReturn(executionEntity);
-        given(executionEntity.getProcessInstance()).willReturn(internalProcessInstance);
+        ActivitiEventType activitiEventType = converter.handledType();
+
         //then
-        assertThat(activitiEventType).isEqualTo(getPrefix(activitiEvent) + ActivitiEventType.PROCESS_STARTED);
+        assertThat(activitiEventType).isEqualTo(ActivitiEventType.PROCESS_STARTED);
     }
 }

@@ -24,6 +24,6 @@ public interface EventConverter {
 
     ProcessEngineEvent from (ActivitiEvent event);
 
-    String handledType();
+    ActivitiEventType handledType();
 
 }

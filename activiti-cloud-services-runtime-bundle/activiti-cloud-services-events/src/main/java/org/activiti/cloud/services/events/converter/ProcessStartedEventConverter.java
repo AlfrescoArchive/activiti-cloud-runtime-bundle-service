@@ -20,6 +20,7 @@ import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.events.ProcessStartedEventImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.delegate.event.ActivitiEvent;
+import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.ActivitiProcessStartedEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -45,7 +46,7 @@ public class ProcessStartedEventConverter extends AbstractEventConverter {
     }
 
     @Override
-    public String handledType() {
-        return "ProcessInstance:" + PROCESS_STARTED.toString();
+    public ActivitiEventType handledType() {
+        return PROCESS_STARTED;
     }
 }

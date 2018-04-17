@@ -20,6 +20,7 @@ import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.events.ActivityStartedEventImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.delegate.event.ActivitiEvent;
+import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.impl.ActivitiActivityEventImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -46,7 +47,7 @@ public class ActivityStartedEventConverter extends AbstractEventConverter {
     }
 
     @Override
-    public String handledType() {
-        return ACTIVITY_STARTED.toString();
+    public ActivitiEventType handledType() {
+        return ACTIVITY_STARTED;
     }
 }

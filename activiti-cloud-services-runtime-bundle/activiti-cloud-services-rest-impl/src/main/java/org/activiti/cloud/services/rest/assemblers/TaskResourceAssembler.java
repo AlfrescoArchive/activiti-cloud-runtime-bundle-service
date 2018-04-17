@@ -49,10 +49,7 @@ public class TaskResourceAssembler extends ResourceAssemblerSupport<Task, TaskRe
             links.add(linkTo(methodOn(TaskControllerImpl.class).completeTask(task.getId(),
                                                                          null)).withRel("complete"));
         }
-        // standalone tasks are not bound to a process instance
-        if (task.getProcessInstanceId() != null && !task.getProcessInstanceId().isEmpty()) {
-            links.add(linkTo(methodOn(ProcessInstanceControllerImpl.class).getProcessInstanceById(task.getProcessInstanceId())).withRel("processInstance"));
-        }
+        links.add(linkTo(methodOn(ProcessInstanceControllerImpl.class).getProcessInstanceById(task.getProcessInstanceId())).withRel("processInstance"));
         if (task.getParentTaskId() != null && !task.getParentTaskId().isEmpty()) {
             links.add(linkTo(methodOn(TaskControllerImpl.class).getTaskById(task.getParentTaskId())).withRel("parent"));
         }

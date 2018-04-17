@@ -21,6 +21,7 @@ import org.activiti.cloud.services.events.ProcessCancelledEventImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.delegate.event.ActivitiCancelledEvent;
 import org.activiti.engine.delegate.event.ActivitiEvent;
+import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +45,7 @@ public class ProcessCancelledEventConverter extends AbstractEventConverter {
     }
 
     @Override
-    public String handledType() {
-        return "ProcessInstance:" + PROCESS_CANCELLED.toString();
+    public ActivitiEventType handledType() {
+        return PROCESS_CANCELLED;
     }
 }

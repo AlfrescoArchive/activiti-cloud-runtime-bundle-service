@@ -20,14 +20,14 @@ package org.activiti.cloud.services.events.converter;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.impl.ActivitiEventImpl;
+import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -36,7 +36,7 @@ public class EventConverterContextTest {
 
     private EventConverterContext converterContext;
 
-    private Map<String, EventConverter> converters;
+    private Map<ActivitiEventType, EventConverter> converters;
 
     @Mock
     private EventConverter eventConverter;
@@ -54,8 +54,7 @@ public class EventConverterContextTest {
         ActivitiEventImpl activitiEvent = new ActivitiEventImpl(ActivitiEventType.PROCESS_STARTED);
         ProcessEngineEvent processEngineEvent = mock(ProcessEngineEvent.class);
 
-        converters.put(ActivitiEventType.PROCESS_STARTED.toString(),
-                       eventConverter);
+        converters.put(ActivitiEventType.PROCESS_STARTED, eventConverter);
         given(eventConverter.from(activitiEvent)).willReturn(processEngineEvent);
 
         //when

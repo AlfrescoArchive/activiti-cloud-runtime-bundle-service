@@ -5,9 +5,8 @@ import org.activiti.cloud.services.rest.api.resources.TaskResource;
 import org.junit.Test;
 import org.springframework.hateoas.Link;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class TaskResourceAssemblerTest {
 
@@ -49,28 +48,6 @@ public class TaskResourceAssemblerTest {
         assertThat(resource.getLink("claim")).isNull();
         assertThat(resource.getLink("release")).isNotNull();
         assertThat(resource.getLink("complete")).isNotNull();
-    }
-
-    @Test
-    public void toResourceShouldNotReturnResourceWithProcessInstanceLinkWhenNewTaskIsCreated() {
-        Task model = mock(Task.class);
-        when(model.getStatus()).thenReturn(Task.TaskStatus.CREATED.name());
-        TaskResource resource = resourceAssembler.toResource(model);
-
-        // a new standalone task doesn't have a bond to a process instance
-        // and should not return the rel 'processInstance'
-        assertThat(resource.getLink("processInstance")).isNull();
-    }
-
-    @Test
-    public void toResourceShouldReturnResourceWithProcessInstanceLinkForProcessInstanceTask() {
-        // process instance task
-        Task model = mock(Task.class);
-        when(model.getProcessInstanceId()).thenReturn("processInstanceId");
-
-        TaskResource resource = resourceAssembler.toResource(model);
-
-        assertThat(resource.getLink("processInstance")).isNotNull();
     }
 
 }

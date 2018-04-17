@@ -20,6 +20,7 @@ import org.activiti.cloud.services.api.events.ProcessEngineEvent;
 import org.activiti.cloud.services.events.VariableUpdatedEventImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.delegate.event.ActivitiEvent;
+import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.delegate.event.impl.ActivitiVariableEventImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -48,7 +49,7 @@ public class VariableUpdatedEventConverter extends AbstractEventConverter {
     }
 
     @Override
-    public String handledType() {
-        return VARIABLE_UPDATED.toString();
+    public ActivitiEventType handledType() {
+        return VARIABLE_UPDATED;
     }
 }
