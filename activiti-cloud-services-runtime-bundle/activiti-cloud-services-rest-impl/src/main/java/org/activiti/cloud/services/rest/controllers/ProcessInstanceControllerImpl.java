@@ -101,7 +101,6 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
                                          SecurityPoliciesApplicationService securityService,
                                          ManagementService managementService,
                                          AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler) {
-
         this.processEngine = processEngine;
         this.repositoryService = repositoryService;
         this.processDiagramGenerator = processDiagramGenerator;
