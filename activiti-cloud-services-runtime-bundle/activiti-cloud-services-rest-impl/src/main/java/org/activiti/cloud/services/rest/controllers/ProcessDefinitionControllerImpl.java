@@ -21,25 +21,26 @@ import java.nio.charset.StandardCharsets;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
 import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.converter.ProcessDefinitionConverter;
-import org.activiti.cloud.services.SecurityPolicy;
+import org.activiti.cloud.services.core.ProcessDiagramGeneratorWrapper;
 import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
+import org.activiti.cloud.services.core.pageable.PageableRepositoryService;
+import org.activiti.cloud.services.rest.api.ProcessDefinitionController;
+import org.activiti.cloud.services.rest.api.resources.ProcessDefinitionResource;
+import org.activiti.cloud.services.rest.assemblers.ProcessDefinitionResourceAssembler;
+import org.activiti.cloud.services.security.SecurityPolicy;
 import org.activiti.editor.language.json.converter.BpmnJsonConverter;
 import org.activiti.engine.ActivitiException;
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
-import org.activiti.image.ProcessDiagramGenerator;
-import org.activiti.cloud.services.core.pageable.PageableRepositoryService;
-import org.activiti.cloud.services.rest.api.ProcessDefinitionController;
-import org.activiti.cloud.services.rest.api.resources.ProcessDefinitionResource;
-import org.activiti.cloud.services.rest.assemblers.ProcessDefinitionResourceAssembler;
+import org.activiti.image.exception.ActivitiInterchangeInfoNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -52,7 +53,7 @@ public class ProcessDefinitionControllerImpl implements ProcessDefinitionControl
 
     private final RepositoryService repositoryService;
 
-    private final ProcessDiagramGenerator processDiagramGenerator;
+    private final ProcessDiagramGeneratorWrapper processDiagramGenerator;
 
     private final ProcessDefinitionConverter processDefinitionConverter;
 
@@ -62,32 +63,42 @@ public class ProcessDefinitionControllerImpl implements ProcessDefinitionControl
 
     private final SecurityPoliciesApplicationService securityService;
 
+    private final AlfrescoPagedResourcesAssembler<ProcessDefinition> pagedResourcesAssembler;
+
     @ExceptionHandler(ActivitiObjectNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public String handleAppException(ActivitiObjectNotFoundException ex) {
         return ex.getMessage();
     }
 
+    @ExceptionHandler(ActivitiInterchangeInfoNotFoundException.class)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public String handleDiagramInterchangeInfoNotFoundException(ActivitiInterchangeInfoNotFoundException ex) {
+        return ex.getMessage();
+    }
+
     @Autowired
     public ProcessDefinitionControllerImpl(RepositoryService repositoryService,
-                                           ProcessDiagramGenerator processDiagramGenerator,
+                                           ProcessDiagramGeneratorWrapper processDiagramGenerator,
                                            ProcessDefinitionConverter processDefinitionConverter,
                                            ProcessDefinitionResourceAssembler resourceAssembler,
                                            PageableRepositoryService pageableRepositoryService,
-                                           SecurityPoliciesApplicationService securityPoliciesApplicationService) {
+                                           SecurityPoliciesApplicationService securityPoliciesApplicationService,
+                                           AlfrescoPagedResourcesAssembler<ProcessDefinition> pagedResourcesAssembler) {
         this.repositoryService = repositoryService;
         this.processDiagramGenerator = processDiagramGenerator;
         this.processDefinitionConverter = processDefinitionConverter;
         this.resourceAssembler = resourceAssembler;
         this.pageableRepositoryService = pageableRepositoryService;
         this.securityService = securityPoliciesApplicationService;
+        this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
 
     @Override
-    public PagedResources<ProcessDefinitionResource> getProcessDefinitions(Pageable pageable,
-                                                                           PagedResourcesAssembler<ProcessDefinition> pagedResourcesAssembler) {
+    public PagedResources<ProcessDefinitionResource> getProcessDefinitions(Pageable pageable) {
         Page<ProcessDefinition> page = pageableRepositoryService.getProcessDefinitions(pageable);
-        return pagedResourcesAssembler.toResource(page,
+        return pagedResourcesAssembler.toResource(pageable,
+                                                  page,
                                                   resourceAssembler);
     }
 
@@ -101,7 +112,8 @@ public class ProcessDefinitionControllerImpl implements ProcessDefinitionControl
     private org.activiti.engine.repository.ProcessDefinition retrieveProcessDefinition(String id) {
         ProcessDefinitionQuery query = repositoryService.createProcessDefinitionQuery()
                 .processDefinitionId(id);
-        query = securityService.restrictProcessDefQuery(query, SecurityPolicy.READ);
+        query = securityService.restrictProcessDefQuery(query,
+                                                        SecurityPolicy.READ);
         org.activiti.engine.repository.ProcessDefinition processDefinition = query.singleResult();
         if (processDefinition == null) {
             throw new ActivitiObjectNotFoundException("Unable to find process definition for the given id:'" + id + "'");
@@ -135,24 +147,12 @@ public class ProcessDefinitionControllerImpl implements ProcessDefinitionControl
     }
 
     @Override
-    public String getProcessDiagram(@PathVariable  String id) {
+    public String getProcessDiagram(@PathVariable String id) {
         // first check the user can see the process definition (which has same ID as BPMN model in engine)
         retrieveProcessDefinition(id);
 
         BpmnModel bpmnModel = repositoryService.getBpmnModel(id);
-        String activityFontName = processDiagramGenerator.getDefaultActivityFontName();
-        String labelFontName = processDiagramGenerator.getDefaultLabelFontName();
-        String annotationFontName = processDiagramGenerator.getDefaultAnnotationFontName();
-        try (final InputStream imageStream = processDiagramGenerator.generateDiagram(bpmnModel,
-                                                                                     activityFontName,
-                                                                                     labelFontName,
-                                                                                     annotationFontName)) {
-            return new String(IoUtil.readInputStream(imageStream,
-                                                     null),
-                              StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new ActivitiException("Error occured while getting process diagram '" + id + "' : " + e.getMessage(),
-                                        e);
-        }
+        return new String(processDiagramGenerator.generateDiagram(bpmnModel),
+                          StandardCharsets.UTF_8);
     }
 }
