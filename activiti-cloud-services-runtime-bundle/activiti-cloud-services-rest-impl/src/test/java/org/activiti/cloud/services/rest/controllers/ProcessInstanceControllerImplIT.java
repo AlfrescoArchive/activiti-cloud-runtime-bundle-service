@@ -30,6 +30,7 @@ import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.core.ProcessDiagramGeneratorWrapper;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
+import org.activiti.engine.ManagementService;
 import org.activiti.engine.RepositoryService;
 import org.activiti.image.exception.ActivitiInterchangeInfoNotFoundException;
 import org.junit.Test;
@@ -89,6 +90,8 @@ public class ProcessInstanceControllerImplIT {
     private RepositoryService repositoryService;
     @MockBean
     private ProcessDiagramGeneratorWrapper processDiagramGenerator;
+    @MockBean
+    private ManagementService managementService;
     @SpyBean
     private ObjectMapper mapper;
 
