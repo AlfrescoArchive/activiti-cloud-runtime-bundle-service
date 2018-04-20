@@ -16,7 +16,7 @@ import org.springframework.core.io.support.SpringFactoriesLoader;
 
 public class CloudListenerFactory extends DefaultListenerFactory {
 
-    List<CloudListenerFactoryInterceptor> interceptors;
+    private List<CloudListenerFactoryInterceptor> interceptors;
 
     public CloudListenerFactory() {
         ClassLoader classLoader=Thread.currentThread().getContextClassLoader();

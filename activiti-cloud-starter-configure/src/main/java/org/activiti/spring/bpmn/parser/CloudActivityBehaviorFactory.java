@@ -79,7 +79,7 @@ import org.springframework.core.io.support.SpringFactoriesLoader;
 
 public class CloudActivityBehaviorFactory extends DefaultActivityBehaviorFactory {
 
-    List<CloudActivityBehaviorFactoryInterceptor> interceptors;
+    private List<CloudActivityBehaviorFactoryInterceptor> interceptors;
 
     public CloudActivityBehaviorFactory() {
         ClassLoader classLoader=Thread.currentThread().getContextClassLoader();
