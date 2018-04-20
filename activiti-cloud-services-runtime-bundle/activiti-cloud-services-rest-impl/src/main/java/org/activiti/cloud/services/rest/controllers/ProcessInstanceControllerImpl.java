@@ -35,14 +35,7 @@ import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssemb
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.engine.ManagementService;
 import org.activiti.engine.RepositoryService;
-import org.activiti.engine.impl.util.IoUtil;
-import org.activiti.image.ProcessDiagramGenerator;
-import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.BroadcastSignalCmd;
-import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
-import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
-import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
-import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssembler;
 import org.activiti.image.exception.ActivitiInterchangeInfoNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
