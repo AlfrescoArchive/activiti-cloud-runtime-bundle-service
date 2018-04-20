@@ -3,6 +3,10 @@ package org.activiti.services.subscriptions.model;
 
 public class BroadcastSignalEvent {
 
+    private String signalName;
+
+    private boolean isSignalAsync;
+
     public BroadcastSignalEvent() {
     }
 
@@ -26,9 +30,5 @@ public class BroadcastSignalEvent {
     public void setSignalAsync(boolean isSignalAsync) {
         this.isSignalAsync = isSignalAsync;
     }
-
-    private String signalName;
-
-    private boolean isSignalAsync;
 }
 
