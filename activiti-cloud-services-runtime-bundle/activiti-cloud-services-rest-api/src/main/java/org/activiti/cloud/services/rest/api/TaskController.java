@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,4 +40,11 @@ public interface TaskController {
 
     @RequestMapping(method = RequestMethod.POST)
     Resource<Task> createNewTask(@RequestBody CreateTaskCmd createTaskCmd);
+
+    @RequestMapping(value = "/{taskId}/subtask", method = RequestMethod.POST)
+    Resource<Task> createSubtask(@PathVariable String taskId,
+                                 @RequestBody CreateTaskCmd createSubtaskCmd);
+
+    @RequestMapping(value = "/{taskId}/subtasks", method = RequestMethod.GET)
+    Resources getSubtasks(@PathVariable String taskId);
 }
