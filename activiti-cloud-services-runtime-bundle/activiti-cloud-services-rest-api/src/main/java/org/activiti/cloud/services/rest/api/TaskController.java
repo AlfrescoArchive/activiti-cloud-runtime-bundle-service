@@ -41,6 +41,10 @@ public interface TaskController {
     @RequestMapping(method = RequestMethod.POST)
     Resource<Task> createNewTask(@RequestBody CreateTaskCmd createTaskCmd);
 
+    @RequestMapping(value = "/{taskId}", method = RequestMethod.PUT)
+    ResponseEntity<Void> updateTask(@PathVariable("taskId") String taskId,
+            @RequestBody CreateTaskCmd updateTaskCmd);
+
     @RequestMapping(value = "/{taskId}/subtask", method = RequestMethod.POST)
     Resource<Task> createSubtask(@PathVariable String taskId,
                                  @RequestBody CreateTaskCmd createSubtaskCmd);

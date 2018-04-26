@@ -270,4 +270,32 @@ public class ProcessEngineWrapper {
 
         return taskService.getSubTasks(parentTaskId);
     }
+
+    public void updateTask(String taskId,
+                           CreateTaskCmd createTaskCmd) {
+        final org.activiti.engine.task.Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        if (task == null) {
+            throw new ActivitiObjectNotFoundException("Unable to find task for the given id: " + createTaskCmd.getId());
+        }
+
+        if (createTaskCmd.getAssignee() != null) {
+            task.setAssignee(createTaskCmd.getAssignee());
+        }
+        if (createTaskCmd.getName() != null) {
+            task.setName(createTaskCmd.getName());
+        }
+        if (createTaskCmd.getDescription() != null) {
+            task.setDescription(createTaskCmd.getDescription());
+        }
+        if (createTaskCmd.getDueDate() != null) {
+            task.setDueDate(createTaskCmd.getDueDate());
+        }
+        if (createTaskCmd.getPriority() != null) {
+            task.setPriority(createTaskCmd.getPriority());
+        }
+        if (createTaskCmd.getParentTaskId() != null) {
+            task.setParentTaskId(createTaskCmd.getParentTaskId());
+        }
+        taskService.saveTask(task);
+    }
 }

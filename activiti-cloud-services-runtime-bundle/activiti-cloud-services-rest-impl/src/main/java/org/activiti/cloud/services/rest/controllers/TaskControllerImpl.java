@@ -134,6 +134,14 @@ public class TaskControllerImpl implements TaskController {
     }
 
     @Override
+    public ResponseEntity<Void> updateTask(@PathVariable String taskId,
+                                           @RequestBody CreateTaskCmd createTaskCmd) {
+        processEngine.updateTask(taskId,
+                                 createTaskCmd);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @Override
     public Resource<Task> createSubtask(@PathVariable String taskId,
                                         @RequestBody CreateTaskCmd createSubtaskCmd) {
 
