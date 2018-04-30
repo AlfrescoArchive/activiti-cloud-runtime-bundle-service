@@ -73,6 +73,7 @@ public class EventConverterContextIT {
                                                            "Task:" + ActivitiEventType.TASK_ASSIGNED.toString(),
                                                            "Task:" + ActivitiEventType.TASK_COMPLETED.toString(),
                                                            "Task:" + ActivitiEventType.TASK_CREATED.toString(),
+                                                           "Task:" + ActivitiEventType.ENTITY_DELETED.toString(),
                                                            "TaskCandidateUser:" + ActivitiEventType.ENTITY_CREATED.toString(),
                                                            "TaskCandidateUser:" + ActivitiEventType.ENTITY_DELETED.toString(),
                                                            "TaskCandidateGroup:" + ActivitiEventType.ENTITY_CREATED.toString(),
@@ -84,7 +85,7 @@ public class EventConverterContextIT {
     }
 
     @Test
-    public void shouldIncludeApplicationNameInConvertedEvents() throws Exception {
+    public void shouldIncludeFullyQualifiedServiceNameInConvertedEvents() throws Exception {
 
         //when
         Map<String, EventConverter> converters = converterContext.getConvertersMap();
@@ -102,6 +103,6 @@ public class EventConverterContextIT {
 
         assertThat(processEngineEvent).isNotNull();
         // this comes from the application.properties (test-application.properties) spring app name configuration
-        assertThat(processEngineEvent.getApplicationName()).isEqualTo("test-app");
+        assertThat(processEngineEvent.getServiceFullName()).isEqualTo("test-app");
     }
 }

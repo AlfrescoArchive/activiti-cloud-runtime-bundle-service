@@ -16,14 +16,21 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.activiti.cloud.services.api.commands.CreateTaskCmd;
 import org.activiti.cloud.services.api.model.Task;
+import org.activiti.cloud.services.api.model.Task.TaskStatus;
+import org.activiti.cloud.services.api.model.converter.ListConverter;
+import org.activiti.cloud.services.api.model.converter.TaskConverter;
 import org.activiti.cloud.services.core.AuthenticationWrapper;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
+import org.activiti.engine.impl.persistence.entity.TaskEntityImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +38,7 @@ import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDoc
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -40,18 +48,22 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.activiti.cloud.services.api.model.Task.TaskStatus.CREATED;
+import static org.activiti.cloud.services.api.model.Task.TaskStatus.ASSIGNED;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.restdocs.request.RequestDocumentation.requestParameters;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -66,6 +78,13 @@ public class TaskControllerImplIT {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @SpyBean
+    private ObjectMapper mapper;
+    @SpyBean
+    private TaskConverter taskConverter;
+    @SpyBean
+    private ListConverter listConverter;
 
     @MockBean
     private ProcessEngineWrapper processEngine;
@@ -94,42 +113,20 @@ public class TaskControllerImplIT {
     public void getTasksShouldUseAlfrescoGuidelineWhenMediaTypeIsApplicationJson() throws Exception {
         List<Task> taskList = Collections.singletonList(buildDefaultTask());
         Page<Task> taskPage = new PageImpl<>(taskList,
-                                          PageRequest.of(1,
-                                                         10),
-                                          taskList.size());
+                                             PageRequest.of(1,
+                                                            10),
+                                             taskList.size());
         when(processEngine.getTasks(any())).thenReturn(taskPage);
 
         this.mockMvc.perform(get("/v1/tasks?skipCount=10&maxItems=10").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
-                                requestParameters(
-                                        parameterWithName("skipCount")
-                                                .description("How many entities exist in the entire addressed collection before those included in this list."),
-                                        parameterWithName("maxItems")
-                                                .description("The max number of entities that can be included in the result.")
-                                ),
-                                responseFields(
-                                        subsectionWithPath("list").ignored(),
-                                        subsectionWithPath("list.entries").description("List of results."),
-                                        subsectionWithPath("list.entries[].entry").description("Wrapper for each entry in the list of results."),
-                                        subsectionWithPath("list.pagination").description("Pagination metadata."),
-                                        subsectionWithPath("list.pagination.skipCount")
-                                                .description("How many entities exist in the entire addressed collection before those included in this list."),
-                                        subsectionWithPath("list.pagination.maxItems")
-                                                .description("The maxItems parameter used to generate this list."),
-                                        subsectionWithPath("list.pagination.count")
-                                                .description("The number of entities included in this list. This number must correspond to the number of objects in the \"entries\" array."),
-                                        subsectionWithPath("list.pagination.hasMoreItems")
-                                                .description("A boolean value that indicates whether there are further entities in the addressed collection beyond those returned " +
-                                                                     "in this response. If true then a request with a larger value for either the skipCount or the maxItems " +
-                                                                     "parameter is expected to return further results."),
-                                        subsectionWithPath("list.pagination.totalItems")
-                                                .description("An integer value that indicates the total number of entities in the addressed collection.")
-                                )));
+                                pageRequestParameters(),
+                                pagedResourcesResponseFields()));
     }
 
     private Task buildDefaultTask() {
-        return buildTask(Task.TaskStatus.ASSIGNED, "user");
+        return buildTask(ASSIGNED, "user");
     }
 
     @Test
@@ -158,7 +155,7 @@ public class TaskControllerImplIT {
     @Test
     public void releaseTask() throws Exception {
 
-        given(processEngine.releaseTask(any())).willReturn(buildTask(Task.TaskStatus.CREATED, null));
+        given(processEngine.releaseTask(any())).willReturn(buildTask(CREATED, null));
 
         this.mockMvc.perform(post("/v1/tasks/{taskId}/release",
                                   1))
@@ -167,7 +164,7 @@ public class TaskControllerImplIT {
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 
-    private Task buildTask(Task.TaskStatus status,
+    private Task buildTask(TaskStatus status,
                            String assignee) {
         return new Task(UUID.randomUUID().toString(),
                         "user",
@@ -181,7 +178,7 @@ public class TaskControllerImplIT {
                         UUID.randomUUID().toString(),
                         UUID.randomUUID().toString(),
                         null,
-                        status.name());
+                        status);
     }
 
     @Test
@@ -189,9 +186,60 @@ public class TaskControllerImplIT {
 
         this.mockMvc.perform(post("/v1/tasks/{taskId}/complete",
                                   1))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/complete",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
+    }
+
+    @Test
+    public void deleteTask() throws Exception {
+
+        this.mockMvc.perform(delete("/v1/tasks/{taskId}",
+                                  1))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/delete",
+                                pathParameters(parameterWithName("taskId").description("The task id"))));
+    }
+
+    @Test
+    public void getTaskByIdTaskNotFound() throws Exception {
+        when(processEngine.getTaskById("not-existent-task")).thenReturn(null);
+
+        this.mockMvc.perform(get("/v1/tasks/{taskId}",
+                                 "not-existent-task"))
+                .andExpect(status().isNotFound())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/get",
+                                pathParameters(parameterWithName("taskId").description("The task id"))));
+    }
+
+    @Test
+    public void createNewStandaloneTask() throws Exception {
+        final org.activiti.engine.task.Task task = new TaskEntityImpl();
+        task.setName("new-task");
+        task.setDescription("description");
+
+        final Task taskConverted = taskConverter.from(task);
+        when(processEngine.createNewTask(any())).thenReturn(taskConverted);
+
+        this.mockMvc.perform(post("/v1/tasks/",
+                                  1).contentType(MediaType.APPLICATION_JSON)
+                                     .content(mapper.writeValueAsString(new CreateTaskCmd("new-task",
+                                                                                          "description",
+                                                                                          null,
+                                                                                          50,
+                                                                                          null))))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/new",
+                                links(linkWithRel("self").ignored(),
+                                      linkWithRel("claim").description("Link to the claim task resource"),
+                                      linkWithRel("home").description("Link to the home resource")
+                                ),
+                                responseFields(
+                                        subsectionWithPath("name").description("The task name."),
+                                        subsectionWithPath("description").description("Task description."),
+                                        subsectionWithPath("priority").description("Task priority. Can have values between 0 and 100."),
+                                        subsectionWithPath("status").description("Task status (can be " + Arrays.asList(TaskStatus.values()) + ")"),
+                                        subsectionWithPath("_links").ignored()
+                                )));
     }
 }

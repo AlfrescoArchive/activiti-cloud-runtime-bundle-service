@@ -20,10 +20,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.activiti.cloud.services.api.events.ProcessEngineEvent;
+import org.activiti.cloud.services.events.ActivityCancelledEventImpl;
 import org.activiti.cloud.services.events.ActivityCompletedEventImpl;
 import org.activiti.cloud.services.events.ActivityStartedEventImpl;
-import org.activiti.cloud.services.events.ProcessActivatedEvent;
 import org.activiti.cloud.services.events.ProcessActivatedEventImpl;
+import org.activiti.cloud.services.events.ProcessCancelledEventImpl;
 import org.activiti.cloud.services.events.ProcessCreatedEventImpl;
 import org.activiti.cloud.services.events.ProcessStartedEventImpl;
 import org.activiti.cloud.services.events.ProcessSuspendedEventImpl;
@@ -69,7 +70,7 @@ public class MessageProducerActivitiEventActivateSuspendIT {
     }
 
     @Test
-    public void suspendAndActivate() throws Exception {
+    public void testActivitiEventsSuspendAndActivateProcessInstance() throws Exception {
         ProcessEngine processEngine = ProcessEngineConfiguration.createStandaloneInMemProcessEngineConfiguration()
                 .setDatabaseSchemaUpdate(ProcessEngineConfigurationImpl.DB_SCHEMA_UPDATE_DROP_CREATE)
                 .buildProcessEngine();
@@ -91,7 +92,6 @@ public class MessageProducerActivitiEventActivateSuspendIT {
         assertThat(events[5].getClass()).isEqualTo(ActivityStartedEventImpl.class);
         assertThat(events[6].getClass()).isEqualTo(TaskCreatedEventImpl.class);
 
-
         processEngine.getRuntimeService().suspendProcessInstanceById(processInstance.getId());
         events = (ProcessEngineEvent[]) MockMessageChannel.messageResult.getPayload();
         for (ProcessEngineEvent e : events) {
@@ -108,7 +108,6 @@ public class MessageProducerActivitiEventActivateSuspendIT {
         assertThat(events.length).isEqualTo(2);
         assertThat(events[0].getClass()).isEqualTo(ProcessActivatedEventImpl.class);
         assertThat(events[1].getClass()).isEqualTo(TaskActivatedEventImpl.class);
-
     }
 
     public static void deploy(final String processDefinitionKey,

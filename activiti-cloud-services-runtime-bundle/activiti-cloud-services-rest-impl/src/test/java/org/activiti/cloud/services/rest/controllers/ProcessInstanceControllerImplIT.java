@@ -16,9 +16,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -30,10 +27,11 @@ import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.core.ActivitiForbiddenException;
+import org.activiti.cloud.services.core.ProcessDiagramGeneratorWrapper;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
 import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.engine.RepositoryService;
-import org.activiti.image.ProcessDiagramGenerator;
+import org.activiti.image.exception.ActivitiInterchangeInfoNotFoundException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,17 +49,21 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.restdocs.request.RequestDocumentation.requestParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -86,7 +88,7 @@ public class ProcessInstanceControllerImplIT {
     @MockBean
     private RepositoryService repositoryService;
     @MockBean
-    private ProcessDiagramGenerator processDiagramGenerator;
+    private ProcessDiagramGeneratorWrapper processDiagramGenerator;
     @SpyBean
     private ObjectMapper mapper;
 
@@ -113,38 +115,16 @@ public class ProcessInstanceControllerImplIT {
 
         List<ProcessInstance> processInstanceList = Collections.singletonList(buildDefaultProcessInstance());
         Page<ProcessInstance> processInstancePage = new PageImpl<>(processInstanceList,
-                                                                PageRequest.of(1,
-                                                                               10),
-                                                                processInstanceList.size());
+                                                                   PageRequest.of(1,
+                                                                                  10),
+                                                                   processInstanceList.size());
         when(processEngine.getProcessInstances(any())).thenReturn(processInstancePage);
 
         this.mockMvc.perform(get("/v1/process-instances?skipCount=10&maxItems=10").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER_ALFRESCO + "/list",
-                                requestParameters(
-                                        parameterWithName("skipCount")
-                                                .description("How many entities exist in the entire addressed collection before those included in this list."),
-                                        parameterWithName("maxItems")
-                                                .description("The max number of entities that can be included in the result.")
-                                ),
-                                responseFields(
-                                        subsectionWithPath("list").ignored(),
-                                        subsectionWithPath("list.entries").description("List of results."),
-                                        subsectionWithPath("list.entries[].entry").description("Wrapper for each entry in the list of results."),
-                                        subsectionWithPath("list.pagination").description("Pagination metadata."),
-                                        subsectionWithPath("list.pagination.skipCount")
-                                                .description("How many entities exist in the entire addressed collection before those included in this list."),
-                                        subsectionWithPath("list.pagination.maxItems")
-                                                .description("The maxItems parameter used to generate this list."),
-                                        subsectionWithPath("list.pagination.count")
-                                                .description("The number of entities included in this list. This number must correspond to the number of objects in the \"entries\" array."),
-                                        subsectionWithPath("list.pagination.hasMoreItems")
-                                                .description("A boolean value that indicates whether there are further entities in the addressed collection beyond those returned " +
-                                                                     "in this response. If true then a request with a larger value for either the skipCount or the maxItems " +
-                                                                     "parameter is expected to return further results."),
-                                        subsectionWithPath("list.pagination.totalItems")
-                                                .description("An integer value that indicates the total number of entities in the addressed collection.")
-                                )));
+                                pageRequestParameters(),
+                                pagedResourcesResponseFields()));
     }
 
     private ProcessInstance buildDefaultProcessInstance() {
@@ -179,8 +159,8 @@ public class ProcessInstanceControllerImplIT {
         when(processEngine.startProcess(any())).thenThrow(new ActivitiForbiddenException("Not permitted"));
 
         this.mockMvc.perform(post("/v1/process-instances")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(cmd)))
+                                     .contentType(MediaType.APPLICATION_JSON)
+                                     .content(mapper.writeValueAsString(cmd)))
                 .andExpect(status().isForbidden())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/start"));
     }
@@ -198,30 +178,59 @@ public class ProcessInstanceControllerImplIT {
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 
+    @Test
+    public void getProcessInstanceByIdNotFound() throws Exception {
+        when(processEngine.getProcessInstanceById("1")).thenReturn(null);
+
+        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}",
+                                 1))
+                .andExpect(status().isNotFound());
+    }
 
     @Test
     public void getProcessDiagram() throws Exception {
         ProcessInstance processInstance = mock(ProcessInstance.class);
-        when(processEngine.getProcessInstanceById("1")).thenReturn(processInstance);
-        InputStream diagram = new ByteArrayInputStream("diagram".getBytes());
-        BpmnModel bpmnModel = mock(BpmnModel.class);
-        when(repositoryService.getBpmnModel(processInstance.getProcessDefinitionId())).thenReturn(bpmnModel);
+        when(processEngine.getProcessInstanceById(anyString())).thenReturn(processInstance);
+        when(repositoryService.getBpmnModel(processInstance.getProcessDefinitionId())).thenReturn(mock(BpmnModel.class));
         when(securityService.canRead(processInstance.getProcessDefinitionId())).thenReturn(true);
-        List<String> activitiIds = new ArrayList<>();
-        when(processEngine.getActiveActivityIds("1")).thenReturn(activitiIds);
+        when(processEngine.getActiveActivityIds(anyString())).thenReturn(Collections.emptyList());
 
-        when(processDiagramGenerator.generateDiagram(bpmnModel,
-                                                     activitiIds,
-                                                     Collections.emptyList(),
-                                                     processDiagramGenerator.getDefaultActivityFontName(),
-                                                     processDiagramGenerator.getDefaultLabelFontName(),
-                                                     processDiagramGenerator.getDefaultAnnotationFontName())).thenReturn(diagram);
+        when(processDiagramGenerator.generateDiagram(any(BpmnModel.class),
+                                                     anyList(),
+                                                     anyList()))
+                .thenReturn("diagram".getBytes());
 
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/model",
                                  1).contentType("image/svg+xml"))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/diagram",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
+    }
+
+    @Test
+    public void getProcessDiagramProcessNotFound() throws Exception {
+        when(processEngine.getProcessInstanceById(anyString())).thenReturn(null);
+        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/model",
+                                 1).contentType("image/svg+xml"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void getProcessDiagramWithoutInterchangeInfo() throws Exception {
+        ProcessInstance processInstance = mock(ProcessInstance.class);
+        when(processEngine.getProcessInstanceById(anyString())).thenReturn(processInstance);
+        when(repositoryService.getBpmnModel(processInstance.getProcessDefinitionId())).thenReturn(mock(BpmnModel.class));
+        when(securityService.canRead(processInstance.getProcessDefinitionId())).thenReturn(true);
+        when(processEngine.getActiveActivityIds(anyString())).thenReturn(Collections.emptyList());
+
+        when(processDiagramGenerator.generateDiagram(any(BpmnModel.class),
+                                                     anyList(),
+                                                     anyList()))
+                .thenThrow(new ActivitiInterchangeInfoNotFoundException("No interchange information found."));
+
+        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/model",
+                                 1).contentType("image/svg+xml"))
+                .andExpect(status().isNoContent());
     }
 
     @Test
@@ -255,6 +264,18 @@ public class ProcessInstanceControllerImplIT {
                                  1))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/activate",
+                                pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
+    }
+
+
+    @Test
+    public void deleteProcessInstance() throws Exception {
+        ProcessInstance processInstance = mock(ProcessInstance.class);
+        when(processEngine.getProcessInstanceById("1")).thenReturn(processInstance);
+
+        this.mockMvc.perform(delete("/v1/process-instances/{processInstanceId}", 1))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/delete",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 }

@@ -16,13 +16,13 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.activiti.cloud.services.api.model.ProcessInstanceVariables;
-import org.activiti.cloud.services.rest.assemblers.ProcessInstanceVariablesResourceAssembler;
+import org.activiti.cloud.services.rest.assemblers.ProcessInstanceVariableResourceAssembler;
 import org.activiti.engine.RuntimeService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -63,16 +63,17 @@ public class ProcessInstanceVariableControllerImplIT {
     @MockBean
     private RuntimeService runtimeService;
     @MockBean
-    private ProcessInstanceVariablesResourceAssembler variableResourceAssembler;
+    private ProcessInstanceVariableResourceAssembler variableResourceAssembler;
 
     @SpyBean
     private ObjectMapper mapper;
 
     @Test
     public void getVariables() throws Exception {
-        when(runtimeService.getVariables("1")).thenReturn(new HashMap<>());
+        when(runtimeService.getVariableInstancesByExecutionIds(any())).thenReturn(new ArrayList<>());
 
-        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/variables",
+        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/variables/",
+                                 1,
                                  1).accept(MediaTypes.HAL_JSON_VALUE))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
@@ -80,38 +81,48 @@ public class ProcessInstanceVariableControllerImplIT {
     }
 
     @Test
+    public void getVariablesLocal() throws Exception {
+        when(runtimeService.getVariableInstancesLocal(anyString())).thenReturn(new HashMap<>());
+
+        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/variables/local",
+                1,
+                1).accept(MediaTypes.HAL_JSON_VALUE))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list/local",
+                        pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
+    }
+
+    @Test
     public void setVariables() throws Exception {
         Map<String, Object> variables = new HashMap<>();
         variables.put("var1",
-                      "varObj1");
+                "varObj1");
         variables.put("var2",
-                      "varObj2");
+                "varObj2");
 
-        ProcessInstanceVariables processInstanceVariables = new ProcessInstanceVariables("processInstanceId",
-                                                                                         variables);
         this.mockMvc.perform(post("/v1/process-instances/{processInstanceId}/variables",
-                                  1)
-                                     .accept(MediaTypes.HAL_JSON_VALUE)
-                                     .contentType(MediaType.APPLICATION_JSON)
-                                     .content(mapper.writeValueAsString(processInstanceVariables))
+                1)
+                .accept(MediaTypes.HAL_JSON_VALUE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(variables))
         )
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/upsert",
-                                pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
+                        pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 
     @Test
     public void deleteVariables() throws Exception {
         this.mockMvc.perform(delete("/v1/process-instances/{processInstanceId}/variables",
-                                    1)
-                                     .accept(MediaTypes.HAL_JSON_VALUE)
-                                     .contentType(MediaType.APPLICATION_JSON)
-                                     .content(mapper.writeValueAsString(Arrays.asList("varName1",
-                                                                                      "varName2"))))
+                1)
+                .accept(MediaTypes.HAL_JSON_VALUE)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(Arrays.asList("varName1",
+                        "varName2"))))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/delete",
-                                pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
+                        pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 }

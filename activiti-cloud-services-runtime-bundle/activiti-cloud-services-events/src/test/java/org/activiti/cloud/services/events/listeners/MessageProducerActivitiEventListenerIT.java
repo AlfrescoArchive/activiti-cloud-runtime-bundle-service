@@ -18,22 +18,26 @@ package org.activiti.cloud.services.events.listeners;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 import org.activiti.cloud.services.api.events.ProcessEngineEvent;
+import org.activiti.cloud.services.events.ActivityCancelledEventImpl;
 import org.activiti.cloud.services.events.ActivityCompletedEventImpl;
 import org.activiti.cloud.services.events.ActivityStartedEventImpl;
+import org.activiti.cloud.services.events.ProcessCancelledEventImpl;
 import org.activiti.cloud.services.events.ProcessCompletedEventImpl;
 import org.activiti.cloud.services.events.ProcessCreatedEventImpl;
 import org.activiti.cloud.services.events.ProcessStartedEventImpl;
-import org.activiti.cloud.services.events.ProcessSuspendedEventImpl;
 import org.activiti.cloud.services.events.SequenceFlowTakenEventImpl;
+import org.activiti.cloud.services.events.TaskAssignedEventImpl;
+import org.activiti.cloud.services.events.TaskCancelledEventImpl;
 import org.activiti.cloud.services.events.TaskCreatedEventImpl;
 import org.activiti.cloud.services.events.tests.util.MockMessageChannel;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.runtime.ProcessInstance;
-import org.junit.Ignore;
+import org.activiti.engine.task.Task;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,6 +112,92 @@ public class MessageProducerActivitiEventListenerIT {
         assertThat(events[2].getClass()).isEqualTo(ActivityStartedEventImpl.class);
         assertThat(events[3].getClass()).isEqualTo(ActivityCompletedEventImpl.class);
         assertThat(events[4].getClass()).isEqualTo(SequenceFlowTakenEventImpl.class);
+    }
+
+    /**
+     * This test is here for the default behavior of the engine when a new standalone task is created
+     * First is send the TASK_ASSIGNED event then the TASK_CREATED event
+     * Note: If it's decided to change the behavior this test should fail
+     * @throws Exception
+     */
+    @Test
+    public void executeListenerForTaskCreated() throws Exception {
+        // given
+        ProcessEngine processEngine = ProcessEngineConfiguration.createStandaloneInMemProcessEngineConfiguration()
+                .setDatabaseSchemaUpdate(ProcessEngineConfigurationImpl.DB_SCHEMA_UPDATE_DROP_CREATE).buildProcessEngine();
+        processEngine.getRuntimeService().addEventListener(eventListener);
+
+        // when
+        final Task newTask = processEngine.getTaskService().newTask();
+        newTask.setName("new-task");
+        newTask.setDescription("new-task-description");
+        newTask.setAssignee("huser");
+        try {
+            processEngine.getTaskService().saveTask(newTask);
+        } catch (Exception e) {
+            // nothing to do
+        }
+
+        // then
+        ProcessEngineEvent[] events = (ProcessEngineEvent[]) MockMessageChannel.messageResult.getPayload();
+        assertThat(events.length).isEqualTo(2);
+        assertThat(events[0].getClass()).isEqualTo(TaskAssignedEventImpl.class);
+        assertThat(events[1].getClass()).isEqualTo(TaskCreatedEventImpl.class);
+    }
+
+    /**
+     * Test that when deleting a process instance the process engine will fire
+     * activity cancelled event, task cancelled event and process cancelled event
+     */
+    @Test
+    public void testActivitiEventsDeleteProcessInstance() throws Exception {
+        //GIVEN
+        ProcessEngine processEngine = ProcessEngineConfiguration.createStandaloneInMemProcessEngineConfiguration()
+                .setDatabaseSchemaUpdate(ProcessEngineConfigurationImpl.DB_SCHEMA_UPDATE_DROP_CREATE)
+                .buildProcessEngine();
+        deploy("SimpleUserTaskProcess",
+               processEngine);
+        processEngine.getRuntimeService().addEventListener(eventListener);
+
+        ProcessInstance processInstance =
+                processEngine.getRuntimeService().startProcessInstanceByKey("simpleUserTaskProcess");
+
+        //WHEN
+        processEngine.getRuntimeService().deleteProcessInstance(processInstance.getId(),
+                                                                "test");
+
+        //THEN
+        assertThat(Arrays.asList((ProcessEngineEvent[]) MockMessageChannel.messageResult.getPayload()))
+                .isNotNull()
+                .extracting("class")
+                .containsExactly(
+                        ActivityCancelledEventImpl.class,
+                        TaskCancelledEventImpl.class,
+                        ProcessCancelledEventImpl.class
+                );
+    }
+
+    /**
+     * Test that when deleting a task the process engine will fire a task cancelled event
+     */
+    @Test
+    public void executeListenerForTaskCancelled() {
+        //GIVEN
+        ProcessEngine processEngine = ProcessEngineConfiguration.createStandaloneInMemProcessEngineConfiguration()
+                .setDatabaseSchemaUpdate(ProcessEngineConfigurationImpl.DB_SCHEMA_UPDATE_DROP_CREATE).buildProcessEngine();
+        processEngine.getRuntimeService().addEventListener(eventListener);
+
+        final Task newTask = processEngine.getTaskService().newTask();
+        processEngine.getTaskService().saveTask(newTask);
+
+        //WHEN
+        processEngine.getTaskService().deleteTask(newTask.getId(), "test");
+
+        //THEN
+        assertThat(Arrays.asList((ProcessEngineEvent[]) MockMessageChannel.messageResult.getPayload()))
+                .isNotNull()
+                .extracting("class")
+                .containsOnlyOnce(TaskCancelledEventImpl.class);
     }
 
     public static void deploy(final String processDefinitionKey, ProcessEngine processEngine) throws IOException {

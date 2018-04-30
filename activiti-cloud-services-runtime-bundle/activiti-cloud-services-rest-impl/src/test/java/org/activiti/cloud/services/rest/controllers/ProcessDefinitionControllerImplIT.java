@@ -26,14 +26,14 @@ import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.bpmn.model.Process;
 import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.converter.ProcessDefinitionConverter;
+import org.activiti.cloud.services.core.ProcessDiagramGeneratorWrapper;
 import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.cloud.services.core.pageable.PageableRepositoryService;
-import org.activiti.cloud.services.rest.api.ProcessDefinitionMetaController;
 import org.activiti.cloud.services.security.SecurityPolicy;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.impl.persistence.entity.ProcessDefinitionEntityImpl;
 import org.activiti.engine.repository.ProcessDefinitionQuery;
-import org.activiti.image.ProcessDiagramGenerator;
+import org.activiti.image.exception.ActivitiInterchangeInfoNotFoundException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,10 +53,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.processDefinitionFields;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.processDefinitionIdParameter;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.halLinks;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
@@ -64,9 +66,6 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.restdocs.request.RequestDocumentation.requestParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -92,16 +91,13 @@ public class ProcessDefinitionControllerImplIT {
     private RepositoryService repositoryService;
 
     @MockBean
-    private ProcessDiagramGenerator processDiagramGenerator;
+    private ProcessDiagramGeneratorWrapper processDiagramGenerator;
 
     @MockBean
     private ProcessDefinitionConverter processDefinitionConverter;
 
     @MockBean
     private PageableRepositoryService pageableRepositoryService;
-
-    @MockBean
-    private ProcessDefinitionMetaController processDefinitionMetaController;
 
     @Test
     public void getProcessDefinitions() throws Exception {
@@ -148,30 +144,8 @@ public class ProcessDefinitionControllerImplIT {
         MvcResult result = this.mockMvc.perform(get("/v1/process-definitions?skipCount=10&maxItems=10").accept(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER_ALFRESCO + "/list",
-                                requestParameters(
-                                        parameterWithName("skipCount")
-                                                .description("How many entities exist in the entire addressed collection before those included in this list."),
-                                        parameterWithName("maxItems")
-                                                .description("The max number of entities that can be included in the result.")
-                                ),
-                                responseFields(
-                                        subsectionWithPath("list").ignored(),
-                                        subsectionWithPath("list.entries").description("List of results."),
-                                        subsectionWithPath("list.entries[].entry").description("Wrapper for each entry in the list of results."),
-                                        subsectionWithPath("list.pagination").description("Pagination metadata."),
-                                        subsectionWithPath("list.pagination.skipCount")
-                                                .description("How many entities exist in the entire addressed collection before those included in this list."),
-                                        subsectionWithPath("list.pagination.maxItems")
-                                                .description("The maxItems parameter used to generate this list."),
-                                        subsectionWithPath("list.pagination.count")
-                                                .description("The number of entities included in this list. This number must correspond to the number of objects in the \"entries\" array."),
-                                        subsectionWithPath("list.pagination.hasMoreItems")
-                                                .description("A boolean value that indicates whether there are further entities in the addressed collection beyond those returned " +
-                                                                     "in this response. If true then a request with a larger value for either the skipCount or the maxItems " +
-                                                                     "parameter is expected to return further results."),
-                                        subsectionWithPath("list.pagination.totalItems")
-                                                .description("An integer value that indicates the total number of entities in the addressed collection.")
-                                )))
+                                pageRequestParameters(),
+                                pagedResourcesResponseFields()))
                 .andReturn();
 
         //then
@@ -207,7 +181,7 @@ public class ProcessDefinitionControllerImplIT {
                                  1).accept(MediaTypes.HAL_JSON_VALUE))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/get",
-                                pathParameters(parameterWithName("id").description("The process definition id"))));
+                                processDefinitionIdParameter()));
     }
 
     @Test
@@ -229,14 +203,8 @@ public class ProcessDefinitionControllerImplIT {
                                                     procDefId).accept(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER_ALFRESCO + "/get",
-                                pathParameters(parameterWithName("id").description("The process definition id.")),
-                                responseFields(
-                                        subsectionWithPath("entry").ignored(),
-                                        subsectionWithPath("entry.id").description("The process definition id."),
-                                        subsectionWithPath("entry.name").description("The process definition name."),
-                                        subsectionWithPath("entry.description").description("The process definition description."),
-                                        subsectionWithPath("entry.version").description("The process definition version.")
-                                )
+                                processDefinitionIdParameter(),
+                                processDefinitionFields()
                        )
                 ).andReturn();
 
@@ -264,7 +232,7 @@ public class ProcessDefinitionControllerImplIT {
                     1).accept(MediaType.APPLICATION_XML))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/model/get",
-                                pathParameters(parameterWithName("id").description("The process model id"))));
+                                processDefinitionIdParameter()));
     }
 
     @Test
@@ -287,7 +255,7 @@ public class ProcessDefinitionControllerImplIT {
                     1).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/bpmn-model/get",
-                                pathParameters(parameterWithName("id").description("The BPMN model id"))));
+                                processDefinitionIdParameter()));
     }
 
     @Test
@@ -300,18 +268,54 @@ public class ProcessDefinitionControllerImplIT {
                                                                         SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
         when(processDefinitionQuery.processDefinitionId("1")).thenReturn(processDefinitionQuery);
         when(processDefinitionQuery.singleResult()).thenReturn(new ProcessDefinitionEntityImpl());
-        InputStream img = new ByteArrayInputStream("img".getBytes());
-        when(processDiagramGenerator.generateDiagram(bpmnModel,
-                                                     processDiagramGenerator.getDefaultActivityFontName(),
-                                                     processDiagramGenerator.getDefaultLabelFontName(),
-                                                     processDiagramGenerator.getDefaultAnnotationFontName()))
-                .thenReturn(img);
+        when(processDiagramGenerator.generateDiagram(any(BpmnModel.class)))
+                .thenReturn("img".getBytes());
 
         this.mockMvc.perform(
                 get("/v1/process-definitions/{id}/model",
                     1).accept("image/svg+xml"))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/diagram",
-                                pathParameters(parameterWithName("id").description("The BPMN model id"))));
+                                processDefinitionIdParameter()));
     }
+
+
+    @Test
+    public void getProcessDiagramProcessNotFound() throws Exception {
+        ProcessDefinitionQuery processDefinitionQuery = mock(ProcessDefinitionQuery.class);
+        when(repositoryService.createProcessDefinitionQuery()).thenReturn(processDefinitionQuery);
+        when(securityPoliciesApplicationService.restrictProcessDefQuery(processDefinitionQuery,
+                                                                        SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
+        when(processDefinitionQuery.processDefinitionId("1")).thenReturn(processDefinitionQuery);
+        when(processDefinitionQuery.singleResult()).thenReturn(null);
+        when(processDiagramGenerator.generateDiagram(any(BpmnModel.class)))
+                .thenReturn("img".getBytes());
+
+        this.mockMvc.perform(
+                get("/v1/process-definitions/{id}/model",
+                    1).accept("image/svg+xml"))
+                .andExpect(status().isNotFound())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/diagram",
+                                processDefinitionIdParameter()));
+    }
+
+    @Test
+    public void getProcessDiagramWithoutInterchangeInfo() throws Exception {
+        BpmnModel bpmnModel = new BpmnModel();
+        when(repositoryService.getBpmnModel("1")).thenReturn(bpmnModel);
+        ProcessDefinitionQuery processDefinitionQuery = mock(ProcessDefinitionQuery.class);
+        when(repositoryService.createProcessDefinitionQuery()).thenReturn(processDefinitionQuery);
+        when(securityPoliciesApplicationService.restrictProcessDefQuery(processDefinitionQuery,
+                                                                        SecurityPolicy.READ)).thenReturn(processDefinitionQuery);
+        when(processDefinitionQuery.processDefinitionId("1")).thenReturn(processDefinitionQuery);
+        when(processDefinitionQuery.singleResult()).thenReturn(new ProcessDefinitionEntityImpl());
+        when(processDiagramGenerator.generateDiagram(any(BpmnModel.class)))
+                .thenThrow(new ActivitiInterchangeInfoNotFoundException("No interchange information found."));
+
+        this.mockMvc.perform(
+                get("/v1/process-definitions/{id}/model",
+                    1).accept("image/svg+xml"))
+                .andExpect(status().isNoContent());
+    }
+
 }

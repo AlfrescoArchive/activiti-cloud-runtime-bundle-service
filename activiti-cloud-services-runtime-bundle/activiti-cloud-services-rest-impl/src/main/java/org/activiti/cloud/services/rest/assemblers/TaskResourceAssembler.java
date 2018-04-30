@@ -29,6 +29,7 @@ import org.springframework.stereotype.Component;
 
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
+import static org.activiti.cloud.services.api.model.Task.TaskStatus.ASSIGNED;
 
 @Component
 public class TaskResourceAssembler extends ResourceAssemblerSupport<Task, TaskResource> {
@@ -42,14 +43,17 @@ public class TaskResourceAssembler extends ResourceAssemblerSupport<Task, TaskRe
     public TaskResource toResource(Task task) {
         List<Link> links = new ArrayList<>();
         links.add(linkTo(methodOn(TaskControllerImpl.class).getTaskById(task.getId())).withSelfRel());
-        if (!Task.TaskStatus.ASSIGNED.name().equals(task.getStatus())) {
+        if (ASSIGNED != task.getStatus()) {
             links.add(linkTo(methodOn(TaskControllerImpl.class).claimTask(task.getId())).withRel("claim"));
         } else {
             links.add(linkTo(methodOn(TaskControllerImpl.class).releaseTask(task.getId())).withRel("release"));
             links.add(linkTo(methodOn(TaskControllerImpl.class).completeTask(task.getId(),
                                                                          null)).withRel("complete"));
         }
-        links.add(linkTo(methodOn(ProcessInstanceControllerImpl.class).getProcessInstanceById(task.getProcessInstanceId())).withRel("processInstance"));
+        // standalone tasks are not bound to a process instance
+        if (task.getProcessInstanceId() != null && !task.getProcessInstanceId().isEmpty()) {
+            links.add(linkTo(methodOn(ProcessInstanceControllerImpl.class).getProcessInstanceById(task.getProcessInstanceId())).withRel("processInstance"));
+        }
         if (task.getParentTaskId() != null && !task.getParentTaskId().isEmpty()) {
             links.add(linkTo(methodOn(TaskControllerImpl.class).getTaskById(task.getParentTaskId())).withRel("parent"));
         }
