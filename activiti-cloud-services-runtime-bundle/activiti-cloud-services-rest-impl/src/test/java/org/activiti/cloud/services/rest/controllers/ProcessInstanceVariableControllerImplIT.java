@@ -18,10 +18,17 @@ package org.activiti.cloud.services.rest.controllers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.activiti.cloud.services.api.commands.RemoveProcessVariablesCmd;
+import org.activiti.cloud.services.api.commands.SetProcessVariablesCmd;
+import org.activiti.cloud.services.api.model.ProcessInstance;
+import org.activiti.cloud.services.core.ProcessEngineWrapper;
+import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceVariableResourceAssembler;
 import org.activiti.engine.RuntimeService;
 import org.junit.Test;
@@ -65,6 +72,11 @@ public class ProcessInstanceVariableControllerImplIT {
     @MockBean
     private ProcessInstanceVariableResourceAssembler variableResourceAssembler;
 
+    @MockBean
+    private SecurityPoliciesApplicationService securityService;
+    @MockBean
+    private ProcessEngineWrapper processEngine;
+
     @SpyBean
     private ObjectMapper mapper;
 
@@ -91,7 +103,6 @@ public class ProcessInstanceVariableControllerImplIT {
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list/local",
                         pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
-
     @Test
     public void setVariables() throws Exception {
         Map<String, Object> variables = new HashMap<>();
@@ -100,13 +111,13 @@ public class ProcessInstanceVariableControllerImplIT {
         variables.put("var2",
                 "varObj2");
 
+        ProcessInstance processInstance = buildDefaultProcessInstance();
+        when(processEngine.getProcessInstanceById(any())).thenReturn(processInstance);
+        when(securityService.canWrite(processInstance.getProcessDefinitionKey())).thenReturn(true);
+
         this.mockMvc.perform(post("/v1/process-instances/{processInstanceId}/variables",
-                1)
-                .accept(MediaTypes.HAL_JSON_VALUE)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(variables))
-        )
-                .andDo(print())
+                1).contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(new SetProcessVariablesCmd("1",
+                variables))))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/upsert",
                         pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
@@ -114,15 +125,32 @@ public class ProcessInstanceVariableControllerImplIT {
 
     @Test
     public void deleteVariables() throws Exception {
+        ProcessInstance processInstance = buildDefaultProcessInstance();
+        when(processEngine.getProcessInstanceById(any())).thenReturn(processInstance);
+        when(securityService.canRead(processInstance.getProcessDefinitionKey())).thenReturn(true);
+        when(securityService.canWrite(processInstance.getProcessDefinitionKey())).thenReturn(true);
+
         this.mockMvc.perform(delete("/v1/process-instances/{processInstanceId}/variables",
                 1)
                 .accept(MediaTypes.HAL_JSON_VALUE)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(Arrays.asList("varName1",
-                        "varName2"))))
+                .content(mapper.writeValueAsString(new RemoveProcessVariablesCmd("1",Arrays.asList("varName1",
+                        "varName2")))))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/delete",
                         pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
+    }
+
+    private ProcessInstance buildDefaultProcessInstance() {
+        return new ProcessInstance(UUID.randomUUID().toString(),
+                "My process instance",
+                "This is my process instance",
+                UUID.randomUUID().toString(),
+                "user",
+                new Date(),
+                "my business key",
+                ProcessInstance.ProcessInstanceStatus.RUNNING.name(),
+                "my-proc-def");
     }
 }
