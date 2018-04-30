@@ -17,6 +17,7 @@
     <module>activiti-cloud-starter-configure</module>
     <module>activiti-cloud-starter-runtime-bundle</module>
     <module>activiti-cloud-starter-test</module>
+    <module>activiti-spring-boot-starter-basic</module>
   </modules>
   <scm>
     <url>https://github.com/Activiti/activiti-cloud-runtime-bundle-service</url>
