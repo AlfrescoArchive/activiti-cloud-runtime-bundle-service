@@ -252,9 +252,37 @@ public class ProcessEngineWrapper {
         return taskConverter.from(taskService.createTaskQuery().taskId(task.getId()).singleResult());
     }
 
+    public Task createNewSubtask(String parentTaskId,
+                                 CreateTaskCmd createSubtaskCmd) {
+        if (taskService.createTaskQuery().taskId(parentTaskId).singleResult() == null) {
+            throw new ActivitiException("Parent task with id " + parentTaskId + " was not found");
+        }
+
+        final org.activiti.engine.task.Task task = taskService.newTask();
+        task.setName(createSubtaskCmd.getName());
+        task.setDescription(createSubtaskCmd.getDescription());
+        task.setDueDate(createSubtaskCmd.getDueDate());
+        if (createSubtaskCmd.getPriority() != null) {
+            task.setPriority(createSubtaskCmd.getPriority());
+        }
+        task.setParentTaskId(parentTaskId);
+        taskService.saveTask(task);
+
+        // see ACTIVITI#1854
+        task.setAssignee(createSubtaskCmd.getAssignee() == null ? authenticationWrapper.getAuthenticatedUserId() : createSubtaskCmd.getAssignee());
+        taskService.saveTask(task);
+
+        return taskConverter.from(taskService.createTaskQuery().taskId(task.getId()).singleResult());
+    }
+
     public void deleteProcessInstance(String processInstanceId) {
         verifyCanWriteToProcessInstance(processInstanceId);
         runtimeService.deleteProcessInstance(processInstanceId,
                                              "Cancelled by " + authenticationWrapper.getAuthenticatedUserId());
+    }
+
+    public List<org.activiti.engine.task.Task> getSubtasks(String parentTaskId) {
+
+        return taskService.getSubTasks(parentTaskId);
     }
 }

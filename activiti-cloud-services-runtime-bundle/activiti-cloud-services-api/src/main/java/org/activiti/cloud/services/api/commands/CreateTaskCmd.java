@@ -30,6 +30,7 @@ public class CreateTaskCmd implements Command {
     private Date dueDate;
     private Integer priority;
     private String assignee;
+    private String parentTaskId;
 
     public CreateTaskCmd() {
         this.id = UUID.randomUUID().toString();
@@ -40,7 +41,8 @@ public class CreateTaskCmd implements Command {
                          @JsonProperty("description") String description,
                          @JsonProperty("dueDate") Date dueDate,
                          @JsonProperty("priority") Integer priority,
-                         @JsonProperty("assignee") String assignee) {
+                         @JsonProperty("assignee") String assignee,
+                         @JsonProperty("parentTaskId") String parentTaskId) {
 
         this();
         this.name = name;
@@ -48,6 +50,7 @@ public class CreateTaskCmd implements Command {
         this.dueDate = dueDate;
         this.priority = priority;
         this.assignee = assignee;
+        this.parentTaskId = parentTaskId;
     }
 
     @Override
@@ -73,5 +76,9 @@ public class CreateTaskCmd implements Command {
 
     public String getAssignee() {
         return assignee;
+    }
+
+    public String getParentTaskId() {
+        return parentTaskId;
     }
 }
