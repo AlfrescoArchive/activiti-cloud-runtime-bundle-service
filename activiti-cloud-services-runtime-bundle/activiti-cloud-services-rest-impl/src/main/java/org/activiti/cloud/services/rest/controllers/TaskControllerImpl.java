@@ -22,6 +22,7 @@ import org.activiti.cloud.services.api.commands.ClaimTaskCmd;
 import org.activiti.cloud.services.api.commands.CompleteTaskCmd;
 import org.activiti.cloud.services.api.commands.CreateTaskCmd;
 import org.activiti.cloud.services.api.commands.ReleaseTaskCmd;
+import org.activiti.cloud.services.api.commands.UpdateTaskCmd;
 import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.services.api.model.converter.TaskConverter;
 import org.activiti.cloud.services.core.AuthenticationWrapper;
@@ -135,9 +136,9 @@ public class TaskControllerImpl implements TaskController {
 
     @Override
     public ResponseEntity<Void> updateTask(@PathVariable String taskId,
-                                           @RequestBody CreateTaskCmd createTaskCmd) {
+                                           @RequestBody UpdateTaskCmd updateTaskCmd) {
         processEngine.updateTask(taskId,
-                                 createTaskCmd);
+                                 updateTaskCmd);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 

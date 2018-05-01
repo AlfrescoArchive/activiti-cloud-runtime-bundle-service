@@ -2,6 +2,7 @@ package org.activiti.cloud.services.rest.api;
 
 import org.activiti.cloud.services.api.commands.CompleteTaskCmd;
 import org.activiti.cloud.services.api.commands.CreateTaskCmd;
+import org.activiti.cloud.services.api.commands.UpdateTaskCmd;
 import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.services.rest.api.resources.TaskResource;
 import org.springframework.data.domain.Pageable;
@@ -43,7 +44,7 @@ public interface TaskController {
 
     @RequestMapping(value = "/{taskId}", method = RequestMethod.PUT)
     ResponseEntity<Void> updateTask(@PathVariable("taskId") String taskId,
-            @RequestBody CreateTaskCmd updateTaskCmd);
+            @RequestBody UpdateTaskCmd updateTaskCmd);
 
     @RequestMapping(value = "/{taskId}/subtask", method = RequestMethod.POST)
     Resource<Task> createSubtask(@PathVariable String taskId,

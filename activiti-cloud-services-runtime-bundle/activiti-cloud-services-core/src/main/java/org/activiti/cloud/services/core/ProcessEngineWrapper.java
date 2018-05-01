@@ -11,6 +11,7 @@ import org.activiti.cloud.services.api.commands.SetTaskVariablesCmd;
 import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
+import org.activiti.cloud.services.api.commands.UpdateTaskCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
@@ -228,9 +229,7 @@ public class ProcessEngineWrapper {
         if (createTaskCmd.getPriority() != null) {
             task.setPriority(createTaskCmd.getPriority());
         }
-        taskService.saveTask(task);
 
-        // see ACTIVITI#1854
         task.setAssignee(createTaskCmd.getAssignee() == null ? authenticationWrapper.getAuthenticatedUserId() : createTaskCmd.getAssignee());
         taskService.saveTask(task);
 
@@ -251,9 +250,7 @@ public class ProcessEngineWrapper {
             task.setPriority(createSubtaskCmd.getPriority());
         }
         task.setParentTaskId(parentTaskId);
-        taskService.saveTask(task);
 
-        // see ACTIVITI#1854
         task.setAssignee(createSubtaskCmd.getAssignee() == null ? authenticationWrapper.getAuthenticatedUserId() : createSubtaskCmd.getAssignee());
         taskService.saveTask(task);
 
@@ -272,29 +269,29 @@ public class ProcessEngineWrapper {
     }
 
     public void updateTask(String taskId,
-                           CreateTaskCmd createTaskCmd) {
+                           UpdateTaskCmd updateTaskCmd) {
         final org.activiti.engine.task.Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
         if (task == null) {
-            throw new ActivitiObjectNotFoundException("Unable to find task for the given id: " + createTaskCmd.getId());
+            throw new ActivitiObjectNotFoundException("Unable to find task for the given id: " + updateTaskCmd.getId());
         }
 
-        if (createTaskCmd.getAssignee() != null) {
-            task.setAssignee(createTaskCmd.getAssignee());
+        if (updateTaskCmd.getAssignee() != null) {
+            task.setAssignee(updateTaskCmd.getAssignee());
         }
-        if (createTaskCmd.getName() != null) {
-            task.setName(createTaskCmd.getName());
+        if (updateTaskCmd.getName() != null) {
+            task.setName(updateTaskCmd.getName());
         }
-        if (createTaskCmd.getDescription() != null) {
-            task.setDescription(createTaskCmd.getDescription());
+        if (updateTaskCmd.getDescription() != null) {
+            task.setDescription(updateTaskCmd.getDescription());
         }
-        if (createTaskCmd.getDueDate() != null) {
-            task.setDueDate(createTaskCmd.getDueDate());
+        if (updateTaskCmd.getDueDate() != null) {
+            task.setDueDate(updateTaskCmd.getDueDate());
         }
-        if (createTaskCmd.getPriority() != null) {
-            task.setPriority(createTaskCmd.getPriority());
+        if (updateTaskCmd.getPriority() != null) {
+            task.setPriority(updateTaskCmd.getPriority());
         }
-        if (createTaskCmd.getParentTaskId() != null) {
-            task.setParentTaskId(createTaskCmd.getParentTaskId());
+        if (updateTaskCmd.getParentTaskId() != null) {
+            task.setParentTaskId(updateTaskCmd.getParentTaskId());
         }
         taskService.saveTask(task);
     }
