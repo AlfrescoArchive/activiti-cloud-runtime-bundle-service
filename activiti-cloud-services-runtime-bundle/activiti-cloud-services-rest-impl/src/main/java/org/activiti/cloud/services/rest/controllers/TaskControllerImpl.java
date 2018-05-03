@@ -82,7 +82,9 @@ public class TaskControllerImpl implements TaskController {
     @Override
     public PagedResources<TaskResource> getTasks(Pageable pageable) {
         Page<Task> page = processEngine.getTasks(pageable);
-        return pagedResourcesAssembler.toResource(pageable, page,
+        return pagedResourcesAssembler.toResource(pageable,
+                                                  page,
+                                                  Task.class,
                                                   taskResourceAssembler);
     }
 

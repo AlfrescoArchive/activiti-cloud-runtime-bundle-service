@@ -99,6 +99,7 @@ public class ProcessDefinitionControllerImpl implements ProcessDefinitionControl
         Page<ProcessDefinition> page = pageableRepositoryService.getProcessDefinitions(pageable);
         return pagedResourcesAssembler.toResource(pageable,
                                                   page,
+                                                  ProcessDefinition.class,
                                                   resourceAssembler);
     }
 

@@ -48,8 +48,10 @@ public class TaskAdminControllerImpl implements TaskAdminController {
     @Override
     public PagedResources<TaskResource> getAllTasks(Pageable pageable) {
         Page<Task> page = processEngine.getAllTasks(pageable);
-        return pagedResourcesAssembler.toResource(pageable, page,
-                taskResourceAssembler);
+        return pagedResourcesAssembler.toResource(pageable,
+                                                  page,
+                                                  Task.class,
+                                                  taskResourceAssembler);
     }
 
 }

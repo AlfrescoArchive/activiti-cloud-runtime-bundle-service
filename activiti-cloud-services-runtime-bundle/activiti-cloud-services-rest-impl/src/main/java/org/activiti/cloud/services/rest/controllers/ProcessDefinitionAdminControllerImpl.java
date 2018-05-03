@@ -60,7 +60,9 @@ public class ProcessDefinitionAdminControllerImpl implements ProcessDefinitionAd
     @Override
     public PagedResources<ProcessDefinitionResource> getAllProcessDefinitions(Pageable pageable) {
         Page<ProcessDefinition> page = pageableRepositoryService.getAllProcessDefinitions(pageable);
-        return pagedResourcesAssembler.toResource(pageable, page,
+        return pagedResourcesAssembler.toResource(pageable,
+                                                  page,
+                                                  ProcessDefinition.class,
                                                   resourceAssembler);
     }
 
