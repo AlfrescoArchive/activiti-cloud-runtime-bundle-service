@@ -52,7 +52,9 @@ public class ProcessInstanceTasksControllerImpl implements ProcessInstanceTasksC
                                                  Pageable pageable) {
         Page<Task> page = pageableTaskService.getTasks(processInstanceId,
                                                        pageable);
-        return pagedResourcesAssembler.toResource(pageable, page,
+        return pagedResourcesAssembler.toResource(pageable,
+                                                  page,
+                                                  Task.class,
                                                   taskResourceAssembler);
     }
 }

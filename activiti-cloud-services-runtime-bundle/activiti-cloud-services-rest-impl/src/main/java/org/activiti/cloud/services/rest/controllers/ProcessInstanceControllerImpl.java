@@ -101,6 +101,7 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     public PagedResources<ProcessInstanceResource> getProcessInstances(Pageable pageable) {
         return pagedResourcesAssembler.toResource(pageable,
                                                   processEngine.getProcessInstances(pageable),
+                                                  ProcessInstance.class,
                                                   resourceAssembler);
     }
 

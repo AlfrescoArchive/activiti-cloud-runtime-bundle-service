@@ -64,7 +64,9 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
 
     @Override
     public PagedResources<ProcessInstanceResource> getAllProcessInstances(Pageable pageable) {
-        return pagedResourcesAssembler.toResource(pageable, processEngine.getAllProcessInstances(pageable),
+        return pagedResourcesAssembler.toResource(pageable,
+                                                  processEngine.getAllProcessInstances(pageable),
+                                                  ProcessInstance.class,
                                                   resourceAssembler);
     }
 
