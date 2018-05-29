@@ -25,10 +25,12 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.cloud.services.api.commands.CreateTaskCmd;
 import org.activiti.cloud.services.api.model.Task;
+import org.activiti.cloud.services.api.model.Task.TaskStatus;
 import org.activiti.cloud.services.api.model.converter.ListConverter;
 import org.activiti.cloud.services.api.model.converter.TaskConverter;
 import org.activiti.cloud.services.core.AuthenticationWrapper;
 import org.activiti.cloud.services.core.ProcessEngineWrapper;
+import org.activiti.cloud.services.rest.assemblers.TaskResourceAssembler;
 import org.activiti.engine.impl.persistence.entity.TaskEntityImpl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,17 +51,22 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
+import static org.activiti.cloud.services.api.model.Task.TaskStatus.ASSIGNED;
+import static org.activiti.cloud.services.api.model.Task.TaskStatus.CREATED;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.halLinks;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
 import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
@@ -81,6 +88,8 @@ public class TaskControllerImplIT {
     private TaskConverter taskConverter;
     @SpyBean
     private ListConverter listConverter;
+    @SpyBean
+    private TaskResourceAssembler taskResourceAssembler;
 
     @MockBean
     private ProcessEngineWrapper processEngine;
@@ -122,8 +131,7 @@ public class TaskControllerImplIT {
     }
 
     private Task buildDefaultTask() {
-        return buildTask(Task.TaskStatus.ASSIGNED,
-                         "user");
+        return buildTask(ASSIGNED, "user");
     }
 
     @Test
@@ -152,8 +160,7 @@ public class TaskControllerImplIT {
     @Test
     public void releaseTask() throws Exception {
 
-        given(processEngine.releaseTask(any())).willReturn(buildTask(Task.TaskStatus.CREATED,
-                                                                     null));
+        given(processEngine.releaseTask(any())).willReturn(buildTask(CREATED, null));
 
         this.mockMvc.perform(post("/v1/tasks/{taskId}/release",
                                   1))
@@ -162,7 +169,7 @@ public class TaskControllerImplIT {
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 
-    private Task buildTask(Task.TaskStatus status,
+    private Task buildTask(TaskStatus status,
                            String assignee) {
         return new Task(UUID.randomUUID().toString(),
                         "user",
@@ -176,7 +183,7 @@ public class TaskControllerImplIT {
                         UUID.randomUUID().toString(),
                         UUID.randomUUID().toString(),
                         null,
-                        status.name());
+                        status);
     }
 
     @Test
@@ -186,6 +193,27 @@ public class TaskControllerImplIT {
                                   1))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/complete",
+                                pathParameters(parameterWithName("taskId").description("The task id"))));
+    }
+
+    @Test
+    public void deleteTask() throws Exception {
+
+        this.mockMvc.perform(delete("/v1/tasks/{taskId}",
+                                  1))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/delete",
+                                pathParameters(parameterWithName("taskId").description("The task id"))));
+    }
+
+    @Test
+    public void getTaskByIdTaskNotFound() throws Exception {
+        when(processEngine.getTaskById("not-existent-task")).thenReturn(null);
+
+        this.mockMvc.perform(get("/v1/tasks/{taskId}",
+                                 "not-existent-task"))
+                .andExpect(status().isNotFound())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/get",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
     }
 
@@ -204,6 +232,7 @@ public class TaskControllerImplIT {
                                                                                           "description",
                                                                                           null,
                                                                                           50,
+                                                                                          null,
                                                                                           null))))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/new",
@@ -215,8 +244,64 @@ public class TaskControllerImplIT {
                                         subsectionWithPath("name").description("The task name."),
                                         subsectionWithPath("description").description("Task description."),
                                         subsectionWithPath("priority").description("Task priority. Can have values between 0 and 100."),
+                                        subsectionWithPath("status").description("Task status (can be " + Arrays.asList(TaskStatus.values()) + ")"),
+                                        subsectionWithPath("_links").ignored()
+                                )));
+    }
+
+    @Test
+    public void createNewSubtask() throws Exception {
+        final org.activiti.engine.task.Task subtask = new TaskEntityImpl();
+        subtask.setName("new-subtask");
+        subtask.setDescription("subtask description");
+
+        final Task taskConverted = taskConverter.from(subtask);
+        when(processEngine.createNewSubtask(any(),
+                                            any())).thenReturn(taskConverted);
+
+        this.mockMvc.perform(post("/v1/tasks/{taskId}/subtask",
+                                  "parentTaskId").contentType(MediaType.APPLICATION_JSON)
+                                     .content(mapper.writeValueAsString(new CreateTaskCmd("new-task",
+                                                                                          "description",
+                                                                                          null,
+                                                                                          50,
+                                                                                          null,
+                                                                                          null))))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/subtasks/get",
+                                links(linkWithRel("self").ignored(),
+                                      linkWithRel("claim").description("Link to the claim task resource"),
+                                      linkWithRel("home").description("Link to the home resource")
+                                ),
+                                responseFields(
+                                        subsectionWithPath("name").description("The task name."),
+                                        subsectionWithPath("description").description("Task description."),
+                                        subsectionWithPath("priority").description("Task priority. Can have values between 0 and 100."),
                                         subsectionWithPath("status").description("Task status (can be " + Arrays.asList(Task.TaskStatus.values()) + ")"),
                                         subsectionWithPath("_links").ignored()
                                 )));
+    }
+
+    @Test
+    public void getSubtasks() throws Exception {
+        final org.activiti.engine.task.Task subtask1 = new TaskEntityImpl();
+        subtask1.setName("subtask-1");
+        subtask1.setDescription("subtask-1 description");
+
+        final org.activiti.engine.task.Task subtask2 = new TaskEntityImpl();
+        subtask2.setName("subtask-2");
+        subtask2.setDescription("subtask-2 description");
+        subtask1.setPriority(85);
+
+        when(processEngine.getSubtasks(any())).thenReturn(Arrays.asList(subtask1,
+                                                                        subtask2));
+
+        this.mockMvc.perform(get("/v1/tasks/{taskId}/subtasks",
+                                 "parentTaskId").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/subtasks/get",
+                                links(halLinks(),
+                                      linkWithRel("self").ignored().optional())));
     }
 }

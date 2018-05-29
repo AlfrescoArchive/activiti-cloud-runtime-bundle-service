@@ -2,6 +2,7 @@ package org.activiti.cloud.services.core;
 
 import java.util.UUID;
 
+import org.activiti.cloud.services.api.commands.SetProcessVariablesCmd;
 import org.activiti.cloud.services.security.SecurityPolicy;
 import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.ClaimTaskCmd;
@@ -34,6 +35,7 @@ import org.mockito.Mock;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.startsWith;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -122,27 +124,13 @@ public class ProcessEngineWrapperTest {
     }
     @Test
     public void shouldNotSuspendWithoutPermission(){
-        ProcessDefinition def = mock(ProcessDefinition.class);
-        org.activiti.engine.runtime.ProcessInstance inst = mock(org.activiti.engine.runtime.ProcessInstance.class);
-        ProcessInstanceQuery query = mock(ProcessInstanceQuery.class);
-        when(runtimeService.createProcessInstanceQuery()).thenReturn(query);
-        when(query.processInstanceId(any())).thenReturn(query);
-        when(query.singleResult()).thenReturn(inst);
-        when(processInstanceConverter.from(inst)).thenReturn(mock(ProcessInstance.class));
-        when(repositoryService.getProcessDefinition(any())).thenReturn(def);
+        givenMockProcessInstance();
         when(securityService.canWrite(any())).thenReturn(false);
         assertThatExceptionOfType(ActivitiForbiddenException.class).isThrownBy(() -> processEngineWrapper.suspend(mock(SuspendProcessInstanceCmd.class)));
     }
     @Test
     public void shouldNotActivateWithoutPermission(){
-        ProcessDefinition def = mock(ProcessDefinition.class);
-        org.activiti.engine.runtime.ProcessInstance inst = mock(org.activiti.engine.runtime.ProcessInstance.class);
-        ProcessInstanceQuery query = mock(ProcessInstanceQuery.class);
-        when(runtimeService.createProcessInstanceQuery()).thenReturn(query);
-        when(query.processInstanceId(any())).thenReturn(query);
-        when(query.singleResult()).thenReturn(inst);
-        when(processInstanceConverter.from(inst)).thenReturn(mock(ProcessInstance.class));
-        when(repositoryService.getProcessDefinition(any())).thenReturn(def);
+        givenMockProcessInstance();
         when(securityService.canWrite(any())).thenReturn(false);
         assertThatExceptionOfType(ActivitiForbiddenException.class).isThrownBy(() -> processEngineWrapper.activate(mock(ActivateProcessInstanceCmd.class)));
     }
@@ -225,5 +213,78 @@ public class ProcessEngineWrapperTest {
         assertThatExceptionOfType(ActivitiForbiddenException.class).isThrownBy(
                 () -> processEngineWrapper.deleteProcessInstance(processInstance.getProcessInstanceId())
         ).withMessageStartingWith("Operation not permitted");
+    }
+
+    /**
+     * Test that delete task method on process engine wrapper
+     * will trigger delete task method on process engine
+     * if the task exists.
+     */
+    @Test
+    public void testDeleteTask(){
+        //GIVEN
+        TaskQuery query = mock(TaskQuery.class);
+        when(query.taskId(eq("taskId"))).thenReturn(query);
+        when(taskService.createTaskQuery()).thenReturn(query);
+        Task task = mock(Task.class);
+        when(query.singleResult()).thenReturn(task);
+
+        org.activiti.cloud.services.api.model.Task modelTask = mock(org.activiti.cloud.services.api.model.Task.class);
+        modelTask.setId("taskId");
+
+        when(taskConverter.from(task)).thenReturn(modelTask);
+
+        //WHEN
+        processEngineWrapper.deleteTask("taskId");
+
+        //THEN
+        verify(taskService).deleteTask(eq("taskId"), startsWith("Cancelled by"));
+    }
+
+    /**
+     * Test that delete task method on process engine wrapper
+     * will throw ActivitiObjectNotFoundException
+     * if the task doesn't exist.
+     */
+    @Test
+    public void testDeleteTaskForNotExistingTask() {
+        //GIVEN
+        TaskQuery query = mock(TaskQuery.class);
+        when(query.taskId(eq("not-existent-task"))).thenReturn(query);
+        when(taskService.createTaskQuery()).thenReturn(query);
+        when(query.singleResult()).thenReturn(null);
+
+        //THEN
+        assertThatExceptionOfType(ActivitiObjectNotFoundException.class).isThrownBy(
+                //WHEN
+                () -> processEngineWrapper.deleteTask("not-existent-task")
+        ).withMessage("Unable to find task for the given id: not-existent-task");
+    }
+
+    @Test
+    public void shouldSetProcessVariables(){
+        givenMockProcessInstance();
+        when(securityService.canWrite(any())).thenReturn(true);
+
+                processEngineWrapper.setProcessVariables(mock(SetProcessVariablesCmd.class));
+        verify(runtimeService).setVariables(any(),any());
+    }
+    @Test
+    public void shouldNotSetProcessVariablesWithoutPermission(){
+        givenMockProcessInstance();
+        when(securityService.canWrite(any())).thenReturn(false);
+
+                assertThatExceptionOfType(ActivitiForbiddenException.class).isThrownBy(() -> processEngineWrapper.setProcessVariables(mock(SetProcessVariablesCmd.class)));
+    }
+
+    protected void givenMockProcessInstance() {
+        ProcessDefinition def = mock(ProcessDefinition.class);
+        org.activiti.engine.runtime.ProcessInstance inst = mock(org.activiti.engine.runtime.ProcessInstance.class);
+        ProcessInstanceQuery query = mock(ProcessInstanceQuery.class);
+        when(runtimeService.createProcessInstanceQuery()).thenReturn(query);
+        when(query.processInstanceId(any())).thenReturn(query);
+        when(query.singleResult()).thenReturn(inst);
+        when(processInstanceConverter.from(inst)).thenReturn(mock(ProcessInstance.class));
+        when(repositoryService.getProcessDefinition(any())).thenReturn(def);
     }
 }

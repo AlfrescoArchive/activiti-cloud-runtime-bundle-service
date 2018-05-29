@@ -7,10 +7,13 @@ import org.activiti.cloud.services.api.commands.ClaimTaskCmd;
 import org.activiti.cloud.services.api.commands.CompleteTaskCmd;
 import org.activiti.cloud.services.api.commands.CreateTaskCmd;
 import org.activiti.cloud.services.api.commands.ReleaseTaskCmd;
+import org.activiti.cloud.services.api.commands.RemoveProcessVariablesCmd;
+import org.activiti.cloud.services.api.commands.SetProcessVariablesCmd;
 import org.activiti.cloud.services.api.commands.SetTaskVariablesCmd;
 import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
+import org.activiti.cloud.services.api.commands.UpdateTaskCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.services.api.model.converter.ProcessInstanceConverter;
@@ -200,6 +203,39 @@ public class ProcessEngineWrapper {
                                       setTaskVariablesCmd.getVariables());
     }
 
+    public void setProcessVariables(SetProcessVariablesCmd setProcessVariablesCmd) {
+        ProcessInstance processInstance = getProcessInstanceById(setProcessVariablesCmd.getProcessId());
+        verifyCanWriteToProcessInstance(processInstance.getId());
+        runtimeService.setVariables(setProcessVariablesCmd.getProcessId(),
+        setProcessVariablesCmd.getVariables());
+    }
+
+    public void removeProcessVariables(RemoveProcessVariablesCmd removeProcessVariablesCmd){
+        ProcessInstance processInstance = getProcessInstanceById(removeProcessVariablesCmd.getProcessId());
+        verifyCanWriteToProcessInstance(processInstance.getId());
+        runtimeService.removeVariables(removeProcessVariablesCmd.getProcessId(),removeProcessVariablesCmd.getVariableNames());
+    }
+
+    /**
+     * Delete task by id.
+     * @param taskId the task id to delete
+     */
+    public void deleteTask(String taskId) {
+        Task task = getTaskById(taskId);
+        if (task == null) {
+            throw new ActivitiObjectNotFoundException("Unable to find task for the given id: " + taskId);
+        }
+
+        checkWritePermissionsOnTask(task);
+
+        taskService.deleteTask(taskId,
+                               "Cancelled by " + authenticationWrapper.getAuthenticatedUserId());
+    }
+
+    public void checkWritePermissionsOnTask(Task task) {
+        //TODO: to check the user write permissions on task
+    }
+
     public Task createNewTask(CreateTaskCmd createTaskCmd) {
         final org.activiti.engine.task.Task task = taskService.newTask();
         task.setName(createTaskCmd.getName());
@@ -208,10 +244,29 @@ public class ProcessEngineWrapper {
         if (createTaskCmd.getPriority() != null) {
             task.setPriority(createTaskCmd.getPriority());
         }
+
+        task.setAssignee(createTaskCmd.getAssignee() == null ? authenticationWrapper.getAuthenticatedUserId() : createTaskCmd.getAssignee());
         taskService.saveTask(task);
 
-        // see ACTIVITI#1854
-        task.setAssignee(createTaskCmd.getAssignee() == null ? authenticationWrapper.getAuthenticatedUserId() : createTaskCmd.getAssignee());
+        return taskConverter.from(taskService.createTaskQuery().taskId(task.getId()).singleResult());
+    }
+
+    public Task createNewSubtask(String parentTaskId,
+                                 CreateTaskCmd createSubtaskCmd) {
+        if (taskService.createTaskQuery().taskId(parentTaskId).singleResult() == null) {
+            throw new ActivitiException("Parent task with id " + parentTaskId + " was not found");
+        }
+
+        final org.activiti.engine.task.Task task = taskService.newTask();
+        task.setName(createSubtaskCmd.getName());
+        task.setDescription(createSubtaskCmd.getDescription());
+        task.setDueDate(createSubtaskCmd.getDueDate());
+        if (createSubtaskCmd.getPriority() != null) {
+            task.setPriority(createSubtaskCmd.getPriority());
+        }
+        task.setParentTaskId(parentTaskId);
+
+        task.setAssignee(createSubtaskCmd.getAssignee() == null ? authenticationWrapper.getAuthenticatedUserId() : createSubtaskCmd.getAssignee());
         taskService.saveTask(task);
 
         return taskConverter.from(taskService.createTaskQuery().taskId(task.getId()).singleResult());
@@ -221,5 +276,38 @@ public class ProcessEngineWrapper {
         verifyCanWriteToProcessInstance(processInstanceId);
         runtimeService.deleteProcessInstance(processInstanceId,
                                              "Cancelled by " + authenticationWrapper.getAuthenticatedUserId());
+    }
+
+    public List<org.activiti.engine.task.Task> getSubtasks(String parentTaskId) {
+
+        return taskService.getSubTasks(parentTaskId);
+    }
+
+    public void updateTask(String taskId,
+                           UpdateTaskCmd updateTaskCmd) {
+        final org.activiti.engine.task.Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        if (task == null) {
+            throw new ActivitiObjectNotFoundException("Unable to find task for the given id: " + updateTaskCmd.getId());
+        }
+
+        if (updateTaskCmd.getAssignee() != null) {
+            task.setAssignee(updateTaskCmd.getAssignee());
+        }
+        if (updateTaskCmd.getName() != null) {
+            task.setName(updateTaskCmd.getName());
+        }
+        if (updateTaskCmd.getDescription() != null) {
+            task.setDescription(updateTaskCmd.getDescription());
+        }
+        if (updateTaskCmd.getDueDate() != null) {
+            task.setDueDate(updateTaskCmd.getDueDate());
+        }
+        if (updateTaskCmd.getPriority() != null) {
+            task.setPriority(updateTaskCmd.getPriority());
+        }
+        if (updateTaskCmd.getParentTaskId() != null) {
+            task.setParentTaskId(updateTaskCmd.getParentTaskId());
+        }
+        taskService.saveTask(task);
     }
 }

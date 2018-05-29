@@ -16,20 +16,25 @@
 
 package org.activiti.cloud.starter.tests.helper;
 
+import org.activiti.cloud.services.api.commands.RemoveProcessVariablesCmd;
+import org.activiti.cloud.services.api.commands.SetProcessVariablesCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
+import org.activiti.cloud.services.api.model.ProcessInstanceVariable;
 import org.activiti.cloud.services.api.model.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -111,12 +116,12 @@ public class ProcessInstanceRestTemplate {
         return responseEntity;
     }
 
-    public ResponseEntity<Resource<Map<String, Object>>> getVariables(ResponseEntity<ProcessInstance> processInstanceEntity) {
+    public ResponseEntity<Resources<ProcessInstanceVariable>> getVariables(ResponseEntity<ProcessInstance> processInstanceEntity) {
 
-        ResponseEntity<Resource<Map<String, Object>>> responseEntity = testRestTemplate.exchange(ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL + processInstanceEntity.getBody().getId() + "/variables",
+        ResponseEntity<Resources<ProcessInstanceVariable>> responseEntity = testRestTemplate.exchange(ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL + processInstanceEntity.getBody().getId() + "/variables",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<Resource<Map<String, Object>>>() {
+                new ParameterizedTypeReference<Resources<ProcessInstanceVariable>>() {
                 });
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
@@ -129,6 +134,36 @@ public class ProcessInstanceRestTemplate {
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<ProcessInstance>() {
+                });
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return responseEntity;
+    }
+
+    public ResponseEntity<Void> setVariables(String processId, Map<String, Object> variables) {
+        SetProcessVariablesCmd processVariablesCmd = new SetProcessVariablesCmd(processId, variables);
+
+        HttpEntity<SetProcessVariablesCmd> requestEntity = new HttpEntity<>(
+                processVariablesCmd,
+                null);
+        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + processId + "/variables/",
+                HttpMethod.POST,
+                requestEntity,
+                new ParameterizedTypeReference<Void>() {
+                });
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return responseEntity;
+    }
+
+    public ResponseEntity<Void> removeVariables(String processId, List<String> variableNames) {
+        RemoveProcessVariablesCmd processVariablesCmd = new RemoveProcessVariablesCmd(processId, variableNames);
+
+        HttpEntity<RemoveProcessVariablesCmd> requestEntity = new HttpEntity<>(
+                processVariablesCmd,
+                null);
+        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + processId + "/variables/",
+                HttpMethod.DELETE,
+                requestEntity,
+                new ParameterizedTypeReference<Void>() {
                 });
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;

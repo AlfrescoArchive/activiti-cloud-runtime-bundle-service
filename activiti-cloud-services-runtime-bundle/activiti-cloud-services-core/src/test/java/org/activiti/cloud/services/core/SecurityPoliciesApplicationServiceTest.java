@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
+import org.activiti.cloud.services.core.AuthenticationWrapper;
 import org.activiti.cloud.services.security.SecurityPoliciesService;
 import org.activiti.cloud.services.security.SecurityPolicy;
 import org.activiti.engine.UserGroupLookupProxy;
@@ -90,7 +91,27 @@ public class SecurityPoliciesApplicationServiceTest {
         Map<String,Set<String>> map = new HashMap<>();
         map.put("rb1", Collections.singleton("key"));
         when(securityPoliciesService.getProcessDefinitionKeys(any(),any(),any(SecurityPolicy.class))).thenReturn(map);
-        when(runtimeBundleProperties.getName()).thenReturn("rb1");
+        when(runtimeBundleProperties.getServiceName()).thenReturn("rb1");
+
+        securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
+
+        verify(processDefinitionRestrictionApplier).restrictToKeys(any(), anySet());
+
+    }
+
+
+    @Test
+    public void shouldRestrictQueryWhenGroupsAndPoliciesAvailableForRBFullName(){
+        ProcessDefinitionQuery query = mock(ProcessDefinitionQuery.class);
+
+        when(securityPoliciesService.policiesDefined()).thenReturn(true);
+        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
+
+        when(userGroupLookupProxy.getGroupsForCandidateUser("bob")).thenReturn(Arrays.asList("hr"));
+        Map<String,Set<String>> map = new HashMap<>();
+        map.put("app1-rb1", Collections.singleton("key"));
+        when(securityPoliciesService.getProcessDefinitionKeys(any(),any(),any(SecurityPolicy.class))).thenReturn(map);
+        when(runtimeBundleProperties.getServiceFullName()).thenReturn("app1-rb1");
 
         securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
 
@@ -110,7 +131,7 @@ public class SecurityPoliciesApplicationServiceTest {
         Map<String,Set<String>> map = new HashMap<>();
         map.put("rb1", Collections.singleton("key"));
         when(securityPoliciesService.getProcessDefinitionKeys(any(),any(),any(SecurityPolicy.class))).thenReturn(map);
-        when(runtimeBundleProperties.getName()).thenReturn(null);
+        when(runtimeBundleProperties.getServiceName()).thenReturn(null);
 
         securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
 
@@ -129,7 +150,7 @@ public class SecurityPoliciesApplicationServiceTest {
         Map<String,Set<String>> map = new HashMap<>();
         map.put("rb1", Collections.singleton("key"));
         when(securityPoliciesService.getProcessDefinitionKeys(any(),any(),any(SecurityPolicy.class))).thenReturn(map);
-        when(runtimeBundleProperties.getName()).thenReturn("rb2");
+        when(runtimeBundleProperties.getServiceName()).thenReturn("rb2");
 
         securityPoliciesApplicationService.restrictProcessDefQuery(query, SecurityPolicy.READ);
 
@@ -169,6 +190,7 @@ public class SecurityPoliciesApplicationServiceTest {
         map.put("rb1", Collections.singleton("key"));
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.WRITE)).thenReturn(map);
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.READ)).thenReturn(map);
+        when(runtimeBundleProperties.getServiceName()).thenReturn("rb1");
 
         assertThat(securityPoliciesApplicationService.canWrite("key")).isTrue();
         assertThat(securityPoliciesApplicationService.canRead("key")).isTrue();
@@ -188,6 +210,7 @@ public class SecurityPoliciesApplicationServiceTest {
         map.put("rb1",Collections.singleton(securityPoliciesService.getWildcard()));
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.WRITE)).thenReturn(map);
         when(securityPoliciesService.getProcessDefinitionKeys("bob",groups,SecurityPolicy.READ)).thenReturn(map);
+        when(runtimeBundleProperties.getServiceFullName()).thenReturn("rb1");
 
         assertThat(securityPoliciesApplicationService.canWrite("key")).isTrue();
         assertThat(securityPoliciesApplicationService.canRead("key")).isTrue();
