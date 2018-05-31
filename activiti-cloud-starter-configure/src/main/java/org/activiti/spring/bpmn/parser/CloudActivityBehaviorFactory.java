@@ -164,9 +164,9 @@ public class CloudActivityBehaviorFactory extends DefaultActivityBehaviorFactory
     }
 
     @Override
-    public ServiceTaskDelegateExpressionActivityBehavior createDefaultServiceTaskBehavior(ServiceTask serviceTask) {
+    public ActivityBehavior createDefaultServiceTaskBehavior(ServiceTask serviceTask) {
         for(CloudActivityBehaviorFactoryInterceptor interceptor : interceptors){
-            ServiceTaskDelegateExpressionActivityBehavior behavior = interceptor.createDefaultServiceTaskBehavior(serviceTask);
+        	ActivityBehavior behavior = interceptor.createDefaultServiceTaskBehavior(serviceTask);
             if (behavior != null) {
                 return behavior;
             }

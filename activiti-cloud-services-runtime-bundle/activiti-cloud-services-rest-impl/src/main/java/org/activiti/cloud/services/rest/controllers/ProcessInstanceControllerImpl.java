@@ -21,7 +21,7 @@ import java.util.List;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
 import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
-import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
+import org.activiti.cloud.services.api.commands.SendSignalCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
@@ -33,9 +33,7 @@ import org.activiti.cloud.services.rest.api.ProcessInstanceController;
 import org.activiti.cloud.services.rest.api.resources.ProcessInstanceResource;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssembler;
 import org.activiti.engine.ActivitiObjectNotFoundException;
-import org.activiti.engine.ManagementService;
 import org.activiti.engine.RepositoryService;
-import org.activiti.cloud.services.api.commands.BroadcastSignalCmd;
 import org.activiti.image.exception.ActivitiInterchangeInfoNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -64,8 +62,6 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     private final SecurityPoliciesApplicationService securityService;
 
-    private final ManagementService managementService;
-
     private final AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler;
 
     @ExceptionHandler(ActivitiForbiddenException.class)
@@ -92,14 +88,12 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
                                          ProcessDiagramGeneratorWrapper processDiagramGenerator,
                                          ProcessInstanceResourceAssembler resourceAssembler,
                                          SecurityPoliciesApplicationService securityService,
-                                         ManagementService managementService,
                                          AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler) {
         this.processEngine = processEngine;
         this.repositoryService = repositoryService;
         this.processDiagramGenerator = processDiagramGenerator;
         this.resourceAssembler = resourceAssembler;
         this.securityService = securityService;
-        this.managementService = managementService;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
     }
 
@@ -141,14 +135,8 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     }
 
     @Override
-    public ResponseEntity<Void> sendSignal(@RequestBody SignalProcessInstancesCmd cmd) {
+    public ResponseEntity<Void> sendSignal(@RequestBody SendSignalCmd cmd) {
         processEngine.signal(cmd);
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-
-    @Override
-    public ResponseEntity<Void> broadcastSignal(@RequestBody BroadcastSignalCmd cmd) {
-        managementService.executeCommand(new org.activiti.services.subscription.impl.cmd.BroadcastSignalCmd(cmd.getName(), cmd.isSignalAsync(), null));
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

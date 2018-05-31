@@ -70,7 +70,9 @@ import org.activiti.engine.impl.bpmn.behavior.TransactionActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.UserTaskActivityBehavior;
 import org.activiti.engine.impl.bpmn.behavior.WebServiceActivityBehavior;
 import org.activiti.engine.impl.bpmn.helper.ClassDelegate;
+import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.delegate.ActivityBehavior;
+import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.activiti.spring.bpmn.parser.CloudActivityBehaviorFactoryInterceptor;
 
 public class BroadcastSignalEventActivityBehaviorInterceptor implements CloudActivityBehaviorFactoryInterceptor {
@@ -279,10 +281,8 @@ public class BroadcastSignalEventActivityBehaviorInterceptor implements CloudAct
                                                                                                            ThrowEvent throwEvent,
                                                                                                            SignalEventDefinition signalEventDefinition,
                                                                                                            Signal signal) {
-        if (Signal.SCOPE_BROADCAST.equals(signal.getScope())) {
-            return new BroadcastSignalEventActivityBehavior(signalEventDefinition, signal);
-        }
-        return null;
+        SpringProcessEngineConfiguration springProcessEngineConfiguration = (SpringProcessEngineConfiguration) Context.getProcessEngineConfiguration();
+    	return new BroadcastSignalEventActivityBehavior(springProcessEngineConfiguration.getApplicationContext(), signalEventDefinition, signal);
     }
 
     public IntermediateThrowCompensationEventActivityBehavior createIntermediateThrowCompensationEventActivityBehavior(

@@ -16,14 +16,14 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
-import org.activiti.cloud.services.api.commands.BroadcastSignalCmd;
-import org.activiti.cloud.services.api.commands.SignalProcessInstancesCmd;
+import org.activiti.cloud.services.api.commands.SendSignalCmd;
 import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.ProcessInstanceVariable;
 import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.starter.tests.definition.ProcessDefinitionIT;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
+import org.activiti.engine.RuntimeService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +45,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL;
@@ -56,6 +57,9 @@ import static org.awaitility.Awaitility.await;
 @TestPropertySource("classpath:application-test.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class SignalIT {
+
+    @Autowired
+    private RuntimeService runtimeService;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -77,10 +81,28 @@ public class SignalIT {
     }
 
     @Test
+    public void shouldBroadcastSignals() throws Exception {
+        //when
+        org.activiti.engine.runtime.ProcessInstance procInst1 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+        org.activiti.engine.runtime.ProcessInstance procInst2 = runtimeService.startProcessInstanceByKey("broadcastSignalEventProcess");
+        assertThat(procInst1).isNotNull();
+        assertThat(procInst2).isNotNull();
+
+        await("Broadcast Signals").untilAsserted(() -> {
+            List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();
+            assertThat(processInstances).isEmpty();
+        });
+
+        //then
+        List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();
+        assertThat(processInstances).isEmpty();
+    }
+
+    @Test
     public void processShouldTakeExceptionPathWhenSignalIsSent() throws Exception {
         //given
         ResponseEntity<ProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIGNAL_PROCESS));
-        SignalProcessInstancesCmd signalProcessInstancesCmd = new SignalProcessInstancesCmd("go");
+        SendSignalCmd signalProcessInstancesCmd = new SendSignalCmd("go");
 
         //when
         ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/signal",
@@ -99,7 +121,7 @@ public class SignalIT {
     public void processShouldHaveVariablesSetWhenSignalCarriesVariables() throws Exception {
         //given
         ResponseEntity<ProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIGNAL_PROCESS));
-        SignalProcessInstancesCmd signalProcessInstancesCmd = new SignalProcessInstancesCmd("go",
+        SendSignalCmd signalProcessInstancesCmd = new SendSignalCmd("go",
                 Collections.singletonMap("myVar",
                         "myContent"));
 
@@ -124,31 +146,6 @@ public class SignalIT {
             assertThat(variable.getValue()).isEqualTo("myContent");
         });
 
-    }
-
-    @Test
-    public void shouldBroadcastSignals() throws Exception {
-        //given
-        ResponseEntity<ProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIGNAL_PROCESS));
-        BroadcastSignalCmd broadcastSignalCmd = new BroadcastSignalCmd("go", false);
-
-        //when
-        ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/broadcast-signal",
-                HttpMethod.POST,
-                new HttpEntity(broadcastSignalCmd),
-                new ParameterizedTypeReference<Void>() {
-                });
-
-        //then
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        await("Broadcast Signals").untilAsserted(() -> {
-            ResponseEntity<PagedResources<Task>> taskEntity = processInstanceRestTemplate.getTasks(startProcessEntity);
-            assertThat(taskEntity.getBody().getContent()).extracting(Task::getName).containsExactly("Boundary target");
-        });
-
-        ResponseEntity<PagedResources<Task>> taskEntity = processInstanceRestTemplate.getTasks(startProcessEntity);
-        assertThat(taskEntity.getBody().getContent()).extracting(Task::getName).containsExactly("Boundary target");
     }
 
     private ResponseEntity<PagedResources<ProcessDefinition>> getProcessDefinitions() {

@@ -1,7 +1,7 @@
 package org.activiti.services.subscription.channel;
 
+import org.activiti.cloud.services.api.commands.SendSignalCmd;
 import org.activiti.engine.RuntimeService;
-import org.activiti.services.subscriptions.model.BroadcastSignalEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.StreamListener;
@@ -21,16 +21,16 @@ public class BroadcastSignaEventHandler {
     private RuntimeService runtimeService;
 
     @StreamListener(ProcessEngineSignalChannels.SIGNAL_CONSUMER)
-    public void receive(BroadcastSignalEvent event) {
-        if (event.isSignalAsync()) {
-            runtimeService.signalEventReceivedAsync(event.getSignalName());
+    public void receive(SendSignalCmd sendSignalCmd) {
+        if ((sendSignalCmd.getInputVariables() == null) || (sendSignalCmd.getInputVariables().isEmpty())) {
+            runtimeService.signalEventReceived(sendSignalCmd.getName());
         } else {
-            runtimeService.signalEventReceived(event.getSignalName());
+            runtimeService.signalEventReceived(sendSignalCmd.getName(), sendSignalCmd.getInputVariables());
         }
     }
 
-    public void broadcastSignal(BroadcastSignalEvent event) {
-        Message<BroadcastSignalEvent> message = MessageBuilder.withPayload(event).build();
+    public void broadcastSignal(SendSignalCmd sendSignalCmd) {
+        Message<SendSignalCmd> message = MessageBuilder.withPayload(sendSignalCmd).build();
         resolver.resolveDestination("signalEvent").send(message);
     }
 }
