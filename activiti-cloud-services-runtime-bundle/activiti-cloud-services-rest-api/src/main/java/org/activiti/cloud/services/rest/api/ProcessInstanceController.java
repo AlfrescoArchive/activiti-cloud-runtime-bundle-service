@@ -1,6 +1,6 @@
 package org.activiti.cloud.services.rest.api;
 
-import org.activiti.cloud.services.api.commands.SendSignalCmd;
+import org.activiti.cloud.services.api.commands.SignalCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.rest.api.resources.ProcessInstanceResource;
@@ -36,7 +36,7 @@ public interface ProcessInstanceController {
     String getProcessDiagram(@PathVariable String processInstanceId);
 
     @RequestMapping(value = "/signal")
-    ResponseEntity<Void> sendSignal(@RequestBody SendSignalCmd cmd);
+    ResponseEntity<Void> sendSignal(@RequestBody SignalCmd cmd);
 
     @RequestMapping(value = "{processInstanceId}/suspend")
     ResponseEntity<Void> suspend(@PathVariable String processInstanceId);

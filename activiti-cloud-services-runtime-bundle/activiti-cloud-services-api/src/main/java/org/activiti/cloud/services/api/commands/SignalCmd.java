@@ -22,25 +22,25 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class SendSignalCmd implements Command {
+public class SignalCmd implements Command {
 
     private final String id;
     private String name;
     private Map<String, Object> inputVariables;
 
-    public SendSignalCmd() {
+    public SignalCmd() {
         this.id = UUID.randomUUID().toString();
     }
 
     @JsonCreator
-    public SendSignalCmd(@JsonProperty("name") String name,
+    public SignalCmd(@JsonProperty("name") String name,
                                      @JsonProperty("inputVariables") Map<String, Object> inputVariables) {
         this();
         this.name = name;
         this.inputVariables = inputVariables;
     }
 
-    public SendSignalCmd(@JsonProperty("name") String name) {
+    public SignalCmd(@JsonProperty("name") String name) {
         this();
         this.name = name;
     }

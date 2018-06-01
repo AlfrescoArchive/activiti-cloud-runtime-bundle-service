@@ -2,7 +2,7 @@ package org.activiti.services.subscriptions.behavior;
 
 import org.activiti.bpmn.model.Signal;
 import org.activiti.bpmn.model.SignalEventDefinition;
-import org.activiti.cloud.services.api.commands.SendSignalCmd;
+import org.activiti.cloud.services.api.commands.SignalCmd;
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.delegate.Expression;
 import org.activiti.engine.impl.bpmn.behavior.IntermediateThrowSignalEventActivityBehavior;
@@ -37,7 +37,7 @@ public class BroadcastSignalEventActivityBehavior extends IntermediateThrowSigna
             eventSubscriptionName = expressionObject.getValue(execution).toString();
         }
         
-        eventPublisher.publishEvent(new SendSignalCmd(eventSubscriptionName, null));
+        eventPublisher.publishEvent(new SignalCmd(eventSubscriptionName, null));
         
         Context.getAgenda().planTakeOutgoingSequenceFlowsOperation((ExecutionEntity) execution,
                                                                    true);

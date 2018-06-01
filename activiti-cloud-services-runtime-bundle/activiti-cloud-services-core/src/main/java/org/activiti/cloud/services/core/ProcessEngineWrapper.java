@@ -10,7 +10,7 @@ import org.activiti.cloud.services.api.commands.ReleaseTaskCmd;
 import org.activiti.cloud.services.api.commands.RemoveProcessVariablesCmd;
 import org.activiti.cloud.services.api.commands.SetProcessVariablesCmd;
 import org.activiti.cloud.services.api.commands.SetTaskVariablesCmd;
-import org.activiti.cloud.services.api.commands.SendSignalCmd;
+import org.activiti.cloud.services.api.commands.SignalCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.UpdateTaskCmd;
@@ -119,11 +119,11 @@ public class ProcessEngineWrapper {
         return processInstanceConverter.from(builder.start());
     }
 
-    public void signal(SendSignalCmd sendSignalCmd) {
+    public void signal(SignalCmd SignalCmd) {
         //TODO: plan is to restrict access to events using a new security policy on events
         // - that's another piece of work though so for now no security here
 
-        eventPublisher.publishEvent(sendSignalCmd);
+        eventPublisher.publishEvent(SignalCmd);
     }
 
     public void suspend(SuspendProcessInstanceCmd suspendProcessInstanceCmd) {

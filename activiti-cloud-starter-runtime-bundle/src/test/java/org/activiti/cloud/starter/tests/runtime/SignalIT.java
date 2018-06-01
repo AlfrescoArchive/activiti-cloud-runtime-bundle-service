@@ -16,7 +16,7 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
-import org.activiti.cloud.services.api.commands.SendSignalCmd;
+import org.activiti.cloud.services.api.commands.SignalCmd;
 import org.activiti.cloud.services.api.model.ProcessDefinition;
 import org.activiti.cloud.services.api.model.ProcessInstance;
 import org.activiti.cloud.services.api.model.ProcessInstanceVariable;
@@ -101,7 +101,7 @@ public class SignalIT {
     public void processShouldTakeExceptionPathWhenSignalIsSent() throws Exception {
         //given
         ResponseEntity<ProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIGNAL_PROCESS));
-        SendSignalCmd signalProcessInstancesCmd = new SendSignalCmd("go");
+        SignalCmd signalProcessInstancesCmd = new SignalCmd("go");
 
         //when
         ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/signal",
@@ -120,7 +120,7 @@ public class SignalIT {
     public void processShouldHaveVariablesSetWhenSignalCarriesVariables() throws Exception {
         //given
         ResponseEntity<ProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIGNAL_PROCESS));
-        SendSignalCmd signalProcessInstancesCmd = new SendSignalCmd("go",
+        SignalCmd signalProcessInstancesCmd = new SignalCmd("go",
                 Collections.singletonMap("myVar",
                         "myContent"));
 

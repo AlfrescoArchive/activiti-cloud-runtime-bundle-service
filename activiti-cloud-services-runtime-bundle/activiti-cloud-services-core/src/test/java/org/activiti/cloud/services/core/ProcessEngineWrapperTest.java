@@ -9,7 +9,7 @@ import org.activiti.cloud.services.api.commands.ClaimTaskCmd;
 import org.activiti.cloud.services.api.commands.CompleteTaskCmd;
 import org.activiti.cloud.services.api.commands.ReleaseTaskCmd;
 import org.activiti.cloud.services.api.commands.SetTaskVariablesCmd;
-import org.activiti.cloud.services.api.commands.SendSignalCmd;
+import org.activiti.cloud.services.api.commands.SignalCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
@@ -122,8 +122,8 @@ public class ProcessEngineWrapperTest {
         when(repositoryService.createProcessDefinitionQuery()).thenReturn(query);
         when(securityService.restrictProcessDefQuery(query, SecurityPolicy.WRITE)).thenReturn(query);
         when(query.count()).thenReturn(1L);
-        processEngineWrapper.signal(mock(SendSignalCmd.class));
-        verify(eventPublisher).publishEvent(any(SendSignalCmd.class));
+        processEngineWrapper.signal(mock(SignalCmd.class));
+        verify(eventPublisher).publishEvent(any(SignalCmd.class));
     }
     @Test
     public void shouldNotSuspendWithoutPermission(){

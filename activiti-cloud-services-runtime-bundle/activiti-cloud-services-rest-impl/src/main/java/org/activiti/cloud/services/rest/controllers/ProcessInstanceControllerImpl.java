@@ -21,7 +21,7 @@ import java.util.List;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
 import org.activiti.cloud.services.api.commands.ActivateProcessInstanceCmd;
-import org.activiti.cloud.services.api.commands.SendSignalCmd;
+import org.activiti.cloud.services.api.commands.SignalCmd;
 import org.activiti.cloud.services.api.commands.StartProcessInstanceCmd;
 import org.activiti.cloud.services.api.commands.SuspendProcessInstanceCmd;
 import org.activiti.cloud.services.api.model.ProcessInstance;
@@ -137,7 +137,7 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     @Override
     @Transactional
-    public ResponseEntity<Void> sendSignal(@RequestBody SendSignalCmd cmd) {
+    public ResponseEntity<Void> sendSignal(@RequestBody SignalCmd cmd) {
         processEngine.signal(cmd);
         return new ResponseEntity<>(HttpStatus.OK);
     }
