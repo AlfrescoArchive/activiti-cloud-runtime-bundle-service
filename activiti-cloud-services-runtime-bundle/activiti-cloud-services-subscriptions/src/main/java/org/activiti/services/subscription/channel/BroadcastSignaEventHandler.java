@@ -21,16 +21,16 @@ public class BroadcastSignaEventHandler {
     private RuntimeService runtimeService;
 
     @StreamListener(ProcessEngineSignalChannels.SIGNAL_CONSUMER)
-    public void receive(SignalCmd SignalCmd) {
-        if ((SignalCmd.getInputVariables() == null) || (SignalCmd.getInputVariables().isEmpty())) {
-            runtimeService.signalEventReceived(SignalCmd.getName());
+    public void receive(SignalCmd signalCmd) {
+        if ((signalCmd.getInputVariables() == null) || (signalCmd.getInputVariables().isEmpty())) {
+            runtimeService.signalEventReceived(signalCmd.getName());
         } else {
-            runtimeService.signalEventReceived(SignalCmd.getName(), SignalCmd.getInputVariables());
+            runtimeService.signalEventReceived(signalCmd.getName(), signalCmd.getInputVariables());
         }
     }
 
-    public void broadcastSignal(SignalCmd SignalCmd) {
-        Message<SignalCmd> message = MessageBuilder.withPayload(SignalCmd).build();
+    public void broadcastSignal(SignalCmd signalCmd) {
+        Message<SignalCmd> message = MessageBuilder.withPayload(signalCmd).build();
         resolver.resolveDestination("signalEvent").send(message);
     }
 }

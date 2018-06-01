@@ -119,11 +119,12 @@ public class ProcessEngineWrapper {
         return processInstanceConverter.from(builder.start());
     }
 
-    public void signal(SignalCmd SignalCmd) {
+    public void signal(SignalCmd signalCmd) {
         //TODO: plan is to restrict access to events using a new security policy on events
         // - that's another piece of work though so for now no security here
 
-        eventPublisher.publishEvent(SignalCmd);
+        runtimeService.signalEventReceived(signalCmd.getName(), signalCmd.getInputVariables());
+        eventPublisher.publishEvent(signalCmd);
     }
 
     public void suspend(SuspendProcessInstanceCmd suspendProcessInstanceCmd) {

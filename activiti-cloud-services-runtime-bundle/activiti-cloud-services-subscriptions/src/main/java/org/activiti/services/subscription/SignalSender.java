@@ -16,7 +16,7 @@ public class SignalSender {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void sendSignal(SignalCmd SignalCmd) {
-        eventHandler.broadcastSignal(SignalCmd);
+    public void sendSignal(SignalCmd signalCmd) {
+        eventHandler.broadcastSignal(signalCmd);
     }
 }

@@ -8,7 +8,6 @@ import org.activiti.engine.delegate.Expression;
 import org.activiti.engine.impl.bpmn.behavior.IntermediateThrowSignalEventActivityBehavior;
 import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.interceptor.CommandContext;
-import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
@@ -29,6 +28,7 @@ public class BroadcastSignalEventActivityBehavior extends IntermediateThrowSigna
     }
 
     public void execute(DelegateExecution execution) {
+        super.execute(execution);
 
         CommandContext commandContext = Context.getCommandContext();
         String eventSubscriptionName = null;
@@ -40,8 +40,5 @@ public class BroadcastSignalEventActivityBehavior extends IntermediateThrowSigna
         }
         
         eventPublisher.publishEvent(new SignalCmd(eventSubscriptionName, null));
-        
-        Context.getAgenda().planTakeOutgoingSequenceFlowsOperation((ExecutionEntity) execution,
-                                                                   true);
     }
 }
