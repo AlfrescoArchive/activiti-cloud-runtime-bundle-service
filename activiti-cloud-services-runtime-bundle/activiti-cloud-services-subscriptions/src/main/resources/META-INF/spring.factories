@@ -1,2 +1,0 @@
-org.activiti.spring.bpmn.parser.CloudActivityBehaviorFactoryInterceptor =\
-    org.activiti.services.subscriptions.behavior.BroadcastSignalEventActivityBehaviorInterceptor

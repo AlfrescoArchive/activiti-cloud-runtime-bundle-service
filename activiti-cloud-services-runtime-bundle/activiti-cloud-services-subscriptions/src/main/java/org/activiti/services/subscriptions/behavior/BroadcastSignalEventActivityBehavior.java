@@ -10,7 +10,9 @@ import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
 
+@Component("defaultThrowSignalEventBehavior")
 public class BroadcastSignalEventActivityBehavior extends IntermediateThrowSignalEventActivityBehavior {
     
     private static final long serialVersionUID = 1L;
