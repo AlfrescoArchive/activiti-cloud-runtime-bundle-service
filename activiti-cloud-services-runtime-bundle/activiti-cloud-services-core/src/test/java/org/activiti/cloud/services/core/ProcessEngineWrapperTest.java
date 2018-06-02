@@ -123,6 +123,7 @@ public class ProcessEngineWrapperTest {
         when(securityService.restrictProcessDefQuery(query, SecurityPolicy.WRITE)).thenReturn(query);
         when(query.count()).thenReturn(1L);
         processEngineWrapper.signal(mock(SignalCmd.class));
+        verify(runtimeService).signalEventReceived(any(),anyMap());
         verify(eventPublisher).publishEvent(any(SignalCmd.class));
     }
     @Test
