@@ -24,6 +24,7 @@ import org.activiti.cloud.services.api.model.Task;
 import org.activiti.cloud.starter.tests.definition.ProcessDefinitionIT;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.engine.RuntimeService;
+import org.activiti.engine.TaskService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -61,6 +62,9 @@ public class SignalIT {
     private RuntimeService runtimeService;
 
     @Autowired
+    private TaskService taskService;
+
+    @Autowired
     private TestRestTemplate restTemplate;
 
     @Autowired
@@ -95,6 +99,38 @@ public class SignalIT {
         //then
         List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();
         assertThat(processInstances).isEmpty();
+    }
+
+    @Test
+    public void shouldBroadcastDifferentSignals() throws Exception {
+        //when
+        org.activiti.engine.runtime.ProcessInstance procInst1 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+        org.activiti.engine.runtime.ProcessInstance procInst2 = runtimeService.startProcessInstanceByKey("broadcastSignalEventProcess");
+        assertThat(procInst1).isNotNull();
+        assertThat(procInst2).isNotNull();
+
+        await("Broadcast Signals").untilAsserted(() -> {
+            List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();
+            assertThat(processInstances).isEmpty();
+        });
+
+        //then
+        List<org.activiti.engine.runtime.ProcessInstance> processInstances1 = runtimeService.createProcessInstanceQuery().processInstanceId(procInst1.getId()).list();
+        assertThat(processInstances1).isEmpty();
+
+        org.activiti.engine.runtime.ProcessInstance procInst3 = runtimeService.startProcessInstanceByKey(SIGNAL_PROCESS);
+        org.activiti.engine.runtime.ProcessInstance procInst4 = runtimeService.startProcessInstanceByKey("signalThrowEventProcess");
+        assertThat(procInst3).isNotNull();
+        assertThat(procInst4).isNotNull();
+
+        await("Broadcast Signals").untilAsserted(() -> {
+            String taskName = taskService.createTaskQuery().processInstanceId(procInst3.getId()).singleResult().getName();
+            assertThat(taskName).isEqualTo("Boundary target");
+        });
+    
+        //then
+        String taskName = taskService.createTaskQuery().processInstanceId(procInst3.getId()).singleResult().getName();
+        assertThat(taskName).isEqualTo("Boundary target");
     }
 
     @Test

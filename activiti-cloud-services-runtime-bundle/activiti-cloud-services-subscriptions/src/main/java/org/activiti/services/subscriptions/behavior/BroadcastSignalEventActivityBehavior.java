@@ -9,14 +9,14 @@ import org.activiti.engine.impl.bpmn.behavior.IntermediateThrowSignalEventActivi
 import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+@Scope("prototype")
 @Component("defaultThrowSignalEventBehavior")
 public class BroadcastSignalEventActivityBehavior extends IntermediateThrowSignalEventActivityBehavior {
     
     private static final long serialVersionUID = 1L;
-
-    protected final SignalEventDefinition signalEventDefinition;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -24,7 +24,6 @@ public class BroadcastSignalEventActivityBehavior extends IntermediateThrowSigna
                                                         Signal signal) {
         super(signalEventDefinition, signal);
         this.eventPublisher = eventPublisher;
-        this.signalEventDefinition = signalEventDefinition;
     }
 
     public void execute(DelegateExecution execution) {
