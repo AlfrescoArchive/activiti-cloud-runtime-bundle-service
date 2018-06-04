@@ -8,12 +8,13 @@ import org.activiti.engine.delegate.Expression;
 import org.activiti.engine.impl.bpmn.behavior.IntermediateThrowSignalEventActivityBehavior;
 import org.activiti.engine.impl.context.Context;
 import org.activiti.engine.impl.interceptor.CommandContext;
+import org.activiti.spring.bpmn.parser.CloudActivityBehaviorFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 @Scope("prototype")
-@Component("defaultThrowSignalEventBehavior")
+@Component(CloudActivityBehaviorFactory.DEFAULT_THROW_SIGNAL_EVENT_BEAN_NAME)
 public class BroadcastSignalEventActivityBehavior extends IntermediateThrowSignalEventActivityBehavior {
     
     private static final long serialVersionUID = 1L;
