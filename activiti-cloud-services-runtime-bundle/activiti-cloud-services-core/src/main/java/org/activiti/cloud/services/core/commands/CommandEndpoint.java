@@ -6,6 +6,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.activiti.cloud.services.events.ProcessEngineChannels;
+import org.activiti.runtime.api.ProcessRuntime;
+import org.activiti.runtime.api.TaskRuntime;
 import org.activiti.runtime.api.cmd.Command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +33,7 @@ public class CommandEndpoint<T extends Command<?>> {
     }
 
     private void processCommand(T cmd) {
+
         CommandExecutor<T> cmdExecutor = commandExecutors.get(cmd.getCommandType().name());
         if (cmdExecutor != null) {
             cmdExecutor.execute(cmd);

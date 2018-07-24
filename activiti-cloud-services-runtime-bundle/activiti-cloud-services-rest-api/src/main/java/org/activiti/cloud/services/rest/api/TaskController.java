@@ -1,9 +1,9 @@
 package org.activiti.cloud.services.rest.api;
 
 import org.activiti.cloud.services.rest.api.resources.TaskResource;
-import org.activiti.runtime.api.cmd.CompleteTask;
-import org.activiti.runtime.api.cmd.CreateTask;
-import org.activiti.runtime.api.cmd.UpdateTask;
+import org.activiti.runtime.api.model.payloads.CompleteTaskPayload;
+import org.activiti.runtime.api.model.payloads.CreateTaskPayload;
+import org.activiti.runtime.api.model.payloads.UpdateTaskPayload;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedResources;
@@ -32,21 +32,21 @@ public interface TaskController {
 
     @RequestMapping(value = "/{taskId}/complete", method = RequestMethod.POST)
     ResponseEntity<Void> completeTask(@PathVariable String taskId,
-                                      @RequestBody(required = false) CompleteTask completeTask);
+                                      @RequestBody(required = false) CompleteTaskPayload completeTaskPayload);
 
     @RequestMapping(value = "/{taskId}", method = RequestMethod.DELETE)
     void deleteTask(@PathVariable String taskId);
 
     @RequestMapping(method = RequestMethod.POST)
-    TaskResource createNewTask(@RequestBody CreateTask createTaskCmd);
+    TaskResource createNewTask(@RequestBody CreateTaskPayload createTaskPayload);
 
     @RequestMapping(value = "/{taskId}", method = RequestMethod.PUT)
     ResponseEntity<Void> updateTask(@PathVariable("taskId") String taskId,
-            @RequestBody UpdateTask updateTaskCmd);
+                                    @RequestBody UpdateTaskPayload updateTaskPayload);
 
     @RequestMapping(value = "/{taskId}/subtask", method = RequestMethod.POST)
     TaskResource createSubtask(@PathVariable String taskId,
-                                 @RequestBody CreateTask createSubtaskCmd);
+                               @RequestBody CreateTaskPayload createTaskPayload);
 
     @RequestMapping(value = "/{taskId}/subtasks", method = RequestMethod.GET)
     Resources<TaskResource> getSubtasks(@PathVariable String taskId);

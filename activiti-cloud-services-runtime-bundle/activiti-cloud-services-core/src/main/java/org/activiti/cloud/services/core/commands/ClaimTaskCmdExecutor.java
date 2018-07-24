@@ -1,16 +1,20 @@
 package org.activiti.cloud.services.core.commands;
 
+import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.DomHandlerEx;
 import org.activiti.cloud.services.core.pageable.SecurityAwareTaskService;
 import org.activiti.runtime.api.cmd.ClaimTask;
 import org.activiti.runtime.api.cmd.TaskCommands;
 import org.activiti.runtime.api.cmd.result.impl.ClaimTaskResultImpl;
+import org.activiti.runtime.api.model.Task;
+import org.activiti.runtime.api.model.builder.TaskPayloadBuilder;
+import org.activiti.runtime.api.model.payloads.ClaimTaskPayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ClaimTaskCmdExecutor implements CommandExecutor<ClaimTask> {
+public class ClaimTaskCmdExecutor implements CommandExecutor<ClaimTaskPayload> {
 
     private SecurityAwareTaskService securityAwareTaskService;
     private MessageChannel commandResults;
@@ -24,13 +28,14 @@ public class ClaimTaskCmdExecutor implements CommandExecutor<ClaimTask> {
 
     @Override
     public String getHandledType() {
-        return TaskCommands.CLAIM_TASK.name();
+        return ClaimTaskPayload.class.getName();
     }
 
     @Override
-    public void execute(ClaimTask cmd) {
-        securityAwareTaskService.claimTask(cmd);
-        ClaimTaskResultImpl cmdResult = new ClaimTaskResultImpl(cmd);
-        commandResults.send(MessageBuilder.withPayload(cmdResult).build());
+    public void execute(ClaimTaskPayload claimTaskPayload) {
+        Task task = securityAwareTaskService.claimTask(claimTaskPayload);
+        Result<Task> result = new ResultImpl<>(claimTaskPayload, task);
+
+        commandResults.send(MessageBuilder.withPayload(result).build());
     }
 }
