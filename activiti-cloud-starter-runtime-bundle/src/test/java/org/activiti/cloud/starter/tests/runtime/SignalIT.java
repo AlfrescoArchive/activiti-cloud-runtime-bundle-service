@@ -37,7 +37,7 @@ import org.activiti.runtime.api.model.CloudVariableInstance;
 import org.activiti.runtime.api.model.ProcessDefinition;
 import org.activiti.runtime.api.model.Task;
 import org.activiti.runtime.api.model.VariableInstance;
-import org.activiti.runtime.api.model.builder.ProcessPayloadBuilder;
+import org.activiti.runtime.api.model.builders.ProcessPayloadBuilder;
 import org.activiti.runtime.api.model.payloads.SignalPayload;
 import org.junit.Before;
 import org.junit.Test;

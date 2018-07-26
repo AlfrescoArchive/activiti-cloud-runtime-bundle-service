@@ -22,7 +22,7 @@ import java.util.Map;
 import org.activiti.runtime.api.model.CloudProcessInstance;
 import org.activiti.runtime.api.model.CloudTask;
 import org.activiti.runtime.api.model.CloudVariableInstance;
-import org.activiti.runtime.api.model.builder.ProcessPayloadBuilder;
+import org.activiti.runtime.api.model.builders.ProcessPayloadBuilder;
 import org.activiti.runtime.api.model.payloads.RemoveProcessVariablesPayload;
 import org.activiti.runtime.api.model.payloads.SetProcessVariablesPayload;
 import org.activiti.runtime.api.model.payloads.StartProcessPayload;

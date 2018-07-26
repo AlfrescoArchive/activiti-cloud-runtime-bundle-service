@@ -14,7 +14,7 @@ import org.activiti.runtime.api.model.CloudProcessInstance;
 import org.activiti.runtime.api.model.CloudTask;
 import org.activiti.runtime.api.model.ProcessDefinition;
 import org.activiti.runtime.api.model.Task;
-import org.activiti.runtime.api.model.builder.TaskPayloadBuilder;
+import org.activiti.runtime.api.model.builders.TaskPayloadBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

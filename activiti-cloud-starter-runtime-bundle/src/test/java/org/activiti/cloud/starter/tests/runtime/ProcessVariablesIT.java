@@ -30,7 +30,7 @@ import org.activiti.runtime.api.model.CloudProcessInstance;
 import org.activiti.runtime.api.model.CloudVariableInstance;
 import org.activiti.runtime.api.model.ProcessDefinition;
 import org.activiti.runtime.api.model.VariableInstance;
-import org.activiti.runtime.api.model.builder.ProcessPayloadBuilder;
+import org.activiti.runtime.api.model.builders.ProcessPayloadBuilder;
 import org.activiti.runtime.api.model.payloads.RemoveProcessVariablesPayload;
 import org.junit.Before;
 import org.junit.Test;
