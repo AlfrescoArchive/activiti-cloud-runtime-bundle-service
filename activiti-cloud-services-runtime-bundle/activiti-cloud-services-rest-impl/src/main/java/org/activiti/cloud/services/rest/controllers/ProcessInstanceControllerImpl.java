@@ -30,7 +30,7 @@ import org.activiti.engine.RepositoryService;
 import org.activiti.image.exception.ActivitiInterchangeInfoNotFoundException;
 import org.activiti.runtime.api.NotFoundException;
 import org.activiti.runtime.api.model.ProcessInstance;
-import org.activiti.runtime.api.model.builder.ProcessPayloadBuilder;
+import org.activiti.runtime.api.model.builders.ProcessPayloadBuilder;
 import org.activiti.runtime.api.model.payloads.SignalPayload;
 import org.activiti.runtime.api.model.payloads.StartProcessPayload;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,7 +114,9 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processInstance.getProcessDefinitionId());
         return new String(processDiagramGenerator.generateDiagram(bpmnModel,
-                                                                  processRuntime.activeActivityIds(),
+                                                                  securityAwareProcessInstanceService
+                                                                          .processInstanceMeta(processInstance.getId())
+                                                                          .getActiveActivitiesIds(),
                                                                   emptyList()),
                           StandardCharsets.UTF_8);
     }

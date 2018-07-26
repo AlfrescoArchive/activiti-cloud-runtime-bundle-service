@@ -1,12 +1,8 @@
 package org.activiti.cloud.services.core.commands;
 
-import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.DomHandlerEx;
 import org.activiti.cloud.services.core.pageable.SecurityAwareTaskService;
-import org.activiti.runtime.api.cmd.ClaimTask;
-import org.activiti.runtime.api.cmd.TaskCommands;
-import org.activiti.runtime.api.cmd.result.impl.ClaimTaskResultImpl;
+import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.Task;
-import org.activiti.runtime.api.model.builder.TaskPayloadBuilder;
 import org.activiti.runtime.api.model.payloads.ClaimTaskPayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;
@@ -34,8 +30,7 @@ public class ClaimTaskCmdExecutor implements CommandExecutor<ClaimTaskPayload> {
     @Override
     public void execute(ClaimTaskPayload claimTaskPayload) {
         Task task = securityAwareTaskService.claimTask(claimTaskPayload);
-        Result<Task> result = new ResultImpl<>(claimTaskPayload, task);
-
+        Result<Task> result = new Result<>(claimTaskPayload, task);
         commandResults.send(MessageBuilder.withPayload(result).build());
     }
 }

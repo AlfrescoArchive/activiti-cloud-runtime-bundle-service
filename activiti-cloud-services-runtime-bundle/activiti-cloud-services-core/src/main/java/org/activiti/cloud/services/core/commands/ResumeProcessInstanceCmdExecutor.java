@@ -1,16 +1,16 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.cloud.services.core.pageable.SecurityAwareProcessInstanceService;
-import org.activiti.runtime.api.cmd.ProcessCommands;
-import org.activiti.runtime.api.cmd.ResumeProcess;
-import org.activiti.runtime.api.cmd.result.impl.ResumeProcessResultImpl;
+import org.activiti.runtime.api.Result;
+import org.activiti.runtime.api.model.ProcessInstance;
+import org.activiti.runtime.api.model.payloads.ResumeProcessPayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ResumeProcessInstanceCmdExecutor implements CommandExecutor<ResumeProcess> {
+public class ResumeProcessInstanceCmdExecutor implements CommandExecutor<ResumeProcessPayload> {
 
     private SecurityAwareProcessInstanceService processInstanceService;
     private MessageChannel commandResults;
@@ -24,13 +24,14 @@ public class ResumeProcessInstanceCmdExecutor implements CommandExecutor<ResumeP
 
     @Override
     public String getHandledType() {
-        return ProcessCommands.RESUME_PROCESS.name();
+        return ResumeProcessPayload.class.getName();
     }
 
     @Override
-    public void execute(ResumeProcess cmd) {
-        processInstanceService.activate(cmd);
-        ResumeProcessResultImpl cmdResult = new ResumeProcessResultImpl(cmd);
-        commandResults.send(MessageBuilder.withPayload(cmdResult).build());
+    public void execute(ResumeProcessPayload resumeProcessPayload) {
+        ProcessInstance processInstance = processInstanceService.activate(resumeProcessPayload);
+        Result<ProcessInstance> result = new Result<>(resumeProcessPayload,
+                                                         processInstance);
+        commandResults.send(MessageBuilder.withPayload(result).build());
     }
 }

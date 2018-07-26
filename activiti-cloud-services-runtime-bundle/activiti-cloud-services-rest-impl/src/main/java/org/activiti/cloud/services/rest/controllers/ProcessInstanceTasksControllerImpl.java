@@ -23,7 +23,7 @@ import org.activiti.cloud.services.rest.api.ProcessInstanceTasksController;
 import org.activiti.cloud.services.rest.api.resources.TaskResource;
 import org.activiti.cloud.services.rest.assemblers.TaskResourceAssembler;
 import org.activiti.runtime.api.model.Task;
-import org.activiti.runtime.api.model.builder.TaskPayloadBuilder;
+import org.activiti.runtime.api.model.builders.TaskPayloadBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;

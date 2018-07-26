@@ -25,23 +25,19 @@ import org.activiti.cloud.services.rest.assemblers.TaskResourceAssembler;
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.runtime.api.NotFoundException;
 import org.activiti.runtime.api.model.Task;
-import org.activiti.runtime.api.model.builder.TaskPayloadBuilder;
+import org.activiti.runtime.api.model.builders.TaskPayloadBuilder;
 import org.activiti.runtime.api.model.payloads.CompleteTaskPayload;
 import org.activiti.runtime.api.model.payloads.CreateTaskPayload;
 import org.activiti.runtime.api.model.payloads.UpdateTaskPayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
-import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 
 @RestController
 public class TaskControllerImpl implements TaskController {
@@ -115,19 +111,22 @@ public class TaskControllerImpl implements TaskController {
     }
 
     @Override
-    public ResponseEntity<Void> completeTask(@PathVariable String taskId,
-                                             @RequestBody(required = false) CompleteTaskPayload completeTaskPayload) {
-
-        securityAwareTaskService.completeTask(completeTaskPayload);
-        return new ResponseEntity<>(HttpStatus.OK);
+    public TaskResource completeTask(@PathVariable String taskId,
+                                     @RequestBody(required = false) CompleteTaskPayload completeTaskPayload) {
+        if(completeTaskPayload != null){
+            completeTaskPayload.setTaskId(taskId);
+        }
+        Task task = securityAwareTaskService.completeTask(completeTaskPayload);
+        return taskResourceAssembler.toResource(task);
     }
 
     @Override
-    public void deleteTask(@PathVariable String taskId) {
-        securityAwareTaskService.deleteTask(TaskPayloadBuilder
-                                                    .delete()
-                                                    .withTaskId(taskId)
-                                                    .build());
+    public TaskResource deleteTask(@PathVariable String taskId) {
+        Task task = securityAwareTaskService.deleteTask(TaskPayloadBuilder
+                                                                .delete()
+                                                                .withTaskId(taskId)
+                                                                .build());
+        return taskResourceAssembler.toResource(task);
     }
 
     @Override
@@ -136,11 +135,10 @@ public class TaskControllerImpl implements TaskController {
     }
 
     @Override
-    public ResponseEntity<Void> updateTask(@PathVariable String taskId,
-                                           @RequestBody UpdateTaskPayload updateTaskPayload) {
-        securityAwareTaskService.updateTask(taskId,
-                                            updateTaskPayload);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    public TaskResource updateTask(@PathVariable String taskId,
+                                   @RequestBody UpdateTaskPayload updateTaskPayload) {
+        return taskResourceAssembler.toResource(securityAwareTaskService.updateTask(taskId,
+                                                                                    updateTaskPayload));
     }
 
     @Override
@@ -152,9 +150,18 @@ public class TaskControllerImpl implements TaskController {
     }
 
     @Override
-    public Resources<TaskResource> getSubtasks(@PathVariable String taskId) {
-        return new Resources<>(taskResourceAssembler.toResources(securityAwareTaskService.tasks(TaskPayloadBuilder.tasks().withParentTaskId(taskId).build())),
-                               //this should be Pageable
-                               linkTo(TaskControllerImpl.class).withSelfRel());
+    public PagedResources<TaskResource> getSubtasks(Pageable pageable,
+                                                    @PathVariable String taskId) {
+        org.activiti.runtime.api.query.Page<Task> taskPage = securityAwareTaskService
+                .tasks(pageConverter.toAPIPageable(pageable),
+                       TaskPayloadBuilder
+                               .tasks()
+                               .withParentTaskId(taskId)
+                               .build());
+
+        return pagedResourcesAssembler.toResource(pageable,
+                                                  pageConverter.toSpringPage(pageable,
+                                                                             taskPage),
+                                                  taskResourceAssembler);
     }
 }

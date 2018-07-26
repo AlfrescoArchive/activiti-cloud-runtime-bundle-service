@@ -23,7 +23,7 @@ import org.activiti.runtime.api.TaskRuntime;
 import org.activiti.runtime.api.identity.IdentityLookup;
 import org.activiti.runtime.api.model.Task;
 import org.activiti.runtime.api.model.VariableInstance;
-import org.activiti.runtime.api.model.builder.TaskPayloadBuilder;
+import org.activiti.runtime.api.model.builders.TaskPayloadBuilder;
 import org.activiti.runtime.api.model.payloads.ClaimTaskPayload;
 import org.activiti.runtime.api.model.payloads.CompleteTaskPayload;
 import org.activiti.runtime.api.model.payloads.CreateTaskPayload;
@@ -94,8 +94,8 @@ public class SecurityAwareTaskService {
                 .release(releaseTaskPayload);
     }
 
-    public void completeTask(CompleteTaskPayload completeTaskPayload) {
-        taskRuntime.complete(completeTaskPayload);
+    public Task completeTask(CompleteTaskPayload completeTaskPayload) {
+        return taskRuntime.complete(completeTaskPayload);
     }
 
     public Task createNewTask(CreateTaskPayload createTaskPayload) {

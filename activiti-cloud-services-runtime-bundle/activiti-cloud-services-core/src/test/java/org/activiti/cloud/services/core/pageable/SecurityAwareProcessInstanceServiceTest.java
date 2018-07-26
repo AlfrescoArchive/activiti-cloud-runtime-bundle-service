@@ -1,6 +1,8 @@
 package org.activiti.cloud.services.core.pageable;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -8,39 +10,29 @@ import org.activiti.cloud.services.common.security.SpringSecurityAuthenticationW
 import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
 import org.activiti.cloud.services.security.SecurityPolicy;
-import org.activiti.engine.RuntimeService;
 import org.activiti.runtime.api.NotFoundException;
 import org.activiti.runtime.api.ProcessRuntime;
-import org.activiti.runtime.api.cmd.StartProcess;
-import org.activiti.runtime.api.cmd.impl.ResumeProcessImpl;
-import org.activiti.runtime.api.cmd.impl.SendSignalImpl;
-import org.activiti.runtime.api.cmd.impl.SetProcessVariablesImpl;
-import org.activiti.runtime.api.cmd.impl.StartProcessImpl;
-import org.activiti.runtime.api.cmd.impl.SuspendProcessImpl;
-import org.activiti.runtime.api.model.FluentProcessDefinition;
-import org.activiti.runtime.api.model.FluentProcessInstance;
+import org.activiti.runtime.api.model.ProcessDefinition;
 import org.activiti.runtime.api.model.ProcessInstance;
-import org.activiti.runtime.api.model.builder.ProcessStarter;
-import org.activiti.runtime.api.model.builder.SignalPayload;
-import org.activiti.runtime.api.model.impl.FluentProcessInstanceImpl;
-import org.activiti.runtime.api.query.ProcessInstanceFilter;
+import org.activiti.runtime.api.model.builders.ProcessPayloadBuilder;
+import org.activiti.runtime.api.model.impl.ProcessInstanceImpl;
+import org.activiti.runtime.api.model.payloads.GetProcessInstancesPayload;
+import org.activiti.runtime.api.model.payloads.ResumeProcessPayload;
+import org.activiti.runtime.api.model.payloads.SetProcessVariablesPayload;
+import org.activiti.runtime.api.model.payloads.SignalPayload;
+import org.activiti.runtime.api.model.payloads.StartProcessPayload;
+import org.activiti.runtime.api.model.payloads.SuspendProcessPayload;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import static org.activiti.cloud.services.core.utils.MockUtils.selfReturningMock;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class SecurityAwareProcessInstanceServiceTest {
@@ -58,16 +50,13 @@ public class SecurityAwareProcessInstanceServiceTest {
     private SpringPageConverter springPageConverter;
 
     @Mock
-    private org.activiti.runtime.api.query.Page<FluentProcessInstance> apiPage;
+    private org.activiti.runtime.api.query.Page<ProcessInstance> apiPage;
 
     @Mock
     private Page<ProcessInstance> springPage;
 
     @Mock
     private SpringSecurityAuthenticationWrapper authenticationWrapper;
-
-    @Mock
-    private RuntimeService runtimeService;
 
     public SecurityAwareProcessInstanceServiceTest() {
     }
@@ -81,7 +70,7 @@ public class SecurityAwareProcessInstanceServiceTest {
     @Test
     public void getAuthorizedProcessInstancesShouldApplySecurity() {
         //given
-        ProcessInstanceFilter filter = mock(ProcessInstanceFilter.class);
+        GetProcessInstancesPayload filter = mock(GetProcessInstancesPayload.class);
         given(securityService.restrictProcessInstQuery(SecurityPolicy.READ)).willReturn(filter);
 
         Pageable springPageable = mock(Pageable.class);
@@ -90,8 +79,8 @@ public class SecurityAwareProcessInstanceServiceTest {
 
         given(processRuntime.processInstances(apiPageable,
                                               filter)).willReturn(apiPage);
-        given(springPageConverter.<ProcessInstance, FluentProcessInstance>toSpringPage(springPageable,
-                                                                                       apiPage)).willReturn(springPage);
+        given(springPageConverter.<ProcessInstance, ProcessInstance>toSpringPage(springPageable,
+                                                                                 apiPage)).willReturn(springPage);
 
         //when
         Page<ProcessInstance> authorizedProcessInstances = securityAwareProcessInstanceService.getAuthorizedProcessInstances(springPageable);
@@ -104,21 +93,23 @@ public class SecurityAwareProcessInstanceServiceTest {
     public void shouldStartProcessByKeyWithPermission() {
         //given
         String processDefinitionKey = "my-proc";
-        FluentProcessDefinition processDefinition = buildProcessDefinition(processDefinitionKey);
+        ProcessDefinition processDefinition = buildProcessDefinition(processDefinitionKey);
+        org.activiti.runtime.api.query.Page<ProcessDefinition> page = mock(org.activiti.runtime.api.query.Page.class);
 
-        given(processRuntime.processDefinitionByKey(processDefinitionKey)).willReturn(processDefinition);
+        List<ProcessDefinition> processDefinitionList = new ArrayList<>();
+        processDefinitionList.add(processDefinition);
+        given(page.getContent()).willReturn(processDefinitionList);
+        given(processRuntime.processDefinitions(org.activiti.runtime.api.query.Pageable.of(0,
+                                                                                           50),
+                                                ProcessPayloadBuilder.processDefinitions().withProcessDefinitionKey(processDefinitionKey).build())).willReturn(page);
+
+        given(processRuntime.processDefinition(processDefinitionKey)).willReturn(processDefinition);
         given(securityService.canWrite(processDefinitionKey)).willReturn(true);
 
-        ProcessStarter starter = mock(ProcessStarter.class,
-                                      Answers.RETURNS_DEEP_STUBS);
-        given(processDefinition.startProcessWith()).willReturn(starter);
-        given(starter.variables(any())
-                      .businessKey(any()))
-                .willReturn(starter);
-        FluentProcessInstance processInstance = mock(FluentProcessInstance.class);
-        given(starter.doIt()).willReturn(processInstance);
+        ProcessInstance processInstance = mock(ProcessInstance.class);
+        given(processRuntime.start(any())).willReturn(processInstance);
 
-        StartProcess startProcess = buildStartProcessCmd(processDefinitionKey);
+        StartProcessPayload startProcess = buildStartProcessCmd(processDefinitionKey);
 
         //when
         ProcessInstance startedInstance = securityAwareProcessInstanceService.startProcess(startProcess);
@@ -127,14 +118,15 @@ public class SecurityAwareProcessInstanceServiceTest {
         assertThat(startedInstance).isEqualTo(processInstance);
     }
 
-    private StartProcess buildStartProcessCmd(String processDefinitionKey) {
-        StartProcess startProcess = new StartProcessImpl();
-        ((StartProcessImpl) startProcess).setProcessDefinitionKey(processDefinitionKey);
-        return startProcess;
+    private StartProcessPayload buildStartProcessCmd(String processDefinitionKey) {
+        return new StartProcessPayload(UUID.randomUUID().toString(),
+                                       processDefinitionKey,
+                                       "",
+                                       null);
     }
 
-    private FluentProcessDefinition buildProcessDefinition(String processDefinitionKey) {
-        FluentProcessDefinition processDefinition = mock(FluentProcessDefinition.class);
+    private ProcessDefinition buildProcessDefinition(String processDefinitionKey) {
+        ProcessDefinition processDefinition = mock(ProcessDefinition.class);
         given(processDefinition.getKey()).willReturn(processDefinitionKey);
         return processDefinition;
     }
@@ -143,9 +135,17 @@ public class SecurityAwareProcessInstanceServiceTest {
     public void shouldNotStartWithoutPermission() {
         //given
         String processDefinitionKey = "my-proc";
-        FluentProcessDefinition processDefinition = buildProcessDefinition(processDefinitionKey);
+        ProcessDefinition processDefinition = buildProcessDefinition(processDefinitionKey);
 
-        given(processRuntime.processDefinitionByKey(processDefinitionKey)).willReturn(processDefinition);
+        org.activiti.runtime.api.query.Page<ProcessDefinition> page = mock(org.activiti.runtime.api.query.Page.class);
+
+        List<ProcessDefinition> processDefinitionList = new ArrayList<>();
+        processDefinitionList.add(processDefinition);
+        given(page.getContent()).willReturn(processDefinitionList);
+        given(processRuntime.processDefinitions(org.activiti.runtime.api.query.Pageable.of(0,
+                                                                                           50),
+                                                ProcessPayloadBuilder.processDefinitions().withProcessDefinitionKey(processDefinitionKey).build())).willReturn(page);
+        given(processRuntime.processDefinition(processDefinitionKey)).willReturn(processDefinition);
         given(securityService.canWrite(processDefinitionKey)).willReturn(false);
 
         //then
@@ -157,18 +157,20 @@ public class SecurityAwareProcessInstanceServiceTest {
 
     @Test
     public void shouldSignal() {
-        //given
-        SignalPayload signalPayload = selfReturningMock(SignalPayload.class);
-        doReturn(null).when(signalPayload).doIt();
-        given(processRuntime.sendSignalWith()).willReturn(signalPayload);
         String name = "go";
         Map<String, Object> inputVariables = Collections.singletonMap("var",
                                                                       "value");
+        //given
+        SignalPayload signalPayload = ProcessPayloadBuilder
+                .signal()
+                .withName(name)
+                .withVariables(inputVariables)
+                .build();
+
         //when
-        securityAwareProcessInstanceService.signal(new SendSignalImpl(name,
-                                                                      inputVariables));
-        verify(signalPayload).name(name);
-        verify(signalPayload).variables(inputVariables);
+        securityAwareProcessInstanceService.signal(signalPayload);
+
+        verify(processRuntime).signal(signalPayload);
     }
 
     @Test
@@ -179,36 +181,42 @@ public class SecurityAwareProcessInstanceServiceTest {
         //then
         assertThatExceptionOfType(ActivitiForbiddenException.class).isThrownBy(
                 //when
-                () -> securityAwareProcessInstanceService.suspend(new SuspendProcessImpl(processInstance.getId()))
+                () -> securityAwareProcessInstanceService.suspend(new SuspendProcessPayload(processInstance.getId()))
         );
     }
 
-    private FluentProcessInstance aProcessInstanceWithWritePermission(boolean hasWritePermission) {
-        FluentProcessInstance processInstance = buildProcessInstance(UUID.randomUUID().toString(),
-                                                                     UUID.randomUUID().toString(),
-                                                                     "my-proc");
+    private ProcessInstance aProcessInstanceWithWritePermission(boolean hasWritePermission) {
+        ProcessInstance processInstance = buildProcessInstance(UUID.randomUUID().toString(),
+                                                               UUID.randomUUID().toString(),
+                                                               "my-proc");
         given(processRuntime.processInstance(processInstance.getId())).willReturn(processInstance);
         given(securityService.canRead(processInstance.getProcessDefinitionKey())).willReturn(true);
-        FluentProcessDefinition def = buildProcessDefinition("my-proc");
-        when(processRuntime.processDefinitionById(processInstance.getProcessDefinitionId())).thenReturn(def);
+        ProcessDefinition processDefinition = buildProcessDefinition("my-proc");
+//        when(processRuntime.processDefinitionById(processInstance.getProcessDefinitionId())).thenReturn(def);
+        org.activiti.runtime.api.query.Page<ProcessDefinition> page = mock(org.activiti.runtime.api.query.Page.class);
 
-        when(securityService.canWrite(def.getKey())).thenReturn(hasWritePermission);
+        List<ProcessDefinition> processDefinitionList = new ArrayList<>();
+        processDefinitionList.add(processDefinition);
+        given(page.getContent()).willReturn(processDefinitionList);
+        given(processRuntime.processDefinitions(org.activiti.runtime.api.query.Pageable.of(0,
+                                                                                           50),
+                                                ProcessPayloadBuilder.processDefinitions().withProcessDefinitionId(processInstance.getProcessDefinitionId()).build())).willReturn(page);
+        when(securityService.canWrite(processDefinition.getKey())).thenReturn(hasWritePermission);
         return processInstance;
     }
 
-    private FluentProcessInstance buildProcessInstance(String processInstanceId,
-                                                       String processDefinitionId,
-                                                       String processDefinitionKey) {
-        FluentProcessInstanceImpl processInstance = buildProcessInstance(processInstanceId,
-                                                                         processDefinitionId);
+    private ProcessInstance buildProcessInstance(String processInstanceId,
+                                                 String processDefinitionId,
+                                                 String processDefinitionKey) {
+        ProcessInstanceImpl processInstance = buildProcessInstance(processInstanceId,
+                                                                   processDefinitionId);
         processInstance.setProcessDefinitionKey(processDefinitionKey);
         return processInstance;
     }
 
-    private FluentProcessInstanceImpl buildProcessInstance(String processInstanceId,
-                                                           String processDefinitionId) {
-        FluentProcessInstanceImpl processInstance = new FluentProcessInstanceImpl(runtimeService,
-                                                                                  null);
+    private ProcessInstanceImpl buildProcessInstance(String processInstanceId,
+                                                     String processDefinitionId) {
+        ProcessInstanceImpl processInstance = new ProcessInstanceImpl();
         processInstance.setId(processInstanceId);
         processInstance.setProcessDefinitionId(processDefinitionId);
         return processInstance;
@@ -222,24 +230,27 @@ public class SecurityAwareProcessInstanceServiceTest {
         //then
         assertThatExceptionOfType(ActivitiForbiddenException.class).isThrownBy(
                 //when
-                () -> securityAwareProcessInstanceService.activate(new ResumeProcessImpl(processInstance.getId()))
+                () -> securityAwareProcessInstanceService.activate(new ResumeProcessPayload(processInstance.getId()))
         );
     }
 
     @Test
     public void shouldSetProcessVariables() {
         //given
-        FluentProcessInstance processInstance = aProcessInstanceWithWritePermission(true);
+        ProcessInstance processInstance = aProcessInstanceWithWritePermission(true);
 
         Map<String, Object> variables = Collections.singletonMap("var",
                                                                  "value");
         //when
-        securityAwareProcessInstanceService.setProcessVariables(new SetProcessVariablesImpl(processInstance.getId(),
-                                                                                            variables));
+        SetProcessVariablesPayload setProcessVariablesPayload = ProcessPayloadBuilder
+                .setVariables()
+                .withProcessInstanceId(processInstance.getId())
+                .withVariables(variables)
+                .build();
+        securityAwareProcessInstanceService.setProcessVariables(setProcessVariablesPayload);
 
         //then
-        verify(runtimeService).setVariables(processInstance.getId(),
-                                            variables);
+        verify(processRuntime).setVariables(setProcessVariablesPayload);
     }
 
     @Test
@@ -250,8 +261,12 @@ public class SecurityAwareProcessInstanceServiceTest {
         //then
         assertThatExceptionOfType(ActivitiForbiddenException.class).isThrownBy(
                 //when
-                () -> securityAwareProcessInstanceService.setProcessVariables(new SetProcessVariablesImpl(processInstance.getId(),
-                                                                                                         Collections.emptyMap()))
+                () -> securityAwareProcessInstanceService.setProcessVariables(ProcessPayloadBuilder
+                                                                                      .setVariables()
+                                                                                      .withProcessInstanceId(processInstance.getId())
+                                                                                      .withVariables(Collections.emptyMap())
+                                                                                      .build())
+
         );
     }
 
@@ -264,7 +279,7 @@ public class SecurityAwareProcessInstanceServiceTest {
         //then
         assertThatExceptionOfType(NotFoundException.class).isThrownBy(
                 //when
-                () -> securityAwareProcessInstanceService.deleteProcessInstance(processInstanceId)
+                () -> securityAwareProcessInstanceService.deleteProcessInstance(ProcessPayloadBuilder.delete(processInstanceId))
         ).withMessageStartingWith("Not found");
     }
 
@@ -276,7 +291,7 @@ public class SecurityAwareProcessInstanceServiceTest {
         //then
         assertThatExceptionOfType(ActivitiForbiddenException.class).isThrownBy(
                 //when
-                () -> securityAwareProcessInstanceService.deleteProcessInstance(processInstance.getId())
+                () -> securityAwareProcessInstanceService.deleteProcessInstance(ProcessPayloadBuilder.delete(processInstance.getId()))
         ).withMessageStartingWith("Operation not permitted");
     }
 }

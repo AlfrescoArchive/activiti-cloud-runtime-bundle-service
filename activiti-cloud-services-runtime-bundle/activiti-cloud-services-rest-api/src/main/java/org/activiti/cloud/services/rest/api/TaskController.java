@@ -31,17 +31,17 @@ public interface TaskController {
     TaskResource releaseTask(@PathVariable String taskId);
 
     @RequestMapping(value = "/{taskId}/complete", method = RequestMethod.POST)
-    ResponseEntity<Void> completeTask(@PathVariable String taskId,
+    TaskResource completeTask(@PathVariable String taskId,
                                       @RequestBody(required = false) CompleteTaskPayload completeTaskPayload);
 
     @RequestMapping(value = "/{taskId}", method = RequestMethod.DELETE)
-    void deleteTask(@PathVariable String taskId);
+    TaskResource deleteTask(@PathVariable String taskId);
 
     @RequestMapping(method = RequestMethod.POST)
     TaskResource createNewTask(@RequestBody CreateTaskPayload createTaskPayload);
 
     @RequestMapping(value = "/{taskId}", method = RequestMethod.PUT)
-    ResponseEntity<Void> updateTask(@PathVariable("taskId") String taskId,
+    TaskResource updateTask(@PathVariable("taskId") String taskId,
                                     @RequestBody UpdateTaskPayload updateTaskPayload);
 
     @RequestMapping(value = "/{taskId}/subtask", method = RequestMethod.POST)
@@ -49,5 +49,5 @@ public interface TaskController {
                                @RequestBody CreateTaskPayload createTaskPayload);
 
     @RequestMapping(value = "/{taskId}/subtasks", method = RequestMethod.GET)
-    Resources<TaskResource> getSubtasks(@PathVariable String taskId);
+    PagedResources<TaskResource> getSubtasks(Pageable pageable, @PathVariable String taskId);
 }

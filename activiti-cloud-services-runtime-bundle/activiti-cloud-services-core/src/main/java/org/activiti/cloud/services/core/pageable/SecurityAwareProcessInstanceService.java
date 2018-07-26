@@ -25,6 +25,7 @@ import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessDefinition;
 import org.activiti.runtime.api.model.ProcessInstance;
+import org.activiti.runtime.api.model.ProcessInstanceMeta;
 import org.activiti.runtime.api.model.VariableInstance;
 import org.activiti.runtime.api.model.payloads.DeleteProcessPayload;
 import org.activiti.runtime.api.model.payloads.GetProcessInstancesPayload;
@@ -79,17 +80,26 @@ public class SecurityAwareProcessInstanceService {
                                                 processRuntime.processInstances(springPageConverter.toAPIPageable(pageable)));
     }
 
+    public ProcessInstanceMeta processInstanceMeta(String processInstanceId) {
+        return processRuntime.processInstanceMeta(processInstanceId);
+    }
+
     public ProcessInstance startProcess(StartProcessPayload startProcessPayload) {
 
-        if (startProcessPayload.getProcessDefinitionKey() == null) {
-            throw new IllegalStateException("Process Definition Key is required to start a process");
+        ProcessDefinition processDefinition = null;
+        if (startProcessPayload.getProcessDefinitionId() != null) {
+            processDefinition = processRuntime.processDefinition(startProcessPayload.getProcessDefinitionId());
         }
-        ProcessDefinition processDefinition = processRuntime.processDefinition(startProcessPayload.getProcessDefinitionKey());
+        if (processDefinition == null && startProcessPayload.getProcessDefinitionKey() != null) {
+            processDefinition = processRuntime.processDefinition(startProcessPayload.getProcessDefinitionKey());
+        }
+        if (processDefinition == null) {
+            throw new IllegalStateException("At least Process Definition Id or Key needs to be provided to start a process");
+        }
         if (!securityService.canWrite(processDefinition.getKey())) {
             LOGGER.debug("User " + authenticationWrapper.getAuthenticatedUserId() + " not permitted to access definition " + processDefinition.getKey());
             throw new ActivitiForbiddenException("Operation not permitted for " + processDefinition.getKey());
         }
-
         return processRuntime.start(startProcessPayload);
     }
 
@@ -146,8 +156,7 @@ public class SecurityAwareProcessInstanceService {
         processRuntime.removeVariables(removeVariablesPayload);
     }
 
-    public List<VariableInstance> getVariableInstances(Pageable pageable,
-                                                       GetVariablesPayload getVariablesPayload) {
+    public List<VariableInstance> getVariableInstances(GetVariablesPayload getVariablesPayload) {
         ProcessInstance processInstance = getAuthorizedProcessInstanceById(getVariablesPayload.getProcessInstanceId());
         return processRuntime.variables(getVariablesPayload);
     }
