@@ -119,7 +119,7 @@ public class SecurityAwareProcessInstanceServiceTest {
     }
 
     private StartProcessPayload buildStartProcessCmd(String processDefinitionKey) {
-        return new StartProcessPayload(UUID.randomUUID().toString(),
+        return new StartProcessPayload(null,
                                        processDefinitionKey,
                                        "",
                                        null);

@@ -4,6 +4,7 @@ import org.activiti.cloud.services.core.pageable.SecurityAwareTaskService;
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.Task;
 import org.activiti.runtime.api.model.payloads.CompleteTaskPayload;
+import org.activiti.runtime.api.model.results.TaskResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
@@ -30,8 +31,8 @@ public class CompleteTaskCmdExecutor implements CommandExecutor<CompleteTaskPayl
     @Override
     public void execute(CompleteTaskPayload completeTaskPayload) {
         Task task = securityAwareTaskService.completeTask(completeTaskPayload);
-        Result<Task> result = new Result<>(completeTaskPayload,
-                                           task);
+        TaskResult result = new TaskResult(completeTaskPayload,
+                                         task);
         commandResults.send(MessageBuilder.withPayload(result).build());
     }
 }

@@ -113,7 +113,7 @@ public class TaskControllerImpl implements TaskController {
     @Override
     public TaskResource completeTask(@PathVariable String taskId,
                                      @RequestBody(required = false) CompleteTaskPayload completeTaskPayload) {
-        if(completeTaskPayload != null){
+        if (completeTaskPayload != null) {
             completeTaskPayload.setTaskId(taskId);
         }
         Task task = securityAwareTaskService.completeTask(completeTaskPayload);
@@ -137,8 +137,10 @@ public class TaskControllerImpl implements TaskController {
     @Override
     public TaskResource updateTask(@PathVariable String taskId,
                                    @RequestBody UpdateTaskPayload updateTaskPayload) {
-        return taskResourceAssembler.toResource(securityAwareTaskService.updateTask(taskId,
-                                                                                    updateTaskPayload));
+        if (updateTaskPayload != null) {
+            updateTaskPayload.setTaskId(taskId);
+        }
+        return taskResourceAssembler.toResource(securityAwareTaskService.updateTask(updateTaskPayload));
     }
 
     @Override

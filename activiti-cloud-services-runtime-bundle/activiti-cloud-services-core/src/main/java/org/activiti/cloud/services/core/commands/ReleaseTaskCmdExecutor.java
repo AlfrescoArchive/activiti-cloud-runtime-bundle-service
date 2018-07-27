@@ -4,6 +4,7 @@ import org.activiti.cloud.services.core.pageable.SecurityAwareTaskService;
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.Task;
 import org.activiti.runtime.api.model.payloads.ReleaseTaskPayload;
+import org.activiti.runtime.api.model.results.TaskResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
@@ -30,8 +31,8 @@ public class ReleaseTaskCmdExecutor implements CommandExecutor<ReleaseTaskPayloa
     @Override
     public void execute(ReleaseTaskPayload releaseTaskPayload) {
         Task task = securityAwareTaskService.releaseTask(releaseTaskPayload);
-        Result<Task> result = new Result<>(releaseTaskPayload,
-                                           task);
+        TaskResult result = new TaskResult(releaseTaskPayload,
+                                         task);
         commandResults.send(MessageBuilder.withPayload(result).build());
     }
 }

@@ -42,12 +42,12 @@ public class CommandEndPointITStreamHandler {
     private AtomicBoolean removeProcessVariablesAck = new AtomicBoolean(false);
 
     @StreamListener(MessageClientStream.MY_CMD_RESULTS)
-    public <T extends Result<?>> void consumeStartProcessInstanceResults(Result<T> result) {
+    public <T extends Result> void consumeStartProcessInstanceResults(Result result) {
         if (result.getPayload() instanceof StartProcessPayload) {
             assertThat(result.getEntity()).isNotNull();
             assertThat(result.getEntity()).isInstanceOf(ProcessInstance.class);
-            assertThat(((ProcessInstance) result).getId()).isNotEmpty();
-            processInstanceId = ((ProcessInstance) result).getId();
+            assertThat(((ProcessInstance) result.getEntity()).getId()).isNotEmpty();
+            processInstanceId = ((ProcessInstance) result.getEntity()).getId();
             startedProcessInstanceAck.set(true);
         } else if (result.getPayload() instanceof SuspendProcessPayload) {
             suspendedProcessInstanceAck.set(true);

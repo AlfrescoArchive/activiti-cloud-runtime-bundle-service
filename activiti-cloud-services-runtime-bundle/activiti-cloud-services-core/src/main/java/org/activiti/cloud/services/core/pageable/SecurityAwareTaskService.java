@@ -122,8 +122,7 @@ public class SecurityAwareTaskService {
         return taskRuntime.delete(deleteTaskPayload);
     }
 
-    public Task updateTask(String taskId,
-                           UpdateTaskPayload updateTaskPayload) {
+    public Task updateTask(UpdateTaskPayload updateTaskPayload) {
         return taskRuntime.update(updateTaskPayload);
     }
 

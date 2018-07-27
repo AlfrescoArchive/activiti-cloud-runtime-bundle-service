@@ -235,7 +235,7 @@ public class TasksIT {
         //given
         CloudTask standaloneTask = taskRestTemplate.createTask(TaskPayloadBuilder.create().withName("parent task").withDescription("This is my parent task").build());
         //when
-        ResponseEntity<Task> delete = taskRestTemplate.delete(standaloneTask);
+        ResponseEntity<CloudTask> delete = taskRestTemplate.delete(standaloneTask);
 
         //then
         assertThat(delete.getStatusCodeValue()).isEqualTo(HttpStatus.OK.value());

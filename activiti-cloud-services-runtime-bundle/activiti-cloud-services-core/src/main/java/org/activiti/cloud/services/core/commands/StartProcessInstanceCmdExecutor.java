@@ -4,6 +4,7 @@ import org.activiti.cloud.services.core.pageable.SecurityAwareProcessInstanceSer
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.StartProcessPayload;
+import org.activiti.runtime.api.model.results.ProcessInstanceResult;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
@@ -29,8 +30,8 @@ public class StartProcessInstanceCmdExecutor implements CommandExecutor<StartPro
     public void execute(StartProcessPayload startProcessPayload) {
         ProcessInstance processInstance = securityAwareProcessInstanceService.startProcess(startProcessPayload);
         if (processInstance != null) {
-            Result<ProcessInstance> result = new Result<>(startProcessPayload,
-                                                          processInstance);
+            ProcessInstanceResult result = new ProcessInstanceResult(startProcessPayload,
+                                                        processInstance);
             commandResults.send(MessageBuilder.withPayload(result).build());
         } else {
             throw new IllegalStateException("Failed to start processInstance");

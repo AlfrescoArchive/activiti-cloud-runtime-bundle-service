@@ -211,7 +211,8 @@ public class AuditProducerIT {
                 "long description here").build());
 
         //when
-        taskRestTemplate.delete(task);
+        ResponseEntity<CloudTask> deleteTask = taskRestTemplate.delete(task);
+
 
         //then
         await().untilAsserted(() -> {

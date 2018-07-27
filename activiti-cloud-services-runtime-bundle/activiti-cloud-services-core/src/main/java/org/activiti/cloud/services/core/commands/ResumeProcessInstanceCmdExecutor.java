@@ -4,6 +4,7 @@ import org.activiti.cloud.services.core.pageable.SecurityAwareProcessInstanceSer
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.ResumeProcessPayload;
+import org.activiti.runtime.api.model.results.ProcessInstanceResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
@@ -30,8 +31,8 @@ public class ResumeProcessInstanceCmdExecutor implements CommandExecutor<ResumeP
     @Override
     public void execute(ResumeProcessPayload resumeProcessPayload) {
         ProcessInstance processInstance = processInstanceService.activate(resumeProcessPayload);
-        Result<ProcessInstance> result = new Result<>(resumeProcessPayload,
-                                                         processInstance);
+        ProcessInstanceResult result = new ProcessInstanceResult(resumeProcessPayload,
+                                                    processInstance);
         commandResults.send(MessageBuilder.withPayload(result).build());
     }
 }
