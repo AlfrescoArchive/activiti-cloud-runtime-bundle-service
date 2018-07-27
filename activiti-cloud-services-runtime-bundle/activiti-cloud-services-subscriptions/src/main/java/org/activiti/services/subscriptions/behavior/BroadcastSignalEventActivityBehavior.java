@@ -40,7 +40,7 @@ public class BroadcastSignalEventActivityBehavior extends IntermediateThrowSigna
             eventSubscriptionName = expressionObject.getValue(execution).toString();
         }
 
-        SendSignal sendSignal = new SendSignalImpl(eventSubscriptionName);
+        SendSignal sendSignal = new SendSignalImpl(eventSubscriptionName, execution.getVariables());
         eventPublisher.publishEvent(sendSignal);
     }
 }
