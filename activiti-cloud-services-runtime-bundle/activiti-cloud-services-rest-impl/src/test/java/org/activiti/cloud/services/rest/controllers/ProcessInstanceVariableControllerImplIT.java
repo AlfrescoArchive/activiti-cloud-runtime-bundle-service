@@ -135,7 +135,7 @@ public class ProcessInstanceVariableControllerImplIT {
         given(securityAwareProcessInstanceService.getVariableInstances(ProcessPayloadBuilder
                                                                                .variables()
                                                                                .withProcessInstanceId(PROCESS_INSTANCE_ID)
-                                                                               .localOnly(true)
+                                                                               .localOnly()
                                                                                .build()))
                 .willReturn(Collections.singletonList(count));
 

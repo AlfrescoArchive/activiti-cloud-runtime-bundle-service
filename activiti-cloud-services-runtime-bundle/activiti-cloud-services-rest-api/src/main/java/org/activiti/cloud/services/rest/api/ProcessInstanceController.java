@@ -29,7 +29,7 @@ public interface ProcessInstanceController {
     @RequestMapping(value = "/{processInstanceId}/model",
             method = RequestMethod.GET,
             produces = "image/svg+xml",
-            consumes = "image/svg+xml")
+            consumes = "image/svg+xml")//TODO: remove consumes as it's not consuming anything
     @ResponseBody
     String getProcessDiagram(@PathVariable String processInstanceId);
 

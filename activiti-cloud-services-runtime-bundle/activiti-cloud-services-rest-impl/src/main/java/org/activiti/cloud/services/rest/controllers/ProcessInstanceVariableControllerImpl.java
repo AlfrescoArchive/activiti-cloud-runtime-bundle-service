@@ -69,7 +69,6 @@ public class ProcessInstanceVariableControllerImpl implements ProcessInstanceVar
     public Resources<VariableInstanceResource> getVariables(@PathVariable String processInstanceId) {
         return resourcesAssembler.toResources(securityAwareProcessInstanceService.getVariableInstances(ProcessPayloadBuilder.variables()
                                                                                                                .withProcessInstanceId(processInstanceId)
-                                                                                                               .localOnly(false)
                                                                                                                .build()),
                                               variableResourceAssembler);
     }
@@ -78,7 +77,7 @@ public class ProcessInstanceVariableControllerImpl implements ProcessInstanceVar
     public Resources<VariableInstanceResource> getVariablesLocal(@PathVariable String processInstanceId) {
         return resourcesAssembler.toResources(securityAwareProcessInstanceService.getVariableInstances(ProcessPayloadBuilder.variables()
                                                                                                                .withProcessInstanceId(processInstanceId)
-                                                                                                               .localOnly(true)
+                                                                                                               .localOnly()
                                                                                                                .build()),
                                               variableResourceAssembler);
     }
