@@ -54,8 +54,8 @@ public class SecurityAwareRepositoryServiceTest {
 
         given(processRuntime.processDefinitions(apiPageable,
                                                 filter)).willReturn(apiPage);
-        given(pageConverter.<ProcessDefinition, ProcessDefinition>toSpringPage(springPageable,
-                                                                               apiPage)).willReturn(springPage);
+        given(pageConverter.toSpringPage(springPageable,
+                                         apiPage)).willReturn(springPage);
 
         //when
         Page<ProcessDefinition> authorizedProcessDefinitions = securityAwareRepositoryService.getAuthorizedProcessDefinitions(springPageable);

@@ -50,10 +50,13 @@ public class SecurityAwareProcessInstanceServiceTest {
     private SpringPageConverter springPageConverter;
 
     @Mock
-    private org.activiti.runtime.api.query.Page<ProcessInstance> apiPage;
+    private org.activiti.runtime.api.query.Page<ProcessInstance> apiProcInstPage;
 
     @Mock
-    private Page<ProcessInstance> springPage;
+    private org.activiti.runtime.api.query.Page<ProcessDefinition> apiProcDefPage;
+
+    @Mock
+    private Page<ProcessInstance> springProcInstPage;
 
     @Mock
     private SpringSecurityAuthenticationWrapper authenticationWrapper;
@@ -78,15 +81,15 @@ public class SecurityAwareProcessInstanceServiceTest {
         given(springPageConverter.toAPIPageable(springPageable)).willReturn(apiPageable);
 
         given(processRuntime.processInstances(apiPageable,
-                                              filter)).willReturn(apiPage);
-        given(springPageConverter.<ProcessInstance, ProcessInstance>toSpringPage(springPageable,
-                                                                                 apiPage)).willReturn(springPage);
+                                              filter)).willReturn(apiProcInstPage);
+        given(springPageConverter.toSpringPage(springPageable,
+                                               apiProcInstPage)).willReturn(springProcInstPage);
 
         //when
         Page<ProcessInstance> authorizedProcessInstances = securityAwareProcessInstanceService.getAuthorizedProcessInstances(springPageable);
 
         //then
-        assertThat(authorizedProcessInstances).isEqualTo(springPage);
+        assertThat(authorizedProcessInstances).isEqualTo(springProcInstPage);
     }
 
     @Test
@@ -94,14 +97,14 @@ public class SecurityAwareProcessInstanceServiceTest {
         //given
         String processDefinitionKey = "my-proc";
         ProcessDefinition processDefinition = buildProcessDefinition(processDefinitionKey);
-        org.activiti.runtime.api.query.Page<ProcessDefinition> page = mock(org.activiti.runtime.api.query.Page.class);
 
         List<ProcessDefinition> processDefinitionList = new ArrayList<>();
         processDefinitionList.add(processDefinition);
-        given(page.getContent()).willReturn(processDefinitionList);
+        given(apiProcDefPage.getContent()).willReturn(processDefinitionList);
         given(processRuntime.processDefinitions(org.activiti.runtime.api.query.Pageable.of(0,
                                                                                            50),
-                                                ProcessPayloadBuilder.processDefinitions().withProcessDefinitionKey(processDefinitionKey).build())).willReturn(page);
+                                                ProcessPayloadBuilder.processDefinitions().withProcessDefinitionKey(processDefinitionKey).build()))
+                .willReturn(apiProcDefPage);
 
         given(processRuntime.processDefinition(processDefinitionKey)).willReturn(processDefinition);
         given(securityService.canWrite(processDefinitionKey)).willReturn(true);
@@ -137,14 +140,13 @@ public class SecurityAwareProcessInstanceServiceTest {
         String processDefinitionKey = "my-proc";
         ProcessDefinition processDefinition = buildProcessDefinition(processDefinitionKey);
 
-        org.activiti.runtime.api.query.Page<ProcessDefinition> page = mock(org.activiti.runtime.api.query.Page.class);
-
         List<ProcessDefinition> processDefinitionList = new ArrayList<>();
         processDefinitionList.add(processDefinition);
-        given(page.getContent()).willReturn(processDefinitionList);
+        given(apiProcDefPage.getContent()).willReturn(processDefinitionList);
         given(processRuntime.processDefinitions(org.activiti.runtime.api.query.Pageable.of(0,
                                                                                            50),
-                                                ProcessPayloadBuilder.processDefinitions().withProcessDefinitionKey(processDefinitionKey).build())).willReturn(page);
+                                                ProcessPayloadBuilder.processDefinitions().withProcessDefinitionKey(processDefinitionKey).build()))
+                .willReturn(apiProcDefPage);
         given(processRuntime.processDefinition(processDefinitionKey)).willReturn(processDefinition);
         given(securityService.canWrite(processDefinitionKey)).willReturn(false);
 
@@ -192,15 +194,14 @@ public class SecurityAwareProcessInstanceServiceTest {
         given(processRuntime.processInstance(processInstance.getId())).willReturn(processInstance);
         given(securityService.canRead(processInstance.getProcessDefinitionKey())).willReturn(true);
         ProcessDefinition processDefinition = buildProcessDefinition("my-proc");
-//        when(processRuntime.processDefinitionById(processInstance.getProcessDefinitionId())).thenReturn(def);
-        org.activiti.runtime.api.query.Page<ProcessDefinition> page = mock(org.activiti.runtime.api.query.Page.class);
 
         List<ProcessDefinition> processDefinitionList = new ArrayList<>();
         processDefinitionList.add(processDefinition);
-        given(page.getContent()).willReturn(processDefinitionList);
+        given(apiProcDefPage.getContent()).willReturn(processDefinitionList);
         given(processRuntime.processDefinitions(org.activiti.runtime.api.query.Pageable.of(0,
                                                                                            50),
-                                                ProcessPayloadBuilder.processDefinitions().withProcessDefinitionId(processInstance.getProcessDefinitionId()).build())).willReturn(page);
+                                                ProcessPayloadBuilder.processDefinitions().withProcessDefinitionId(processInstance.getProcessDefinitionId()).build()))
+                .willReturn(apiProcDefPage);
         when(securityService.canWrite(processDefinition.getKey())).thenReturn(hasWritePermission);
         return processInstance;
     }

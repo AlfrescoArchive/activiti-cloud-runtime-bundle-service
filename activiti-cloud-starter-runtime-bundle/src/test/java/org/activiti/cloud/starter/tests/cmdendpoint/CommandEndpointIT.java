@@ -91,9 +91,6 @@ public class CommandEndpointIT {
     @Autowired
     private CommandEndPointITStreamHandler streamHandler;
 
-    private static final ParameterizedTypeReference<PagedResources<CloudTask>> PAGED_TASKS_RESPONSE_TYPE = new ParameterizedTypeReference<PagedResources<CloudTask>>() {
-    };
-
     private Map<String, String> processDefinitionIds = new HashMap<>();
 
     private static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";

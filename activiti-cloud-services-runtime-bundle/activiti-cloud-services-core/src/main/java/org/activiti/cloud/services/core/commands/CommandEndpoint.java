@@ -26,18 +26,17 @@ public class CommandEndpoint<T extends Payload> {
     }
 
     @StreamListener(ProcessEngineChannels.COMMAND_CONSUMER)
-    public void consumeActivateProcessInstanceCmd(T cmd) {
-        processCommand(cmd);
+    public void consumeActivateProcessInstanceCmd(T payload) {
+        processCommand(payload);
     }
 
-    private void processCommand(T cmd) {
+    private void processCommand(T payload) {
 
-        CommandExecutor<T> cmdExecutor = commandExecutors.get(cmd.getClass().getName());
+        CommandExecutor<T> cmdExecutor = commandExecutors.get(payload.getClass().getName());
         if (cmdExecutor != null) {
-            cmdExecutor.execute(cmd);
-            return;
+            cmdExecutor.execute(payload);
+        } else {
+            LOGGER.warn(">>> No Command Found for type: " + payload.getClass());
         }
-
-        LOGGER.warn(">>> No Command Found for type: " + cmd.getClass());
     }
 }

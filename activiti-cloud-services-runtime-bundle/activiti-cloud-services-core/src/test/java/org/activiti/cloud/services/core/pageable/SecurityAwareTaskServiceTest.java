@@ -18,18 +18,19 @@ package org.activiti.cloud.services.core.pageable;
 
 import org.activiti.cloud.services.common.security.SpringSecurityAuthenticationWrapper;
 import org.activiti.runtime.api.TaskRuntime;
-import org.activiti.runtime.api.model.Task;
-import org.activiti.runtime.api.model.builders.TaskPayloadBuilder;
 import org.activiti.runtime.api.model.payloads.ClaimTaskPayload;
+import org.activiti.runtime.api.model.payloads.CompleteTaskPayload;
 import org.activiti.runtime.api.model.payloads.DeleteTaskPayload;
 import org.activiti.runtime.api.model.payloads.ReleaseTaskPayload;
+import org.activiti.runtime.api.model.payloads.SetTaskVariablesPayload;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class SecurityAwareTaskServiceTest {
@@ -57,11 +58,9 @@ public class SecurityAwareTaskServiceTest {
     @Test
     public void deleteTaskShouldCallDeleteOnFluentTask() {
         //GIVEN
-        Task task = mock(Task.class);
-        given(taskRuntime.task("taskId")).willReturn(task);
+        DeleteTaskPayload deleteTaskPayload = mock(DeleteTaskPayload.class);
 
         //WHEN
-        DeleteTaskPayload deleteTaskPayload = TaskPayloadBuilder.delete().withTaskId("taskId").build();
         taskService.deleteTask(deleteTaskPayload);
 
         //THEN
@@ -71,82 +70,49 @@ public class SecurityAwareTaskServiceTest {
     @Test
     public void claimShouldCallClaimOnFluentTask() {
         //given
-        Task task = mock(Task.class);
-        given(taskRuntime.task("taskId")).willReturn(task);
+        ClaimTaskPayload claimTaskPayload = mock(ClaimTaskPayload.class);
 
-        ClaimTaskPayload claimTaskPayload = TaskPayloadBuilder.claim().withTaskId("taskId").withAssignee("user").build();
         //when
         taskService.claimTask(claimTaskPayload);
 
-        //
+        //then
         verify(taskRuntime).claim(claimTaskPayload);
     }
 
     @Test
     public void releaseTaskShouldClearAssignee() {
         //given
-        Task task = mock(Task.class);
-        given(taskRuntime.task("taskId")).willReturn(task);
+        ReleaseTaskPayload releaseTaskPayload = mock(ReleaseTaskPayload.class);
 
         //when
-        ReleaseTaskPayload releaseTaskPayload = TaskPayloadBuilder.release().withTaskId("taskId").build();
-
         taskService.releaseTask(releaseTaskPayload);
 
         //then
         verify(taskRuntime).release(releaseTaskPayload);
     }
 
-//    @Test
-//    public void completeTaskShouldCallCompleteOnFluentTask() {
-//        Task task = mock(Task.class);
-//        given(taskRuntime.task("taskId")).willReturn(task);
-//
-//        CompleteTaskPayload completeTaskPayload = mock(CompleteTaskPayload.class,
-//                                                       Answers.RETURNS_SELF);
-//        doReturn(null).when(completeTaskPayload).doIt();
-//        given(task.completeWith()).willReturn(completeTaskPayload);
-//
-//        Map<String, Object> variables = Collections.singletonMap("name",
-//                                                                 "paul");
-//
-//        //when
-//        taskService.completeTask(new CompleteTaskImpl("taskId",
-//                                                      variables));
-//        verify(completeTaskPayload).variables(variables);
-//        verify(completeTaskPayload).doIt();
-//    }
-//
-//    @Test
-//    public void setTaskVariablesShouldSetVariablesOnFluentTask() {
-//        //given
-//        SetTaskVariablesImpl setTaskVariablesCmd = new SetTaskVariablesImpl("taskId",
-//                                                                            Collections.singletonMap("name",
-//                                                                                                     "john"));
-//        Task task = mock(Task.class);
-//        given(taskRuntime.task(setTaskVariablesCmd.getTaskId())).willReturn(task);
-//
-//        //when
-//        taskService.setTaskVariables(setTaskVariablesCmd);
-//
-//        //then
-//        verify(task).variables(setTaskVariablesCmd.getVariables());
-//    }
-//
-//    @Test
-//    public void shouldSetTaskVariablesLocal() {
-//        //given
-//        SetTaskVariablesImpl cmd = new SetTaskVariablesImpl("taskId",
-//                                                            Collections.singletonMap("local",
-//                                                                                     "myLocalVar"));
-//
-//        Task task = mock(Task.class);
-//        given(taskRuntime.task(cmd.getTaskId())).willReturn(task);
-//
-//        //when
-//        taskService.setTaskVariablesLocal(cmd);
-//
-//        //when
-//        verify(task).localVariables(cmd.getVariables());
-//    }
+    @Test
+    public void completeTaskShouldCallCompleteOnTaskRuntime() {
+        //given
+        CompleteTaskPayload payload = mock(CompleteTaskPayload.class);
+
+        //when
+        taskService.completeTask(payload);
+
+        //then
+        verify(taskRuntime).complete(payload);
+    }
+
+    @Test
+    public void setTaskVariablesShouldSetVariablesOnFluentTask() {
+        //given
+        SetTaskVariablesPayload payload = mock(SetTaskVariablesPayload.class);
+
+        //when
+        taskService.setTaskVariables(payload);
+
+        //then
+        verify(taskRuntime).setVariables(payload);
+    }
+
 }
