@@ -16,11 +16,12 @@
 package org.activiti.cloud.services.core.pageable;
 
 import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
-import org.activiti.cloud.services.security.SecurityPolicy;
+
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessDefinition;
 import org.activiti.runtime.api.model.payloads.GetProcessDefinitionsPayload;
+import org.activiti.spring.security.policies.SecurityPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

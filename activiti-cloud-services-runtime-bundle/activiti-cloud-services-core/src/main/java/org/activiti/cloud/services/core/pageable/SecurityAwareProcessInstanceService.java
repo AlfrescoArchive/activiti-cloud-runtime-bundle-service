@@ -15,54 +15,47 @@
 
 package org.activiti.cloud.services.core.pageable;
 
-import java.util.List;
-
-import org.activiti.cloud.services.common.security.SpringSecurityAuthenticationWrapper;
 import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
-import org.activiti.cloud.services.security.SecurityPolicy;
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.runtime.api.ProcessRuntime;
+import org.activiti.runtime.api.identity.UserGroupManager;
 import org.activiti.runtime.api.model.ProcessDefinition;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.ProcessInstanceMeta;
 import org.activiti.runtime.api.model.VariableInstance;
-import org.activiti.runtime.api.model.payloads.DeleteProcessPayload;
-import org.activiti.runtime.api.model.payloads.GetProcessInstancesPayload;
-import org.activiti.runtime.api.model.payloads.GetVariablesPayload;
-import org.activiti.runtime.api.model.payloads.RemoveProcessVariablesPayload;
-import org.activiti.runtime.api.model.payloads.ResumeProcessPayload;
-import org.activiti.runtime.api.model.payloads.SetProcessVariablesPayload;
-import org.activiti.runtime.api.model.payloads.SignalPayload;
-import org.activiti.runtime.api.model.payloads.StartProcessPayload;
-import org.activiti.runtime.api.model.payloads.SuspendProcessPayload;
+import org.activiti.runtime.api.model.payloads.*;
+import org.activiti.runtime.api.security.SecurityManager;
+import org.activiti.spring.security.policies.SecurityPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class SecurityAwareProcessInstanceService {
 
-    private final ProcessRuntime processRuntime;
-
-    private final SecurityPoliciesApplicationService securityService;
-
-    private final SpringPageConverter springPageConverter;
-
-    private final SpringSecurityAuthenticationWrapper authenticationWrapper;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityAwareProcessInstanceService.class);
+    private final ProcessRuntime processRuntime;
+    private final SecurityPoliciesApplicationService securityService;
+    private final SpringPageConverter springPageConverter;
+    private final UserGroupManager userGroupManager;
+    private final SecurityManager securityManager;
 
     public SecurityAwareProcessInstanceService(ProcessRuntime processRuntime,
+                                               UserGroupManager userGroupManager,
+                                               SecurityManager securityManager,
                                                SecurityPoliciesApplicationService securityPolicyApplicationService,
-                                               SpringPageConverter springPageConverter,
-                                               SpringSecurityAuthenticationWrapper authenticationWrapper) {
+                                               SpringPageConverter springPageConverter) {
         this.processRuntime = processRuntime;
+        this.userGroupManager = userGroupManager;
+        this.securityManager = securityManager;
         this.securityService = securityPolicyApplicationService;
         this.springPageConverter = springPageConverter;
-        this.authenticationWrapper = authenticationWrapper;
+
     }
 
     public Page<ProcessInstance> getAuthorizedProcessInstances(Pageable pageable) {
@@ -70,14 +63,14 @@ public class SecurityAwareProcessInstanceService {
         GetProcessInstancesPayload getProcessInstancesPayload = securityService.restrictProcessInstQuery(SecurityPolicy.READ);
 
         return springPageConverter.toSpringPage(pageable,
-                                                processRuntime.processInstances(springPageConverter.toAPIPageable(pageable),
-                                                                                getProcessInstancesPayload));
+                processRuntime.processInstances(springPageConverter.toAPIPageable(pageable),
+                        getProcessInstancesPayload));
     }
 
     public Page<ProcessInstance> getAllProcessInstances(Pageable pageable) {
 
         return springPageConverter.toSpringPage(pageable,
-                                                processRuntime.processInstances(springPageConverter.toAPIPageable(pageable)));
+                processRuntime.processInstances(springPageConverter.toAPIPageable(pageable)));
     }
 
     public ProcessInstanceMeta processInstanceMeta(String processInstanceId) {
@@ -97,7 +90,7 @@ public class SecurityAwareProcessInstanceService {
             throw new IllegalStateException("At least Process Definition Id or Key needs to be provided to start a process");
         }
         if (!securityService.canWrite(processDefinition.getKey())) {
-            LOGGER.debug("User " + authenticationWrapper.getAuthenticatedUserId() + " not permitted to access definition " + processDefinition.getKey());
+            LOGGER.debug("User " + securityManager.getAuthenticatedUserId() + " not permitted to access definition " + processDefinition.getKey());
             throw new ActivitiForbiddenException("Operation not permitted for " + processDefinition.getKey());
         }
         return processRuntime.start(startProcessPayload);
@@ -123,7 +116,7 @@ public class SecurityAwareProcessInstanceService {
 
         String processDefinitionKey = processInstance.getProcessDefinitionKey();
         if (!securityService.canWrite(processDefinitionKey)) {
-            LOGGER.debug("User " + authenticationWrapper.getAuthenticatedUserId() + " not permitted to access definition " + processDefinitionKey);
+            LOGGER.debug("User " + securityManager.getAuthenticatedUserId() + " not permitted to access definition " + processDefinitionKey);
             throw new ActivitiForbiddenException("Operation not permitted for " + processDefinitionKey);
         }
 

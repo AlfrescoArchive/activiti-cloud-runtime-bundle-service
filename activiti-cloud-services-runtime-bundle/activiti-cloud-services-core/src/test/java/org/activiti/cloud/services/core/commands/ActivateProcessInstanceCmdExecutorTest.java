@@ -1,6 +1,7 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.cloud.services.core.pageable.SecurityAwareProcessInstanceService;
+import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.ResumeProcessPayload;
@@ -22,7 +23,7 @@ public class ActivateProcessInstanceCmdExecutorTest {
     private ResumeProcessInstanceCmdExecutor activateProcessInstanceCmdExecutor;
 
     @Mock
-    private SecurityAwareProcessInstanceService processInstanceService;
+    private ProcessRuntime processRuntime;
 
     @Mock
     private MessageChannel commandResults;
@@ -33,14 +34,14 @@ public class ActivateProcessInstanceCmdExecutorTest {
     }
 
     @Test
-    public void activateProcessInstanceCmdExecutorTest() {
+    public void resumeProcessInstanceCmdExecutorTest() {
         ResumeProcessPayload resumeProcessPayload = new ResumeProcessPayload("x");
 
         assertThat(activateProcessInstanceCmdExecutor.getHandledType()).isEqualTo(ResumeProcessPayload.class.getName());
 
         activateProcessInstanceCmdExecutor.execute(resumeProcessPayload);
 
-        verify(processInstanceService).activate(resumeProcessPayload);
+        verify(processRuntime).resume(resumeProcessPayload);
 
         verify(commandResults).send(ArgumentMatchers.<Message<Result<ProcessInstance>>>any());
     }
