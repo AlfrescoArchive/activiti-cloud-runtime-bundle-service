@@ -29,10 +29,13 @@ import org.mockito.Mock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class SecurityAwareProcessInstanceServiceTest {
@@ -122,10 +125,10 @@ public class SecurityAwareProcessInstanceServiceTest {
     }
 
     private StartProcessPayload buildStartProcessCmd(String processDefinitionKey) {
-        return new StartProcessPayload(null,
-                                       processDefinitionKey,
-                                       "",
-                                       null);
+        return ProcessPayloadBuilder
+                .start()
+                .withProcessDefinitionKey(processDefinitionKey)
+                .build();
     }
 
     private ProcessDefinition buildProcessDefinition(String processDefinitionKey) {
