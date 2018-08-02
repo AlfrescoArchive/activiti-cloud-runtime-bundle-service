@@ -35,6 +35,7 @@ import org.activiti.runtime.api.model.builders.TaskPayloadBuilder;
 import org.activiti.runtime.api.model.impl.TaskImpl;
 import org.activiti.runtime.api.model.payloads.CreateTaskPayload;
 import org.activiti.runtime.api.query.Page;
+import org.activiti.runtime.api.query.impl.PageImpl;
 import org.activiti.runtime.conf.CommonModelAutoConfiguration;
 import org.activiti.runtime.conf.TaskModelAutoConfiguration;
 import org.junit.Before;
@@ -125,7 +126,7 @@ public class TaskControllerImplIT {
     public void getTasks() throws Exception {
 
         List<Task> taskList = Collections.singletonList(buildDefaultAssignedTask());
-        org.activiti.runtime.api.query.Page<Task> tasks = new org.activiti.runtime.api.query.impl.PageImpl<>(taskList,
+        Page<Task> tasks = new PageImpl<>(taskList,
                                                                                                              taskList.size());
         when(securityAwareTaskService.getAuthorizedTasks(any())).thenReturn(tasks);
 
@@ -140,7 +141,7 @@ public class TaskControllerImplIT {
     @Test
     public void getTasksShouldUseAlfrescoGuidelineWhenMediaTypeIsApplicationJson() throws Exception {
         List<Task> taskList = Collections.singletonList(buildDefaultAssignedTask());
-        org.activiti.runtime.api.query.Page<Task> taskPage = new org.activiti.runtime.api.query.impl.PageImpl<>(taskList,
+        Page<Task> taskPage = new PageImpl<>(taskList,
                                                                                                                 taskList.size());
         when(securityAwareTaskService.getAuthorizedTasks(any())).thenReturn(taskPage);
 
