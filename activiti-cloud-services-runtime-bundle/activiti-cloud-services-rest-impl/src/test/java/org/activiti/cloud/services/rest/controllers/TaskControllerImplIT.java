@@ -40,6 +40,7 @@ import org.activiti.runtime.conf.TaskModelAutoConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -96,7 +97,7 @@ public class TaskControllerImplIT {
     @Autowired
     private MockMvc mockMvc;
 
-    @SpyBean
+    @Autowired
     private ObjectMapper mapper;
 
     @MockBean
@@ -110,6 +111,9 @@ public class TaskControllerImplIT {
 
     @MockBean
     private ProcessEngineChannels processEngineChannels;
+
+    @Mock
+    private Page<Task> taskPage;
 
     @Before
     public void setUp() {
@@ -305,10 +309,9 @@ public class TaskControllerImplIT {
 
         final TaskImpl subtask2 = buildTask("subtask-2",
                                             "subtask-2 description");
-        Page page = mock(Page.class);
-        when(page.getContent()).thenReturn(Arrays.asList(subtask1,
+        when(taskPage.getContent()).thenReturn(Arrays.asList(subtask1,
                                                          subtask2));
-        when(securityAwareTaskService.tasks(any(), any())).thenReturn(page);
+        when(securityAwareTaskService.tasks(any(), any())).thenReturn(taskPage);
 
         this.mockMvc.perform(get("/v1/tasks/{taskId}/subtasks",
                                  "parentTaskId").contentType(MediaType.APPLICATION_JSON))
