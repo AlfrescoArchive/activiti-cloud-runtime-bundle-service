@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.activiti.cloud.services.common.security.SpringSecurityAuthenticationWrapper;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfiguration;
@@ -35,6 +34,7 @@ import org.activiti.runtime.api.model.builders.TaskPayloadBuilder;
 import org.activiti.runtime.api.model.impl.TaskImpl;
 import org.activiti.runtime.api.model.payloads.CreateTaskPayload;
 import org.activiti.runtime.api.query.Page;
+import org.activiti.runtime.api.security.SecurityManager;
 import org.activiti.runtime.conf.CommonModelAutoConfiguration;
 import org.activiti.runtime.conf.TaskModelAutoConfiguration;
 import org.junit.Before;
@@ -102,7 +102,7 @@ public class TaskControllerImplIT {
     private ObjectMapper mapper;
 
     @MockBean
-    private SpringSecurityAuthenticationWrapper authenticationWrapper;
+    private SecurityManager securityManager;
 
     @MockBean
     private TaskRuntime taskRuntime;
@@ -162,7 +162,7 @@ public class TaskControllerImplIT {
 
     @Test
     public void claimTask() throws Exception {
-        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("assignee");
+        when(securityManager.getAuthenticatedUserId()).thenReturn("assignee");
         given(taskRuntime.claim(any())).willReturn(buildDefaultAssignedTask());
 
         this.mockMvc.perform(post("/v1/tasks/{taskId}/claim",

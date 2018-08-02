@@ -6,10 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.activiti.cloud.services.common.security.SpringSecurityAuthenticationWrapper;
+
 import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
-import org.activiti.cloud.services.security.SecurityPolicy;
 import org.activiti.runtime.api.NotFoundException;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessDefinition;
@@ -22,12 +21,14 @@ import org.activiti.runtime.api.model.payloads.SetProcessVariablesPayload;
 import org.activiti.runtime.api.model.payloads.SignalPayload;
 import org.activiti.runtime.api.model.payloads.StartProcessPayload;
 import org.activiti.runtime.api.model.payloads.SuspendProcessPayload;
+import org.activiti.spring.security.policies.SecurityPolicy;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.activiti.runtime.api.security.SecurityManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+
 
 public class SecurityAwareProcessInstanceServiceTest {
 
@@ -62,7 +64,7 @@ public class SecurityAwareProcessInstanceServiceTest {
     private Page<ProcessInstance> springProcInstPage;
 
     @Mock
-    private SpringSecurityAuthenticationWrapper authenticationWrapper;
+    private SecurityManager securityManager;
 
     public SecurityAwareProcessInstanceServiceTest() {
     }
@@ -70,7 +72,7 @@ public class SecurityAwareProcessInstanceServiceTest {
     @Before
     public void setUp() {
         initMocks(this);
-        when(authenticationWrapper.getAuthenticatedUserId()).thenReturn("bob");
+        when(securityManager.getAuthenticatedUserId()).thenReturn("bob");
     }
 
     @Test
