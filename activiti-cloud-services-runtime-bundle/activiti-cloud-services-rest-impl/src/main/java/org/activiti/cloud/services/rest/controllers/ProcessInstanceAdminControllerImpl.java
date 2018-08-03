@@ -17,12 +17,14 @@ package org.activiti.cloud.services.rest.controllers;
 
 import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
 import org.activiti.cloud.services.core.ActivitiForbiddenException;
-import org.activiti.cloud.services.core.pageable.SecurityAwareProcessInstanceService;
+import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.rest.api.ProcessInstanceAdminController;
 import org.activiti.cloud.services.rest.api.resources.ProcessInstanceResource;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssembler;
 import org.activiti.engine.ActivitiObjectNotFoundException;
+import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessInstance;
+import org.activiti.runtime.api.query.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.http.HttpStatus;
@@ -33,11 +35,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminController {
 
-    private final SecurityAwareProcessInstanceService securityAwareProcessInstanceService;
-
     private final ProcessInstanceResourceAssembler resourceAssembler;
 
     private final AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler;
+
+    private final ProcessRuntime processRuntime;
+
+    private final SpringPageConverter pageConverter;
 
     @ExceptionHandler(ActivitiForbiddenException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
@@ -52,17 +56,21 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
         return ex.getMessage();
     }
 
-    public ProcessInstanceAdminControllerImpl(SecurityAwareProcessInstanceService securityAwareProcessInstanceService,
-                                              ProcessInstanceResourceAssembler resourceAssembler,
-                                              AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler) {
-        this.securityAwareProcessInstanceService = securityAwareProcessInstanceService;
+    public ProcessInstanceAdminControllerImpl(ProcessInstanceResourceAssembler resourceAssembler,
+                                              AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler,
+                                              ProcessRuntime processRuntime,
+                                              SpringPageConverter pageConverter) {
         this.resourceAssembler = resourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
+        this.processRuntime = processRuntime;
+        this.pageConverter = pageConverter;
     }
 
     @Override
     public PagedResources<ProcessInstanceResource> getAllProcessInstances(Pageable pageable) {
-        return pagedResourcesAssembler.toResource(pageable, securityAwareProcessInstanceService.getAllProcessInstances(pageable),
+        Page<ProcessInstance> processInstancePage = processRuntime.processInstances(pageConverter.toAPIPageable(pageable));
+        return pagedResourcesAssembler.toResource(pageable,
+                                                  pageConverter.toSpringPage(pageable, processInstancePage),
                                                   resourceAssembler);
     }
 
