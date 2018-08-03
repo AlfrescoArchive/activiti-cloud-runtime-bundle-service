@@ -1,6 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
-import org.activiti.cloud.services.core.pageable.SecurityAwareProcessInstanceService;
+import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.builders.ProcessPayloadBuilder;
@@ -26,7 +26,7 @@ public class StartProcessInstanceCmdExecutorTest {
     private StartProcessInstanceCmdExecutor startProcessInstanceCmdExecutor;
 
     @Mock
-    private SecurityAwareProcessInstanceService securityAwareProcessInstanceService;
+    private ProcessRuntime processRuntime;
 
     @Mock
     private MessageChannel commandResults;
@@ -46,13 +46,13 @@ public class StartProcessInstanceCmdExecutorTest {
 
         ProcessInstance fakeProcessInstance = mock(ProcessInstance.class);
 
-        given(securityAwareProcessInstanceService.startProcess(any())).willReturn(fakeProcessInstance);
+        given(processRuntime.start(any())).willReturn(fakeProcessInstance);
 
         assertThat(startProcessInstanceCmdExecutor.getHandledType()).isEqualTo(StartProcessPayload.class.getName());
 
         startProcessInstanceCmdExecutor.execute(startProcessInstanceCmd);
 
-        verify(securityAwareProcessInstanceService).startProcess(startProcessInstanceCmd);
+        verify(processRuntime).start(startProcessInstanceCmd);
 
         verify(commandResults).send(ArgumentMatchers.<Message<Result<ProcessInstance>>>any());
     }

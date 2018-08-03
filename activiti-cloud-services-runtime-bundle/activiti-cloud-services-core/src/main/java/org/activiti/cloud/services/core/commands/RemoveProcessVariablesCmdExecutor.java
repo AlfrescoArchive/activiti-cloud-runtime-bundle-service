@@ -1,7 +1,7 @@
 package org.activiti.cloud.services.core.commands;
 
-import org.activiti.cloud.services.core.pageable.SecurityAwareProcessInstanceService;
 import org.activiti.runtime.api.EmptyResult;
+import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.payloads.RemoveProcessVariablesPayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;
@@ -11,13 +11,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class RemoveProcessVariablesCmdExecutor implements CommandExecutor<RemoveProcessVariablesPayload> {
 
-    private SecurityAwareProcessInstanceService securityAwareProcessInstanceService;
+    private ProcessRuntime processRuntime;
     private MessageChannel commandResults;
 
     @Autowired
-    public RemoveProcessVariablesCmdExecutor(SecurityAwareProcessInstanceService securityAwareProcessInstanceService,
+    public RemoveProcessVariablesCmdExecutor(ProcessRuntime processRuntime,
                                              MessageChannel commandResults) {
-        this.securityAwareProcessInstanceService = securityAwareProcessInstanceService;
+        this.processRuntime = processRuntime;
         this.commandResults = commandResults;
     }
 
@@ -28,7 +28,7 @@ public class RemoveProcessVariablesCmdExecutor implements CommandExecutor<Remove
 
     @Override
     public void execute(RemoveProcessVariablesPayload removeProcessVariablesPayload) {
-        securityAwareProcessInstanceService.removeProcessVariables(removeProcessVariablesPayload);
+        processRuntime.removeVariables(removeProcessVariablesPayload);
         commandResults.send(MessageBuilder.withPayload(new EmptyResult(removeProcessVariablesPayload)).build());
     }
 }
