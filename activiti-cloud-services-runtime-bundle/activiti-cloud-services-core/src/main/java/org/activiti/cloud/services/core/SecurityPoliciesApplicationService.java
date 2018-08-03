@@ -5,15 +5,17 @@ import java.util.Map;
 import java.util.Set;
 
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-
 import org.activiti.runtime.api.model.payloads.GetProcessDefinitionsPayload;
 import org.activiti.runtime.api.model.payloads.GetProcessInstancesPayload;
-import org.activiti.spring.security.policies.*;
+import org.activiti.spring.security.policies.BaseSecurityPoliciesManagerImpl;
+import org.activiti.spring.security.policies.SecurityPoliciesProcessDefinitionRestrictionApplier;
+import org.activiti.spring.security.policies.SecurityPoliciesProcessInstanceRestrictionApplier;
 import org.activiti.spring.security.policies.SecurityPoliciesRestrictionApplier;
+import org.activiti.spring.security.policies.SecurityPoliciesService;
+import org.activiti.spring.security.policies.SecurityPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-@Component
+//@Component
 public class SecurityPoliciesApplicationService extends BaseSecurityPoliciesManagerImpl {
 
 

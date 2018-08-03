@@ -15,12 +15,11 @@
 
 package org.activiti.cloud.services.core.pageable;
 
-import org.activiti.cloud.services.core.SecurityPoliciesApplicationService;
-
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessDefinition;
 import org.activiti.runtime.api.model.payloads.GetProcessDefinitionsPayload;
+import org.activiti.spring.security.policies.SecurityPoliciesManager;
 import org.activiti.spring.security.policies.SecurityPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,14 +29,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class SecurityAwareRepositoryService {
 
-    private final SecurityPoliciesApplicationService securityService;
+    private final SecurityPoliciesManager securityService;
 
     private final ProcessRuntime processRuntime;
 
     private final SpringPageConverter pageConverter;
 
     @Autowired
-    public SecurityAwareRepositoryService(SecurityPoliciesApplicationService securityPolicyApplicationService,
+    public SecurityAwareRepositoryService(SecurityPoliciesManager securityPolicyApplicationService,
                                           ProcessRuntime processRuntime,
                                           SpringPageConverter pageConverter) {
         this.securityService = securityPolicyApplicationService;
