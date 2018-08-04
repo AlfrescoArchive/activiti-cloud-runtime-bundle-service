@@ -1,7 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
-import org.activiti.cloud.services.core.pageable.SecurityAwareProcessInstanceService;
-import org.activiti.runtime.api.Result;
+import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.SuspendProcessPayload;
 import org.activiti.runtime.api.model.results.ProcessInstanceResult;
@@ -13,13 +12,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class SuspendProcessInstanceCmdExecutor implements CommandExecutor<SuspendProcessPayload> {
 
-    private SecurityAwareProcessInstanceService processInstanceService;
+    private ProcessRuntime processRuntime;
     private MessageChannel commandResults;
 
     @Autowired
-    public SuspendProcessInstanceCmdExecutor(SecurityAwareProcessInstanceService processInstanceService,
+    public SuspendProcessInstanceCmdExecutor(ProcessRuntime processRuntime,
                                              MessageChannel commandResults) {
-        this.processInstanceService = processInstanceService;
+        this.processRuntime = processRuntime;
         this.commandResults = commandResults;
     }
 
@@ -30,7 +29,7 @@ public class SuspendProcessInstanceCmdExecutor implements CommandExecutor<Suspen
 
     @Override
     public void execute(SuspendProcessPayload suspendProcessPayload) {
-        ProcessInstance processInstance = processInstanceService.suspend(suspendProcessPayload);
+        ProcessInstance processInstance = processRuntime.suspend(suspendProcessPayload);
         ProcessInstanceResult result = new ProcessInstanceResult(suspendProcessPayload,
                                                     processInstance);
         commandResults.send(MessageBuilder.withPayload(result).build());

@@ -1,6 +1,5 @@
 package org.activiti.cloud.services.core.commands;
 
-import org.activiti.cloud.services.core.pageable.SecurityAwareProcessInstanceService;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.ProcessInstance;
@@ -13,8 +12,8 @@ import org.mockito.Mock;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class ActivateProcessInstanceCmdExecutorTest {
