@@ -24,6 +24,7 @@ import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfiguration;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.rest.conf.ServicesRestAutoConfiguration;
+import org.activiti.runtime.api.ProcessAdminRuntime;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.query.Page;
@@ -82,7 +83,7 @@ public class ProcessInstanceAdminControllerImplIT {
     private ProcessEngineChannels processEngineChannels;
 
     @MockBean
-    private ProcessRuntime processRuntime;
+    private ProcessAdminRuntime processAdminRuntime;
 
     @Before
     public void setUp() {
@@ -95,7 +96,7 @@ public class ProcessInstanceAdminControllerImplIT {
         List<ProcessInstance> processInstanceList = Collections.singletonList(defaultProcessInstance());
         Page<ProcessInstance> processInstances = new PageImpl<>(processInstanceList,
                                                                 processInstanceList.size());
-        when(processRuntime.processInstances(any())).thenReturn(processInstances);
+        when(processAdminRuntime.processInstances(any())).thenReturn(processInstances);
 
         this.mockMvc.perform(get("/admin/v1/process-instances"))
                 .andExpect(status().isOk())
@@ -111,7 +112,7 @@ public class ProcessInstanceAdminControllerImplIT {
         List<ProcessInstance> processInstanceList = Collections.singletonList(defaultProcessInstance());
         Page<ProcessInstance> processInstancePage = new PageImpl<>(processInstanceList,
                                                                    processInstanceList.size());
-        when(processRuntime.processInstances(any())).thenReturn(processInstancePage);
+        when(processAdminRuntime.processInstances(any())).thenReturn(processInstancePage);
 
         this.mockMvc.perform(get("/admin/v1/process-instances?skipCount=10&maxItems=10").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
