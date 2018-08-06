@@ -115,11 +115,12 @@ public class TasksIT {
     @Test
     public void shouldUpdateDescription() {
         //given
-        processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
-        ResponseEntity<PagedResources<CloudTask>> responseEntity = executeRequestGetTasks();
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+        ResponseEntity<PagedResources<CloudTask>> responseEntity = processInstanceRestTemplate.getTasks(processInstanceEntity);
         assertThat(responseEntity).isNotNull();
         Collection<CloudTask> tasks = responseEntity.getBody().getContent();
         CloudTask task = tasks.iterator().next();
+        taskRestTemplate.claim(task);
 
         UpdateTaskPayload updateTask = TaskPayloadBuilder.update().withTaskId(task.getId()).withDescription("Updated description").build();
 
@@ -244,8 +245,8 @@ public class TasksIT {
     @Test
     public void shouldGetTaskById() {
         //given
-        processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
-        Task task = executeRequestGetTasks().getBody().iterator().next();
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+        Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
 
         //when
         ResponseEntity<CloudTask> responseEntity = taskRestTemplate.getTask(task.getId());
@@ -258,8 +259,8 @@ public class TasksIT {
     @Test
     public void claimTaskShouldSetAssignee() {
         //given
-        processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
-        Task task = executeRequestGetTasks().getBody().iterator().next();
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+        Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
 
         //when
         ResponseEntity<CloudTask> responseEntity = taskRestTemplate.claim(task);
@@ -273,8 +274,8 @@ public class TasksIT {
     @Test
     public void releaseTaskShouldSetAssigneeBackToNull() {
         //given
-        processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
-        Task task = executeRequestGetTasks().getBody().iterator().next();
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+        Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
 
         taskRestTemplate.claim(task);
 
@@ -293,8 +294,8 @@ public class TasksIT {
     @Test
     public void shouldCompleteATask() {
         //given
-        processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
-        Task task = executeRequestGetTasks().getBody().iterator().next();
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+        Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
         taskRestTemplate.claim(task);
 
         //when
@@ -307,8 +308,8 @@ public class TasksIT {
     @Test
     public void shouldCompleteATaskPassingInputVariables() {
         //given
-        processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
-        Task task = executeRequestGetTasks().getBody().iterator().next();
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+        Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
         taskRestTemplate.claim(task);
 
         CompleteTaskPayload completeTaskPayload = TaskPayloadBuilder.complete().withTaskId(task.getId()).withVariables(Collections.singletonMap("myVar",
