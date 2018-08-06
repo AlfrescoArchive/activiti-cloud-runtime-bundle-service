@@ -64,7 +64,7 @@ public class TasksIT {
     };
     private static final ParameterizedTypeReference<PagedResources<CloudTask>> PAGED_TASKS_RESPONSE_TYPE = new ParameterizedTypeReference<PagedResources<CloudTask>>() {
     };
-    public static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
+    private static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
 
     @Autowired
     private TestRestTemplate testRestTemplate;
@@ -295,6 +295,7 @@ public class TasksIT {
         //given
         processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
         Task task = executeRequestGetTasks().getBody().iterator().next();
+        taskRestTemplate.claim(task);
 
         //when
         ResponseEntity<Task> responseEntity = taskRestTemplate.complete(task);
@@ -308,6 +309,7 @@ public class TasksIT {
         //given
         processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
         Task task = executeRequestGetTasks().getBody().iterator().next();
+        taskRestTemplate.claim(task);
 
         CompleteTaskPayload completeTaskPayload = TaskPayloadBuilder.complete().withTaskId(task.getId()).withVariables(Collections.singletonMap("myVar",
                                                                                                                                                 "any")).build();
