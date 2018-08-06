@@ -1,6 +1,7 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.EmptyResult;
+import org.activiti.runtime.api.ProcessAdminRuntime;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.payloads.SignalPayload;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,13 +12,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class SignalCmdExecutor implements CommandExecutor<SignalPayload> {
 
-    private ProcessRuntime processRuntime;
+    private ProcessAdminRuntime processAdminRuntime;
     private MessageChannel commandResults;
 
     @Autowired
-    public SignalCmdExecutor(ProcessRuntime processRuntime,
+    public SignalCmdExecutor(ProcessAdminRuntime processAdminRuntime,
                              MessageChannel commandResults) {
-        this.processRuntime = processRuntime;
+        this.processAdminRuntime = processAdminRuntime;
         this.commandResults = commandResults;
     }
 
@@ -28,7 +29,7 @@ public class SignalCmdExecutor implements CommandExecutor<SignalPayload> {
 
     @Override
     public void execute(SignalPayload signalPayload) {
-        processRuntime.signal(signalPayload);
+        processAdminRuntime.signal(signalPayload);
         commandResults.send(MessageBuilder.withPayload(new EmptyResult(signalPayload)).build());
     }
 }

@@ -1,6 +1,7 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.EmptyResult;
+import org.activiti.runtime.api.TaskAdminRuntime;
 import org.activiti.runtime.api.TaskRuntime;
 import org.activiti.runtime.api.model.payloads.SetTaskVariablesPayload;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,13 +12,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class SetTaskVariablesCmdExecutor implements CommandExecutor<SetTaskVariablesPayload> {
 
-    private TaskRuntime taskRuntime;
+    private TaskAdminRuntime taskAdminRuntime;
     private MessageChannel commandResults;
 
     @Autowired
-    public SetTaskVariablesCmdExecutor(TaskRuntime taskRuntime,
+    public SetTaskVariablesCmdExecutor(TaskAdminRuntime taskAdminRuntime,
                                        MessageChannel commandResults) {
-        this.taskRuntime = taskRuntime;
+        this.taskAdminRuntime = taskAdminRuntime;
         this.commandResults = commandResults;
     }
 
@@ -28,7 +29,7 @@ public class SetTaskVariablesCmdExecutor implements CommandExecutor<SetTaskVaria
 
     @Override
     public void execute(SetTaskVariablesPayload setTaskVariablesPayload) {
-        taskRuntime.setVariables(setTaskVariablesPayload);
+        taskAdminRuntime.setVariables(setTaskVariablesPayload);
         commandResults.send(MessageBuilder.withPayload(new EmptyResult(setTaskVariablesPayload)).build());
     }
 }

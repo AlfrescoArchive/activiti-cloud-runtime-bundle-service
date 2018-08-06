@@ -1,5 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
+import org.activiti.runtime.api.TaskAdminRuntime;
 import org.activiti.runtime.api.TaskRuntime;
 import org.activiti.runtime.api.model.Task;
 import org.activiti.runtime.api.model.payloads.ClaimTaskPayload;
@@ -12,13 +13,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class ClaimTaskCmdExecutor implements CommandExecutor<ClaimTaskPayload> {
 
-    private TaskRuntime taskRuntime;
+    private TaskAdminRuntime taskAdminRuntime;
     private MessageChannel commandResults;
 
     @Autowired
-    public ClaimTaskCmdExecutor(TaskRuntime taskRuntime,
+    public ClaimTaskCmdExecutor(TaskAdminRuntime taskAdminRuntime,
                                 MessageChannel commandResults) {
-        this.taskRuntime = taskRuntime;
+        this.taskAdminRuntime = taskAdminRuntime;
         this.commandResults = commandResults;
     }
 
@@ -29,7 +30,7 @@ public class ClaimTaskCmdExecutor implements CommandExecutor<ClaimTaskPayload> {
 
     @Override
     public void execute(ClaimTaskPayload claimTaskPayload) {
-        Task task = taskRuntime.claim(claimTaskPayload);
+        Task task = taskAdminRuntime.claim(claimTaskPayload);
         TaskResult result = new TaskResult(claimTaskPayload, task);
         commandResults.send(MessageBuilder.withPayload(result).build());
     }

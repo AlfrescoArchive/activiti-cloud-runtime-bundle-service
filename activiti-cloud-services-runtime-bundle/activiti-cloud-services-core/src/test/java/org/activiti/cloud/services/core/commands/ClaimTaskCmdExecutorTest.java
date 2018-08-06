@@ -1,7 +1,7 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.Result;
-import org.activiti.runtime.api.TaskRuntime;
+import org.activiti.runtime.api.TaskAdminRuntime;
 import org.activiti.runtime.api.model.Task;
 import org.activiti.runtime.api.model.payloads.ClaimTaskPayload;
 import org.junit.Before;
@@ -22,7 +22,7 @@ public class ClaimTaskCmdExecutorTest {
     private ClaimTaskCmdExecutor claimTaskCmdExecutor;
 
     @Mock
-    private TaskRuntime taskRuntime;
+    private TaskAdminRuntime taskAdminRuntime;
 
     @Mock
     private MessageChannel commandResults;
@@ -44,7 +44,7 @@ public class ClaimTaskCmdExecutorTest {
         claimTaskCmdExecutor.execute(claimTaskPayload);
 
         //then
-        verify(taskRuntime).claim(claimTaskPayload);
+        verify(taskAdminRuntime).claim(claimTaskPayload);
         verify(commandResults).send(ArgumentMatchers.<Message<Result<Task>>>any());
     }
 }

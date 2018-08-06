@@ -1,6 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
-import org.activiti.runtime.api.ProcessRuntime;
+import org.activiti.runtime.api.ProcessAdminRuntime;
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.SuspendProcessPayload;
@@ -22,7 +22,7 @@ public class SuspendProcessInstanceCmdExecutorTest {
     private SuspendProcessInstanceCmdExecutor suspendProcessInstanceCmdExecutor;
 
     @Mock
-    private ProcessRuntime processRuntime;
+    private ProcessAdminRuntime processAdminRuntime;
 
     @Mock
     private MessageChannel commandResults;
@@ -42,7 +42,7 @@ public class SuspendProcessInstanceCmdExecutorTest {
         suspendProcessInstanceCmdExecutor.execute(suspendProcessInstanceCmd);
 
         //then
-        verify(processRuntime).suspend(suspendProcessInstanceCmd);
+        verify(processAdminRuntime).suspend(suspendProcessInstanceCmd);
         verify(commandResults).send(ArgumentMatchers.<Message<Result<ProcessInstance>>>any());
     }
 }

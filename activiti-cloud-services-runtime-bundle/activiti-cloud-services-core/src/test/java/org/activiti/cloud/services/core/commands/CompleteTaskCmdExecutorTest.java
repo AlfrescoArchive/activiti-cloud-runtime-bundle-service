@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.activiti.runtime.api.Result;
-import org.activiti.runtime.api.TaskRuntime;
+import org.activiti.runtime.api.TaskAdminRuntime;
 import org.activiti.runtime.api.model.Task;
 import org.activiti.runtime.api.model.payloads.CompleteTaskPayload;
 import org.junit.Before;
@@ -25,7 +25,7 @@ public class CompleteTaskCmdExecutorTest {
     private CompleteTaskCmdExecutor completeTaskCmdExecutor;
 
     @Mock
-    private TaskRuntime taskRuntime;
+    private TaskAdminRuntime taskAdminRuntime;
 
     @Mock
     private MessageChannel commandResults;
@@ -45,7 +45,7 @@ public class CompleteTaskCmdExecutorTest {
 
         completeTaskCmdExecutor.execute(completeTaskPayload);
 
-        verify(taskRuntime).complete(completeTaskPayload);
+        verify(taskAdminRuntime).complete(completeTaskPayload);
 
         verify(commandResults).send(ArgumentMatchers.<Message<Result<Task>>>any());
     }

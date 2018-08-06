@@ -1,6 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
-import org.activiti.runtime.api.TaskRuntime;
+import org.activiti.runtime.api.TaskAdminRuntime;
 import org.activiti.runtime.api.model.Task;
 import org.activiti.runtime.api.model.payloads.ReleaseTaskPayload;
 import org.activiti.runtime.api.model.results.TaskResult;
@@ -12,13 +12,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class ReleaseTaskCmdExecutor implements CommandExecutor<ReleaseTaskPayload> {
 
-    private TaskRuntime taskRuntime;
+    private TaskAdminRuntime taskAdminRuntime;
     private MessageChannel commandResults;
 
     @Autowired
-    public ReleaseTaskCmdExecutor(TaskRuntime taskRuntime,
+    public ReleaseTaskCmdExecutor(TaskAdminRuntime taskAdminRuntime,
                                   MessageChannel commandResults) {
-        this.taskRuntime = taskRuntime;
+        this.taskAdminRuntime = taskAdminRuntime;
         this.commandResults = commandResults;
     }
 
@@ -29,7 +29,7 @@ public class ReleaseTaskCmdExecutor implements CommandExecutor<ReleaseTaskPayloa
 
     @Override
     public void execute(ReleaseTaskPayload releaseTaskPayload) {
-        Task task = taskRuntime.release(releaseTaskPayload);
+        Task task = taskAdminRuntime.release(releaseTaskPayload);
         TaskResult result = new TaskResult(releaseTaskPayload,
                                          task);
         commandResults.send(MessageBuilder.withPayload(result).build());

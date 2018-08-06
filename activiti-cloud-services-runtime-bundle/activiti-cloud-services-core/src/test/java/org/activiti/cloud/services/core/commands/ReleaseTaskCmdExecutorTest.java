@@ -1,7 +1,7 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.Result;
-import org.activiti.runtime.api.TaskRuntime;
+import org.activiti.runtime.api.TaskAdminRuntime;
 import org.activiti.runtime.api.model.Task;
 import org.activiti.runtime.api.model.payloads.ReleaseTaskPayload;
 import org.junit.Before;
@@ -22,7 +22,7 @@ public class ReleaseTaskCmdExecutorTest {
     private ReleaseTaskCmdExecutor releaseTaskCmdExecutor;
 
     @Mock
-    private TaskRuntime taskRuntime;
+    private TaskAdminRuntime taskAdminRuntime;
 
     @Mock
     private MessageChannel commandResults;
@@ -42,7 +42,7 @@ public class ReleaseTaskCmdExecutorTest {
         releaseTaskCmdExecutor.execute(releaseTaskPayload);
 
         //then
-        verify(taskRuntime).release(releaseTaskPayload);
+        verify(taskAdminRuntime).release(releaseTaskPayload);
         verify(commandResults).send(ArgumentMatchers.<Message<Result<Task>>>any());
     }
 }

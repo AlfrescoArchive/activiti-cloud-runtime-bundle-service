@@ -1,5 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
+import org.activiti.runtime.api.ProcessAdminRuntime;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.ProcessInstance;
@@ -26,7 +27,7 @@ public class StartProcessInstanceCmdExecutorTest {
     private StartProcessInstanceCmdExecutor startProcessInstanceCmdExecutor;
 
     @Mock
-    private ProcessRuntime processRuntime;
+    private ProcessAdminRuntime processAdminRuntime;
 
     @Mock
     private MessageChannel commandResults;
@@ -46,13 +47,13 @@ public class StartProcessInstanceCmdExecutorTest {
 
         ProcessInstance fakeProcessInstance = mock(ProcessInstance.class);
 
-        given(processRuntime.start(any())).willReturn(fakeProcessInstance);
+        given(processAdminRuntime.start(any())).willReturn(fakeProcessInstance);
 
         assertThat(startProcessInstanceCmdExecutor.getHandledType()).isEqualTo(StartProcessPayload.class.getName());
 
         startProcessInstanceCmdExecutor.execute(startProcessInstanceCmd);
 
-        verify(processRuntime).start(startProcessInstanceCmd);
+        verify(processAdminRuntime).start(startProcessInstanceCmd);
 
         verify(commandResults).send(ArgumentMatchers.<Message<Result<ProcessInstance>>>any());
     }

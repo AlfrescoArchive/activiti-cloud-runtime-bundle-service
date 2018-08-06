@@ -1,5 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
+import org.activiti.runtime.api.ProcessAdminRuntime;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.StartProcessPayload;
@@ -11,12 +12,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class StartProcessInstanceCmdExecutor implements CommandExecutor<StartProcessPayload> {
 
-    private ProcessRuntime processRuntime;
+    private ProcessAdminRuntime processAdminRuntime;
     private MessageChannel commandResults;
 
-    public StartProcessInstanceCmdExecutor(ProcessRuntime processRuntime,
+    public StartProcessInstanceCmdExecutor(ProcessAdminRuntime processAdminRuntime,
                                            MessageChannel commandResults) {
-        this.processRuntime = processRuntime;
+        this.processAdminRuntime = processAdminRuntime;
         this.commandResults = commandResults;
     }
 
@@ -27,10 +28,10 @@ public class StartProcessInstanceCmdExecutor implements CommandExecutor<StartPro
 
     @Override
     public void execute(StartProcessPayload startProcessPayload) {
-        ProcessInstance processInstance = processRuntime.start(startProcessPayload);
+        ProcessInstance processInstance = processAdminRuntime.start(startProcessPayload);
         if (processInstance != null) {
             ProcessInstanceResult result = new ProcessInstanceResult(startProcessPayload,
-                                                        processInstance);
+                    processInstance);
             commandResults.send(MessageBuilder.withPayload(result).build());
         } else {
             throw new IllegalStateException("Failed to start processInstance");

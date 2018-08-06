@@ -1,5 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
+import org.activiti.runtime.api.ProcessAdminRuntime;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.ResumeProcessPayload;
@@ -12,13 +13,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class ResumeProcessInstanceCmdExecutor implements CommandExecutor<ResumeProcessPayload> {
 
-    private ProcessRuntime processRuntime;
+    private ProcessAdminRuntime processAdminRuntime;
     private MessageChannel commandResults;
 
     @Autowired
-    public ResumeProcessInstanceCmdExecutor(ProcessRuntime processRuntime,
+    public ResumeProcessInstanceCmdExecutor(ProcessAdminRuntime processAdminRuntime,
                                             MessageChannel commandResults) {
-        this.processRuntime = processRuntime;
+        this.processAdminRuntime = processAdminRuntime;
         this.commandResults = commandResults;
     }
 
@@ -29,7 +30,7 @@ public class ResumeProcessInstanceCmdExecutor implements CommandExecutor<ResumeP
 
     @Override
     public void execute(ResumeProcessPayload resumeProcessPayload) {
-        ProcessInstance processInstance = processRuntime.resume(resumeProcessPayload);
+        ProcessInstance processInstance = processAdminRuntime.resume(resumeProcessPayload);
         ProcessInstanceResult result = new ProcessInstanceResult(resumeProcessPayload,
                                                     processInstance);
         commandResults.send(MessageBuilder.withPayload(result).build());

@@ -1,6 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
-import org.activiti.runtime.api.ProcessRuntime;
+import org.activiti.runtime.api.ProcessAdminRuntime;
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.model.payloads.SignalPayload;
 import org.junit.Before;
@@ -21,7 +21,7 @@ public class SignalCmdExecutorTest {
     private SignalCmdExecutor signalCmdExecutor;
 
     @Mock
-    private ProcessRuntime processRuntime;
+    private ProcessAdminRuntime processAdminRuntime;
 
     @Mock
     private MessageChannel commandResults;
@@ -34,13 +34,13 @@ public class SignalCmdExecutorTest {
     @Test
     public void signalProcessInstancesCmdExecutorTest() {
         SignalPayload signalPayload = new SignalPayload("x",
-                                                        null);
+                null);
 
         assertThat(signalCmdExecutor.getHandledType()).isEqualTo(SignalPayload.class.getName());
 
         signalCmdExecutor.execute(signalPayload);
 
-        verify(processRuntime).signal(signalPayload);
+        verify(processAdminRuntime).signal(signalPayload);
 
         verify(commandResults).send(ArgumentMatchers.<Message<Result<Void>>>any());
     }
