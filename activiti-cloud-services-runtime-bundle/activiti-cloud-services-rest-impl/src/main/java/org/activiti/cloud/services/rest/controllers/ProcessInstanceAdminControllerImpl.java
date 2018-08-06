@@ -22,13 +22,16 @@ import org.activiti.cloud.services.rest.api.ProcessInstanceAdminController;
 import org.activiti.cloud.services.rest.api.resources.ProcessInstanceResource;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssembler;
 import org.activiti.engine.ActivitiObjectNotFoundException;
+import org.activiti.runtime.api.ProcessAdminRuntime;
 import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessInstance;
+import org.activiti.runtime.api.model.payloads.StartProcessPayload;
 import org.activiti.runtime.api.query.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,7 +42,7 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
 
     private final AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler;
 
-    private final ProcessRuntime processRuntime;
+    private final ProcessAdminRuntime processAdminRuntime;
 
     private final SpringPageConverter pageConverter;
 
@@ -58,20 +61,25 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
 
     public ProcessInstanceAdminControllerImpl(ProcessInstanceResourceAssembler resourceAssembler,
                                               AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler,
-                                              ProcessRuntime processRuntime,
+                                              ProcessAdminRuntime processAdminRuntime,
                                               SpringPageConverter pageConverter) {
         this.resourceAssembler = resourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
-        this.processRuntime = processRuntime;
+        this.processAdminRuntime = processAdminRuntime;
         this.pageConverter = pageConverter;
     }
 
     @Override
     public PagedResources<ProcessInstanceResource> getAllProcessInstances(Pageable pageable) {
-        Page<ProcessInstance> processInstancePage = processRuntime.processInstances(pageConverter.toAPIPageable(pageable));
+        Page<ProcessInstance> processInstancePage = processAdminRuntime.processInstances(pageConverter.toAPIPageable(pageable));
         return pagedResourcesAssembler.toResource(pageable,
                                                   pageConverter.toSpringPage(pageable, processInstancePage),
                                                   resourceAssembler);
+    }
+
+    @Override
+    public ProcessInstanceResource startProcess(@RequestBody StartProcessPayload startProcessPayload) {
+        return resourceAssembler.toResource(processAdminRuntime.start(startProcessPayload));
     }
 
 }
