@@ -29,7 +29,7 @@ import org.activiti.bpmn.converter.BpmnXMLConverter;
 import org.activiti.bpmn.converter.util.InputStreamProvider;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.cloud.services.test.identity.keycloak.interceptor.KeycloakSecurityContextClientRequestInterceptor;
+import org.activiti.cloud.services.test.identity.keycloak.interceptor.KeycloakTokenProducer;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.cloud.starter.tests.util.TestResourceUtil;
 import org.activiti.engine.impl.util.IoUtil;
@@ -77,7 +77,7 @@ public class ProcessInstanceIT {
     public static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
 
     @Autowired
-    private KeycloakSecurityContextClientRequestInterceptor keycloakSecurityContextClientRequestInterceptor;
+    private KeycloakTokenProducer keycloakSecurityContextClientRequestInterceptor;
 
     @Autowired
     private TestRestTemplate restTemplate;

@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.activiti.cloud.services.test.identity.keycloak.interceptor.KeycloakSecurityContextClientRequestInterceptor;
+import org.activiti.cloud.services.test.identity.keycloak.interceptor.KeycloakTokenProducer;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
 import org.activiti.runtime.api.model.CloudProcessDefinition;
@@ -76,7 +76,7 @@ public class TasksIT {
     private TaskRestTemplate taskRestTemplate;
 
     @Autowired
-    private KeycloakSecurityContextClientRequestInterceptor keycloakSecurityContextClientRequestInterceptor;
+    private KeycloakTokenProducer keycloakSecurityContextClientRequestInterceptor;
 
     private Map<String, String> processDefinitionIds = new HashMap<>();
 
