@@ -2,7 +2,6 @@ package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.EmptyResult;
 import org.activiti.runtime.api.ProcessAdminRuntime;
-import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.payloads.RemoveProcessVariablesPayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;

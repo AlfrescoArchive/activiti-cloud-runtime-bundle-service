@@ -2,7 +2,6 @@ package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.EmptyResult;
 import org.activiti.runtime.api.TaskAdminRuntime;
-import org.activiti.runtime.api.TaskRuntime;
 import org.activiti.runtime.api.model.payloads.SetTaskVariablesPayload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;

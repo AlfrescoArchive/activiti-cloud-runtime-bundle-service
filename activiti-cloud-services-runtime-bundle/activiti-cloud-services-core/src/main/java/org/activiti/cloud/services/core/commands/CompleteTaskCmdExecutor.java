@@ -1,7 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.TaskAdminRuntime;
-import org.activiti.runtime.api.TaskRuntime;
 import org.activiti.runtime.api.model.Task;
 import org.activiti.runtime.api.model.payloads.CompleteTaskPayload;
 import org.activiti.runtime.api.model.results.TaskResult;
@@ -32,7 +31,7 @@ public class CompleteTaskCmdExecutor implements CommandExecutor<CompleteTaskPayl
     public void execute(CompleteTaskPayload completeTaskPayload) {
         Task task = taskAdminRuntime.complete(completeTaskPayload);
         TaskResult result = new TaskResult(completeTaskPayload,
-                                         task);
+                                           task);
         commandResults.send(MessageBuilder.withPayload(result).build());
     }
 }

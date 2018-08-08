@@ -1,7 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.ProcessAdminRuntime;
-import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.StartProcessPayload;
 import org.activiti.runtime.api.model.results.ProcessInstanceResult;
@@ -31,7 +30,7 @@ public class StartProcessInstanceCmdExecutor implements CommandExecutor<StartPro
         ProcessInstance processInstance = processAdminRuntime.start(startProcessPayload);
         if (processInstance != null) {
             ProcessInstanceResult result = new ProcessInstanceResult(startProcessPayload,
-                    processInstance);
+                                                                     processInstance);
             commandResults.send(MessageBuilder.withPayload(result).build());
         } else {
             throw new IllegalStateException("Failed to start processInstance");

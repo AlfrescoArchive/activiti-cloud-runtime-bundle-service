@@ -1,7 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.ProcessAdminRuntime;
-import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.ResumeProcessPayload;
 import org.activiti.runtime.api.model.results.ProcessInstanceResult;
@@ -32,7 +31,7 @@ public class ResumeProcessInstanceCmdExecutor implements CommandExecutor<ResumeP
     public void execute(ResumeProcessPayload resumeProcessPayload) {
         ProcessInstance processInstance = processAdminRuntime.resume(resumeProcessPayload);
         ProcessInstanceResult result = new ProcessInstanceResult(resumeProcessPayload,
-                                                    processInstance);
+                                                                 processInstance);
         commandResults.send(MessageBuilder.withPayload(result).build());
     }
 }

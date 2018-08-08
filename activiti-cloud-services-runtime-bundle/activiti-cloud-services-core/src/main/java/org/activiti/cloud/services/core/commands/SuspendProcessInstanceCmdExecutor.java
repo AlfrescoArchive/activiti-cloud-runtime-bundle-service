@@ -1,7 +1,6 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.ProcessAdminRuntime;
-import org.activiti.runtime.api.ProcessRuntime;
 import org.activiti.runtime.api.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.SuspendProcessPayload;
 import org.activiti.runtime.api.model.results.ProcessInstanceResult;
@@ -32,7 +31,7 @@ public class SuspendProcessInstanceCmdExecutor implements CommandExecutor<Suspen
     public void execute(SuspendProcessPayload suspendProcessPayload) {
         ProcessInstance processInstance = processAdminRuntime.suspend(suspendProcessPayload);
         ProcessInstanceResult result = new ProcessInstanceResult(suspendProcessPayload,
-                                                    processInstance);
+                                                                 processInstance);
         commandResults.send(MessageBuilder.withPayload(result).build());
     }
 }
