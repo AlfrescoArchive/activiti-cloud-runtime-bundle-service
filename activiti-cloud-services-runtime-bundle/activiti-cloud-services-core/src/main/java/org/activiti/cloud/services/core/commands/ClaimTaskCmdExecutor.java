@@ -2,7 +2,7 @@ package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.TaskAdminRuntime;
 import org.activiti.runtime.api.TaskRuntime;
-import org.activiti.runtime.api.model.Task;
+import org.activiti.api.task.model.Task;
 import org.activiti.runtime.api.model.payloads.ClaimTaskPayload;
 import org.activiti.runtime.api.model.results.TaskResult;
 import org.springframework.beans.factory.annotation.Autowired;

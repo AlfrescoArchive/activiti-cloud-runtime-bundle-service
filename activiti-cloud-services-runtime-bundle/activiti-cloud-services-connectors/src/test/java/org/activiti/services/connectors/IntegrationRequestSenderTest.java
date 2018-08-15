@@ -8,7 +8,7 @@ import org.activiti.engine.impl.persistence.entity.integration.IntegrationContex
 import org.activiti.runtime.api.connector.IntegrationContextBuilder;
 import org.activiti.runtime.api.event.CloudRuntimeEvent;
 import org.activiti.runtime.api.event.impl.CloudIntegrationRequestedImpl;
-import org.activiti.runtime.api.model.IntegrationContext;
+import org.activiti.api.process.model.IntegrationContext;
 import org.activiti.runtime.api.model.IntegrationRequest;
 import org.activiti.runtime.api.model.impl.IntegrationRequestImpl;
 import org.junit.Before;

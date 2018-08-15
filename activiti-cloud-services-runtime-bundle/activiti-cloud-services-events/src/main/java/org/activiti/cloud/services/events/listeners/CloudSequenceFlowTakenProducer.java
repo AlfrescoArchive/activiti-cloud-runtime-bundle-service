@@ -17,10 +17,10 @@
 package org.activiti.cloud.services.events.listeners;
 
 import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
-import org.activiti.runtime.api.event.SequenceFlowTaken;
+import org.activiti.runtime.api.event.SequenceFlowTakenEvent;
 import org.activiti.runtime.api.event.listener.BPMNElementEventListener;
 
-public class CloudSequenceFlowTakenProducer implements BPMNElementEventListener<SequenceFlowTaken> {
+public class CloudSequenceFlowTakenProducer implements BPMNElementEventListener<SequenceFlowTakenEvent> {
 
     private final ToCloudProcessRuntimeEventConverter eventConverter;
     private final ProcessEngineEventsAggregator eventsAggregator;
@@ -32,7 +32,7 @@ public class CloudSequenceFlowTakenProducer implements BPMNElementEventListener<
     }
 
     @Override
-    public void onEvent(SequenceFlowTaken event) {
+    public void onEvent(SequenceFlowTakenEvent event) {
         eventsAggregator.add(eventConverter.from(event));
     }
 }

@@ -28,7 +28,7 @@ import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfigura
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.rest.conf.ServicesRestAutoConfiguration;
 import org.activiti.runtime.api.ProcessRuntime;
-import org.activiti.runtime.api.model.builders.ProcessPayloadBuilder;
+import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.runtime.api.model.impl.VariableInstanceImpl;
 import org.activiti.runtime.conf.CommonModelAutoConfiguration;
 import org.conf.activiti.runtime.ProcessModelAutoConfiguration;

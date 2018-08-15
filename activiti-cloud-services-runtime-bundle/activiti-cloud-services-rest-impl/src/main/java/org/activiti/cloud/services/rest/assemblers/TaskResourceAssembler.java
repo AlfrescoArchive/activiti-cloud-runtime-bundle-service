@@ -23,7 +23,7 @@ import org.activiti.cloud.services.rest.controllers.HomeControllerImpl;
 import org.activiti.cloud.services.rest.controllers.ProcessInstanceControllerImpl;
 import org.activiti.cloud.services.rest.controllers.TaskControllerImpl;
 import org.activiti.runtime.api.model.CloudTask;
-import org.activiti.runtime.api.model.Task;
+import org.activiti.api.task.model.Task;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 

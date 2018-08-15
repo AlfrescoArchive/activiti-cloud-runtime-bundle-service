@@ -20,7 +20,7 @@ import java.util.Map;
 
 import org.activiti.runtime.api.model.CloudTask;
 import org.activiti.runtime.api.model.CloudVariableInstance;
-import org.activiti.runtime.api.model.Task;
+import org.activiti.api.task.model.Task;
 import org.activiti.runtime.api.model.builders.TaskPayloadBuilder;
 import org.activiti.runtime.api.model.payloads.CreateTaskPayload;
 import org.activiti.runtime.api.model.payloads.SetTaskVariablesPayload;

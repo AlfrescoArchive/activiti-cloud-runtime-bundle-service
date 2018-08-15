@@ -5,7 +5,7 @@ import org.activiti.cloud.services.rest.controllers.HomeControllerImpl;
 import org.activiti.cloud.services.rest.controllers.TaskControllerImpl;
 import org.activiti.cloud.services.rest.controllers.TaskVariableControllerImpl;
 import org.activiti.runtime.api.model.CloudVariableInstance;
-import org.activiti.runtime.api.model.VariableInstance;
+import org.activiti.api.model.shared.model.VariableInstance;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.mvc.ResourceAssemblerSupport;
 

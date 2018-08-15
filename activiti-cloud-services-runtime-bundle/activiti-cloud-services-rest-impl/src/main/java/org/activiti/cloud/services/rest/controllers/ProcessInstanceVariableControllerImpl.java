@@ -21,7 +21,7 @@ import org.activiti.cloud.services.rest.api.resources.VariableInstanceResource;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceVariableResourceAssembler;
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.runtime.api.ProcessRuntime;
-import org.activiti.runtime.api.model.builders.ProcessPayloadBuilder;
+import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.runtime.api.model.payloads.RemoveProcessVariablesPayload;
 import org.activiti.runtime.api.model.payloads.SetProcessVariablesPayload;
 import org.springframework.beans.factory.annotation.Autowired;

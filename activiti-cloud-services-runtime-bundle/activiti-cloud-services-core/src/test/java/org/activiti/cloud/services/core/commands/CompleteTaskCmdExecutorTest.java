@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.activiti.runtime.api.Result;
 import org.activiti.runtime.api.TaskAdminRuntime;
-import org.activiti.runtime.api.model.Task;
+import org.activiti.api.task.model.Task;
 import org.activiti.runtime.api.model.payloads.CompleteTaskPayload;
 import org.junit.Before;
 import org.junit.Test;

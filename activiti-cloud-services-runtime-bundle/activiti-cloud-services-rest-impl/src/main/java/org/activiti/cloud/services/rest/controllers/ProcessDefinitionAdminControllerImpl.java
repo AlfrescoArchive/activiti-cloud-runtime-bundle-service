@@ -23,8 +23,8 @@ import org.activiti.cloud.services.rest.assemblers.ProcessDefinitionResourceAsse
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.image.exception.ActivitiInterchangeInfoNotFoundException;
 import org.activiti.runtime.api.ProcessAdminRuntime;
-import org.activiti.runtime.api.model.ProcessDefinition;
-import org.activiti.runtime.api.query.Page;
+import org.activiti.api.process.model.ProcessDefinition;
+import org.activiti.api.runtime.shared.query.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;

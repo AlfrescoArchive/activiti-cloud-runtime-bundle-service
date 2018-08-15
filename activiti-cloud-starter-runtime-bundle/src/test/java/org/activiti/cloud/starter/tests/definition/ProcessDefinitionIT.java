@@ -31,7 +31,7 @@ import org.activiti.editor.language.json.converter.BpmnJsonConverter;
 import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.image.ProcessDiagramGenerator;
 import org.activiti.runtime.api.model.CloudProcessDefinition;
-import org.activiti.runtime.api.model.ProcessDefinition;
+import org.activiti.api.process.model.ProcessDefinition;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

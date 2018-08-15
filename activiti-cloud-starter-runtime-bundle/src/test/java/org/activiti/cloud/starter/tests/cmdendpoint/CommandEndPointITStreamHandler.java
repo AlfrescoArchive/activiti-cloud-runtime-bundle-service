@@ -3,7 +3,7 @@ package org.activiti.cloud.starter.tests.cmdendpoint;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.activiti.runtime.api.Result;
-import org.activiti.runtime.api.model.ProcessInstance;
+import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.ClaimTaskPayload;
 import org.activiti.runtime.api.model.payloads.CompleteTaskPayload;
 import org.activiti.runtime.api.model.payloads.ReleaseTaskPayload;

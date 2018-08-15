@@ -25,8 +25,8 @@ import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfigura
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.rest.conf.ServicesRestAutoConfiguration;
 import org.activiti.runtime.api.TaskAdminRuntime;
-import org.activiti.runtime.api.model.Task;
-import org.activiti.runtime.api.query.Page;
+import org.activiti.api.task.model.Task;
+import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.runtime.api.query.impl.PageImpl;
 import org.junit.Before;
 import org.junit.Test;

@@ -18,7 +18,7 @@ package org.activiti.cloud.services.rest.assemblers;
 
 import org.activiti.cloud.services.events.converter.RuntimeBundleInfoAppender;
 import org.activiti.runtime.api.model.CloudVariableInstance;
-import org.activiti.runtime.api.model.VariableInstance;
+import org.activiti.api.model.shared.model.VariableInstance;
 import org.activiti.runtime.api.model.impl.CloudVariableInstanceImpl;
 
 public class ToCloudVariableInstanceConverter {

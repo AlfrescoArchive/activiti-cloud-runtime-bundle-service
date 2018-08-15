@@ -22,9 +22,9 @@ import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfigura
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.rest.conf.ServicesRestAutoConfiguration;
 import org.activiti.runtime.api.ProcessAdminRuntime;
-import org.activiti.runtime.api.model.ProcessDefinition;
+import org.activiti.api.process.model.ProcessDefinition;
 import org.activiti.runtime.api.model.impl.ProcessDefinitionImpl;
-import org.activiti.runtime.api.query.Page;
+import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.runtime.api.query.impl.PageImpl;
 import org.junit.Before;
 import org.junit.Test;

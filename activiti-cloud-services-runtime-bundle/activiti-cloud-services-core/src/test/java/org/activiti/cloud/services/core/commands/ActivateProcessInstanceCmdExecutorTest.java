@@ -2,7 +2,7 @@ package org.activiti.cloud.services.core.commands;
 
 import org.activiti.runtime.api.ProcessAdminRuntime;
 import org.activiti.runtime.api.Result;
-import org.activiti.runtime.api.model.ProcessInstance;
+import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.ResumeProcessPayload;
 import org.junit.Before;
 import org.junit.Test;

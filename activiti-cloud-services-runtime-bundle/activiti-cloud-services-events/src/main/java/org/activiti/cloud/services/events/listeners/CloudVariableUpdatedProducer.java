@@ -16,11 +16,12 @@
 
 package org.activiti.cloud.services.events.listeners;
 
+import org.activiti.api.model.shared.event.VariableUpdatedEvent;
+import org.activiti.api.runtime.shared.events.VariableEventListener;
 import org.activiti.cloud.services.events.converter.ToCloudVariableEventConverter;
-import org.activiti.runtime.api.event.VariableEventListener;
 import org.activiti.runtime.api.event.VariableUpdated;
 
-public class CloudVariableUpdatedProducer implements VariableEventListener<VariableUpdated> {
+public class CloudVariableUpdatedProducer implements VariableEventListener<VariableUpdatedEvent> {
 
     private ToCloudVariableEventConverter converter;
     private ProcessEngineEventsAggregator eventsAggregator;

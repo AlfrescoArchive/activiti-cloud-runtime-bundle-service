@@ -24,9 +24,9 @@ import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssemb
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.runtime.api.ProcessAdminRuntime;
 import org.activiti.runtime.api.ProcessRuntime;
-import org.activiti.runtime.api.model.ProcessInstance;
+import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.runtime.api.model.payloads.StartProcessPayload;
-import org.activiti.runtime.api.query.Page;
+import org.activiti.api.runtime.shared.query.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.http.HttpStatus;

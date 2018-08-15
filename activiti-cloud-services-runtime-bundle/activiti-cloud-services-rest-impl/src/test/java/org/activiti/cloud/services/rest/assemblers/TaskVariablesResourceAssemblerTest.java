@@ -1,7 +1,7 @@
 package org.activiti.cloud.services.rest.assemblers;
 
 import org.activiti.cloud.services.rest.api.resources.VariableInstanceResource;
-import org.activiti.runtime.api.model.VariableInstance;
+import org.activiti.api.model.shared.model.VariableInstance;
 import org.activiti.runtime.api.model.impl.CloudVariableInstanceImpl;
 import org.activiti.runtime.api.model.impl.VariableInstanceImpl;
 import org.junit.Before;
