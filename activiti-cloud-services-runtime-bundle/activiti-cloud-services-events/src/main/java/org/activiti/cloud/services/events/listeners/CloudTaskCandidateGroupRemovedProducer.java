@@ -16,9 +16,9 @@
 
 package org.activiti.cloud.services.events.listeners;
 
+import org.activiti.api.task.runtime.events.TaskCandidateGroupRemovedEvent;
+import org.activiti.api.task.runtime.events.listener.TaskCandidateEventListener;
 import org.activiti.cloud.services.events.converter.ToCloudTaskRuntimeEventConverter;
-import org.activiti.runtime.api.event.TaskCandidateGroupRemovedEvent;
-import org.activiti.runtime.api.event.listener.TaskCandidateEventListener;
 
 public class CloudTaskCandidateGroupRemovedProducer implements TaskCandidateEventListener<TaskCandidateGroupRemovedEvent> {
 

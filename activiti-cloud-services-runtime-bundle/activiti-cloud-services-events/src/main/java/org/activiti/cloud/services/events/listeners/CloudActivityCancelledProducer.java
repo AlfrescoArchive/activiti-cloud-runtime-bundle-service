@@ -16,9 +16,9 @@
 
 package org.activiti.cloud.services.events.listeners;
 
+import org.activiti.api.process.model.events.BPMNActivityCancelledEvent;
+import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
 import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
-import org.activiti.runtime.api.event.BPMNActivityCancelledEvent;
-import org.activiti.runtime.api.event.listener.BPMNElementEventListener;
 
 public class CloudActivityCancelledProducer implements BPMNElementEventListener<BPMNActivityCancelledEvent> {
 

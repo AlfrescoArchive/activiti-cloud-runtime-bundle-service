@@ -16,9 +16,9 @@
 
 package org.activiti.cloud.services.events.listeners;
 
+import org.activiti.api.process.runtime.events.ProcessCreatedEvent;
+import org.activiti.api.process.runtime.events.listener.ProcessEventListener;
 import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
-import org.activiti.runtime.api.event.ProcessCreatedEvent;
-import org.activiti.runtime.api.event.listener.ProcessEventListener;
 
 public class CloudProcessCreatedProducer implements ProcessEventListener<ProcessCreatedEvent> {
 

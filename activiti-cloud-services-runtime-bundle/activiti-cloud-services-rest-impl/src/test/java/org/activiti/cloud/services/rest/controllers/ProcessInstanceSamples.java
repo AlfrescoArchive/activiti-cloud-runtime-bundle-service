@@ -33,7 +33,7 @@ public class ProcessInstanceSamples {
         processInstance.setInitiator("user");
         processInstance.setStartDate(new Date());
         processInstance.setBusinessKey("my business key");
-        processInstance.setStatus(org.activiti.runtime.api.model.ProcessInstance.ProcessInstanceStatus.RUNNING);
+        processInstance.setStatus(ProcessInstance.ProcessInstanceStatus.RUNNING);
         processInstance.setProcessDefinitionKey("my-proc-def");
 
         return processInstance;

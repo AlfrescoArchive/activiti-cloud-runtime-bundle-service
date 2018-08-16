@@ -134,7 +134,7 @@
         <configuration>
           <packages>
             <package>org.activiti.engine.impl.persistence.entity.integration</package>
-            <package>org.activiti.runtime.api.model</package>
+            <package>org.activiti.api.process.model</package>
           </packages>
 
           <!-- whether generated assertions classes can be inherited with consistent assertion chaining -->

@@ -22,7 +22,7 @@ import java.util.UUID;
 import org.activiti.api.task.model.Task;
 import org.activiti.runtime.api.model.impl.TaskImpl;
 
-import static org.activiti.runtime.api.model.Task.TaskStatus.ASSIGNED;
+import static org.activiti.api.task.model.Task.TaskStatus.ASSIGNED;
 
 public class TaskSamples {
 

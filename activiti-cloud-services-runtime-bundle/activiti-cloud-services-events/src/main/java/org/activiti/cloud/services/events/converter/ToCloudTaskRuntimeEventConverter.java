@@ -16,36 +16,36 @@
 
 package org.activiti.cloud.services.events.converter;
 
-import org.activiti.runtime.api.event.CloudTaskActivatedEvent;
-import org.activiti.runtime.api.event.CloudTaskAssignedEvent;
-import org.activiti.runtime.api.event.CloudTaskCancelledEvent;
-import org.activiti.runtime.api.event.CloudTaskCandidateGroupAddedEvent;
-import org.activiti.runtime.api.event.CloudTaskCandidateGroupRemovedEvent;
-import org.activiti.runtime.api.event.CloudTaskCandidateUserAddedEvent;
-import org.activiti.runtime.api.event.CloudTaskCandidateUserRemovedEvent;
-import org.activiti.runtime.api.event.CloudTaskCompletedEvent;
-import org.activiti.runtime.api.event.CloudTaskCreatedEvent;
-import org.activiti.runtime.api.event.CloudTaskSuspendedEvent;
-import org.activiti.runtime.api.event.TaskActivatedEvent;
-import org.activiti.runtime.api.event.TaskAssignedEvent;
-import org.activiti.runtime.api.event.TaskCancelledEvent;
-import org.activiti.runtime.api.event.TaskCandidateGroupAddedEvent;
-import org.activiti.runtime.api.event.TaskCandidateGroupRemovedEvent;
-import org.activiti.runtime.api.event.TaskCandidateUserAddedEvent;
-import org.activiti.runtime.api.event.TaskCandidateUserRemovedEvent;
-import org.activiti.runtime.api.event.TaskCompletedEvent;
-import org.activiti.runtime.api.event.TaskCreatedEvent;
-import org.activiti.runtime.api.event.TaskSuspendedEvent;
-import org.activiti.runtime.api.event.impl.CloudTaskActivatedEventImpl;
-import org.activiti.runtime.api.event.impl.CloudTaskAssignedEventImpl;
-import org.activiti.runtime.api.event.impl.CloudTaskCancelledEventImpl;
-import org.activiti.runtime.api.event.impl.CloudTaskCandidateGroupAddedEventImpl;
-import org.activiti.runtime.api.event.impl.CloudTaskCandidateGroupRemovedEventImpl;
-import org.activiti.runtime.api.event.impl.CloudTaskCandidateUserAddedEventImpl;
-import org.activiti.runtime.api.event.impl.CloudTaskCandidateUserRemovedEventImpl;
-import org.activiti.runtime.api.event.impl.CloudTaskCompletedEventImpl;
-import org.activiti.runtime.api.event.impl.CloudTaskCreatedEventImpl;
-import org.activiti.runtime.api.event.impl.CloudTaskSuspendedEventImpl;
+import org.activiti.api.task.runtime.events.TaskActivatedEvent;
+import org.activiti.api.task.runtime.events.TaskAssignedEvent;
+import org.activiti.api.task.runtime.events.TaskCancelledEvent;
+import org.activiti.api.task.runtime.events.TaskCandidateGroupAddedEvent;
+import org.activiti.api.task.runtime.events.TaskCandidateGroupRemovedEvent;
+import org.activiti.api.task.runtime.events.TaskCandidateUserAddedEvent;
+import org.activiti.api.task.runtime.events.TaskCandidateUserRemovedEvent;
+import org.activiti.api.task.runtime.events.TaskCompletedEvent;
+import org.activiti.api.task.runtime.events.TaskCreatedEvent;
+import org.activiti.api.task.runtime.events.TaskSuspendedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskActivatedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskAssignedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCancelledEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCandidateGroupAddedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCandidateGroupRemovedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserAddedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserRemovedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCompletedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCreatedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskSuspendedEvent;
+import org.activiti.cloud.api.task.model.impl.events.CloudTaskActivatedEventImpl;
+import org.activiti.cloud.api.task.model.impl.events.CloudTaskAssignedEventImpl;
+import org.activiti.cloud.api.task.model.impl.events.CloudTaskCancelledEventImpl;
+import org.activiti.cloud.api.task.model.impl.events.CloudTaskCandidateGroupAddedEventImpl;
+import org.activiti.cloud.api.task.model.impl.events.CloudTaskCandidateGroupRemovedEventImpl;
+import org.activiti.cloud.api.task.model.impl.events.CloudTaskCandidateUserAddedEventImpl;
+import org.activiti.cloud.api.task.model.impl.events.CloudTaskCandidateUserRemovedEventImpl;
+import org.activiti.cloud.api.task.model.impl.events.CloudTaskCompletedEventImpl;
+import org.activiti.cloud.api.task.model.impl.events.CloudTaskCreatedEventImpl;
+import org.activiti.cloud.api.task.model.impl.events.CloudTaskSuspendedEventImpl;
 
 public class ToCloudTaskRuntimeEventConverter {
 

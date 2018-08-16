@@ -16,9 +16,9 @@
 
 package org.activiti.cloud.services.events.listeners;
 
-import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
 import org.activiti.api.process.runtime.events.ProcessCompletedEvent;
-import org.activiti.runtime.api.event.listener.ProcessEventListener;
+import org.activiti.api.process.runtime.events.listener.ProcessEventListener;
+import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
 
 public class CloudProcessCompletedProducer implements ProcessEventListener<ProcessCompletedEvent> {
 
