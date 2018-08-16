@@ -59,8 +59,8 @@
       <artifactId>activiti-api-task-model</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.activiti</groupId>
-      <artifactId>activiti-cloud-task-model-api</artifactId>
+      <groupId>org.activiti.api</groupId>
+      <artifactId>activiti-cloud-api-task-model</artifactId>
     </dependency>
     <dependency>
       <groupId>org.activiti</groupId>
