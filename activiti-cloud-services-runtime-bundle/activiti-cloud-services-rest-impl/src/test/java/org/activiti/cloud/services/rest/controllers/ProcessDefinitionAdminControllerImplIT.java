@@ -110,7 +110,7 @@ public class ProcessDefinitionAdminControllerImplIT {
                 my_process,
                 this_is_my_process,
                 version));
-        Page<ProcessDefinition> processDefinitionPage = new org.activiti.runtime.api.query.impl.PageImpl<>(processDefinitionList,
+        Page<ProcessDefinition> processDefinitionPage = new PageImpl<>(processDefinitionList,
                 processDefinitionList.size());
         when(processAdminRuntime.processDefinitions(any())).thenReturn(processDefinitionPage);
 
