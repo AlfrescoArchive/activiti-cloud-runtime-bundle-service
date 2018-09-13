@@ -17,6 +17,7 @@
 package org.activiti.services.connectors.channel;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.activiti.api.runtime.model.impl.IntegrationContextImpl;
@@ -31,7 +32,9 @@ import org.activiti.engine.impl.persistence.entity.integration.IntegrationContex
 import org.activiti.engine.integration.IntegrationContextService;
 import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ExecutionQuery;
-
+import org.activiti.runtime.api.connector.ConnectorActionDefinitionFinder;
+import org.activiti.runtime.api.connector.VariablesMatchHelper;
+import org.activiti.runtime.api.model.impl.IntegrationContextImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -78,6 +81,15 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
 
     @Mock
     private RuntimeBundleProperties.RuntimeBundleEventsProperties eventsProperties;
+
+    @Mock
+    private ConnectorActionDefinitionFinder connectorActionDefinitionFinder;
+
+    @Mock
+    private VariablesMatchHelper variablesMatchHelper;
+
+    @Mock
+    private List<ConnectorDefinition> connectorDefinitions;
 
     @Captor
     private ArgumentCaptor<Message<CloudIntegrationResultReceivedImpl>> messageCaptor;

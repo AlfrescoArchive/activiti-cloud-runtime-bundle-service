@@ -17,7 +17,11 @@
 package org.activiti.services.connectors.behavior;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
+import org.activiti.api.process.runtime.connector.Connector;
+import org.activiti.bpmn.model.ServiceTask;
 import org.activiti.cloud.api.process.model.IntegrationRequest;
 import org.activiti.cloud.api.process.model.impl.IntegrationRequestImpl;
 import org.activiti.cloud.services.events.converter.RuntimeBundleInfoAppender;
@@ -25,8 +29,12 @@ import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.impl.delegate.TriggerableActivityBehavior;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
+import org.activiti.model.connector.ActionDefinition;
+import org.activiti.model.connector.ConnectorDefinition;
+import org.activiti.runtime.api.connector.ConnectorActionDefinitionFinder;
 import org.activiti.runtime.api.connector.DefaultServiceTaskBehavior;
 import org.activiti.runtime.api.connector.IntegrationContextBuilder;
+import org.activiti.runtime.api.connector.VariablesMatchHelper;
 import org.activiti.services.connectors.IntegrationRequestSender;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,31 +46,40 @@ public class MQServiceTaskBehavior extends DefaultServiceTaskBehavior implements
     private final IntegrationContextManager integrationContextManager;
     private final ApplicationEventPublisher eventPublisher;
     private final IntegrationContextBuilder integrationContextBuilder;
+    private final List<ConnectorDefinition> connectorDefinitions;
+    private final ConnectorActionDefinitionFinder connectorActionDefinitionFinder;
+    private final VariablesMatchHelper variablesMatchHelper;
     private final RuntimeBundleInfoAppender runtimeBundleInfoAppender;
 
     public MQServiceTaskBehavior(IntegrationContextManager integrationContextManager,
                                  ApplicationEventPublisher eventPublisher,
                                  ApplicationContext applicationContext,
                                  IntegrationContextBuilder integrationContextBuilder,
+                                 List<ConnectorDefinition> connectorDefinitions,
+                                 ConnectorActionDefinitionFinder connectorActionDefinitionFinder,
+                                 VariablesMatchHelper variablesMatchHelper,
                                  RuntimeBundleInfoAppender runtimeBundleInfoAppender) {
         super(applicationContext,
-              integrationContextBuilder);
+                integrationContextBuilder, connectorDefinitions, connectorActionDefinitionFinder, variablesMatchHelper);
         this.integrationContextManager = integrationContextManager;
         this.eventPublisher = eventPublisher;
         this.integrationContextBuilder = integrationContextBuilder;
+        this.connectorDefinitions = connectorDefinitions;
+        this.connectorActionDefinitionFinder = connectorActionDefinitionFinder;
+        this.variablesMatchHelper = variablesMatchHelper;
         this.runtimeBundleInfoAppender = runtimeBundleInfoAppender;
     }
 
     @Override
     public void execute(DelegateExecution execution) {
-        if(hasConnectorBean(execution)){
+        if (hasConnectorBean(execution)) {
             // use de default implementation -> directly call a bean
             super.execute(execution);
         } else {
             IntegrationContextEntity integrationContext = storeIntegrationContext(execution);
 
             publishSpringEvent(execution,
-                               integrationContext);
+                    integrationContext);
         }
     }
 
@@ -70,13 +87,24 @@ public class MQServiceTaskBehavior extends DefaultServiceTaskBehavior implements
      * Publishes an custom event using the Spring {@link ApplicationEventPublisher}. This event will be caught by
      * {@link IntegrationRequestSender#sendIntegrationRequest(IntegrationRequest)} which is annotated with
      * {@link TransactionalEventListener} on phase {@link TransactionPhase#AFTER_COMMIT}.
-     * @param execution the related execution
+     *
+     * @param execution          the related execution
      * @param integrationContext the related integration context
      */
     private void publishSpringEvent(DelegateExecution execution,
                                       IntegrationContextEntity integrationContext) {
         IntegrationRequestImpl integrationRequest = new IntegrationRequestImpl(integrationContextBuilder.from(integrationContext,
                                                                                                               execution, null));
+                                    IntegrationContextEntity integrationContext) {
+
+        String implementation = ((ServiceTask) execution.getCurrentFlowElement()).getImplementation();
+
+        Optional<ActionDefinition> actionDefinitionOptional = connectorActionDefinitionFinder.find(implementation, connectorDefinitions);
+
+        IntegrationRequestImpl integrationRequest = actionDefinitionOptional.isPresent() == true ? new IntegrationRequestImpl(integrationContextBuilder.from(integrationContext,
+                execution, actionDefinitionOptional.get())) : new IntegrationRequestImpl(integrationContextBuilder.from(integrationContext,
+                execution, null));
+
         runtimeBundleInfoAppender.appendRuntimeBundleInfoTo(integrationRequest);
 
         eventPublisher.publishEvent(integrationRequest);

@@ -23,6 +23,10 @@ import org.activiti.cloud.services.events.converter.RuntimeBundleInfoAppender;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.engine.integration.IntegrationContextService;
+import org.activiti.model.connector.ActionDefinition;
+import org.activiti.model.connector.ConnectorDefinition;
+import org.activiti.runtime.api.connector.ConnectorActionDefinitionFinder;
+import org.activiti.runtime.api.connector.VariablesMatchHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.stream.annotation.EnableBinding;
@@ -31,6 +35,9 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @EnableBinding(ProcessEngineIntegrationChannels.class)
@@ -43,17 +50,26 @@ public class ServiceTaskIntegrationResultEventHandler {
     private final MessageChannel auditProducer;
     private final RuntimeBundleProperties runtimeBundleProperties;
     private final RuntimeBundleInfoAppender runtimeBundleInfoAppender;
+    private final List<ConnectorDefinition> connectorDefinitions;
+    private final ConnectorActionDefinitionFinder connectorActionDefinitionFinder;
+    private final VariablesMatchHelper variablesMatchHelper;
 
     public ServiceTaskIntegrationResultEventHandler(RuntimeService runtimeService,
                                                     IntegrationContextService integrationContextService,
                                                     MessageChannel auditProducer,
                                                     RuntimeBundleProperties runtimeBundleProperties,
-                                                    RuntimeBundleInfoAppender runtimeBundleInfoAppender) {
+                                                    RuntimeBundleInfoAppender runtimeBundleInfoAppender,
+                                                    List<ConnectorDefinition> connectorDefinitions,
+                                                    ConnectorActionDefinitionFinder connectorActionDefinitionFinder,
+                                                    VariablesMatchHelper variablesMatchHelper) {
         this.runtimeService = runtimeService;
         this.integrationContextService = integrationContextService;
         this.auditProducer = auditProducer;
         this.runtimeBundleProperties = runtimeBundleProperties;
         this.runtimeBundleInfoAppender = runtimeBundleInfoAppender;
+        this.connectorDefinitions = connectorDefinitions;
+        this.connectorActionDefinitionFinder = connectorActionDefinitionFinder;
+        this.variablesMatchHelper = variablesMatchHelper;
     }
 
     @StreamListener(ProcessEngineIntegrationChannels.INTEGRATION_RESULTS_CONSUMER)
@@ -64,8 +80,17 @@ public class ServiceTaskIntegrationResultEventHandler {
             integrationContextService.deleteIntegrationContext(integrationContextEntity);
 
             if (runtimeService.createExecutionQuery().executionId(integrationContextEntity.getExecutionId()).list().size() > 0) {
-                runtimeService.trigger(integrationContextEntity.getExecutionId(),
-                                       integrationResult.getIntegrationContext().getOutBoundVariables());
+
+                String implementation = integrationResult.getIntegrationContext().getConnectorType();
+                Optional<ActionDefinition> actionDefinitionOptional = connectorActionDefinitionFinder.find(implementation, connectorDefinitions);
+
+                if (actionDefinitionOptional.isPresent()) {
+                    runtimeService.trigger(integrationContextEntity.getExecutionId(),
+                            variablesMatchHelper.match(integrationResult.getIntegrationContext().getOutBoundVariables(), actionDefinitionOptional.get().getOutput()));
+                } else {
+                    runtimeService.trigger(integrationContextEntity.getExecutionId(),
+                            integrationResult.getIntegrationContext().getOutBoundVariables());
+                }
             } else {
                 String message = "No task is in this RB is waiting for integration result with execution id `" +
                         integrationContextEntity.getExecutionId() +
