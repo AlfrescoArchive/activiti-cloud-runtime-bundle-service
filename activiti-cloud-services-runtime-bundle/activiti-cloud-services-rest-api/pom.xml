@@ -11,7 +11,7 @@
   <name>Activiti Cloud Services :: REST APIs</name>
   <dependencies>
     <dependency>
-      <groupId>org.activiti.cloud</groupId>
+      <groupId>org.activiti.cloud.rb</groupId>
       <artifactId>activiti-cloud-services-api</artifactId>
     </dependency>
     <dependency>
