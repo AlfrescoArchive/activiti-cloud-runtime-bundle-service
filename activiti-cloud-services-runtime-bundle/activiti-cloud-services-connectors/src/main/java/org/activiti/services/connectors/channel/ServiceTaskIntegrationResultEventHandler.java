@@ -24,7 +24,6 @@ import org.activiti.engine.RuntimeService;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.engine.integration.IntegrationContextService;
 import org.activiti.model.connector.ActionDefinition;
-import org.activiti.model.connector.ConnectorDefinition;
 import org.activiti.runtime.api.connector.ConnectorActionDefinitionFinder;
 import org.activiti.runtime.api.connector.VariablesMatchHelper;
 import org.slf4j.Logger;
@@ -36,7 +35,6 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -50,7 +48,6 @@ public class ServiceTaskIntegrationResultEventHandler {
     private final MessageChannel auditProducer;
     private final RuntimeBundleProperties runtimeBundleProperties;
     private final RuntimeBundleInfoAppender runtimeBundleInfoAppender;
-    private final List<ConnectorDefinition> connectorDefinitions;
     private final ConnectorActionDefinitionFinder connectorActionDefinitionFinder;
     private final VariablesMatchHelper variablesMatchHelper;
 
@@ -59,7 +56,6 @@ public class ServiceTaskIntegrationResultEventHandler {
                                                     MessageChannel auditProducer,
                                                     RuntimeBundleProperties runtimeBundleProperties,
                                                     RuntimeBundleInfoAppender runtimeBundleInfoAppender,
-                                                    List<ConnectorDefinition> connectorDefinitions,
                                                     ConnectorActionDefinitionFinder connectorActionDefinitionFinder,
                                                     VariablesMatchHelper variablesMatchHelper) {
         this.runtimeService = runtimeService;
@@ -67,7 +63,6 @@ public class ServiceTaskIntegrationResultEventHandler {
         this.auditProducer = auditProducer;
         this.runtimeBundleProperties = runtimeBundleProperties;
         this.runtimeBundleInfoAppender = runtimeBundleInfoAppender;
-        this.connectorDefinitions = connectorDefinitions;
         this.connectorActionDefinitionFinder = connectorActionDefinitionFinder;
         this.variablesMatchHelper = variablesMatchHelper;
     }
@@ -82,7 +77,7 @@ public class ServiceTaskIntegrationResultEventHandler {
             if (runtimeService.createExecutionQuery().executionId(integrationContextEntity.getExecutionId()).list().size() > 0) {
 
                 String implementation = integrationResult.getIntegrationContext().getConnectorType();
-                Optional<ActionDefinition> actionDefinitionOptional = connectorActionDefinitionFinder.find(implementation, connectorDefinitions);
+                Optional<ActionDefinition> actionDefinitionOptional = connectorActionDefinitionFinder.find(implementation);
 
                 if (actionDefinitionOptional.isPresent()) {
                     runtimeService.trigger(integrationContextEntity.getExecutionId(),

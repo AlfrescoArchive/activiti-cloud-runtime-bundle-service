@@ -88,9 +88,6 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
     @Mock
     private VariablesMatchHelper variablesMatchHelper;
 
-    @Mock
-    private List<ConnectorDefinition> connectorDefinitions;
-
     @Captor
     private ArgumentCaptor<Message<CloudIntegrationResultReceivedImpl>> messageCaptor;
 

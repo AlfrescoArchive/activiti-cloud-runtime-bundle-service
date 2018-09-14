@@ -16,11 +16,6 @@
 
 package org.activiti.services.connectors.behavior;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-
-import org.activiti.api.process.runtime.connector.Connector;
 import org.activiti.bpmn.model.ServiceTask;
 import org.activiti.cloud.api.process.model.IntegrationRequest;
 import org.activiti.cloud.api.process.model.impl.IntegrationRequestImpl;
@@ -30,7 +25,6 @@ import org.activiti.engine.impl.delegate.TriggerableActivityBehavior;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
 import org.activiti.model.connector.ActionDefinition;
-import org.activiti.model.connector.ConnectorDefinition;
 import org.activiti.runtime.api.connector.ConnectorActionDefinitionFinder;
 import org.activiti.runtime.api.connector.DefaultServiceTaskBehavior;
 import org.activiti.runtime.api.connector.IntegrationContextBuilder;
@@ -41,12 +35,14 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.util.Date;
+import java.util.Optional;
+
 public class MQServiceTaskBehavior extends DefaultServiceTaskBehavior implements TriggerableActivityBehavior {
 
     private final IntegrationContextManager integrationContextManager;
     private final ApplicationEventPublisher eventPublisher;
     private final IntegrationContextBuilder integrationContextBuilder;
-    private final List<ConnectorDefinition> connectorDefinitions;
     private final ConnectorActionDefinitionFinder connectorActionDefinitionFinder;
     private final VariablesMatchHelper variablesMatchHelper;
     private final RuntimeBundleInfoAppender runtimeBundleInfoAppender;
@@ -55,16 +51,14 @@ public class MQServiceTaskBehavior extends DefaultServiceTaskBehavior implements
                                  ApplicationEventPublisher eventPublisher,
                                  ApplicationContext applicationContext,
                                  IntegrationContextBuilder integrationContextBuilder,
-                                 List<ConnectorDefinition> connectorDefinitions,
                                  ConnectorActionDefinitionFinder connectorActionDefinitionFinder,
                                  VariablesMatchHelper variablesMatchHelper,
                                  RuntimeBundleInfoAppender runtimeBundleInfoAppender) {
         super(applicationContext,
-                integrationContextBuilder, connectorDefinitions, connectorActionDefinitionFinder, variablesMatchHelper);
+                integrationContextBuilder, connectorActionDefinitionFinder, variablesMatchHelper);
         this.integrationContextManager = integrationContextManager;
         this.eventPublisher = eventPublisher;
         this.integrationContextBuilder = integrationContextBuilder;
-        this.connectorDefinitions = connectorDefinitions;
         this.connectorActionDefinitionFinder = connectorActionDefinitionFinder;
         this.variablesMatchHelper = variablesMatchHelper;
         this.runtimeBundleInfoAppender = runtimeBundleInfoAppender;
@@ -99,11 +93,10 @@ public class MQServiceTaskBehavior extends DefaultServiceTaskBehavior implements
 
         String implementation = ((ServiceTask) execution.getCurrentFlowElement()).getImplementation();
 
-        Optional<ActionDefinition> actionDefinitionOptional = connectorActionDefinitionFinder.find(implementation, connectorDefinitions);
+        Optional<ActionDefinition> actionDefinitionOptional = connectorActionDefinitionFinder.find(implementation);
 
-        IntegrationRequestImpl integrationRequest = actionDefinitionOptional.isPresent() == true ? new IntegrationRequestImpl(integrationContextBuilder.from(integrationContext,
-                execution, actionDefinitionOptional.get())) : new IntegrationRequestImpl(integrationContextBuilder.from(integrationContext,
-                execution, null));
+        IntegrationRequestImpl integrationRequest = new IntegrationRequestImpl(integrationContextBuilder.from(integrationContext,
+                execution, actionDefinitionOptional.orElse(null)));
 
         runtimeBundleInfoAppender.appendRuntimeBundleInfoTo(integrationRequest);
 

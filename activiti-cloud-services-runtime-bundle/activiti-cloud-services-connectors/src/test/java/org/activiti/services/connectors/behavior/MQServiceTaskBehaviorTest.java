@@ -88,7 +88,7 @@ public class MQServiceTaskBehaviorTest {
         initMocks(this);
         behavior = spy(new MQServiceTaskBehavior(integrationContextManager,
                                                  eventPublisher, applicationContext,
-                                                 integrationContextBuilder,null, connectorActionDefinitionFinder, variablesMatchHelper,
+                                                 integrationContextBuilder,connectorActionDefinitionFinder, variablesMatchHelper,
                                                  runtimeBundleInfoAppender));
     }
 
