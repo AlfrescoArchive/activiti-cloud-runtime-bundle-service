@@ -75,6 +75,16 @@
       </dependency>
       <dependency>
         <groupId>org.activiti.cloud.rb</groupId>
+        <artifactId>activiti-cloud-services-identity-keycloak</artifactId>
+        <version>${activiti-cloud-runtime-bundle.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti.cloud.rb</groupId>
+        <artifactId>activiti-cloud-services-identity-basic</artifactId>
+        <version>${activiti-cloud-runtime-bundle.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti.cloud.rb</groupId>
         <artifactId>activiti-cloud-services-subscriptions</artifactId>
         <version>${activiti-cloud-runtime-bundle.version}</version>
       </dependency>
