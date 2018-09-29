@@ -81,7 +81,7 @@ public class ServiceTaskIntegrationResultEventHandler {
 
                 if (actionDefinitionOptional.isPresent()) {
                     runtimeService.trigger(integrationContextEntity.getExecutionId(),
-                            variablesMatchHelper.match(integrationResult.getIntegrationContext().getOutBoundVariables(), actionDefinitionOptional.get().getOutput()));
+                            variablesMatchHelper.match(integrationResult.getIntegrationContext().getOutBoundVariables(), actionDefinitionOptional.get().getOutputs()));
                 } else {
                     runtimeService.trigger(integrationContextEntity.getExecutionId(),
                             integrationResult.getIntegrationContext().getOutBoundVariables());
