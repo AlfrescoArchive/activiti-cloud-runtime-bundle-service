@@ -29,13 +29,6 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.activiti.cloud.common</groupId>
-        <artifactId>activiti-cloud-service-common-dependencies</artifactId>
-        <version>${activiti-cloud-service-common.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
         <groupId>org.activiti.cloud.rb</groupId>
         <artifactId>activiti-cloud-services-api</artifactId>
         <version>${activiti-cloud-runtime-bundle.version}</version>
@@ -57,17 +50,12 @@
       </dependency>
       <dependency>
         <groupId>org.activiti.cloud.rb</groupId>
-        <artifactId>activiti-cloud-services-identity-keycloak</artifactId>
-        <version>${activiti-cloud-runtime-bundle.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.activiti.cloud.rb</groupId>
         <artifactId>activiti-cloud-services-identity-basic</artifactId>
         <version>${activiti-cloud-runtime-bundle.version}</version>
       </dependency>
       <dependency>
         <groupId>org.activiti.cloud.rb</groupId>
-        <artifactId>activiti-cloud-services-subscriptions</artifactId>
+        <artifactId>activiti-cloud-services-identity-keycloak</artifactId>
         <version>${activiti-cloud-runtime-bundle.version}</version>
       </dependency>
       <dependency>
@@ -82,14 +70,13 @@
       </dependency>
       <dependency>
         <groupId>org.activiti.cloud.rb</groupId>
-        <artifactId>activiti-cloud-starter-runtime-bundle</artifactId>
+        <artifactId>activiti-cloud-services-subscriptions</artifactId>
         <version>${activiti-cloud-runtime-bundle.version}</version>
       </dependency>
       <dependency>
         <groupId>org.activiti.cloud.rb</groupId>
-        <artifactId>activiti-cloud-services-test</artifactId>
+        <artifactId>activiti-cloud-starter-runtime-bundle</artifactId>
         <version>${activiti-cloud-runtime-bundle.version}</version>
-        <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
