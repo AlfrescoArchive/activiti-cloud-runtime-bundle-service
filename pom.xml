@@ -18,7 +18,7 @@
     <activiti-dependencies.version>7.0.48</activiti-dependencies.version>
     <activiti-cloud-build.version>7.0.33</activiti-cloud-build.version>
     <activiti-cloud-service-common.version>7.0.30</activiti-cloud-service-common.version>
-    <activiti-cloud-runtime-bundle.version>${project.version}</activiti-cloud-runtime-bundle.version>
+    <activiti-cloud-runtime-bundle-service.version>${project.version}</activiti-cloud-runtime-bundle-service.version>
   </properties>
 
   <modules>
@@ -99,7 +99,7 @@
       <dependency>
         <groupId>org.activiti.cloud.rb</groupId>
         <artifactId>activiti-cloud-services-identity-keycloak</artifactId>
-        <version>${activiti-cloud-runtime-bundle.version}</version>
+        <version>${activiti-cloud-runtime-bundle-service.version}</version>
       </dependency>
       <dependency>
         <groupId>org.activiti.cloud.rb</groupId>
@@ -114,12 +114,12 @@
       <dependency>
         <groupId>org.activiti.cloud.rb</groupId>
         <artifactId>activiti-cloud-services-subscriptions</artifactId>
-        <version>${activiti-cloud-runtime-bundle.version}</version>
+        <version>${activiti-cloud-runtime-bundle-service.version}</version>
       </dependency>
       <dependency>
         <groupId>org.activiti.cloud.rb</groupId>
         <artifactId>activiti-cloud-starter-runtime-bundle</artifactId>
-        <version>${activiti-cloud-runtime-bundle.version}</version>
+        <version>${activiti-cloud-runtime-bundle-service.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
