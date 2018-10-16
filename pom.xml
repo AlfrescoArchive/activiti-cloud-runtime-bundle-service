@@ -16,9 +16,11 @@
 
   <properties>
 
-    <activiti-cloud-build>7.0.33</activiti-cloud-build>
+    <activiti-cloud-build.version>7.0.33</activiti-cloud-build.version>
     <activiti-cloud-service-common.version>7.0.29</activiti-cloud-service-common.version>
-    <activiti-dependencies.version>7.0.46</activiti-dependencies.version>
+    <activiti-api.version>7.0.0-SNAPSHOT</activiti-api.version>
+    <activiti-core-common.version>7.0.0-SNAPSHOT</activiti-core-common.version>
+    <activiti-dependencies.version>7.0.0-SNAPSHOT</activiti-dependencies.version>
     <activiti-cloud-runtime-bundle.version>${project.version}</activiti-cloud-runtime-bundle.version>
   </properties>
 
@@ -52,13 +54,6 @@
         and we want to keep a standard Maven structure -->
     <dependencies>
       <dependency>
-        <groupId>org.activiti.dependencies</groupId>
-        <artifactId>activiti-dependencies</artifactId>
-        <version>${activiti-dependencies.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
         <groupId>org.activiti.cloud.build</groupId>
         <artifactId>activiti-cloud-dependencies-parent</artifactId>
         <version>${activiti-cloud-build.version}</version>
@@ -69,6 +64,27 @@
         <groupId>org.activiti.cloud.common</groupId>
         <artifactId>activiti-cloud-service-common-dependencies</artifactId>
         <version>${activiti-cloud-service-common.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti.api</groupId>
+        <artifactId>activiti-api-dependencies</artifactId>
+        <version>7.0.0-SNAPSHOT</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti.core.common</groupId>
+        <artifactId>activiti-core-common-dependencies</artifactId>
+        <version>7.0.0-SNAPSHOT</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.activiti</groupId>
+        <artifactId>activiti-core-dependencies</artifactId>
+        <version>7.0.0-SNAPSHOT</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

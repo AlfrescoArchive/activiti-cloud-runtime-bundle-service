@@ -21,16 +21,17 @@ import java.util.Collections;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.activiti.api.runtime.model.impl.VariableInstanceImpl;
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.api.task.runtime.TaskRuntime;
+import org.activiti.cloud.api.model.shared.impl.conf.CloudCommonModelAutoConfiguration;
+import org.activiti.cloud.api.task.model.impl.conf.CloudTaskModelAutoConfiguration;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfiguration;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.rest.assemblers.TaskVariableInstanceResourceAssembler;
 import org.activiti.cloud.services.rest.conf.ServicesRestAutoConfiguration;
-import org.activiti.runtime.api.model.impl.VariableInstanceImpl;
-import org.activiti.runtime.conf.CommonModelAutoConfiguration;
-import org.activiti.runtime.conf.TaskModelAutoConfiguration;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,8 +63,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @EnableSpringDataWebSupport()
 @AutoConfigureMockMvc(secure = false)
 @AutoConfigureRestDocs(outputDir = "target/snippets")
-@Import({CommonModelAutoConfiguration.class,
-        TaskModelAutoConfiguration.class,
+@Import({CloudCommonModelAutoConfiguration.class,
+        CloudTaskModelAutoConfiguration.class,
         RuntimeBundleProperties.class,
         CloudEventsAutoConfiguration.class,
         ServicesRestAutoConfiguration.class})
