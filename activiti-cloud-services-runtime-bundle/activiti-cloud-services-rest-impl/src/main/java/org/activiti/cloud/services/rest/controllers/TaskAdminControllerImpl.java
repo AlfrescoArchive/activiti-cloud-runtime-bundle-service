@@ -17,6 +17,11 @@ package org.activiti.cloud.services.rest.controllers;
 
 import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.api.task.model.Task;
+import org.activiti.api.task.model.payloads.ClaimTaskPayload;
+import org.activiti.api.task.model.payloads.CompleteTaskPayload;
+import org.activiti.api.task.model.payloads.DeleteTaskPayload;
+import org.activiti.api.task.model.payloads.ReleaseTaskPayload;
+import org.activiti.api.task.model.payloads.SetTaskVariablesPayload;
 import org.activiti.api.task.runtime.TaskAdminRuntime;
 import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
@@ -26,6 +31,10 @@ import org.activiti.cloud.services.rest.assemblers.TaskResourceAssembler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -57,5 +66,46 @@ public class TaskAdminControllerImpl implements TaskAdminController {
                                                   pageConverter.toSpringPage(pageable,
                                                                              tasksPage),
                                                   taskResourceAssembler);
+    }
+
+    @Override
+    public TaskResource getTaskById(@PathVariable String taskId) {
+        return taskResourceAssembler.toResource(taskAdminRuntime.task(taskId));
+    }
+
+    @Override
+    public TaskResource claimTask(@PathVariable String taskId,
+                                  @RequestBody ClaimTaskPayload claimTaskPayload) {
+        claimTaskPayload.setTaskId(taskId);
+        return taskResourceAssembler.toResource(taskAdminRuntime.claim(claimTaskPayload));
+    }
+
+    @Override
+    public TaskResource releaseTask(@PathVariable String taskId,
+                                    @RequestBody ReleaseTaskPayload releaseTaskPayload) {
+        releaseTaskPayload.setTaskId(taskId);
+        return taskResourceAssembler.toResource(taskAdminRuntime.release(releaseTaskPayload));
+    }
+
+    @Override
+    public TaskResource completeTask(@PathVariable String taskId,
+                                     @RequestBody CompleteTaskPayload completeTaskPayload) {
+        completeTaskPayload.setTaskId(taskId);
+        return taskResourceAssembler.toResource(taskAdminRuntime.complete(completeTaskPayload));
+    }
+
+    @Override
+    public TaskResource delete(@PathVariable String taskId,
+                               @RequestBody DeleteTaskPayload deleteTaskPayload) {
+        deleteTaskPayload.setTaskId(taskId);
+        return taskResourceAssembler.toResource(taskAdminRuntime.delete(deleteTaskPayload));
+    }
+
+    @Override
+    public ResponseEntity<Void> setVariables(@PathVariable String taskId,
+                                             @RequestBody SetTaskVariablesPayload setVariablesPayload) {
+        setVariablesPayload.setTaskId(taskId);
+        taskAdminRuntime.setVariables(setVariablesPayload);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

@@ -272,3 +272,47 @@ include::{snippets}/task-variable/set/local/http-request.adoc[]
 .Response
 include::{snippets}/task-variable/set/local/http-response.adoc[]
 
+=== Task Admin
+
+==== List all tasks
+.Request
+include::{snippets}/task-admin/list/http-request.adoc[]
+
+.Response
+include::{snippets}/task-admin/task/http-response.adoc[]
+
+==== Get task by id
+.Request
+include::{snippets}/task-admin/task/http-request.adoc[]
+
+.Response
+include::{snippets}/task-admin/task/http-response.adoc[]
+
+==== Claim task
+.Request
+include::{snippets}/task-admin/task/claim/http-request.adoc[]
+
+.Response
+include::{snippets}/task-admin/task/claim/http-response.adoc[]
+
+==== Release task
+.Request
+include::{snippets}/task-admin/task/release/http-request.adoc[]
+
+.Response
+include::{snippets}/task-admin/task/release/http-response.adoc[]
+
+==== Complete task
+.Request
+include::{snippets}/task-admin/task/complete/http-request.adoc[]
+
+.Response
+include::{snippets}/task-admin/task/complete/http-response.adoc[]
+
+==== Delete task
+.Request
+include::{snippets}/task-admin/task/delete/http-request.adoc[]
+
+.Response
+include::{snippets}/task-admin/task/delete/http-response.adoc[]
+
