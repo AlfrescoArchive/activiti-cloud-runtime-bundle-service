@@ -178,7 +178,6 @@ public class AuditProducerIT {
                                  ACTIVITY_STARTED.name()/*end event*/,
                                  BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*end event*/,
                                  VARIABLE_DELETED.name(),
-                                 VARIABLE_UPDATED.name(), //updated because task var copied back to proc var
                                  PROCESS_COMPLETED.name()));
 
         assertThat(streamHandler.getReceivedEvents())
