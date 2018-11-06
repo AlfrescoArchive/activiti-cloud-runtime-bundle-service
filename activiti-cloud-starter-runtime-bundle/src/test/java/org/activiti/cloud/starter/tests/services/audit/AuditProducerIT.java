@@ -10,6 +10,7 @@ import org.activiti.api.task.model.Task;
 import org.activiti.api.task.model.TaskCandidateUser;
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
+import org.activiti.cloud.api.model.shared.events.CloudVariableCreatedEvent;
 import org.activiti.cloud.api.process.model.CloudProcessDefinition;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.api.process.model.events.CloudBPMNActivityStartedEvent;
@@ -113,6 +114,7 @@ public class AuditProducerIT {
                                      BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*start event*/,
                                      SEQUENCE_FLOW_TAKEN.name(),
                                      ACTIVITY_STARTED.name()/*user task*/,
+                                     VARIABLE_CREATED.name(), /*task variable copy of proc var*/
                                      TASK_CANDIDATE_GROUP_ADDED.name(),
                                      TASK_CANDIDATE_USER_ADDED.name(),
                                      TASK_CREATED.name());
@@ -167,7 +169,8 @@ public class AuditProducerIT {
         //then
         await().untilAsserted(() -> assertThat(streamHandler.getReceivedEvents())
                 .extracting(event -> event.getEventType().name())
-                .containsExactly(TASK_COMPLETED.name(),
+                .containsExactly(VARIABLE_UPDATED.name(),/*task local var copied back to proc var*/
+                                 TASK_COMPLETED.name(),
                                  TASK_CANDIDATE_GROUP_REMOVED.name(),
                                  TASK_CANDIDATE_USER_REMOVED.name(),
                                  BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*user task*/,
@@ -175,6 +178,7 @@ public class AuditProducerIT {
                                  ACTIVITY_STARTED.name()/*end event*/,
                                  BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*end event*/,
                                  VARIABLE_DELETED.name(),
+                                 VARIABLE_UPDATED.name(), //updated because task var copied back to proc var
                                  PROCESS_COMPLETED.name()));
 
         assertThat(streamHandler.getReceivedEvents())
