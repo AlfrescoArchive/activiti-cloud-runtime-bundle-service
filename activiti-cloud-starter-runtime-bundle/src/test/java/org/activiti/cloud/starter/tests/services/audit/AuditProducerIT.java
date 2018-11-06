@@ -10,7 +10,6 @@ import org.activiti.api.task.model.Task;
 import org.activiti.api.task.model.TaskCandidateUser;
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
-import org.activiti.cloud.api.model.shared.events.CloudVariableCreatedEvent;
 import org.activiti.cloud.api.process.model.CloudProcessDefinition;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.api.process.model.events.CloudBPMNActivityStartedEvent;
@@ -173,11 +172,12 @@ public class AuditProducerIT {
                                  TASK_COMPLETED.name(),
                                  TASK_CANDIDATE_GROUP_REMOVED.name(),
                                  TASK_CANDIDATE_USER_REMOVED.name(),
+                                 VARIABLE_DELETED.name(),/*task local var deleted*/
                                  BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*user task*/,
                                  SEQUENCE_FLOW_TAKEN.name(),
                                  ACTIVITY_STARTED.name()/*end event*/,
                                  BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*end event*/,
-                                 VARIABLE_DELETED.name(),
+                                 VARIABLE_DELETED.name(), /*proc var deleted as proc completes*/
                                  PROCESS_COMPLETED.name()));
 
         assertThat(streamHandler.getReceivedEvents())
