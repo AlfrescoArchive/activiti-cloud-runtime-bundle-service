@@ -32,8 +32,8 @@ import java.util.Collections;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.cloud.services.events.message.MessageBuilderFilterChain;
 import org.activiti.cloud.services.events.message.CloudRuntimeEventsMessageBuilderFilterChainFactory;
+import org.activiti.cloud.services.events.message.MessageBuilderFilterChain;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.junit.Before;
@@ -55,17 +55,20 @@ public class MessageProducerCommandContextCloseListenerTest {
     private ProcessEngineChannels producer;
 
     @Spy
-    private RuntimeBundleProperties properties = new RuntimeBundleProperties() {{
-    	setAppName("appName");
-    	setAppVersion("appVersion");
-    	setServiceType("serviceType");
-    	setServiceVersion("serviceVersion");
-    	setRbSpringAppName("springAppName");
-    }};
-    
+    private RuntimeBundleProperties properties = new RuntimeBundleProperties() {
+        {
+            setAppName("appName");
+            setAppVersion("appVersion");
+            setServiceType("serviceType");
+            setServiceVersion("serviceVersion");
+            setRbSpringAppName("springAppName");
+        }
+    };
+
     @Spy
-    private CloudRuntimeEventsMessageBuilderFilterChainFactory factory = new CloudRuntimeEventsMessageBuilderFilterChainFactory(properties);
-    
+    private CloudRuntimeEventsMessageBuilderFilterChainFactory factory = new CloudRuntimeEventsMessageBuilderFilterChainFactory(
+            properties);
+
     @Mock
     private MessageChannel auditChannel;
 
@@ -73,14 +76,14 @@ public class MessageProducerCommandContextCloseListenerTest {
     private CommandContext commandContext;
 
     @Captor
-    private ArgumentCaptor<Message<CloudRuntimeEvent<?,?>[]>> messageArgumentCaptor;
+    private ArgumentCaptor<Message<CloudRuntimeEvent<?, ?>[]>> messageArgumentCaptor;
 
     @Mock
-    private CloudRuntimeEvent<?,?> event;
+    private CloudRuntimeEvent<?, ?> event;
 
     @Mock
     private MessageBuilderFilterChain<CloudRuntimeEvent<?, ?>[]> filterChain;
-    
+
     @Before
     public void setUp() throws Exception {
         initMocks(this);
@@ -89,78 +92,76 @@ public class MessageProducerCommandContextCloseListenerTest {
 
     @Test
     public void closedShouldSendEventsRegisteredOnTheCommandContext() {
-        //given
+        // given
         given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.PROCESS_ENGINE_EVENTS))
                 .willReturn(Collections.singletonList(event));
 
-        //when
+        // when
         closeListener.closed(commandContext);
 
-        //then
+        // then
         verify(auditChannel).send(messageArgumentCaptor.capture());
         assertThat(messageArgumentCaptor.getValue().getPayload()).containsExactly(event);
     }
-    
+
     @Test
     public void closedShouldDoNothingWhenRegisteredEventsIsNull() {
-        //given
+        // given
         given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.PROCESS_ENGINE_EVENTS))
                 .willReturn(null);
 
-        //when
+        // when
         closeListener.closed(commandContext);
 
-        //then
+        // then
         verify(auditChannel, never()).send(any());
     }
 
     @Test
     public void closedShouldDoNothingWhenRegisteredEventsIsEmpty() {
-        //given
+        // given
         given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.PROCESS_ENGINE_EVENTS))
                 .willReturn(Collections.emptyList());
 
-        //when
+        // when
         closeListener.closed(commandContext);
 
-        //then
+        // then
         verify(auditChannel, never()).send(any());
     }
-    
+
     @Test
     public void closedShouldSendMessageWithHeaders() {
-        //given
+        // given
         given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.PROCESS_ENGINE_EVENTS))
                 .willReturn(Collections.singletonList(event));
 
         Collection<ExecutionEntity> executions = new ArrayList<ExecutionEntity>();
         executions.add(mockExecutionEntity());
-        
+
         given(commandContext.getInvolvedExecutions()).willReturn(executions);
 
-        //when
+        // when
         closeListener.closed(commandContext);
 
-        //then
+        // then
         verify(auditChannel).send(messageArgumentCaptor.capture());
-        assertThat(messageArgumentCaptor.getValue().getHeaders())
-        	.containsKeys("businessKey","processDefinitionId","processDefinitionKey",
-        			"appName","appVersion","serviceName","serviceVersion","serviceFullName");
-        
+        assertThat(messageArgumentCaptor.getValue().getHeaders()).containsKeys("businessKey", "processDefinitionId",
+                "processDefinitionKey", "appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName");
+
     }
-    
+
     private ExecutionEntity mockExecutionEntity() {
-    	ExecutionEntity entity = mock(ExecutionEntity.class);
-    	ExecutionEntity processInstance = mock(ExecutionEntity.class);
-    	
-    	when(entity.getRootProcessInstance()).thenReturn(processInstance);
-    	
-    	when(processInstance.getBusinessKey()).thenReturn("mockBusinessKey");
-    	when(processInstance.getProcessDefinitionId()).thenReturn("mockProcessDefinitionId");
-    	when(processInstance.getProcessDefinitionKey()).thenReturn("mockProcessDefinitionKey");
-    	
-    	return entity;
+        ExecutionEntity entity = mock(ExecutionEntity.class);
+        ExecutionEntity processInstance = mock(ExecutionEntity.class);
+
+        when(entity.getRootProcessInstance()).thenReturn(processInstance);
+
+        when(processInstance.getBusinessKey()).thenReturn("mockBusinessKey");
+        when(processInstance.getProcessDefinitionId()).thenReturn("mockProcessDefinitionId");
+        when(processInstance.getProcessDefinitionKey()).thenReturn("mockProcessDefinitionKey");
+
+        return entity;
     }
-    
 
 }

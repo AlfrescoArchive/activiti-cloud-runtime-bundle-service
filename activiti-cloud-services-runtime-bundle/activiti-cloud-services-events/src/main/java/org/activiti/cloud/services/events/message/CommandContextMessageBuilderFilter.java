@@ -35,7 +35,7 @@ public class CommandContextMessageBuilderFilter implements MessageBuilderFilter<
         Collection<ExecutionEntity> executions = commandContext.getInvolvedExecutions();
 
         if (!executions.isEmpty()) {
-            ExecutionEntity processInstance = executions.iterator().next().getProcessInstance();
+            ExecutionEntity processInstance = executions.iterator().next().getRootProcessInstance();
 
             if(processInstance != null) {
                 request.setHeader("businessKey", processInstance.getBusinessKey())
