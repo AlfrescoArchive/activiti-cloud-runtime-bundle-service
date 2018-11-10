@@ -16,31 +16,31 @@ public class CommandContextMessageBuilderFilter implements MessageBuilderFilter<
 	}
 
 	@Override
-	public MessageBuilder<CloudRuntimeEvent<?, ?>[]> apply(MessageBuilder<CloudRuntimeEvent<?, ?>[]> request) {
+    public MessageBuilder<CloudRuntimeEvent<?, ?>[]> apply(MessageBuilder<CloudRuntimeEvent<?, ?>[]> request) {
         Collection<ExecutionEntity> executions = commandContext.getInvolvedExecutions();
 
-        if(!executions.isEmpty()) {
-            ExecutionEntity processInstance = executions.iterator()
-            											.next()
-            											.getRootProcessInstance();
+        if (!executions.isEmpty()) {
+            ExecutionEntity processInstance = executions.iterator().next().getProcessInstance();
 
-            request.setHeader("businessKey",processInstance.getBusinessKey())
-            	.setHeader("processDefinitionId", processInstance.getProcessDefinitionId())
-            	.setHeader("processDefinitionKey", processInstance.getProcessDefinitionKey())
-            	.setHeader("tenantId",processInstance.getTenantId())
-            	.setHeader("processDefinitionVersion", processInstance.getProcessDefinitionVersion())
-            	.setHeader("processDefinitionName", processInstance.getProcessDefinitionName())
-            	.setHeader("superExecutionId", processInstance.getSuperExecutionId())
-            	.setHeader("processInstanceId", processInstance.getId())
-        		.setHeader("processName", processInstance.getName());
-            
-            if(processInstance.getSuperExecution() != null) {
-            	request.setHeader("superExecutionName", processInstance.getSuperExecution().getName());
+            if(processInstance != null) {
+                request.setHeader("businessKey", processInstance.getBusinessKey())
+                    .setHeader("processDefinitionId", processInstance.getProcessDefinitionId())
+                    .setHeader("processDefinitionKey", processInstance.getProcessDefinitionKey())
+                    .setHeader("tenantId", processInstance.getTenantId())
+                    .setHeader("processDefinitionVersion", processInstance.getProcessDefinitionVersion())
+                    .setHeader("processDefinitionName", processInstance.getProcessDefinitionName())
+                    .setHeader("superExecutionId", processInstance.getSuperExecutionId())
+                    .setHeader("processInstanceId", processInstance.getId())
+                    .setHeader("processName", processInstance.getName());
+    
+                if (processInstance.getSuperExecution() != null) {
+                    request.setHeader("superExecutionName", processInstance.getSuperExecution().getName());
+                }
             }
         }
-        
+
         return request;
-		
+
 	}
 
 }
