@@ -1,3 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  org.activiti.cloud.services.events.configuration.RuntimeBundleProperties.AutoConfigurer,\
   org.activiti.cloud.services.events.configuration.CloudEventsAutoConfiguration

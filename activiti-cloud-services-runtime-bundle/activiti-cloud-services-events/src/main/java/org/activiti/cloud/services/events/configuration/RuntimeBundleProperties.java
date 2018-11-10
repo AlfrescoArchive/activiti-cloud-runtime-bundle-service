@@ -18,9 +18,9 @@ package org.activiti.cloud.services.events.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+@Configuration
 @ConfigurationProperties(prefix = "activiti.cloud.runtime-bundle")
 public class RuntimeBundleProperties {
 	
@@ -40,12 +40,6 @@ public class RuntimeBundleProperties {
     private String appVersion;
 
     private RuntimeBundleEventsProperties eventsProperties = new RuntimeBundleEventsProperties();
-    
-    @Configuration
-    @EnableConfigurationProperties(RuntimeBundleProperties.class)
-    public static class AutoConfigurer {
-        
-    }
     
     public String getRbSpringAppName() {
         return rbSpringAppName;
