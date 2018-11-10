@@ -25,8 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
@@ -34,8 +32,11 @@ import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.events.message.CloudRuntimeEventsMessageBuilderFilterChainFactory;
 import org.activiti.cloud.services.events.message.MessageBuilderFilterChain;
+import org.activiti.engine.impl.context.ExecutionContext;
 import org.activiti.engine.impl.interceptor.CommandContext;
+import org.activiti.engine.impl.persistence.entity.DeploymentEntity;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
+import org.activiti.engine.repository.ProcessDefinition;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -66,8 +67,8 @@ public class MessageProducerCommandContextCloseListenerTest {
     };
 
     @Spy
-    private CloudRuntimeEventsMessageBuilderFilterChainFactory factory = new CloudRuntimeEventsMessageBuilderFilterChainFactory(
-            properties);
+    private CloudRuntimeEventsMessageBuilderFilterChainFactory factory = 
+                new CloudRuntimeEventsMessageBuilderFilterChainFactory(properties);
 
     @Mock
     private MessageChannel auditChannel;
@@ -101,7 +102,8 @@ public class MessageProducerCommandContextCloseListenerTest {
 
         // then
         verify(auditChannel).send(messageArgumentCaptor.capture());
-        assertThat(messageArgumentCaptor.getValue().getPayload()).containsExactly(event);
+        assertThat(messageArgumentCaptor.getValue()
+                                        .getPayload()).containsExactly(event);
     }
 
     @Test
@@ -114,7 +116,8 @@ public class MessageProducerCommandContextCloseListenerTest {
         closeListener.closed(commandContext);
 
         // then
-        verify(auditChannel, never()).send(any());
+        verify(auditChannel,
+               never()).send(any());
     }
 
     @Test
@@ -127,41 +130,58 @@ public class MessageProducerCommandContextCloseListenerTest {
         closeListener.closed(commandContext);
 
         // then
-        verify(auditChannel, never()).send(any());
+        verify(auditChannel,
+               never()).send(any());
     }
 
     @Test
-    public void closedShouldSendMessageWithHeaders() {
+    public void closedShouldSendMessageHeadersWithExecutionContext() {
         // given
         given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.PROCESS_ENGINE_EVENTS))
                 .willReturn(Collections.singletonList(event));
 
-        Collection<ExecutionEntity> executions = new ArrayList<ExecutionEntity>();
-        executions.add(mockExecutionEntity());
+        ExecutionContext executionContext = mockExecutionContext();
 
-        given(commandContext.getInvolvedExecutions()).willReturn(executions);
+        given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT)).willReturn(executionContext);
 
         // when
         closeListener.closed(commandContext);
 
         // then
         verify(auditChannel).send(messageArgumentCaptor.capture());
-        assertThat(messageArgumentCaptor.getValue().getHeaders()).containsKeys("businessKey", "processDefinitionId",
-                "processDefinitionKey", "appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName");
+        assertThat(messageArgumentCaptor.getValue()
+                                        .getHeaders()).containsKeys("businessKey",
+                                                                    "processDefinitionId",
+                                                                    "processDefinitionKey",
+                                                                    "deploymentId",
+                                                                    "deploymentName",
+                                                                    "appName",
+                                                                    "appVersion",
+                                                                    "serviceName",
+                                                                    "serviceVersion",
+                                                                    "serviceFullName");
 
     }
 
-    private ExecutionEntity mockExecutionEntity() {
-        ExecutionEntity entity = mock(ExecutionEntity.class);
+    private ExecutionContext mockExecutionContext() {
+        ExecutionContext context = mock(ExecutionContext.class);
         ExecutionEntity processInstance = mock(ExecutionEntity.class);
+        DeploymentEntity deploymentEntity = mock(DeploymentEntity.class);
+        ProcessDefinition processDefinition = mock(ProcessDefinition.class);
 
-        when(entity.getRootProcessInstance()).thenReturn(processInstance);
+        when(context.getProcessInstance()).thenReturn(processInstance);
+        when(context.getDeployment()).thenReturn(deploymentEntity);
+        when(context.getProcessDefinition()).thenReturn(processDefinition);
 
         when(processInstance.getBusinessKey()).thenReturn("mockBusinessKey");
-        when(processInstance.getProcessDefinitionId()).thenReturn("mockProcessDefinitionId");
-        when(processInstance.getProcessDefinitionKey()).thenReturn("mockProcessDefinitionKey");
 
-        return entity;
+        when(processDefinition.getId()).thenReturn("mockProcessDefinitionId");
+        when(processDefinition.getKey()).thenReturn("mockProcessDefinitionKey");
+
+        when(deploymentEntity.getId()).thenReturn("mockDeploymentId");
+        when(deploymentEntity.getName()).thenReturn("mockDeploymentName");
+        
+        return context;
     }
 
 }

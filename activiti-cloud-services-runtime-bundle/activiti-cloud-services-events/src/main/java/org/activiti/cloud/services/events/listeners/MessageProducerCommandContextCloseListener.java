@@ -30,14 +30,17 @@ import org.springframework.util.Assert;
 public class MessageProducerCommandContextCloseListener implements CommandContextCloseListener {
 
     public static final String PROCESS_ENGINE_EVENTS = "processEngineEvents";
+    public static final String EXECUTION_CONTEXT = "executionContext";
 
     private final ProcessEngineChannels producer;
     private final MessageBuilderFilterChainFactory<CloudRuntimeEvent<?, ?>[], CommandContext> messageBuilderFilterChainFactory;
 
     public MessageProducerCommandContextCloseListener(ProcessEngineChannels producer,
             MessageBuilderFilterChainFactory<CloudRuntimeEvent<?, ?>[], CommandContext> messageBuilderFilterChainFactory) {
-        Assert.notNull(producer, "producer must not be null");
-        Assert.notNull(messageBuilderFilterChainFactory, "messageBuilderFilterChainFactory must not be null");
+        Assert.notNull(producer,
+                       "producer must not be null");
+        Assert.notNull(messageBuilderFilterChainFactory,
+                       "messageBuilderFilterChainFactory must not be null");
 
         this.producer = producer;
         this.messageBuilderFilterChainFactory = messageBuilderFilterChainFactory;
@@ -46,15 +49,17 @@ public class MessageProducerCommandContextCloseListener implements CommandContex
     @Override
     public void closed(CommandContext commandContext) {
         List<CloudRuntimeEvent<?, ?>> events = commandContext.getGenericAttribute(PROCESS_ENGINE_EVENTS);
+        
         if (events != null && !events.isEmpty()) {
 
             MessageBuilder<CloudRuntimeEvent<?, ?>[]> request = MessageBuilder
                     .withPayload(events.toArray(new CloudRuntimeEvent<?, ?>[events.size()]));
 
             Message<CloudRuntimeEvent<?, ?>[]> message = messageBuilderFilterChainFactory.create(commandContext)
-                    .build(request);
+                                                                                         .build(request);
 
             producer.auditProducer().send(message);
+            
         }
     }
 

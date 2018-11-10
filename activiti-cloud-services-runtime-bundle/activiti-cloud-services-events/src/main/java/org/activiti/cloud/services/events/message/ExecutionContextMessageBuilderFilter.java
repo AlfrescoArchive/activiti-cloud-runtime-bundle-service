@@ -15,42 +15,54 @@
  */
 package org.activiti.cloud.services.events.message;
 
-import java.util.Collection;
-
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
+import org.activiti.cloud.services.events.listeners.MessageProducerCommandContextCloseListener;
+import org.activiti.engine.impl.context.ExecutionContext;
 import org.activiti.engine.impl.interceptor.CommandContext;
+import org.activiti.engine.impl.persistence.entity.DeploymentEntity;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
+import org.activiti.engine.repository.ProcessDefinition;
 import org.springframework.messaging.support.MessageBuilder;
 
-public class CommandContextMessageBuilderFilter implements MessageBuilderFilter<CloudRuntimeEvent<?, ?>[]> {
+public class ExecutionContextMessageBuilderFilter implements MessageBuilderFilter<CloudRuntimeEvent<?, ?>[]> {
 
     private final CommandContext commandContext;
 
-    public CommandContextMessageBuilderFilter(CommandContext commandContext) {
+    public ExecutionContextMessageBuilderFilter(CommandContext commandContext) {
         this.commandContext = commandContext;
     }
 
     @Override
     public MessageBuilder<CloudRuntimeEvent<?, ?>[]> apply(MessageBuilder<CloudRuntimeEvent<?, ?>[]> request) {
-        Collection<ExecutionEntity> executions = commandContext.getInvolvedExecutions();
+        ExecutionContext executionContext = commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT);
 
-        if (!executions.isEmpty()) {
-            ExecutionEntity processInstance = executions.iterator().next().getRootProcessInstance();
+        if(executionContext != null) {
+            ExecutionEntity processInstance = executionContext.getProcessInstance();
+            ProcessDefinition processDefinition = executionContext.getProcessDefinition();
+            DeploymentEntity deploymentEntity = executionContext.getDeployment();
 
-            if(processInstance != null) {
+            if(processInstance != null) { 
                 request.setHeader("businessKey", processInstance.getBusinessKey())
-                    .setHeader("processDefinitionId", processInstance.getProcessDefinitionId())
-                    .setHeader("processDefinitionKey", processInstance.getProcessDefinitionKey())
                     .setHeader("tenantId", processInstance.getTenantId())
-                    .setHeader("processDefinitionVersion", processInstance.getProcessDefinitionVersion())
-                    .setHeader("processDefinitionName", processInstance.getProcessDefinitionName())
                     .setHeader("superExecutionId", processInstance.getSuperExecutionId())
                     .setHeader("processInstanceId", processInstance.getId())
                     .setHeader("processName", processInstance.getName());
-    
-                if (processInstance.getSuperExecution() != null) {
-                    request.setHeader("superExecutionName", processInstance.getSuperExecution().getName());
-                }
+            }
+
+            if(processDefinition != null) { 
+                request.setHeader("processDefinitionId", processDefinition.getId())
+                    .setHeader("processDefinitionKey", processDefinition.getKey())
+                    .setHeader("processDefinitionVersion", processDefinition.getVersion())
+                    .setHeader("processDefinitionName", processDefinition.getName());
+            }
+
+            if(deploymentEntity != null) {
+                request.setHeader("deploymentId", deploymentEntity.getId())
+                    .setHeader("deploymentName", deploymentEntity.getName());
+            }
+            
+            if (processInstance.getSuperExecution() != null) {
+                request.setHeader("superExecutionName", processInstance.getSuperExecution().getName());
             }
         }
 

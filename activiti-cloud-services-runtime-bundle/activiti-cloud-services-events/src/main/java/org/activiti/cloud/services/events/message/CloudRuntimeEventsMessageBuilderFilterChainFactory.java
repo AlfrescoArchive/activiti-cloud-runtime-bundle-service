@@ -35,7 +35,7 @@ public class CloudRuntimeEventsMessageBuilderFilterChainFactory
     public MessageBuilderFilterChain<CloudRuntimeEvent<?, ?>[]> create(CommandContext commandContext) {
         return new CloudRuntimeEventsMessageBuilderFilterChain()
                 .withFilter(new RuntimeBundleInfoMessageBuilderFilter(properties))
-                .withFilter(new CommandContextMessageBuilderFilter(commandContext));
+                .withFilter(new ExecutionContextMessageBuilderFilter(commandContext));
     }
 
 }
