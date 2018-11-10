@@ -15,7 +15,6 @@
  */
 package org.activiti.cloud.services.events.message;
 
-import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.services.events.listeners.MessageProducerCommandContextCloseListener;
 import org.activiti.engine.impl.context.ExecutionContext;
 import org.activiti.engine.impl.interceptor.CommandContext;
@@ -24,7 +23,7 @@ import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.springframework.messaging.support.MessageBuilder;
 
-public class ExecutionContextMessageBuilderFilter implements MessageBuilderFilter<CloudRuntimeEvent<?, ?>[]> {
+public class ExecutionContextMessageBuilderFilter<P> implements MessageBuilderFilter<P> {
 
     private final CommandContext commandContext;
 
@@ -33,7 +32,7 @@ public class ExecutionContextMessageBuilderFilter implements MessageBuilderFilte
     }
 
     @Override
-    public MessageBuilder<CloudRuntimeEvent<?, ?>[]> apply(MessageBuilder<CloudRuntimeEvent<?, ?>[]> request) {
+    public MessageBuilder<P> apply(MessageBuilder<P> request) {
         ExecutionContext executionContext = commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT);
 
         if(executionContext != null) {

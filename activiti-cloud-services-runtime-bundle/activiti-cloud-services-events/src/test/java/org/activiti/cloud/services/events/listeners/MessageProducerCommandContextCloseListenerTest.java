@@ -30,7 +30,7 @@ import java.util.Collections;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.cloud.services.events.message.CloudRuntimeEventsMessageBuilderFilterChainFactory;
+import org.activiti.cloud.services.events.message.CommandContextMessageBuilderFilterChainFactory;
 import org.activiti.cloud.services.events.message.MessageBuilderFilterChain;
 import org.activiti.engine.impl.context.ExecutionContext;
 import org.activiti.engine.impl.interceptor.CommandContext;
@@ -67,8 +67,8 @@ public class MessageProducerCommandContextCloseListenerTest {
     };
 
     @Spy
-    private CloudRuntimeEventsMessageBuilderFilterChainFactory factory = 
-                new CloudRuntimeEventsMessageBuilderFilterChainFactory(properties);
+    private CommandContextMessageBuilderFilterChainFactory<CloudRuntimeEvent<?, ?>[]> factory = 
+                new CommandContextMessageBuilderFilterChainFactory<>(properties);
 
     @Mock
     private MessageChannel auditChannel;
@@ -150,17 +150,17 @@ public class MessageProducerCommandContextCloseListenerTest {
         // then
         verify(auditChannel).send(messageArgumentCaptor.capture());
         assertThat(messageArgumentCaptor.getValue()
-                                        .getHeaders()).containsKeys("businessKey",
-                                                                    "processDefinitionId",
-                                                                    "processDefinitionKey",
-                                                                    "deploymentId",
-                                                                    "deploymentName",
-                                                                    "appName",
-                                                                    "appVersion",
-                                                                    "serviceName",
-                                                                    "serviceVersion",
-                                                                    "serviceFullName");
-
+                                        .getHeaders()).containsEntry("messagePayloadType","[Lorg.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;")
+                                                      .containsEntry("businessKey","mockBusinessKey")
+                                                      .containsEntry("processDefinitionId","mockProcessDefinitionId")
+                                                      .containsEntry("processDefinitionKey","mockProcessDefinitionKey")
+                                                      .containsEntry("deploymentId","mockDeploymentId")
+                                                      .containsEntry("deploymentName","mockDeploymentName")
+                                                      .containsEntry("appName","appName")
+                                                      .containsEntry("appVersion","appVersion")
+                                                      .containsEntry("serviceName","springAppName")
+                                                      .containsEntry("serviceVersion","serviceVersion")
+                                                      .containsEntry("serviceFullName","springAppName");
     }
 
     private ExecutionContext mockExecutionContext() {

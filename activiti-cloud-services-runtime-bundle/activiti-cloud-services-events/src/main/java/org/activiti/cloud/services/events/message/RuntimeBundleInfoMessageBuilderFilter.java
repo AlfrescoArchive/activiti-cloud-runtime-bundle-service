@@ -15,12 +15,11 @@
  */
 package org.activiti.cloud.services.events.message;
 
-import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
-public class RuntimeBundleInfoMessageBuilderFilter implements MessageBuilderFilter<CloudRuntimeEvent<?, ?>[]> {
+public class RuntimeBundleInfoMessageBuilderFilter<P> implements MessageBuilderFilter<P> {
 
     private final RuntimeBundleProperties properties;
 
@@ -31,7 +30,7 @@ public class RuntimeBundleInfoMessageBuilderFilter implements MessageBuilderFilt
     }
 
     @Override
-    public MessageBuilder<CloudRuntimeEvent<?, ?>[]> apply(MessageBuilder<CloudRuntimeEvent<?, ?>[]> request) {
+    public MessageBuilder<P> apply(MessageBuilder<P> request) {
         return request.setHeader("appName", properties.getAppName()).setHeader("appVersion", properties.getAppVersion())
                 .setHeader("serviceName", properties.getServiceName())
                 .setHeader("serviceFullName", properties.getServiceFullName())
