@@ -87,7 +87,7 @@ public class CloudEventsAutoConfiguration {
     public MessageProducerCommandContextCloseListener apiMessageProducerCommandContextCloseListener(ProcessEngineChannels processEngineChannels,
                                                                                                     CloudRuntimeEventsMessageBuilderFilterChainFactory runtimeBundleMessageBuilderFilterChainFactory) {
         return new MessageProducerCommandContextCloseListener(processEngineChannels,
-                runtimeBundleMessageBuilderFilterChainFactory);
+                                                              runtimeBundleMessageBuilderFilterChainFactory);
     }
 
     @Bean
@@ -100,119 +100,136 @@ public class CloudEventsAutoConfiguration {
     @ConditionalOnMissingBean
     public CloudTaskCreatedProducer cloudTaskCreatedProducer(ToCloudTaskRuntimeEventConverter taskRuntimeEventConverter,
                                                              ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTaskCreatedProducer(taskRuntimeEventConverter, eventsAggregator);
+        return new CloudTaskCreatedProducer(taskRuntimeEventConverter,
+                                            eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskUpdatedProducer cloudTaskUpdatedProducer(ToCloudTaskRuntimeEventConverter taskRuntimeEventConverter,
                                                              ProcessEngineChannels processEngineChannels) {
-        return new CloudTaskUpdatedProducer(taskRuntimeEventConverter, processEngineChannels);
+        return new CloudTaskUpdatedProducer(taskRuntimeEventConverter,
+                                            processEngineChannels);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskCancelledProducer cloudTaskCancelledProducer(ToCloudTaskRuntimeEventConverter taskRuntimeEventConverter,
                                                                  ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTaskCancelledProducer(taskRuntimeEventConverter, eventsAggregator);
+        return new CloudTaskCancelledProducer(taskRuntimeEventConverter,
+                                              eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskAssignedProducer cloudTaskAssignedProducer(ToCloudTaskRuntimeEventConverter taskRuntimeEventConverter,
                                                                ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTaskAssignedProducer(taskRuntimeEventConverter, eventsAggregator);
+        return new CloudTaskAssignedProducer(taskRuntimeEventConverter,
+                                             eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskSuspendedProducer cloudTaskSuspendedProducer(ToCloudTaskRuntimeEventConverter taskRuntimeEventConverter,
                                                                  ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTaskSuspendedProducer(taskRuntimeEventConverter, eventsAggregator);
+        return new CloudTaskSuspendedProducer(taskRuntimeEventConverter,
+                                              eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskActivatedProducer cloutTaskActivatedProducer(ToCloudTaskRuntimeEventConverter taskRuntimeEventConverter,
                                                                  ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTaskActivatedProducer(taskRuntimeEventConverter, eventsAggregator);
+        return new CloudTaskActivatedProducer(taskRuntimeEventConverter,
+                                              eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskCompletedProducer cloudTaskCompletedProducer(ToCloudTaskRuntimeEventConverter taskRuntimeEventConverter,
                                                                  ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTaskCompletedProducer(taskRuntimeEventConverter, eventsAggregator);
+        return new CloudTaskCompletedProducer(taskRuntimeEventConverter,
+                                              eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskCandidateUserAddedProducer cloudTaskCandidateUserAddedProducer(ToCloudTaskRuntimeEventConverter taskRuntimeEventConverter,
                                                                                    ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTaskCandidateUserAddedProducer(taskRuntimeEventConverter, eventsAggregator);
+        return new CloudTaskCandidateUserAddedProducer(taskRuntimeEventConverter,
+                                                       eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskCandidateUserRemovedProducer taskCandidateUserRemovedProducer(ToCloudTaskRuntimeEventConverter converter,
                                                                                   ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTaskCandidateUserRemovedProducer(converter, eventsAggregator);
+        return new CloudTaskCandidateUserRemovedProducer(converter,
+                                                         eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskCandidateGroupAddedProducer cloudTaskCandidateGroupAddedProducer(ToCloudTaskRuntimeEventConverter taskRuntimeEventConverter,
                                                                                      ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTaskCandidateGroupAddedProducer(taskRuntimeEventConverter, eventsAggregator);
+        return new CloudTaskCandidateGroupAddedProducer(taskRuntimeEventConverter,
+                                                        eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskCandidateGroupRemovedProducer cloudTaskCandidateGroupRemovedProducer(ToCloudTaskRuntimeEventConverter converter,
                                                                                          ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTaskCandidateGroupRemovedProducer(converter, eventsAggregator);
+        return new CloudTaskCandidateGroupRemovedProducer(converter,
+                                                          eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudProcessCreatedProducer processCreatedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
                                                               ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudProcessCreatedProducer(eventConverter, eventsAggregator);
+        return new CloudProcessCreatedProducer(eventConverter,
+                                               eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudProcessStartedProducer processStartedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
                                                               ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudProcessStartedProducer(eventConverter, eventsAggregator);
+        return new CloudProcessStartedProducer(eventConverter,
+                                               eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudProcessSuspendedProducer cloudProcessSuspendedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
                                                                        ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudProcessSuspendedProducer(eventConverter, eventsAggregator);
+        return new CloudProcessSuspendedProducer(eventConverter,
+                                                 eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudProcessResumedProducer cloudProcessResumedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
                                                                    ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudProcessResumedProducer(eventConverter, eventsAggregator);
+        return new CloudProcessResumedProducer(eventConverter,
+                                               eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudProcessCompletedProducer cloudProcessCompletedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
                                                                        ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudProcessCompletedProducer(eventConverter, eventsAggregator);
+        return new CloudProcessCompletedProducer(eventConverter,
+                                                 eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudProcessCancelledProducer cloudProcessCancelledProducer(ToCloudProcessRuntimeEventConverter eventConverter,
                                                                        ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudProcessCancelledProducer(eventConverter, eventsAggregator);
+        return new CloudProcessCancelledProducer(eventConverter,
+                                                 eventsAggregator);
     }
 
     @Bean
@@ -232,49 +249,56 @@ public class CloudEventsAutoConfiguration {
     @ConditionalOnMissingBean
     public CloudVariableCreatedProducer cloudVariableCreatedProducer(ToCloudVariableEventConverter converter,
                                                                      ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudVariableCreatedProducer(converter, eventsAggregator);
+        return new CloudVariableCreatedProducer(converter,
+                                                eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudVariableUpdatedProducer cloudVariableUpdatedProducer(ToCloudVariableEventConverter converter,
                                                                      ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudVariableUpdatedProducer(converter, eventsAggregator);
+        return new CloudVariableUpdatedProducer(converter,
+                                                eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudVariableDeletedProducer cloudVariableDeletedProducer(ToCloudVariableEventConverter converter,
                                                                      ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudVariableDeletedProducer(converter, eventsAggregator);
+        return new CloudVariableDeletedProducer(converter,
+                                                eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudActivityStartedProducer cloudActivityStartedProducer(ToCloudProcessRuntimeEventConverter converter,
                                                                      ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudActivityStartedProducer(converter, eventsAggregator);
+        return new CloudActivityStartedProducer(converter,
+                                                eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudActivityCompletedProducer cloudActivityCompletedProducer(ToCloudProcessRuntimeEventConverter converter,
                                                                          ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudActivityCompletedProducer(converter, eventsAggregator);
+        return new CloudActivityCompletedProducer(converter,
+                                                  eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudActivityCancelledProducer cloudActivityCancelledProducer(ToCloudProcessRuntimeEventConverter converter,
                                                                          ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudActivityCancelledProducer(converter, eventsAggregator);
+        return new CloudActivityCancelledProducer(converter,
+                                                  eventsAggregator);
     }
 
     @Bean
     @ConditionalOnMissingBean
     public CloudSequenceFlowTakenProducer cloudSequenceFlowTakenProducer(ToCloudProcessRuntimeEventConverter converter,
                                                                          ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudSequenceFlowTakenProducer(converter, eventsAggregator);
+        return new CloudSequenceFlowTakenProducer(converter,
+                                                  eventsAggregator);
     }
 
     @Bean
