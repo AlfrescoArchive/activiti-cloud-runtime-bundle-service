@@ -15,8 +15,8 @@
  */
 package org.activiti.cloud.services.events.message;
 
-import org.springframework.messaging.support.MessageBuilder;
+import org.activiti.engine.impl.interceptor.CommandContext;
 
-public interface MessageBuilderFilter {
-    public <T> MessageBuilder<T> apply(MessageBuilder<T> request);
+public interface MessageChannelSenderFactory {
+    public MessageChannelSenderBuilder create(CommandContext commandContext);
 }

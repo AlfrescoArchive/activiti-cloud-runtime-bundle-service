@@ -20,10 +20,9 @@ import java.util.List;
 
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
-import org.activiti.cloud.services.events.message.MessageBuilderFilterChainFactory;
+import org.activiti.cloud.services.events.message.MessageChannelSenderFactory;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.interceptor.CommandContextCloseListener;
-import org.springframework.messaging.Message;
 import org.springframework.util.Assert;
 
 public class MessageProducerCommandContextCloseListener implements CommandContextCloseListener {
@@ -32,17 +31,17 @@ public class MessageProducerCommandContextCloseListener implements CommandContex
     public static final String EXECUTION_CONTEXT = "executionContext";
 
     private final ProcessEngineChannels producer;
-    private final MessageBuilderFilterChainFactory<CommandContext> messageBuilderFilterChainFactory;
+    private final MessageChannelSenderFactory messageChannelSenderFactory;
 
     public MessageProducerCommandContextCloseListener(ProcessEngineChannels producer,
-            MessageBuilderFilterChainFactory<CommandContext> messageBuilderFilterChainFactory) {
+            MessageChannelSenderFactory messageChannelSenderFactory) {
         Assert.notNull(producer,
                        "producer must not be null");
-        Assert.notNull(messageBuilderFilterChainFactory,
-                       "messageBuilderFilterChainFactory must not be null");
+        Assert.notNull(messageChannelSenderFactory,
+                       "messageChannelSenderFactory must not be null");
 
         this.producer = producer;
-        this.messageBuilderFilterChainFactory = messageBuilderFilterChainFactory;
+        this.messageChannelSenderFactory = messageChannelSenderFactory;
     }
 
     @Override
@@ -53,11 +52,9 @@ public class MessageProducerCommandContextCloseListener implements CommandContex
 
             CloudRuntimeEvent<?, ?>[] payload = events.toArray(new CloudRuntimeEvent<?, ?>[events.size()]);
 
-            Message<CloudRuntimeEvent<?, ?>[]> message = messageBuilderFilterChainFactory.create(commandContext)
-                                                                                         .build(payload);
-
-            producer.auditProducer().send(message);
-            
+            messageChannelSenderFactory.create(commandContext)
+                .build(payload)
+                .sendTo(producer.auditProducer());
         }
     }
 
