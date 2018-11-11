@@ -21,24 +21,24 @@ import java.util.List;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 
-public class MessageBuilderFilterChain<P> {
+public class MessageBuilderFilterChain {
 
-    private final List<MessageBuilderFilter<P>> filters = new ArrayList<>();
+    private final List<MessageBuilderFilter> filters = new ArrayList<>();
 
-    public Message<P> build(P payload) {
+    public <P> Message<P> build(P payload) {
         MessageBuilder<P> request = MessageBuilder.withPayload(payload);
 
         // Let's resolve payload class name 
         request.setHeader("messagePayloadType", payload.getClass().getName());
         
-        for (MessageBuilderFilter<P> filter : filters) {
+        for (MessageBuilderFilter filter : filters) {
             filter.apply(request);
         }
 
         return request.build();
     }
 
-    public MessageBuilderFilterChain<P> withFilter(MessageBuilderFilter<P> filter) {
+    public MessageBuilderFilterChain chain(MessageBuilderFilter filter) {
         filters.add(filter);
 
         return this;

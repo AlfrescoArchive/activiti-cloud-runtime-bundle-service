@@ -19,7 +19,7 @@ import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
-public class RuntimeBundleInfoMessageBuilderFilter<P> implements MessageBuilderFilter<P> {
+public class RuntimeBundleInfoMessageBuilderFilter implements MessageBuilderFilter {
 
     private final RuntimeBundleProperties properties;
 
@@ -30,7 +30,7 @@ public class RuntimeBundleInfoMessageBuilderFilter<P> implements MessageBuilderF
     }
 
     @Override
-    public MessageBuilder<P> apply(MessageBuilder<P> request) {
+    public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
         return request.setHeader("appName", properties.getAppName()).setHeader("appVersion", properties.getAppVersion())
                 .setHeader("serviceName", properties.getServiceName())
                 .setHeader("serviceFullName", properties.getServiceFullName())

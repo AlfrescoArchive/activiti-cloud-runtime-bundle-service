@@ -20,7 +20,6 @@ import java.util.List;
 
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
-import org.activiti.cloud.services.events.message.MessageBuilderFilterChain;
 import org.activiti.cloud.services.events.message.MessageBuilderFilterChainFactory;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.interceptor.CommandContextCloseListener;
@@ -54,9 +53,8 @@ public class MessageProducerCommandContextCloseListener implements CommandContex
 
             CloudRuntimeEvent<?, ?>[] payload = events.toArray(new CloudRuntimeEvent<?, ?>[events.size()]);
 
-            MessageBuilderFilterChain<CloudRuntimeEvent<?, ?>[]> messageBuilder = messageBuilderFilterChainFactory.create(commandContext);
-            
-            Message<CloudRuntimeEvent<?, ?>[]> message = messageBuilder.build(payload);
+            Message<CloudRuntimeEvent<?, ?>[]> message = messageBuilderFilterChainFactory.create(commandContext)
+                                                                                         .build(payload);
 
             producer.auditProducer().send(message);
             

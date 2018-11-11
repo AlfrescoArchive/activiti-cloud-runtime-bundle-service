@@ -19,22 +19,22 @@ import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.springframework.util.Assert;
 
-public class CommandContextMessageBuilderFilterChainFactory
+public class RuntimeBundleMessageBuilderFilterChainFactory
         implements MessageBuilderFilterChainFactory<CommandContext> {
 
     private final RuntimeBundleProperties properties;
 
-    public CommandContextMessageBuilderFilterChainFactory(RuntimeBundleProperties properties) {
+    public RuntimeBundleMessageBuilderFilterChainFactory(RuntimeBundleProperties properties) {
         Assert.notNull(properties, "properties must not be null");
 
         this.properties = properties;
     }
 
     @Override
-    public <P> MessageBuilderFilterChain<P> create(CommandContext commandContext) {
-        return new MessageBuilderFilterChain<P>()
-                .withFilter(new RuntimeBundleInfoMessageBuilderFilter<P>(properties))
-                .withFilter(new ExecutionContextMessageBuilderFilter<P>(commandContext));
+    public MessageBuilderFilterChain create(CommandContext commandContext) {
+        return new MessageBuilderFilterChain()
+                .chain(new RuntimeBundleInfoMessageBuilderFilter(properties))
+                .chain(new ExecutionContextMessageBuilderFilter(commandContext));
     }
 
 }

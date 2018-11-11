@@ -15,14 +15,9 @@
  */
 package org.activiti.cloud.services.events.message;
 
-import org.junit.Before;
 import org.junit.Test;
 
 public class RuntimeBundleInfoMessageBuilderFilterTest {
-
-    @Before
-    public void setUp() throws Exception {
-    }
 
     @Test
     public void testApply() {

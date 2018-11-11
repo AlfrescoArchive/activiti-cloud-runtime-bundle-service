@@ -30,8 +30,7 @@ import java.util.Collections;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.cloud.services.events.message.CommandContextMessageBuilderFilterChainFactory;
-import org.activiti.cloud.services.events.message.MessageBuilderFilterChain;
+import org.activiti.cloud.services.events.message.RuntimeBundleMessageBuilderFilterChainFactory;
 import org.activiti.engine.impl.context.ExecutionContext;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.DeploymentEntity;
@@ -67,8 +66,8 @@ public class MessageProducerCommandContextCloseListenerTest {
     };
 
     @Spy
-    private CommandContextMessageBuilderFilterChainFactory factory = 
-                new CommandContextMessageBuilderFilterChainFactory(properties);
+    private RuntimeBundleMessageBuilderFilterChainFactory messageBuilderFilterChainFactory = 
+                new RuntimeBundleMessageBuilderFilterChainFactory(properties);
 
     @Mock
     private MessageChannel auditChannel;
@@ -81,9 +80,6 @@ public class MessageProducerCommandContextCloseListenerTest {
 
     @Mock
     private CloudRuntimeEvent<?, ?> event;
-
-    @Mock
-    private MessageBuilderFilterChain<CloudRuntimeEvent<?, ?>[]> filterChain;
 
     @Before
     public void setUp() throws Exception {

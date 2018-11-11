@@ -16,5 +16,5 @@
 package org.activiti.cloud.services.events.message;
 
 public interface MessageBuilderFilterChainFactory<T> {
-    public <P> MessageBuilderFilterChain<P> create(T context);
+    public MessageBuilderFilterChain create(T context);
 }

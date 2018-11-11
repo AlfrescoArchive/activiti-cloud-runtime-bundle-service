@@ -23,7 +23,7 @@ import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.springframework.messaging.support.MessageBuilder;
 
-public class ExecutionContextMessageBuilderFilter<P> implements MessageBuilderFilter<P> {
+public class ExecutionContextMessageBuilderFilter implements MessageBuilderFilter {
 
     private final CommandContext commandContext;
 
@@ -32,7 +32,7 @@ public class ExecutionContextMessageBuilderFilter<P> implements MessageBuilderFi
     }
 
     @Override
-    public MessageBuilder<P> apply(MessageBuilder<P> request) {
+    public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
         ExecutionContext executionContext = commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT);
 
         if(executionContext != null) {
