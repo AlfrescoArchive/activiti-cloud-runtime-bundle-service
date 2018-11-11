@@ -67,8 +67,8 @@ public class MessageProducerCommandContextCloseListenerTest {
     };
 
     @Spy
-    private CommandContextMessageBuilderFilterChainFactory<CloudRuntimeEvent<?, ?>[]> factory = 
-                new CommandContextMessageBuilderFilterChainFactory<>(properties);
+    private CommandContextMessageBuilderFilterChainFactory factory = 
+                new CommandContextMessageBuilderFilterChainFactory(properties);
 
     @Mock
     private MessageChannel auditChannel;
