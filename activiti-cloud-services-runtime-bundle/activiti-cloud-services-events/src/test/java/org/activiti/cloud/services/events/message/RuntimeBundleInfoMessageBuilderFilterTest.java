@@ -17,10 +17,10 @@ package org.activiti.cloud.services.events.message;
 
 import org.junit.Test;
 
-public class ExecutionContextMessageBuilderTest {
+public class RuntimeBundleInfoMessageBuilderFilterTest {
 
     @Test
-    public void testCommandContextMessageBuilderFilter() {
+    public void testApply() {
         // TODO
     }
 

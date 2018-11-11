@@ -16,27 +16,26 @@
 package org.activiti.cloud.services.events.message;
 
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.engine.impl.interceptor.CommandContext;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
-public class RuntimeBundleMessageChannelSenderFactory
-        implements MessageChannelSenderFactory {
+public class RuntimeBundleInfoMessageBuilderFilter implements MessageBuilderFilter {
 
     private final RuntimeBundleProperties properties;
 
-    public RuntimeBundleMessageChannelSenderFactory(RuntimeBundleProperties properties) {
+    public RuntimeBundleInfoMessageBuilderFilter(RuntimeBundleProperties properties) {
         Assert.notNull(properties, "properties must not be null");
 
         this.properties = properties;
     }
 
     @Override
-    public MessageChannelSenderBuilder create(CommandContext commandContext) {
-        Assert.notNull(commandContext, "commandContext must not be null");
-        
-        return new MessageChannelSenderBuilder()
-                .chain(new RuntimeBundleInfoMessageBuilder(properties))
-                .chain(new ExecutionContextMessageBuilder(commandContext));
+    public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
+        return request.setHeader("appName", properties.getAppName()).setHeader("appVersion", properties.getAppVersion())
+                .setHeader("serviceName", properties.getServiceName())
+                .setHeader("serviceFullName", properties.getServiceFullName())
+                .setHeader("serviceType", properties.getServiceType())
+                .setHeader("serviceVersion", properties.getServiceVersion());
     }
 
 }

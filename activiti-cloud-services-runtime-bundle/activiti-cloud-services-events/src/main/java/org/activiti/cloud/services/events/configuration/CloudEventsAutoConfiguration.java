@@ -49,8 +49,9 @@ import org.activiti.cloud.services.events.listeners.CloudVariableDeletedProducer
 import org.activiti.cloud.services.events.listeners.CloudVariableUpdatedProducer;
 import org.activiti.cloud.services.events.listeners.MessageProducerCommandContextCloseListener;
 import org.activiti.cloud.services.events.listeners.ProcessEngineEventsAggregator;
-import org.activiti.cloud.services.events.message.MessageChannelSenderFactory;
-import org.activiti.cloud.services.events.message.RuntimeBundleMessageChannelSenderFactory;
+import org.activiti.cloud.services.events.message.MessageBuilderFilterChainFactory;
+import org.activiti.cloud.services.events.message.RuntimeBundleMessageBuilderFilterChainFactory;
+import org.activiti.engine.impl.interceptor.CommandContext;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -65,9 +66,9 @@ public class CloudEventsAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnMissingBean(MessageChannelSenderFactory.class)
-    public MessageChannelSenderFactory messageChannelSenderFactory(RuntimeBundleProperties properties) {
-        return new RuntimeBundleMessageChannelSenderFactory(properties);
+    @ConditionalOnMissingBean(MessageBuilderFilterChainFactory.class)
+    public MessageBuilderFilterChainFactory<CommandContext> messageBuilderFilterChainFactory(RuntimeBundleProperties properties) {
+        return new RuntimeBundleMessageBuilderFilterChainFactory(properties);
     }
 
     @Bean
@@ -85,9 +86,9 @@ public class CloudEventsAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public MessageProducerCommandContextCloseListener apiMessageProducerCommandContextCloseListener(ProcessEngineChannels processEngineChannels,
-                                                                                                    MessageChannelSenderFactory messageChannelSenderFactory) {
+                                                                                                    MessageBuilderFilterChainFactory<CommandContext> messageBuilderFilterChainFactory) {
         return new MessageProducerCommandContextCloseListener(processEngineChannels,
-                                                              messageChannelSenderFactory);
+                                                              messageBuilderFilterChainFactory);
     }
 
     @Bean

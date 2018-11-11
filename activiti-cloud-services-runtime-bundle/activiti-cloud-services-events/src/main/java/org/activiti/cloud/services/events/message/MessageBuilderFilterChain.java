@@ -18,36 +18,28 @@ package org.activiti.cloud.services.events.message;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.util.Assert;
 
-public class MessageChannelSenderBuilder {
+public class MessageBuilderFilterChain {
 
-    private final List<MessageChannelMessageBuilder> builders = new ArrayList<>();
-    
-    public MessageChannelSenderBuilder() {
-        super();
-    }
+    private final List<MessageBuilderFilter> filters = new ArrayList<>();
 
-    public <P> MessageChannelSender build(P payload) {
-        Assert.notNull(payload, "payload must not be null");
-        
+    public <P> Message<P> build(P payload) {
         MessageBuilder<P> request = MessageBuilder.withPayload(payload);
 
-        // Let's resolve and add payload class name into message headers 
-        request.setHeader(CloudRuntimeEventMessageHeaders.MESSAGE_PAYLOAD_TYPE, payload.getClass().getName());
+        // Let's resolve payload class name 
+        request.setHeader("messagePayloadType", payload.getClass().getName());
         
-        for (MessageChannelMessageBuilder builder : builders) {
-            builder.apply(request);
+        for (MessageBuilderFilter filter : filters) {
+            filter.apply(request);
         }
 
-        return new MessageChannelSender(request.build());
+        return request.build();
     }
 
-    public MessageChannelSenderBuilder chain(MessageChannelMessageBuilder builder) {
-        Assert.notNull(builder, "builder must not be null");
-
-        builders.add(builder);
+    public MessageBuilderFilterChain chain(MessageBuilderFilter filter) {
+        filters.add(filter);
 
         return this;
     }

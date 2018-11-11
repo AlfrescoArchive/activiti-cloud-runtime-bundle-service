@@ -22,22 +22,17 @@ import org.activiti.engine.impl.persistence.entity.DeploymentEntity;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.util.Assert;
 
-public class ExecutionContextMessageBuilder implements MessageChannelMessageBuilder {
+public class ExecutionContextMessageBuilderFilter implements MessageBuilderFilter {
 
     private final CommandContext commandContext;
 
-    public ExecutionContextMessageBuilder(CommandContext commandContext) {
-        Assert.notNull(commandContext, "commandContext must not be null");
-        
+    public ExecutionContextMessageBuilderFilter(CommandContext commandContext) {
         this.commandContext = commandContext;
     }
 
     @Override
     public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
-        Assert.notNull(request, "request must not be null");
-        
         ExecutionContext executionContext = commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT);
 
         if(executionContext != null) {
@@ -46,29 +41,28 @@ public class ExecutionContextMessageBuilder implements MessageChannelMessageBuil
             DeploymentEntity deploymentEntity = executionContext.getDeployment();
 
             if(processInstance != null) { 
-                request.setHeader(CloudRuntimeEventMessageHeaders.BUSINESS_KEY, processInstance.getBusinessKey())
-                    .setHeader(CloudRuntimeEventMessageHeaders.TENANT_ID, processInstance.getTenantId())
-                    .setHeader(CloudRuntimeEventMessageHeaders.SUPER_EXECUTION_ID, processInstance.getSuperExecutionId())
-                    .setHeader(CloudRuntimeEventMessageHeaders.PROCESS_INSTANCE_ID, processInstance.getId())
-                    .setHeader(CloudRuntimeEventMessageHeaders.PROCESS_NAME, processInstance.getName());
-
-                if (processInstance.getSuperExecution() != null) {
-                    request.setHeader(CloudRuntimeEventMessageHeaders.SUPER_EXECUTION_NAME, processInstance.getSuperExecution().getName());
-                }
+                request.setHeader("businessKey", processInstance.getBusinessKey())
+                    .setHeader("tenantId", processInstance.getTenantId())
+                    .setHeader("superExecutionId", processInstance.getSuperExecutionId())
+                    .setHeader("processInstanceId", processInstance.getId())
+                    .setHeader("processName", processInstance.getName());
             }
 
             if(processDefinition != null) { 
-                request.setHeader(CloudRuntimeEventMessageHeaders.PROCESS_DEFINITION_ID, processDefinition.getId())
-                    .setHeader(CloudRuntimeEventMessageHeaders.PROCESS_DEFINITION_KEY, processDefinition.getKey())
-                    .setHeader(CloudRuntimeEventMessageHeaders.PROCESS_DEFINITION_VERSION, processDefinition.getVersion())
-                    .setHeader(CloudRuntimeEventMessageHeaders.PROCESS_DEFINITION_NAME, processDefinition.getName());
+                request.setHeader("processDefinitionId", processDefinition.getId())
+                    .setHeader("processDefinitionKey", processDefinition.getKey())
+                    .setHeader("processDefinitionVersion", processDefinition.getVersion())
+                    .setHeader("processDefinitionName", processDefinition.getName());
             }
 
             if(deploymentEntity != null) {
-                request.setHeader(CloudRuntimeEventMessageHeaders.DEPLOYMENT_ID, deploymentEntity.getId())
-                    .setHeader(CloudRuntimeEventMessageHeaders.DEPLOYMENT_NAME, deploymentEntity.getName());
+                request.setHeader("deploymentId", deploymentEntity.getId())
+                    .setHeader("deploymentName", deploymentEntity.getName());
             }
             
+            if (processInstance.getSuperExecution() != null) {
+                request.setHeader("superExecutionName", processInstance.getSuperExecution().getName());
+            }
         }
 
         return request;
