@@ -15,7 +15,7 @@
  */
 package org.activiti.cloud.services.events.message;
 
-public class CloudRuntimeEventMessageHeaders {
+public class RuntimeBundleInfoMessageHeaders {
     
     public final static String MESSAGE_PAYLOAD_TYPE = "messagePayloadType";
     public final static String BUSINESS_KEY = "businessKey";

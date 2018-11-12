@@ -21,6 +21,7 @@ import java.util.List;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.message.MessageBuilderChainFactory;
+import org.activiti.engine.impl.context.ExecutionContext;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.interceptor.CommandContextCloseListener;
 import org.springframework.messaging.Message;
@@ -32,10 +33,10 @@ public class MessageProducerCommandContextCloseListener implements CommandContex
     public static final String EXECUTION_CONTEXT = "executionContext";
 
     private final ProcessEngineChannels producer;
-    private final MessageBuilderChainFactory<CommandContext> messageBuilderChainFactory;
+    private final MessageBuilderChainFactory<ExecutionContext> messageBuilderChainFactory;
 
     public MessageProducerCommandContextCloseListener(ProcessEngineChannels producer,
-            MessageBuilderChainFactory<CommandContext> messageBuilderChainFactory) {
+            MessageBuilderChainFactory<ExecutionContext> messageBuilderChainFactory) {
         Assert.notNull(producer,
                        "producer must not be null");
         Assert.notNull(messageBuilderChainFactory,
@@ -52,8 +53,10 @@ public class MessageProducerCommandContextCloseListener implements CommandContex
         if (events != null && !events.isEmpty()) {
 
             CloudRuntimeEvent<?, ?>[] payload = events.toArray(new CloudRuntimeEvent<?, ?>[events.size()]);
+            
+            ExecutionContext executionContext = commandContext.getGenericAttribute(EXECUTION_CONTEXT);            
 
-            Message<CloudRuntimeEvent<?, ?>[]> message = messageBuilderChainFactory.create(commandContext)
+            Message<CloudRuntimeEvent<?, ?>[]> message = messageBuilderChainFactory.create(executionContext)
                                                                                    .withPayload(payload)
                                                                                    .build();
 

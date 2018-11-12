@@ -15,9 +15,7 @@
  */
 package org.activiti.cloud.services.events.message;
 
-import org.activiti.cloud.services.events.listeners.MessageProducerCommandContextCloseListener;
 import org.activiti.engine.impl.context.ExecutionContext;
-import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.DeploymentEntity;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.repository.ProcessDefinition;
@@ -26,49 +24,43 @@ import org.springframework.util.Assert;
 
 public class ExecutionContextMessageBuilderAppender implements MessageBuilderAppender {
 
-    private final CommandContext commandContext;
+    private final ExecutionContext executionContext;
 
-    public ExecutionContextMessageBuilderAppender(CommandContext commandContext) {
-        this.commandContext = commandContext;
+    public ExecutionContextMessageBuilderAppender(ExecutionContext executionContext) {
+        this.executionContext = executionContext;
     }
 
     @Override
     public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
         Assert.notNull(request, "request must not be null");
         
-        if(commandContext == null)
-            return request;
-        
-        ExecutionContext executionContext = commandContext
-                .getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT);
-
         if(executionContext != null) {
             ExecutionEntity processInstance = executionContext.getProcessInstance();
             ProcessDefinition processDefinition = executionContext.getProcessDefinition();
             DeploymentEntity deploymentEntity = executionContext.getDeployment();
 
             if(processInstance != null) { 
-                request.setHeader(CloudRuntimeEventMessageHeaders.BUSINESS_KEY, processInstance.getBusinessKey())
-                    .setHeader(CloudRuntimeEventMessageHeaders.TENANT_ID, processInstance.getTenantId())
-                    .setHeader(CloudRuntimeEventMessageHeaders.SUPER_EXECUTION_ID, processInstance.getSuperExecutionId())
-                    .setHeader(CloudRuntimeEventMessageHeaders.PROCESS_INSTANCE_ID, processInstance.getId())
-                    .setHeader(CloudRuntimeEventMessageHeaders.PROCESS_NAME, processInstance.getName());
+                request.setHeader(ExecutionContextMessageHeaders.BUSINESS_KEY, processInstance.getBusinessKey())
+                    .setHeader(ExecutionContextMessageHeaders.TENANT_ID, processInstance.getTenantId())
+                    .setHeader(ExecutionContextMessageHeaders.SUPER_EXECUTION_ID, processInstance.getSuperExecutionId())
+                    .setHeader(ExecutionContextMessageHeaders.PROCESS_INSTANCE_ID, processInstance.getId())
+                    .setHeader(ExecutionContextMessageHeaders.PROCESS_NAME, processInstance.getName());
 
                 if (processInstance.getSuperExecution() != null) {
-                    request.setHeader(CloudRuntimeEventMessageHeaders.SUPER_EXECUTION_NAME, processInstance.getSuperExecution().getName());
+                    request.setHeader(ExecutionContextMessageHeaders.SUPER_EXECUTION_NAME, processInstance.getSuperExecution().getName());
                 }
             }
 
             if(processDefinition != null) { 
-                request.setHeader(CloudRuntimeEventMessageHeaders.PROCESS_DEFINITION_ID, processDefinition.getId())
-                    .setHeader(CloudRuntimeEventMessageHeaders.PROCESS_DEFINITION_KEY, processDefinition.getKey())
-                    .setHeader(CloudRuntimeEventMessageHeaders.PROCESS_DEFINITION_VERSION, processDefinition.getVersion())
-                    .setHeader(CloudRuntimeEventMessageHeaders.PROCESS_DEFINITION_NAME, processDefinition.getName());
+                request.setHeader(ExecutionContextMessageHeaders.PROCESS_DEFINITION_ID, processDefinition.getId())
+                    .setHeader(ExecutionContextMessageHeaders.PROCESS_DEFINITION_KEY, processDefinition.getKey())
+                    .setHeader(ExecutionContextMessageHeaders.PROCESS_DEFINITION_VERSION, processDefinition.getVersion())
+                    .setHeader(ExecutionContextMessageHeaders.PROCESS_DEFINITION_NAME, processDefinition.getName());
             }
 
             if(deploymentEntity != null) {
-                request.setHeader(CloudRuntimeEventMessageHeaders.DEPLOYMENT_ID, deploymentEntity.getId())
-                    .setHeader(CloudRuntimeEventMessageHeaders.DEPLOYMENT_NAME, deploymentEntity.getName());
+                request.setHeader(ExecutionContextMessageHeaders.DEPLOYMENT_ID, deploymentEntity.getId())
+                    .setHeader(ExecutionContextMessageHeaders.DEPLOYMENT_NAME, deploymentEntity.getName());
             }
             
         }
