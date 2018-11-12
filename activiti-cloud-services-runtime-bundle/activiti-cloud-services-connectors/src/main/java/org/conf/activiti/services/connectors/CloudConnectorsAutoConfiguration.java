@@ -16,10 +16,12 @@
 
 package org.conf.activiti.services.connectors;
 
+import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.events.converter.RuntimeBundleInfoAppender;
 import org.activiti.engine.impl.bpmn.parser.factory.DefaultActivityBehaviorFactory;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
 import org.activiti.runtime.api.connector.IntegrationContextBuilder;
+import org.activiti.services.connectors.IntegrationContextMessageBuilderFactory;
 import org.activiti.services.connectors.behavior.MQServiceTaskBehavior;
 import org.conf.activiti.runtime.api.ConnectorsAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -37,6 +39,12 @@ import org.springframework.context.annotation.PropertySource;
 @ComponentScan("org.activiti.core.common.spring.connector")
 public class CloudConnectorsAutoConfiguration {
 
+    @Bean
+    @ConditionalOnMissingBean
+    public IntegrationContextMessageBuilderFactory integrationContextMessageBuilderFactory(RuntimeBundleProperties properties) {
+        return new IntegrationContextMessageBuilderFactory(properties);
+    }
+    
     @Bean(name = DefaultActivityBehaviorFactory.DEFAULT_SERVICE_TASK_BEAN_NAME)
     @ConditionalOnMissingBean(name = DefaultActivityBehaviorFactory.DEFAULT_SERVICE_TASK_BEAN_NAME)
     public MQServiceTaskBehavior mqServiceTaskBehavior(IntegrationContextManager integrationContextManager,

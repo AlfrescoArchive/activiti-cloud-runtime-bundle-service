@@ -1,5 +1,14 @@
 package org.activiti.services.connectors;
 
+import static org.activiti.services.test.DelegateExecutionBuilder.anExecution;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
 import org.activiti.api.process.model.IntegrationContext;
 import org.activiti.bpmn.model.ServiceTask;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
@@ -11,24 +20,17 @@ import org.activiti.cloud.services.events.converter.RuntimeBundleInfoAppender;
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.runtime.api.connector.IntegrationContextBuilder;
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-
-import static org.activiti.services.test.DelegateExecutionBuilder.anExecution;
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 public class IntegrationRequestSenderTest {
 
@@ -39,6 +41,8 @@ public class IntegrationRequestSenderTest {
     private static final String INTEGRATION_CONTEXT_ID = "intContextId";
     private static final String FLOW_NODE_ID = "myServiceTask";
     private static final String APP_NAME = "myApp";
+    private static final String PROCESS_DEFINITION_ID = "proc";
+    private static final String PROCESS_INSTANCE_ID = "";
 
     private IntegrationRequestSender integrationRequestSender;
 
@@ -51,8 +55,16 @@ public class IntegrationRequestSenderTest {
     @Mock
     private MessageChannel auditProducer;
 
-    @Mock
-    private RuntimeBundleProperties runtimeBundleProperties;
+    @Spy
+    private RuntimeBundleProperties runtimeBundleProperties = new RuntimeBundleProperties() {
+        {
+            setAppName("appName");
+            setAppVersion("appVersion");
+            setServiceType("serviceType");
+            setServiceVersion("serviceVersion");
+            setRbSpringAppName("springAppName");
+        }
+    };
 
     @Mock
     private RuntimeBundleInfoAppender runtimeBundleInfoAppender;
@@ -60,6 +72,8 @@ public class IntegrationRequestSenderTest {
     @Mock
     private RuntimeBundleProperties.RuntimeBundleEventsProperties eventsProperties;
 
+    private IntegrationContextMessageBuilderFactory messageBuilderFactory;
+    
     @Mock
     private IntegrationContextEntity integrationContextEntity;
 
@@ -77,10 +91,13 @@ public class IntegrationRequestSenderTest {
     public void setUp() {
         initMocks(this);
 
+        messageBuilderFactory = new IntegrationContextMessageBuilderFactory(runtimeBundleProperties);
+        
         integrationRequestSender = new IntegrationRequestSender(runtimeBundleProperties,
                                                                 auditProducer,
                                                                 resolver,
-                                                                runtimeBundleInfoAppender);
+                                                                runtimeBundleInfoAppender,
+                                                                messageBuilderFactory);
 
         when(resolver.resolveDestination(CONNECTOR_TYPE)).thenReturn(integrationProducer);
 
@@ -92,6 +109,7 @@ public class IntegrationRequestSenderTest {
 
         IntegrationContextEntity contextEntity = mock(IntegrationContextEntity.class);
         given(contextEntity.getId()).willReturn(INTEGRATION_CONTEXT_ID);
+        
         IntegrationContext integrationContext = new IntegrationContextBuilder(null).from(contextEntity, delegateExecution, null);
         integrationRequest = new IntegrationRequestImpl(integrationContext);
         integrationRequest.setServiceFullName(APP_NAME);
@@ -130,7 +148,7 @@ public class IntegrationRequestSenderTest {
 
         IntegrationRequest sentIntegrationRequestEvent = integrationRequestMessage.getPayload();
         assertThat(sentIntegrationRequestEvent).isEqualTo(integrationRequest);
-        assertThat(integrationRequestMessage.getHeaders().get(IntegrationRequestSender.CONNECTOR_TYPE)).isEqualTo(CONNECTOR_TYPE);
+        assertThat(integrationRequestMessage.getHeaders().get(IntegrationContextMessageHeaders.CONNECTOR_TYPE)).isEqualTo(CONNECTOR_TYPE);
     }
 
     @Test
@@ -160,6 +178,19 @@ public class IntegrationRequestSenderTest {
         Message<CloudRuntimeEvent<?, ?>> message = auditMessageArgumentCaptor.getValue();
         assertThat(message.getPayload()).isInstanceOf(CloudIntegrationRequestedImpl.class);
 
+        Assertions.assertThat(message.getHeaders())
+            .containsKey("messagePayloadType")
+            .containsEntry("integrationContextId", INTEGRATION_CONTEXT_ID)
+            .containsEntry("processInstanceId", PROC_INST_ID)
+            .containsEntry("processDefinitionId", PROC_DEF_ID)
+            .containsEntry("appName","appName")
+            .containsEntry("appVersion","appVersion")
+            .containsEntry("serviceName","springAppName")
+            .containsEntry("serviceType","serviceType")
+            .containsEntry("serviceVersion","serviceVersion")
+            .containsEntry("serviceFullName","myApp");        
+        
+
         CloudIntegrationRequestedImpl integrationRequested = (CloudIntegrationRequestedImpl) message.getPayload();
 
         assertThat(integrationRequested.getEntity().getId()).isEqualTo(INTEGRATION_CONTEXT_ID);
@@ -167,4 +198,5 @@ public class IntegrationRequestSenderTest {
         assertThat(integrationRequested.getEntity().getProcessDefinitionId()).isEqualTo(PROC_DEF_ID);
         verify(runtimeBundleInfoAppender).appendRuntimeBundleInfoTo(integrationRequested);
     }
+    
 }
