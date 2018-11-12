@@ -30,7 +30,7 @@ import java.util.Collections;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.cloud.services.events.message.RuntimeBundleMessageBuilderFilterChainFactory;
+import org.activiti.cloud.services.events.message.CommandContextMessageBuilderFactory;
 import org.activiti.engine.impl.context.ExecutionContext;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.DeploymentEntity;
@@ -66,8 +66,8 @@ public class MessageProducerCommandContextCloseListenerTest {
     };
 
     @Spy
-    private RuntimeBundleMessageBuilderFilterChainFactory messageBuilderFilterChainFactory = 
-                new RuntimeBundleMessageBuilderFilterChainFactory(properties);
+    private CommandContextMessageBuilderFactory messageBuilderFilterChainFactory = 
+                new CommandContextMessageBuilderFactory(properties);
 
     @Mock
     private MessageChannel auditChannel;
@@ -85,6 +85,11 @@ public class MessageProducerCommandContextCloseListenerTest {
     public void setUp() throws Exception {
         initMocks(this);
         when(producer.auditProducer()).thenReturn(auditChannel);
+        
+        ExecutionContext executionContext = mockExecutionContext();
+        given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT))
+                .willReturn(executionContext);
+        
     }
 
     @Test
@@ -136,10 +141,6 @@ public class MessageProducerCommandContextCloseListenerTest {
         given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.PROCESS_ENGINE_EVENTS))
                 .willReturn(Collections.singletonList(event));
 
-        ExecutionContext executionContext = mockExecutionContext();
-
-        given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT)).willReturn(executionContext);
-
         // when
         closeListener.closed(commandContext);
 
@@ -155,6 +156,7 @@ public class MessageProducerCommandContextCloseListenerTest {
                                                       .containsEntry("appName","appName")
                                                       .containsEntry("appVersion","appVersion")
                                                       .containsEntry("serviceName","springAppName")
+                                                      .containsEntry("serviceType","serviceType")
                                                       .containsEntry("serviceVersion","serviceVersion")
                                                       .containsEntry("serviceFullName","springAppName");
     }

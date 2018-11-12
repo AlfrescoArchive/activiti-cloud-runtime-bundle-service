@@ -15,13 +15,6 @@
  */
 package org.activiti.cloud.services.events.message;
 
-import org.junit.Test;
-
-public class ExecutionContextMessageBuilderFilterTest {
-
-    @Test
-    public void testCommandContextMessageBuilderFilter() {
-        // TODO
-    }
-
+public interface MessageBuilderChainFactory<T> {
+    public MessageBuilderAppenderChain create(T context);
 }

@@ -15,8 +15,13 @@
  */
 package org.activiti.cloud.services.events.message;
 
-import org.springframework.messaging.support.MessageBuilder;
+import org.junit.Test;
 
-public interface MessageBuilderFilter {
-    public <T> MessageBuilder<T> apply(MessageBuilder<T> request);
+public class RuntimeBundleInfoMessageBuilderAppenderTest {
+
+    @Test
+    public void testApply() {
+        // TODO
+    }
+
 }

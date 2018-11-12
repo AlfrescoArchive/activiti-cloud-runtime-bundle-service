@@ -24,11 +24,11 @@ import org.activiti.engine.repository.ProcessDefinition;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
-public class ExecutionContextMessageBuilderFilter implements MessageBuilderFilter {
+public class ExecutionContextMessageBuilderAppender implements MessageBuilderAppender {
 
     private final CommandContext commandContext;
 
-    public ExecutionContextMessageBuilderFilter(CommandContext commandContext) {
+    public ExecutionContextMessageBuilderAppender(CommandContext commandContext) {
         this.commandContext = commandContext;
     }
 
@@ -36,7 +36,11 @@ public class ExecutionContextMessageBuilderFilter implements MessageBuilderFilte
     public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
         Assert.notNull(request, "request must not be null");
         
-        ExecutionContext executionContext = commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT);
+        if(commandContext == null)
+            return request;
+        
+        ExecutionContext executionContext = commandContext
+                .getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT);
 
         if(executionContext != null) {
             ExecutionEntity processInstance = executionContext.getProcessInstance();

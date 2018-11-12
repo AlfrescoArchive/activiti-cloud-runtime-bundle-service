@@ -15,6 +15,8 @@
  */
 package org.activiti.cloud.services.events.message;
 
-public interface MessageBuilderFilterChainFactory<T> {
-    public MessageBuilderFilterChain create(T context);
+import org.springframework.messaging.support.MessageBuilder;
+
+public interface MessageBuilderAppender {
+    public <T> MessageBuilder<T> apply(MessageBuilder<T> request);
 }

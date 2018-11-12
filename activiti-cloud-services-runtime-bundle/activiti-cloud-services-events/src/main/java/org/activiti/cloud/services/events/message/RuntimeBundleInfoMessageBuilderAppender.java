@@ -19,11 +19,11 @@ import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
-public class RuntimeBundleInfoMessageBuilderFilter implements MessageBuilderFilter {
+public class RuntimeBundleInfoMessageBuilderAppender implements MessageBuilderAppender {
 
     private final RuntimeBundleProperties properties;
 
-    public RuntimeBundleInfoMessageBuilderFilter(RuntimeBundleProperties properties) {
+    public RuntimeBundleInfoMessageBuilderAppender(RuntimeBundleProperties properties) {
         Assert.notNull(properties, "properties must not be null");
 
         this.properties = properties;
