@@ -31,11 +31,14 @@ public class RuntimeBundleInfoMessageBuilderFilter implements MessageBuilderFilt
 
     @Override
     public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
-        return request.setHeader("appName", properties.getAppName()).setHeader("appVersion", properties.getAppVersion())
-                .setHeader("serviceName", properties.getServiceName())
-                .setHeader("serviceFullName", properties.getServiceFullName())
-                .setHeader("serviceType", properties.getServiceType())
-                .setHeader("serviceVersion", properties.getServiceVersion());
+        Assert.notNull(request, "request must not be null");
+        
+        return request.setHeader(CloudRuntimeEventMessageHeaders.APP_NAME, properties.getAppName())
+                .setHeader(CloudRuntimeEventMessageHeaders.APP_VERSION, properties.getAppVersion())
+                .setHeader(CloudRuntimeEventMessageHeaders.SERVICE_NAME, properties.getServiceName())
+                .setHeader(CloudRuntimeEventMessageHeaders.SERVICE_FULL_NAME, properties.getServiceFullName())
+                .setHeader(CloudRuntimeEventMessageHeaders.SERVICE_TYPE, properties.getServiceType())
+                .setHeader(CloudRuntimeEventMessageHeaders.SERVICE_VERSION, properties.getServiceVersion());
     }
 
 }
