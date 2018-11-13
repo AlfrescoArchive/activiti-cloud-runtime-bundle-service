@@ -19,6 +19,9 @@ package org.activiti.cloud.starter.tests.runtime;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.api.process.model.IntegrationContext;
 import org.activiti.cloud.api.process.model.IntegrationRequest;
 import org.activiti.cloud.api.process.model.impl.IntegrationResultImpl;
@@ -37,12 +40,19 @@ public class ServiceTaskConsumerHandler {
 
     private final BinderAwareChannelResolver resolver;
     private final RuntimeBundleProperties runtimeBundleProperties;
+    private final ObjectMapper objectMapper;
 
     @Autowired
     public ServiceTaskConsumerHandler(BinderAwareChannelResolver resolver,
-                                      RuntimeBundleProperties runtimeBundleProperties) {
+                                      RuntimeBundleProperties runtimeBundleProperties,
+                                      ObjectMapper objectMapper) {
         this.resolver = resolver;
         this.runtimeBundleProperties = runtimeBundleProperties;
+        this.objectMapper = objectMapper;
+
+        this.objectMapper.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY);
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, false);
     }
 
     @StreamListener(value = ConnectorIntegrationChannels.INTEGRATION_EVENTS_CONSUMER)
