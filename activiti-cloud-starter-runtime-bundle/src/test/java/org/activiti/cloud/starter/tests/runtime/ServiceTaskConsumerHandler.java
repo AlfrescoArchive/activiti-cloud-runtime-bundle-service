@@ -49,11 +49,17 @@ public class ServiceTaskConsumerHandler {
     public void receive(IntegrationRequest integrationRequest) {
         IntegrationContext integrationContext = integrationRequest.getIntegrationContext();
         Map<String, Object> requestVariables = integrationContext.getInBoundVariables();
+
+        Object customPojo = requestVariables.get("customPojo");
+
         String variableToUpdate = "age";
 
         HashMap<String, Object> resultVariables = new HashMap<>();
         resultVariables.put(variableToUpdate,
                             ((Integer) requestVariables.get(variableToUpdate)) + 1);
+
+        resultVariables.put("customPojoTypeInConnector","Type of customPojo var in connector is "+customPojo.getClass());
+
         integrationContext.addOutBoundVariables(resultVariables);
 
         IntegrationResultImpl integrationResult = new IntegrationResultImpl(integrationRequest, integrationContext);

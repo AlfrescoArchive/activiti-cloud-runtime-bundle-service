@@ -48,6 +48,8 @@ public class MQServiceTaskIT {
     @Test
     public void shouldContinueExecution() {
         //given
+
+        CustomPojo customPojo = new CustomPojo();
         Map<String, Object> variables = new HashMap<>();
         variables.put("firstName",
                       "John");
@@ -55,6 +57,8 @@ public class MQServiceTaskIT {
                       "Smith");
         variables.put("age",
                       19);
+        variables.put("customPojo",customPojo
+                     );
 
         //when
         ProcessInstance procInst = runtimeService.startProcessInstanceByKey("MQServiceTaskProcess",
@@ -81,6 +85,10 @@ public class MQServiceTaskIT {
                                "Smith")
                 .containsEntry("age",
                                20);
+
+        assertThat(updatedVariables.get("customPojo").getClass()).isEqualTo(customPojo.getClass());
+
+        assertThat(updatedVariables.get("customPojoTypeInConnector")).isEqualTo("Type of customPojo var in connector is "+customPojo.getClass());
 
         //should be able to complete the process
         //when
