@@ -91,7 +91,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @EnableAutoConfiguration(exclude = {SecurityAutoConfiguration.class, SecurityFilterAutoConfiguration.class})
 public class ProcessInstanceAdminControllerImplIT {
 
-    private static final String DOCUMENTATION_IDENTIFIER = "process-admin";
+    private static final String DOCUMENTATION_IDENTIFIER = "process-instance-admin";
 
     private static final String DOCUMENTATION_IDENTIFIER_ALFRESCO = "process-instance-alfresco";
 
