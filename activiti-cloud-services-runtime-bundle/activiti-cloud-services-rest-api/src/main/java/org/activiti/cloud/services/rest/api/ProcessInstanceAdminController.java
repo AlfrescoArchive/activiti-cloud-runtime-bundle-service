@@ -19,6 +19,10 @@ public interface ProcessInstanceAdminController {
 
     @RequestMapping(method = RequestMethod.POST)
     ProcessInstanceResource startProcess(@RequestBody StartProcessPayload cmd);
+    
+    @RequestMapping(method = RequestMethod.POST,value = "{processInstanceId}/suspend")
+    ProcessInstanceResource suspend(@PathVariable String processInstanceId);
+
 
     @RequestMapping(method = RequestMethod.POST,value = "{processInstanceId}/resume")
     ProcessInstanceResource resume(@PathVariable String processInstanceId);

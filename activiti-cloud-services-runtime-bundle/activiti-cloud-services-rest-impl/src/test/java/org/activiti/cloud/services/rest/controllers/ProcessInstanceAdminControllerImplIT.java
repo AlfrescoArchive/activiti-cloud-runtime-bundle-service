@@ -16,6 +16,21 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
+import static org.activiti.cloud.services.rest.controllers.ProcessInstanceSamples.defaultProcessInstance;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -139,6 +154,19 @@ public class ProcessInstanceAdminControllerImplIT {
                 .andDo(MockMvcResultHandlers.print())
 
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/resume",
+                        pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
+    }
+    
+    @Test
+    public void suspend() throws Exception {
+        ProcessInstance processInstance = mock(ProcessInstance.class);
+         when(processAdminRuntime.processInstance("1")).thenReturn(processInstance);
+         when(processAdminRuntime.suspend(any())).thenReturn(defaultProcessInstance());
+         this.mockMvc.perform(RestDocumentationRequestBuilders.post("/admin/v1/process-instances/{processInstanceId}/suspend",
+                1))
+                .andExpect(status().isOk())
+                .andDo(MockMvcResultHandlers.print())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/suspend",
                         pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 }
