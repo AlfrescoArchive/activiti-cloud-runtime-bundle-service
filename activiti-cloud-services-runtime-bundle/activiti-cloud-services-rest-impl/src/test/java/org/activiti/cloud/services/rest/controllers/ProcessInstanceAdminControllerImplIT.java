@@ -160,13 +160,13 @@ public class ProcessInstanceAdminControllerImplIT {
     @Test
     public void suspend() throws Exception {
         ProcessInstance processInstance = mock(ProcessInstance.class);
-         when(processAdminRuntime.processInstance("1")).thenReturn(processInstance);
-         when(processAdminRuntime.suspend(any())).thenReturn(defaultProcessInstance());
-         this.mockMvc.perform(RestDocumentationRequestBuilders.post("/admin/v1/process-instances/{processInstanceId}/suspend",
-                1))
-                .andExpect(status().isOk())
-                .andDo(MockMvcResultHandlers.print())
-                .andDo(document(DOCUMENTATION_IDENTIFIER + "/suspend",
-                        pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
+        when(processAdminRuntime.processInstance("1")).thenReturn(processInstance);
+        when(processAdminRuntime.suspend(any())).thenReturn(defaultProcessInstance());
+        this.mockMvc.perform(RestDocumentationRequestBuilders.post("/admin/v1/process-instances/{processInstanceId}/suspend",
+               1))
+               .andExpect(status().isOk())
+               .andDo(MockMvcResultHandlers.print())
+               .andDo(document(DOCUMENTATION_IDENTIFIER + "/suspend",
+                       pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 }
