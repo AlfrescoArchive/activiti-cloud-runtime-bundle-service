@@ -341,7 +341,7 @@ public class ProcessInstanceIT {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }
-
+//almer
     @Test
     public void activateShouldPutASuspendedProcessInstanceBackToActiveState() {
         //given
