@@ -394,10 +394,14 @@ public class ProcessInstanceIT {
         //given
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
         
-        //First suspend process
+        //First suspend process and check that everything is OK
         //testadmin should see process instances at admin endpoint
         keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("testadmin");
         ResponseEntity<Void> responseEntity = adminExecuteRequestSuspendProcess(startProcessEntity);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.getProcessInstance(startProcessEntity);
+        //Check that process is really in a suspended state
+        assertThat(processInstanceEntity.getBody().getStatus()).isEqualTo(ProcessInstance.ProcessInstanceStatus.SUSPENDED);
         
         //when
         //change user
@@ -415,7 +419,7 @@ public class ProcessInstanceIT {
         
         //then
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.getProcessInstance(startProcessEntity);
+        processInstanceEntity = processInstanceRestTemplate.getProcessInstance(startProcessEntity);
         assertThat(processInstanceEntity.getBody().getStatus()).isEqualTo(ProcessInstance.ProcessInstanceStatus.RUNNING);
     }
     
