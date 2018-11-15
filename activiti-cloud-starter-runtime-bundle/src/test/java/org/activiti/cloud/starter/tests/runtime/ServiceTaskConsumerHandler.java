@@ -19,6 +19,7 @@ package org.activiti.cloud.starter.tests.runtime;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.api.process.model.IntegrationContext;
 import org.activiti.cloud.api.process.model.IntegrationRequest;
 import org.activiti.cloud.api.process.model.impl.IntegrationResultImpl;
@@ -37,12 +38,15 @@ public class ServiceTaskConsumerHandler {
 
     private final BinderAwareChannelResolver resolver;
     private final RuntimeBundleProperties runtimeBundleProperties;
+    private final ObjectMapper objectMapper;
 
     @Autowired
     public ServiceTaskConsumerHandler(BinderAwareChannelResolver resolver,
-                                      RuntimeBundleProperties runtimeBundleProperties) {
+                                      RuntimeBundleProperties runtimeBundleProperties,
+                                      ObjectMapper objectMapper) {
         this.resolver = resolver;
         this.runtimeBundleProperties = runtimeBundleProperties;
+        this.objectMapper = objectMapper;
     }
 
     @StreamListener(value = ConnectorIntegrationChannels.INTEGRATION_EVENTS_CONSUMER)
@@ -59,6 +63,9 @@ public class ServiceTaskConsumerHandler {
                             ((Integer) requestVariables.get(variableToUpdate)) + 1);
 
         resultVariables.put("customPojoTypeInConnector","Type of customPojo var in connector is "+customPojo.getClass());
+        resultVariables.put("customPojoField1InConnector", "Value of field1 on customPojo is " + objectMapper.convertValue(customPojo,CustomPojo.class).getField1());
+        //even the annotated pojo in connector won't be deserialized as the relevant type unless we tell objectMapper to do so
+        resultVariables.put("customPojoAnnotatedTypeInConnector", "Type of customPojoAnnotated var in connector is " + requestVariables.get("customPojoAnnotated").getClass());
 
         integrationContext.addOutBoundVariables(resultVariables);
 
