@@ -103,6 +103,8 @@ public class ProcessVariablesIT {
                       "Silva");
         variables.put("age",
                       15);
+        variables.put("boolvar",
+                true);
         variables.put("customPojo",objectMapper.readTree("{ \"test-json-variable-element1\":\"test-json-variable-value1\"}")
         );
         ResponseEntity<CloudProcessInstance> startResponse = processInstanceRestTemplate.startProcess(processDefinitionIds.get(PROCESS_WITH_VARIABLES2),
@@ -124,6 +126,9 @@ public class ProcessVariablesIT {
             assertThat(variablesContainEntry("age",
                                              15,
                                              variableCollection)).isTrue();
+            assertThat(variablesContainEntry("boolVar",
+                    true,
+                    variableCollection)).isTrue();
 
             assertThat(variableCollection)
                     .filteredOn("name","customPojo")

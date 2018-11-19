@@ -63,6 +63,8 @@ public class MQServiceTaskIT {
                       "Smith");
         variables.put("age",
                       19);
+        variables.put("boolVar",
+                true);
         variables.put("customPojo",customPojo
                      );
         variables.put("customPojoAnnotated",customPojoAnnotated);
@@ -91,7 +93,9 @@ public class MQServiceTaskIT {
                 .containsEntry("lastName",
                                "Smith")
                 .containsEntry("age",
-                               20);
+                               20)
+                .containsEntry("boolVar",
+                        false);
 
         //engine can resolve annotated pojo in var to correct type but not without annotation
         assertThat(updatedVariables.get("customPojo").getClass()).isEqualTo(ObjectNode.class);
