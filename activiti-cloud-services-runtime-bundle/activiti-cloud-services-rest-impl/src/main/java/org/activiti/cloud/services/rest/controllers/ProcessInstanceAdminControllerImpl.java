@@ -16,6 +16,7 @@
 package org.activiti.cloud.services.rest.controllers;
 
 import org.activiti.api.process.model.ProcessInstance;
+import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.payloads.StartProcessPayload;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
 import org.activiti.api.runtime.shared.query.Page;
@@ -29,7 +30,9 @@ import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -80,5 +83,17 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
     public ProcessInstanceResource startProcess(@RequestBody StartProcessPayload startProcessPayload) {
         return resourceAssembler.toResource(processAdminRuntime.start(startProcessPayload));
     }
+
+    @Override
+    public ProcessInstanceResource resume(@PathVariable String processInstanceId) {
+        return resourceAssembler.toResource(processAdminRuntime.resume(ProcessPayloadBuilder.resume(processInstanceId)));
+    }
+
+
+	@Override
+	public ProcessInstanceResource suspend(@PathVariable String processInstanceId) {
+		return resourceAssembler.toResource(processAdminRuntime.suspend(ProcessPayloadBuilder.suspend(processInstanceId)));
+	}
+	
 
 }

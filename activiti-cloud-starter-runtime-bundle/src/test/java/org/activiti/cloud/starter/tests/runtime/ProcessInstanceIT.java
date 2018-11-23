@@ -16,6 +16,11 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
+import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_ADMIN_RELATIVE_URL;
+import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,11 +66,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestClientException;
-
-import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_ADMIN_RELATIVE_URL;
-import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -331,7 +331,7 @@ public class ProcessInstanceIT {
         ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.getProcessInstance(startProcessEntity);
         assertThat(processInstanceEntity.getBody().getStatus()).isEqualTo(ProcessInstance.ProcessInstanceStatus.SUSPENDED);
     }
-
+    
     private ResponseEntity<Void> executeRequestSuspendProcess(ResponseEntity<CloudProcessInstance> processInstanceEntity) {
         ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + processInstanceEntity.getBody().getId() + "/suspend",
                                                                     HttpMethod.POST,
@@ -341,9 +341,41 @@ public class ProcessInstanceIT {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }
+    
+    @Test
+    public void adminSuspendShouldPutProcessInstanceInSuspendedState() {
+        //given
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+        
+        //when
+        ResponseEntity<Void> responseEntity = adminExecuteRequestSuspendProcess(startProcessEntity);
+
+        //then
+        //No User specified: should get an error, because admin endpoint
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        
+        //when
+        //testadmin should see process instances at admin endpoint
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("testadmin");
+        responseEntity = adminExecuteRequestSuspendProcess(startProcessEntity);
+        
+        //then
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.getProcessInstance(startProcessEntity);
+        assertThat(processInstanceEntity.getBody().getStatus()).isEqualTo(ProcessInstance.ProcessInstanceStatus.SUSPENDED);
+    }
+    
+    private ResponseEntity<Void> adminExecuteRequestSuspendProcess(ResponseEntity<CloudProcessInstance> processInstanceEntity) {
+        ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_ADMIN_RELATIVE_URL + processInstanceEntity.getBody().getId() + "/suspend",
+                                                                    HttpMethod.POST,
+                                                                    null,
+                                                                    new ParameterizedTypeReference<Void>() {
+                                                                    });
+        return responseEntity;
+    }
 
     @Test
-    public void activateShouldPutASuspendedProcessInstanceBackToActiveState() {
+    public void resumeShouldPutASuspendedProcessInstanceBackToActiveState() {
         //given
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
         executeRequestSuspendProcess(startProcessEntity);
@@ -355,6 +387,49 @@ public class ProcessInstanceIT {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.getProcessInstance(startProcessEntity);
         assertThat(processInstanceEntity.getBody().getStatus()).isEqualTo(ProcessInstance.ProcessInstanceStatus.RUNNING);
+    }
+    
+    @Test
+    public void adminResumeShouldPutASuspendedProcessInstanceBackToActiveState() {
+        //given
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+        
+        //First suspend process and check that everything is OK
+        //testadmin should see process instances at admin endpoint
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("testadmin");
+        ResponseEntity<Void> responseEntity = adminExecuteRequestSuspendProcess(startProcessEntity);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.getProcessInstance(startProcessEntity);
+        //Check that process is really in a suspended state
+        assertThat(processInstanceEntity.getBody().getStatus()).isEqualTo(ProcessInstance.ProcessInstanceStatus.SUSPENDED);
+        
+        //when
+        //change user
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser(keycloakTestUser);
+        responseEntity = adminExecuteRequestResumeProcess(startProcessEntity);
+
+        //then
+        //Bad user specified: should get an error, because admin endpoint
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        
+        //when
+        //testadmin should see process instances at admin endpoint
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("testadmin");
+        responseEntity = adminExecuteRequestResumeProcess(startProcessEntity);
+        
+        //then
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        processInstanceEntity = processInstanceRestTemplate.getProcessInstance(startProcessEntity);
+        assertThat(processInstanceEntity.getBody().getStatus()).isEqualTo(ProcessInstance.ProcessInstanceStatus.RUNNING);
+    }
+    
+    private ResponseEntity<Void> adminExecuteRequestResumeProcess(ResponseEntity<CloudProcessInstance> processInstanceEntity) {
+        ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_ADMIN_RELATIVE_URL + processInstanceEntity.getBody().getId() + "/resume",
+                                                                    HttpMethod.POST,
+                                                                    null,
+                                                                    new ParameterizedTypeReference<Void>() {
+                                                                    });
+        return responseEntity;
     }
 
     private ResponseEntity<PagedResources<CloudProcessDefinition>> getProcessDefinitions() {
