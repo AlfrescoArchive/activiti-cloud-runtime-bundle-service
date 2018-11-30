@@ -159,10 +159,8 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
             payload.setProcessInstanceId(processInstanceId);
             
         }
-        ProcessInstance processInstance=processRuntime.update(payload);
         
-        if (processInstance==null) return null;
-        return resourceAssembler.toResource(processInstance);
+        return resourceAssembler.toResource(processRuntime.update(payload));
     }
 
 }
