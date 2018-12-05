@@ -28,6 +28,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import java.util.Collections;
 
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
+import org.activiti.cloud.api.model.shared.impl.events.CloudRuntimeEventImpl;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.events.message.ExecutionContextMessageBuilderFactory;
@@ -79,7 +80,7 @@ public class MessageProducerCommandContextCloseListenerTest {
     private ArgumentCaptor<Message<CloudRuntimeEvent<?, ?>[]>> messageArgumentCaptor;
 
     @Mock
-    private CloudRuntimeEvent<?, ?> event;
+    private CloudRuntimeEventImpl<?, ?> event;
 
     @Before
     public void setUp() throws Exception {
