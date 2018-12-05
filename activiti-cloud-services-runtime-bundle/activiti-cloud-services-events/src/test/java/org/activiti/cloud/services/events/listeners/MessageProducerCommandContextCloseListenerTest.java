@@ -151,6 +151,7 @@ public class MessageProducerCommandContextCloseListenerTest {
                                                       .containsEntry("businessKey","mockBusinessKey")
                                                       .containsEntry("processDefinitionId","mockProcessDefinitionId")
                                                       .containsEntry("processDefinitionKey","mockProcessDefinitionKey")
+                                                      .containsEntry("processDefinitionVersion", 0)
                                                       .containsEntry("deploymentId","mockDeploymentId")
                                                       .containsEntry("deploymentName","mockDeploymentName")
                                                       .containsEntry("appName","appName")
@@ -175,6 +176,7 @@ public class MessageProducerCommandContextCloseListenerTest {
 
         when(processDefinition.getId()).thenReturn("mockProcessDefinitionId");
         when(processDefinition.getKey()).thenReturn("mockProcessDefinitionKey");
+        when(processDefinition.getVersion()).thenReturn(0);
 
         when(deploymentEntity.getId()).thenReturn("mockDeploymentId");
         when(deploymentEntity.getName()).thenReturn("mockDeploymentName");
