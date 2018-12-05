@@ -49,6 +49,7 @@ import org.activiti.cloud.services.events.listeners.CloudVariableDeletedProducer
 import org.activiti.cloud.services.events.listeners.CloudVariableUpdatedProducer;
 import org.activiti.cloud.services.events.listeners.MessageProducerCommandContextCloseListener;
 import org.activiti.cloud.services.events.listeners.ProcessEngineEventsAggregator;
+import org.activiti.cloud.services.events.message.AuditProducerRoutingKeyResolver;
 import org.activiti.cloud.services.events.message.CloudRuntimeEventMessageBuilderFactory;
 import org.activiti.cloud.services.events.message.ExecutionContextMessageBuilderFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -57,13 +58,19 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class CloudEventsAutoConfiguration {
-
+    
     @Bean
     @ConditionalOnMissingBean
     public RuntimeBundleInfoAppender runtimeBundleInfoAppender(RuntimeBundleProperties properties) {
         return new RuntimeBundleInfoAppender(properties);
     }
 
+    @Bean
+    @ConditionalOnMissingBean(AuditProducerRoutingKeyResolver.class)
+    public AuditProducerRoutingKeyResolver auditProducerRoutingKeyResolver() {
+        return new AuditProducerRoutingKeyResolver();
+    }
+    
     @Bean
     @ConditionalOnMissingBean
     public CloudRuntimeEventMessageBuilderFactory cloudRuntimeEventMessageBuilderFactory(RuntimeBundleProperties properties) {
