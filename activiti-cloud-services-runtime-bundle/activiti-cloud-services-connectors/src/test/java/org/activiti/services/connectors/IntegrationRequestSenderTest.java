@@ -38,11 +38,10 @@ public class IntegrationRequestSenderTest {
     private static final String EXECUTION_ID = "execId";
     private static final String PROC_INST_ID = "procInstId";
     private static final String PROC_DEF_ID = "procDefId";
+    private static final String BUSINESS_KEY = "businessKey";
     private static final String INTEGRATION_CONTEXT_ID = "intContextId";
     private static final String FLOW_NODE_ID = "myServiceTask";
     private static final String APP_NAME = "myApp";
-    private static final String PROCESS_DEFINITION_ID = "proc";
-    private static final String PROCESS_INSTANCE_ID = "";
 
     private IntegrationRequestSender integrationRequestSender;
 
@@ -129,6 +128,7 @@ public class IntegrationRequestSenderTest {
                 .withServiceTask(serviceTask)
                 .withProcessDefinitionId(PROC_DEF_ID)
                 .withProcessInstanceId(PROC_INST_ID)
+                .withBusinessKey(BUSINESS_KEY)
                 .build();
     }
 
@@ -180,6 +180,9 @@ public class IntegrationRequestSenderTest {
 
         Assertions.assertThat(message.getHeaders())
             .containsKey("messagePayloadType")
+            // TODO fix missing attributes in IntegrationContext 
+            //.containsKey("parentProcessInstanceId")
+            //.containsKey("businessKey")
             .containsEntry("integrationContextId", INTEGRATION_CONTEXT_ID)
             .containsEntry("processInstanceId", PROC_INST_ID)
             .containsEntry("processDefinitionId", PROC_DEF_ID)

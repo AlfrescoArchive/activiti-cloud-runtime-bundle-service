@@ -16,10 +16,11 @@
 
 package org.activiti.services.test;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.activiti.bpmn.model.ServiceTask;
 import org.activiti.engine.delegate.DelegateExecution;
-
-import static org.mockito.Mockito.*;
 
 public class DelegateExecutionBuilder {
 
@@ -48,6 +49,11 @@ public class DelegateExecutionBuilder {
             return this;
         }
 
+        public DelegateExecutionBuilder withBusinessKey(String businessKey) {
+            when(execution.getProcessInstanceBusinessKey()).thenReturn(businessKey);
+            return this;
+        }
+        
         public DelegateExecutionBuilder withFlowNodeId(String flowNodeId) {
             when(execution.getCurrentActivityId()).thenReturn(flowNodeId);
             return this;
