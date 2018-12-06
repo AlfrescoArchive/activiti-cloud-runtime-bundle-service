@@ -18,21 +18,24 @@ package org.activiti.cloud.services.events.listeners;
 
 import org.activiti.api.process.runtime.events.ProcessUpdatedEvent;
 import org.activiti.api.process.runtime.events.listener.ProcessEventListener;
+import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
+import org.springframework.messaging.support.MessageBuilder;
 
 public class CloudProcessUpdatedProducer implements ProcessEventListener<ProcessUpdatedEvent> {
 
     private final ToCloudProcessRuntimeEventConverter eventConverter;
-    private final ProcessEngineEventsAggregator eventsAggregator;
+    private ProcessEngineChannels producer;
 
     public CloudProcessUpdatedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
-                                       ProcessEngineEventsAggregator eventsAggregator) {
+                                       ProcessEngineChannels producer) {
         this.eventConverter = eventConverter;
-        this.eventsAggregator = eventsAggregator;
+        this.producer = producer;
     }
 
     @Override
     public void onEvent(ProcessUpdatedEvent event) {
-        eventsAggregator.add(eventConverter.from(event));
+        producer.auditProducer().send(MessageBuilder.withPayload(
+                eventConverter.from(event)).build());
     }
 }
