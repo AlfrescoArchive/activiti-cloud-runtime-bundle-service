@@ -22,6 +22,8 @@ import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
 import org.springframework.messaging.support.MessageBuilder;
 
+import java.util.Collections;
+
 public class CloudProcessUpdatedProducer implements ProcessEventListener<ProcessUpdatedEvent> {
 
     private final ToCloudProcessRuntimeEventConverter eventConverter;
@@ -36,6 +38,6 @@ public class CloudProcessUpdatedProducer implements ProcessEventListener<Process
     @Override
     public void onEvent(ProcessUpdatedEvent event) {
         producer.auditProducer().send(MessageBuilder.withPayload(
-                eventConverter.from(event)).build());
+                Collections.singletonList(eventConverter.from(event)).toArray()).build());
     }
 }
