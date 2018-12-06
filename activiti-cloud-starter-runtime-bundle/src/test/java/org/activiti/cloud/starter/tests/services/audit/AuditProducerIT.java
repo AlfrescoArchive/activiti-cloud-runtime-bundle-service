@@ -1,32 +1,5 @@
 package org.activiti.cloud.starter.tests.services.audit;
 
-import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_CREATED;
-import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_DELETED;
-import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_UPDATED;
-import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_CANCELLED;
-import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CANCELLED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_COMPLETED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CREATED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_RESUMED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_STARTED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_SUSPENDED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_UPDATED;
-import static org.activiti.api.process.model.events.SequenceFlowEvent.SequenceFlowEvents.SEQUENCE_FLOW_TAKEN;
-import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_ADDED;
-import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_REMOVED;
-import static org.activiti.api.task.model.events.TaskCandidateUserEvent.TaskCandidateUserEvents.TASK_CANDIDATE_USER_ADDED;
-import static org.activiti.api.task.model.events.TaskCandidateUserEvent.TaskCandidateUserEvents.TASK_CANDIDATE_USER_REMOVED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ACTIVATED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ASSIGNED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CANCELLED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_COMPLETED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CREATED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_SUSPENDED;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-import static org.awaitility.Awaitility.await;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +36,33 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_CREATED;
+import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_DELETED;
+import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_UPDATED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_CANCELLED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CANCELLED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_COMPLETED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CREATED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_RESUMED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_STARTED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_SUSPENDED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_UPDATED;
+import static org.activiti.api.process.model.events.SequenceFlowEvent.SequenceFlowEvents.SEQUENCE_FLOW_TAKEN;
+import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_ADDED;
+import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_REMOVED;
+import static org.activiti.api.task.model.events.TaskCandidateUserEvent.TaskCandidateUserEvents.TASK_CANDIDATE_USER_ADDED;
+import static org.activiti.api.task.model.events.TaskCandidateUserEvent.TaskCandidateUserEvents.TASK_CANDIDATE_USER_REMOVED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ACTIVATED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ASSIGNED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CANCELLED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_COMPLETED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CREATED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_SUSPENDED;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.awaitility.Awaitility.await;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(AuditProducerIT.AUDIT_PRODUCER_IT)
@@ -107,7 +107,7 @@ public class AuditProducerIT {
         //then
         assertThat(receivedEvents)
                 .filteredOn(event -> ProcessDefinitionEvent.ProcessDefinitionEvents.PROCESS_DEPLOYED.name().equals(event.getEventType().name()))
-                .extracting(event -> ((ProcessDefinition)event.getEntity()).getKey())
+                .extracting(event -> ((ProcessDefinition) event.getEntity()).getKey())
                 .contains(SIMPLE_PROCESS);
     }
 
@@ -121,6 +121,7 @@ public class AuditProducerIT {
                                                                                                                    .withVariable("name",
                                                                                                                                  "peter")
                                                                                                                    .withProcessInstanceName("my instance name")
+                                                                                                                   .withBusinessKey("my business key")
                                                                                                                    .build());
 
         //then
@@ -144,9 +145,12 @@ public class AuditProducerIT {
                     .filteredOn(event -> ACTIVITY_STARTED.equals(event.getEventType()))
                     .extracting(event -> ((CloudBPMNActivityStartedEvent) event).getEntity().getActivityType())
                     .containsExactly("startEvent",
-                            "userTask");
+                                     "userTask");
+            assertThat(receivedEvents).filteredOn(cloudRuntimeEvent -> PROCESS_CREATED.equals(cloudRuntimeEvent.getEventType()))
+                    .extracting(cloudRuntimeEvent -> ((ProcessInstance) cloudRuntimeEvent.getEntity()).getBusinessKey())
+                    .containsExactly("my business key");
             assertThat(receivedEvents).filteredOn(cloudRuntimeEvent -> PROCESS_STARTED.equals(cloudRuntimeEvent.getEventType()))
-                    .extracting(cloudRuntimeEvent -> ((ProcessInstance)cloudRuntimeEvent.getEntity()).getName())
+                    .extracting(cloudRuntimeEvent -> ((ProcessInstance) cloudRuntimeEvent.getEntity()).getName())
                     .containsExactly("my instance name");
         });
 
@@ -263,7 +267,6 @@ public class AuditProducerIT {
 
         //when
         ResponseEntity<CloudTask> deleteTask = taskRestTemplate.delete(task);
-
 
         //then
         await().untilAsserted(() -> {
