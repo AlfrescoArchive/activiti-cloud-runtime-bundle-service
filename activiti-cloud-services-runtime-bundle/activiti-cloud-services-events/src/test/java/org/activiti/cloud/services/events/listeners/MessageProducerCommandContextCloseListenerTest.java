@@ -29,8 +29,10 @@ import java.util.Collections;
 
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.api.model.shared.impl.events.CloudRuntimeEventImpl;
+import org.activiti.cloud.api.process.model.impl.events.CloudProcessCreatedEventImpl;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
+import org.activiti.cloud.services.events.converter.RuntimeBundleInfoAppender;
 import org.activiti.cloud.services.events.message.ExecutionContextMessageBuilderFactory;
 import org.activiti.engine.impl.context.ExecutionContext;
 import org.activiti.engine.impl.interceptor.CommandContext;
@@ -49,6 +51,36 @@ import org.springframework.messaging.MessageChannel;
 
 public class MessageProducerCommandContextCloseListenerTest {
 
+    private static final String LORG_ACTIVITI_CLOUD_API_MODEL_SHARED_EVENTS_CLOUD_RUNTIME_EVENT = "[Lorg.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;";
+
+    private static final String MOCK_PROCESS_NAME = "mockProcessName";
+
+    private static final String SPRING_APP_NAME = "springAppName";
+
+    private static final String SERVICE_VERSION = "serviceVersion";
+
+    private static final String SERVICE_TYPE = "serviceType";
+
+    private static final String APP_VERSION = "appVersion";
+
+    private static final String APP_NAME = "appName";
+
+    private static final String MOCK_DEPLOYMENT_NAME = "mockDeploymentName";
+
+    private static final String MOCK_DEPLOYMENT_ID = "mockDeploymentId";
+
+    private static final int MOCK_PROCESS_DEFINITION_VERSION = 0;
+
+    private static final String MOCK_PROCESS_DEFINITION_KEY = "mockProcessDefinitionKey";
+
+    private static final String MOCK_PROCESS_DEFINITION_ID = "mockProcessDefinitionId";
+
+    private static final String MOCK_PARENT_PROCESS_INSTANCE_ID = "mockParentId";
+
+    private static final String MOCK_PROCESS_INSTANCE_ID = "mockId";
+
+    private static final String MOCK_BUSINESS_KEY = "mockBusinessKey";
+
     @InjectMocks
     private MessageProducerCommandContextCloseListener closeListener;
 
@@ -58,11 +90,11 @@ public class MessageProducerCommandContextCloseListenerTest {
     @Spy
     private RuntimeBundleProperties properties = new RuntimeBundleProperties() {
         {
-            setAppName("appName");
-            setAppVersion("appVersion");
-            setServiceType("serviceType");
-            setServiceVersion("serviceVersion");
-            setRbSpringAppName("springAppName");
+            setAppName(APP_NAME);
+            setAppVersion(APP_VERSION);
+            setServiceType(SERVICE_TYPE);
+            setServiceVersion(SERVICE_VERSION);
+            setRbSpringAppName(SPRING_APP_NAME);
         }
     };
 
@@ -70,6 +102,10 @@ public class MessageProducerCommandContextCloseListenerTest {
     private ExecutionContextMessageBuilderFactory messageBuilderChainFactory = 
                 new ExecutionContextMessageBuilderFactory(properties);
 
+    @Spy
+    private RuntimeBundleInfoAppender runtimeBundleInfoAppender = 
+                new RuntimeBundleInfoAppender(properties);
+    
     @Mock
     private MessageChannel auditChannel;
 
@@ -79,12 +115,13 @@ public class MessageProducerCommandContextCloseListenerTest {
     @Captor
     private ArgumentCaptor<Message<CloudRuntimeEvent<?, ?>[]>> messageArgumentCaptor;
 
-    @Mock
     private CloudRuntimeEventImpl<?, ?> event;
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
+        event = new CloudProcessCreatedEventImpl();
+        
         when(producer.auditProducer()).thenReturn(auditChannel);
         
         ExecutionContext executionContext = mockExecutionContext();
@@ -106,6 +143,23 @@ public class MessageProducerCommandContextCloseListenerTest {
         verify(auditChannel).send(messageArgumentCaptor.capture());
         assertThat(messageArgumentCaptor.getValue()
                                         .getPayload()).containsExactly(event);
+        
+        CloudRuntimeEvent<?, ?>[] result = messageArgumentCaptor.getValue().getPayload();
+        
+        assertThat(result).hasSize(1);
+
+        assertThat(result[0].getProcessInstanceId()).isEqualTo(MOCK_PROCESS_INSTANCE_ID);
+        assertThat(result[0].getParentProcessInstanceId()).isEqualTo(MOCK_PARENT_PROCESS_INSTANCE_ID);
+        assertThat(result[0].getBusinessKey()).isEqualTo(MOCK_BUSINESS_KEY);
+        assertThat(result[0].getProcessDefinitionId()).isEqualTo(MOCK_PROCESS_DEFINITION_ID);
+        assertThat(result[0].getProcessDefinitionKey()).isEqualTo(MOCK_PROCESS_DEFINITION_KEY);
+        assertThat(result[0].getProcessDefinitionVersion()).isEqualTo(MOCK_PROCESS_DEFINITION_VERSION);
+
+        assertThat(result[0].getAppName()).isEqualTo(APP_NAME);
+        assertThat(result[0].getAppVersion()).isEqualTo(APP_VERSION);
+        assertThat(result[0].getServiceName()).isEqualTo(SPRING_APP_NAME);
+        assertThat(result[0].getServiceType()).isEqualTo(SERVICE_TYPE);
+        assertThat(result[0].getServiceVersion()).isEqualTo(SERVICE_VERSION);        
     }
 
     @Test
@@ -148,19 +202,23 @@ public class MessageProducerCommandContextCloseListenerTest {
         // then
         verify(auditChannel).send(messageArgumentCaptor.capture());
         assertThat(messageArgumentCaptor.getValue()
-                                        .getHeaders()).containsEntry("messagePayloadType","[Lorg.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;")
-                                                      .containsEntry("businessKey","mockBusinessKey")
-                                                      .containsEntry("processDefinitionId","mockProcessDefinitionId")
-                                                      .containsEntry("processDefinitionKey","mockProcessDefinitionKey")
-                                                      .containsEntry("processDefinitionVersion", 0)
-                                                      .containsEntry("deploymentId","mockDeploymentId")
-                                                      .containsEntry("deploymentName","mockDeploymentName")
-                                                      .containsEntry("appName","appName")
-                                                      .containsEntry("appVersion","appVersion")
-                                                      .containsEntry("serviceName","springAppName")
-                                                      .containsEntry("serviceType","serviceType")
-                                                      .containsEntry("serviceVersion","serviceVersion")
-                                                      .containsEntry("serviceFullName","springAppName");
+                                        .getHeaders()).containsEntry("messagePayloadType",LORG_ACTIVITI_CLOUD_API_MODEL_SHARED_EVENTS_CLOUD_RUNTIME_EVENT)
+                                                      .containsEntry("businessKey",MOCK_BUSINESS_KEY)
+                                                      .containsEntry("processInstanceId",MOCK_PROCESS_INSTANCE_ID)
+                                                      .containsEntry("processName",MOCK_PROCESS_NAME)
+                                                      .containsEntry("parentProcessInstanceId",MOCK_PARENT_PROCESS_INSTANCE_ID)
+                                                      .containsEntry("processDefinitionId",MOCK_PROCESS_DEFINITION_ID)
+                                                      .containsEntry("processDefinitionKey",MOCK_PROCESS_DEFINITION_KEY)
+                                                      .containsEntry("processDefinitionVersion", MOCK_PROCESS_DEFINITION_VERSION)
+                                                      .containsEntry("deploymentId",MOCK_DEPLOYMENT_ID)
+                                                      .containsEntry("deploymentName",MOCK_DEPLOYMENT_NAME)
+                                                      .containsEntry("appName", APP_NAME)
+                                                      .containsEntry("appVersion", APP_VERSION)
+                                                      .containsEntry("serviceName",SPRING_APP_NAME)
+                                                      .containsEntry("serviceType", SERVICE_TYPE)
+                                                      .containsEntry("serviceVersion", SERVICE_VERSION)
+                                                      .containsEntry("serviceFullName",SPRING_APP_NAME);
+        
     }
 
     private ExecutionContext mockExecutionContext() {
@@ -173,14 +231,17 @@ public class MessageProducerCommandContextCloseListenerTest {
         when(context.getDeployment()).thenReturn(deploymentEntity);
         when(context.getProcessDefinition()).thenReturn(processDefinition);
 
-        when(processInstance.getBusinessKey()).thenReturn("mockBusinessKey");
+        when(processInstance.getId()).thenReturn(MOCK_PROCESS_INSTANCE_ID);
+        when(processInstance.getParentId()).thenReturn(MOCK_PARENT_PROCESS_INSTANCE_ID);
+        when(processInstance.getBusinessKey()).thenReturn(MOCK_BUSINESS_KEY);
+        when(processInstance.getName()).thenReturn(MOCK_PROCESS_NAME);
 
-        when(processDefinition.getId()).thenReturn("mockProcessDefinitionId");
-        when(processDefinition.getKey()).thenReturn("mockProcessDefinitionKey");
-        when(processDefinition.getVersion()).thenReturn(0);
+        when(processDefinition.getId()).thenReturn(MOCK_PROCESS_DEFINITION_ID);
+        when(processDefinition.getKey()).thenReturn(MOCK_PROCESS_DEFINITION_KEY);
+        when(processDefinition.getVersion()).thenReturn(MOCK_PROCESS_DEFINITION_VERSION);
 
-        when(deploymentEntity.getId()).thenReturn("mockDeploymentId");
-        when(deploymentEntity.getName()).thenReturn("mockDeploymentName");
+        when(deploymentEntity.getId()).thenReturn(MOCK_DEPLOYMENT_ID);
+        when(deploymentEntity.getName()).thenReturn(MOCK_DEPLOYMENT_NAME);
         
         return context;
     }

@@ -98,9 +98,11 @@ public class CloudEventsAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public MessageProducerCommandContextCloseListener apiMessageProducerCommandContextCloseListener(ProcessEngineChannels processEngineChannels,
-                                                                                                    ExecutionContextMessageBuilderFactory executionContextMessageBuilderFactory) {
+                                                                                                    ExecutionContextMessageBuilderFactory executionContextMessageBuilderFactory,
+                                                                                                    RuntimeBundleInfoAppender runtimeBundleInfoAppender) {
         return new MessageProducerCommandContextCloseListener(processEngineChannels,
-                                                              executionContextMessageBuilderFactory);
+                                                              executionContextMessageBuilderFactory,
+                                                              runtimeBundleInfoAppender);
     }
 
     @Bean
