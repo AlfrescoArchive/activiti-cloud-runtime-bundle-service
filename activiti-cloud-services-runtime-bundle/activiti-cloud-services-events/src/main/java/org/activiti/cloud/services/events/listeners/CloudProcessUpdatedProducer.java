@@ -16,23 +16,28 @@
 
 package org.activiti.cloud.services.events.listeners;
 
-import org.activiti.api.process.model.events.BPMNSequenceFlowTakenEvent;
-import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
+import org.activiti.api.process.runtime.events.ProcessUpdatedEvent;
+import org.activiti.api.process.runtime.events.listener.ProcessEventListener;
+import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
+import org.springframework.messaging.support.MessageBuilder;
 
-public class CloudSequenceFlowTakenProducer implements BPMNElementEventListener<BPMNSequenceFlowTakenEvent> {
+import java.util.Collections;
+
+public class CloudProcessUpdatedProducer implements ProcessEventListener<ProcessUpdatedEvent> {
 
     private final ToCloudProcessRuntimeEventConverter eventConverter;
-    private final ProcessEngineEventsAggregator eventsAggregator;
+    private ProcessEngineChannels producer;
 
-    public CloudSequenceFlowTakenProducer(ToCloudProcessRuntimeEventConverter eventConverter,
-                                          ProcessEngineEventsAggregator eventsAggregator) {
+    public CloudProcessUpdatedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
+                                       ProcessEngineChannels producer) {
         this.eventConverter = eventConverter;
-        this.eventsAggregator = eventsAggregator;
+        this.producer = producer;
     }
 
     @Override
-    public void onEvent(BPMNSequenceFlowTakenEvent event) {
-        eventsAggregator.add(eventConverter.from(event));
+    public void onEvent(ProcessUpdatedEvent event) {
+        producer.auditProducer().send(MessageBuilder.withPayload(
+                Collections.singletonList(eventConverter.from(event)).toArray()).build());
     }
 }
