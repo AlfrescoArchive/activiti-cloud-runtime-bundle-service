@@ -122,10 +122,15 @@ public class SignalIT {
     public void shouldBroadcastSignalswithProcessInstanceRest() {
         //when
         org.activiti.engine.runtime.ProcessInstance procInst1 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
-        processInstanceRestTemplate.startProcess(processDefinitionIds.get("Broadcast Signal Event Process"));
-        org.activiti.engine.runtime.ProcessInstance procInst2 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
-
         assertThat(procInst1).isNotNull();
+        SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder.signal().withName("Test").build();
+        ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/signal",
+                                                                    HttpMethod.POST,
+                                                                    new HttpEntity<>(signalProcessInstancesCmd),
+                                                                    new ParameterizedTypeReference<Void>() {
+                                                                    });
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        org.activiti.engine.runtime.ProcessInstance procInst2 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
         assertThat(procInst2).isNotNull();
 
         await("Broadcast Signals").untilAsserted(() -> {
