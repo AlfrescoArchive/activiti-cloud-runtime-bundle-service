@@ -69,6 +69,7 @@ public class MessageProducerCommandContextCloseListener implements CommandContex
 
             // Add execution context attributes to every event 
             CloudRuntimeEvent<?, ?>[] payload = events.stream()
+                                                      .filter(CloudRuntimeEventImpl.class::isInstance)
                                                       .map(CloudRuntimeEventImpl.class::cast)
                                                       .map(runtimeBundleInfoAppender::appendRuntimeBundleInfoTo)
                                                       .map(executionContextInfoAppender::appendExecutionContextInfoTo)
