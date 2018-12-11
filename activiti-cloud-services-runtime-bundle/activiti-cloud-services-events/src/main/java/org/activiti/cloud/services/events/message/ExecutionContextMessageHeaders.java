@@ -29,6 +29,6 @@ public class ExecutionContextMessageHeaders {
     public final static String PROCESS_DEFINITION_NAME = "processDefinitionName";
     public final static String DEPLOYMENT_ID = "deploymentId";
     public final static String DEPLOYMENT_NAME = "deploymentName";
-    public final static String SUPER_EXECUTION_NAME = "superExecutionName";
+    public final static String PARENT_PROCESS_INSTANCE_NAME = "parentProcessInstanceName";
     
 }

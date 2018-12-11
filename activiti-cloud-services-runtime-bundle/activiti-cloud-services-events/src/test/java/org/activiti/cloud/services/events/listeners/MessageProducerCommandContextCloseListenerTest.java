@@ -51,6 +51,8 @@ import org.springframework.messaging.MessageChannel;
 
 public class MessageProducerCommandContextCloseListenerTest {
 
+    private static final String MOCK_PARENT_PROCESS_NAME = "mockParentProcessName";
+
     private static final String LORG_ACTIVITI_CLOUD_API_MODEL_SHARED_EVENTS_CLOUD_RUNTIME_EVENT = "[Lorg.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;";
 
     private static final String MOCK_PROCESS_NAME = "mockProcessName";
@@ -207,6 +209,7 @@ public class MessageProducerCommandContextCloseListenerTest {
                                                       .containsEntry("processInstanceId",MOCK_PROCESS_INSTANCE_ID)
                                                       .containsEntry("processName",MOCK_PROCESS_NAME)
                                                       .containsEntry("parentProcessInstanceId",MOCK_PARENT_PROCESS_INSTANCE_ID)
+                                                      .containsEntry("parentProcessInstanceName",MOCK_PARENT_PROCESS_NAME)
                                                       .containsEntry("processDefinitionId",MOCK_PROCESS_DEFINITION_ID)
                                                       .containsEntry("processDefinitionKey",MOCK_PROCESS_DEFINITION_KEY)
                                                       .containsEntry("processDefinitionVersion", MOCK_PROCESS_DEFINITION_VERSION)
@@ -232,10 +235,14 @@ public class MessageProducerCommandContextCloseListenerTest {
         when(context.getProcessDefinition()).thenReturn(processDefinition);
 
         when(processInstance.getId()).thenReturn(MOCK_PROCESS_INSTANCE_ID);
-        when(processInstance.getParentId()).thenReturn(MOCK_PARENT_PROCESS_INSTANCE_ID);
+        when(processInstance.getSuperExecutionId()).thenReturn(MOCK_PARENT_PROCESS_INSTANCE_ID);
         when(processInstance.getBusinessKey()).thenReturn(MOCK_BUSINESS_KEY);
         when(processInstance.getName()).thenReturn(MOCK_PROCESS_NAME);
 
+        ExecutionEntity superExectuion = mock(ExecutionEntity.class);
+        when(processInstance.getSuperExecution()).thenReturn(superExectuion);
+        when(superExectuion.getName()).thenReturn(MOCK_PARENT_PROCESS_NAME);
+        
         when(processDefinition.getId()).thenReturn(MOCK_PROCESS_DEFINITION_ID);
         when(processDefinition.getKey()).thenReturn(MOCK_PROCESS_DEFINITION_KEY);
         when(processDefinition.getVersion()).thenReturn(MOCK_PROCESS_DEFINITION_VERSION);

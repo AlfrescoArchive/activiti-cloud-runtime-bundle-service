@@ -37,7 +37,7 @@ public class ExecutionContextInfoAppender {
 
             if(processInstance != null) { 
                 event.setProcessInstanceId(processInstance.getId());
-                event.setParentProcessInstanceId(processInstance.getParentId());
+                event.setParentProcessInstanceId(processInstance.getSuperExecutionId());
                 event.setBusinessKey(processInstance.getBusinessKey());
             }
 
