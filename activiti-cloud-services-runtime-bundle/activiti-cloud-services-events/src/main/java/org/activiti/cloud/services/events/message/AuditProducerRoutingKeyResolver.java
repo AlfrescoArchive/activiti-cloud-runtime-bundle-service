@@ -45,7 +45,12 @@ public class AuditProducerRoutingKeyResolver implements RoutingKeyResolver<Map<S
     private String mapNullOrEmptyValue(Optional<Object> obj) {
         return obj.map(Object::toString)
                   .filter(notEmpty)
+                  .map(this::escape)
                   .orElse(UNDERSCORE);
+    }
+    
+    private String escape(String value) {
+        return value.replaceAll("[\\t\\s\\.*#:]", "-");
     }
 
 }
