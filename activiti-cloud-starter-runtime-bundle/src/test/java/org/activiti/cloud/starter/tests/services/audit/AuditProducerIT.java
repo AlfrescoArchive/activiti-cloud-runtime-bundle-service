@@ -4,10 +4,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.activiti.api.process.model.ProcessDefinition;
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
+import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
 import org.activiti.api.process.model.events.BPMNActivityEvent;
 import org.activiti.api.process.model.events.ProcessDefinitionEvent;
 import org.activiti.api.task.model.Task;
@@ -71,6 +73,13 @@ import static org.awaitility.Awaitility.await;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class AuditProducerIT {
 
+    public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName"};
+    public static final String[] EXECUTION_CONTEXT_HEADERS = {"businessKey", "processDefinitionId", "processDefinitionKey", "processInstanceId",
+                                                              "processName", "deploymentId", "deploymentName"};
+    public static final String[] ALL_REQUIRED_HEADERS = Stream.of(RUNTIME_BUNDLE_INFO_HEADERS, EXECUTION_CONTEXT_HEADERS)
+                                                     .flatMap(Stream::of)
+                                                     .toArray(String[]::new);
+
     public static final String AUDIT_PRODUCER_IT = "AuditProducerIT";
     private static final String SIMPLE_PROCESS = "SimpleProcess";
     private static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
@@ -104,6 +113,8 @@ public class AuditProducerIT {
         //when
         List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
 
+        assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
+
         //then
         assertThat(receivedEvents)
                 .filteredOn(event -> ProcessDefinitionEvent.ProcessDefinitionEvents.PROCESS_DEPLOYED.name().equals(event.getEventType().name()))
@@ -128,8 +139,8 @@ public class AuditProducerIT {
         await().untilAsserted(() -> {
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
 
-            assertThatHeadersExists(streamHandler.getReceivedHeaders());
-
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            
             assertThat(receivedEvents)
                     .extracting(event -> event.getEventType().name())
                     .containsExactly(PROCESS_CREATED.name(),
@@ -159,8 +170,8 @@ public class AuditProducerIT {
         //then
         await().untilAsserted(() -> {
 
-            assertThatHeadersExists(streamHandler.getReceivedHeaders());
-
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            
             assertThat(streamHandler.getLatestReceivedEvents())
                 .extracting(event -> event.getEventType().name())
                 .containsExactly(PROCESS_SUSPENDED.name(),
@@ -172,8 +183,8 @@ public class AuditProducerIT {
 
         //then
         await().untilAsserted(() -> {
-            assertThatHeadersExists(streamHandler.getReceivedHeaders());
-
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            
             assertThat(streamHandler.getLatestReceivedEvents())
                 .extracting(event -> event.getEventType().name())
                 .containsExactly(PROCESS_RESUMED.name(),
@@ -187,8 +198,8 @@ public class AuditProducerIT {
 
         //then
         await().untilAsserted(() -> {
-            assertThatHeadersExists(streamHandler.getReceivedHeaders());
-
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            
             assertThat(streamHandler.getLatestReceivedEvents())
                     .extracting(event -> event.getEventType().name())
                     .containsExactly(VARIABLE_UPDATED.name());
@@ -201,11 +212,12 @@ public class AuditProducerIT {
         //when
         taskRestTemplate.claim(task);
         await().untilAsserted(() -> {
-            assertThatHeadersExists(streamHandler.getReceivedHeaders());
-
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+                            
             assertThat(streamHandler.getLatestReceivedEvents())
                 .extracting(event -> event.getEventType().name())
-                .containsExactly(TASK_ASSIGNED.name()
+                .containsExactly(TASK_ASSIGNED.name(),
+                                 TASK_UPDATED.name()
                 );
         });
 
@@ -214,33 +226,36 @@ public class AuditProducerIT {
 
         //then
         await().untilAsserted(() -> {
-            assertThatHeadersExists(streamHandler.getReceivedHeaders());
-
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+                            
             assertThat(streamHandler.getLatestReceivedEvents())
-                    .extracting(event -> event.getEventType().name())
-                    .containsExactly(VARIABLE_UPDATED.name(),/*task local var copied back to proc var*/
-                                     TASK_COMPLETED.name(),
-                                     TASK_CANDIDATE_GROUP_REMOVED.name(),
-                                     TASK_CANDIDATE_USER_REMOVED.name(),
-                                     BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*user task*/,
-                                     SEQUENCE_FLOW_TAKEN.name(),
-                                     ACTIVITY_STARTED.name()/*end event*/,
-                                     BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*end event*/,
-                                     PROCESS_COMPLETED.name());
+                .extracting(event -> event.getEventType().name())
+                .containsExactly(VARIABLE_UPDATED.name(),/*task local var copied back to proc var*/
+                                 TASK_COMPLETED.name(),
+                                 TASK_CANDIDATE_GROUP_REMOVED.name(),
+                                 TASK_CANDIDATE_USER_REMOVED.name(),
+                                 BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*user task*/,
+                                 SEQUENCE_FLOW_TAKEN.name(),
+                                 ACTIVITY_STARTED.name()/*end event*/,
+                                 BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*end event*/,
+                                 PROCESS_COMPLETED.name());
+        });
 
             assertThat(streamHandler.getLatestReceivedEvents())
                     .filteredOn(event -> event.getEventType().equals(TASK_COMPLETED))
                     .extracting(event -> ((Task) event.getEntity()).getStatus())
                     .containsOnly(Task.TaskStatus.COMPLETED);
-        });
     }
 
     @Test
     public void shouldProduceEventsForAProcessDeletion() {
         //given
-        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS),
-                                                                                                           Collections.emptyMap(),
-                                                                                                           "businessKey");
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
+                                                                                                               .withProcessDefinitionId(processDefinitionIds.get(SIMPLE_PROCESS))
+                                                                                                               .withProcessInstanceName("processInstanceName")
+                                                                                                               .withBusinessKey("businessKey")
+                                                                                                               .withVariables(Collections.emptyMap())
+                                                                                                               .build());
 
         //when
         processInstanceRestTemplate.delete(startProcessEntity);
@@ -248,8 +263,8 @@ public class AuditProducerIT {
         //then
         await().untilAsserted(() -> {
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
-
-            assertThatHeadersExists(streamHandler.getReceivedHeaders());
+            
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
 
             assertThat(receivedEvents)
                     .extracting(event -> event.getEventType().name())
@@ -276,9 +291,24 @@ public class AuditProducerIT {
         //then
         await().untilAsserted(() -> {
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
             assertThat(receivedEvents)
                     .extracting(event -> event.getEventType().name())
                     .containsExactly(PROCESS_UPDATED.name());
+
+            assertThat(receivedEvents)
+                    .extracting(event -> event.getEntity())
+                    .extracting(ProcessInstance.class::cast)
+                    .extracting(event -> event.getName())
+                    .containsExactly("name");
+
+            assertThat(receivedEvents)
+                    .extracting(event -> event.getEntity())
+                    .extracting(ProcessInstance.class::cast)
+                    .extracting(entity -> entity.getBusinessKey())
+                    .containsExactly("businessKey");
         });
     }
 
@@ -345,6 +375,9 @@ public class AuditProducerIT {
         //then
         await().untilAsserted(() -> {
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
+
             assertThat(receivedEvents)
                     .hasSize(1)
                     .extracting(CloudRuntimeEvent::getEventType,
