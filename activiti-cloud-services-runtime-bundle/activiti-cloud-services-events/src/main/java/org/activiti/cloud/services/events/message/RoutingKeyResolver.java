@@ -18,6 +18,8 @@ package org.activiti.cloud.services.events.message;
 
 public interface RoutingKeyResolver<T> {
 
-    String resolve(T value);
+    default String resolve(T value) {
+        return null;
+    };
     
 }

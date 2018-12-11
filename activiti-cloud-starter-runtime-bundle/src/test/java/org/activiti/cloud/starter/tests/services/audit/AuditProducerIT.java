@@ -73,7 +73,8 @@ import static org.awaitility.Awaitility.await;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class AuditProducerIT {
 
-    public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName"};
+    public static final String ROUTING_KEY_HEADER = "routingKey";
+    public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
     public static final String[] EXECUTION_CONTEXT_HEADERS = {"businessKey", "processDefinitionId", "processDefinitionKey", "processInstanceId",
                                                               "processName", "deploymentId", "deploymentName"};
     public static final String[] ALL_REQUIRED_HEADERS = Stream.of(RUNTIME_BUNDLE_INFO_HEADERS, EXECUTION_CONTEXT_HEADERS)

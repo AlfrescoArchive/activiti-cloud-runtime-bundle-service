@@ -17,29 +17,56 @@ package org.activiti.cloud.services.events.message;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.util.Assert;
 
 public class MessageBuilderAppenderChain {
 
+    private static final String ROUTING_KEY = "routingKey";
+
+    private static final String MESSAGE_PAYLOAD_TYPE = "messagePayloadType";
+
     private final List<MessageBuilderAppender> appenders = new ArrayList<>();
 
+    // Noop routing key resolver
+    private RoutingKeyResolver<Map<String, Object>> routingKeyResolver = new RoutingKeyResolver<Map<String,Object>>() { };
+    
+    public MessageBuilderAppenderChain() {
+        // Silence is golden
+    }
+    
     public <P> MessageBuilder<P> withPayload(P payload) {
         Assert.notNull(payload, "payload must not be null");
-        
-        MessageBuilder<P> messageBuilder = MessageBuilder.withPayload(payload);
 
+        // So we can access headers later
+        MessageHeaderAccessor accessor = new MessageHeaderAccessor();
+        accessor.setLeaveMutable(true);
+        
+        MessageBuilder<P> messageBuilder = MessageBuilder.withPayload(payload)
+                                                         .setHeaders(accessor);
         // Let's resolve payload class name 
-        messageBuilder.setHeader("messagePayloadType", payload.getClass().getName());
+        messageBuilder.setHeader(MESSAGE_PAYLOAD_TYPE, payload.getClass().getName());
         
         for (MessageBuilderAppender appender : appenders) {
             appender.apply(messageBuilder);
         }
 
+        // Let's resolve and set routingKey in the message headers if present
+        resolveRoutingKey(accessor.getMessageHeaders())
+                .ifPresent(routingKey -> accessor.setHeader(ROUTING_KEY, routingKey));
+
         return messageBuilder;
     }
-
+    
+    protected Optional<String> resolveRoutingKey(MessageHeaders messageHeaders) {
+        return Optional.ofNullable(routingKeyResolver.resolve(messageHeaders));
+    }
+    
     public MessageBuilderAppenderChain chain(MessageBuilderAppender filter) {
         Assert.notNull(filter, "filter must not be null");
 
@@ -48,4 +75,12 @@ public class MessageBuilderAppenderChain {
         return this;
     }
 
+    public MessageBuilderAppenderChain routingKeyResolver(RoutingKeyResolver<Map<String, Object>> routingKeyResolver) {
+        Assert.notNull(routingKeyResolver, "routingKeyResolver must not be null");
+
+        this.routingKeyResolver = routingKeyResolver;
+
+        return this;
+    }
+    
 }

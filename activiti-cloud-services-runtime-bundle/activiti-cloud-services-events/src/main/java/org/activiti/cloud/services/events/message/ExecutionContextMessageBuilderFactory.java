@@ -33,6 +33,7 @@ public class ExecutionContextMessageBuilderFactory
     @Override
     public MessageBuilderAppenderChain create(ExecutionContext executionContext) {
         return new MessageBuilderAppenderChain()
+                .routingKeyResolver(new AuditProducerRoutingKeyResolver())
                 .chain(new RuntimeBundleInfoMessageBuilderAppender(properties))
                 .chain(new ExecutionContextMessageBuilderAppender(executionContext));
     }

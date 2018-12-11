@@ -33,6 +33,7 @@ public class CloudRuntimeEventMessageBuilderFactory
     @Override
     public MessageBuilderAppenderChain create(CloudRuntimeEvent<?, ?> event) {
         return new MessageBuilderAppenderChain()
+                .routingKeyResolver(new AuditProducerRoutingKeyResolver())
                 .chain(new RuntimeBundleInfoMessageBuilderAppender(properties))
                 .chain(new CloudRuntimeEventMessageBuilderAppender(event));
     }

@@ -18,7 +18,6 @@ package org.activiti.cloud.services.events.message;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,9 +25,6 @@ public class AuditProducerRoutingKeyResolver implements RoutingKeyResolver<Map<S
     
     private static final String UNDERSCORE = "_";
     
-    Predicate<String> isEmpty = String::isEmpty;
-    Predicate<String> notEmpty = isEmpty.negate();    
-
     @Override
     public String resolve(Map<String, Object> headers) {
         return Stream.of(RuntimeBundleInfoMessageHeaders.SERVICE_NAME,
@@ -44,12 +40,12 @@ public class AuditProducerRoutingKeyResolver implements RoutingKeyResolver<Map<S
     
     private String mapNullOrEmptyValue(Optional<Object> obj) {
         return obj.map(Object::toString)
-                  .filter(notEmpty)
-                  .map(this::escape)
+                  .filter(value -> !value.isEmpty())
+                  .map(this::escapeIllegalCharacters)
                   .orElse(UNDERSCORE);
     }
     
-    private String escape(String value) {
+    private String escapeIllegalCharacters(String value) {
         return value.replaceAll("[\\t\\s\\.*#:]", "-");
     }
 

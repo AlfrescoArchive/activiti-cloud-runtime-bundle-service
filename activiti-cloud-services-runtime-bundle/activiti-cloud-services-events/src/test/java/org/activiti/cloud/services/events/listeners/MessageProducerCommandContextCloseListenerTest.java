@@ -51,6 +51,8 @@ import org.springframework.messaging.MessageChannel;
 
 public class MessageProducerCommandContextCloseListenerTest {
 
+    private static final String MOCK_ROUTING_KEY = "springAppName.appName.mockProcessDefinitionKey.mockProcessInstanceId.mockBusinessKey";
+
     private static final String MOCK_PARENT_PROCESS_NAME = "mockParentProcessName";
 
     private static final String LORG_ACTIVITI_CLOUD_API_MODEL_SHARED_EVENTS_CLOUD_RUNTIME_EVENT = "[Lorg.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;";
@@ -79,7 +81,7 @@ public class MessageProducerCommandContextCloseListenerTest {
 
     private static final String MOCK_PARENT_PROCESS_INSTANCE_ID = "mockParentId";
 
-    private static final String MOCK_PROCESS_INSTANCE_ID = "mockId";
+    private static final String MOCK_PROCESS_INSTANCE_ID = "mockProcessInstanceId";
 
     private static final String MOCK_BUSINESS_KEY = "mockBusinessKey";
 
@@ -204,7 +206,8 @@ public class MessageProducerCommandContextCloseListenerTest {
         // then
         verify(auditChannel).send(messageArgumentCaptor.capture());
         assertThat(messageArgumentCaptor.getValue()
-                                        .getHeaders()).containsEntry("messagePayloadType",LORG_ACTIVITI_CLOUD_API_MODEL_SHARED_EVENTS_CLOUD_RUNTIME_EVENT)
+                                        .getHeaders()).containsEntry("routingKey", MOCK_ROUTING_KEY)
+                                                      .containsEntry("messagePayloadType",LORG_ACTIVITI_CLOUD_API_MODEL_SHARED_EVENTS_CLOUD_RUNTIME_EVENT)
                                                       .containsEntry("businessKey",MOCK_BUSINESS_KEY)
                                                       .containsEntry("processInstanceId",MOCK_PROCESS_INSTANCE_ID)
                                                       .containsEntry("processName",MOCK_PROCESS_NAME)
