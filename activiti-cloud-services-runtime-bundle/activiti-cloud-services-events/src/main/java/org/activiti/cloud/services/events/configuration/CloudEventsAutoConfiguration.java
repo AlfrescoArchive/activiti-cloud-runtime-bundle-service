@@ -122,9 +122,9 @@ public class CloudEventsAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public CloudTaskUpdatedProducer cloudTaskUpdatedProducer(ToCloudTaskRuntimeEventConverter taskRuntimeEventConverter,
-                                                             ProcessEngineChannels processEngineChannels) {
+                                                             ProcessEngineEventsAggregator eventsAggregator) {
         return new CloudTaskUpdatedProducer(taskRuntimeEventConverter,
-                                            processEngineChannels);
+                                            eventsAggregator);
     }
 
     @Bean
@@ -249,10 +249,10 @@ public class CloudEventsAutoConfiguration {
 
     @Bean
     public CloudProcessUpdatedProducer cloudProcessUpdatedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
-                                                             ProcessEngineChannels processEngineChannels) {
+                                                                   ProcessEngineEventsAggregator eventsAggregator) {
         return new CloudProcessUpdatedProducer(eventConverter,
-                                            processEngineChannels);
-    }
+                                               eventsAggregator);
+    } 
 
     @Bean
     @ConditionalOnMissingBean
