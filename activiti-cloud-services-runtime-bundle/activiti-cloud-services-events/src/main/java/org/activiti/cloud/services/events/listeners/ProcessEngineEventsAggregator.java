@@ -22,6 +22,7 @@ import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.api.model.shared.events.CloudVariableEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessRuntimeEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskRuntimeEvent;
+import org.activiti.cloud.services.events.converter.CachingExecutionContext;
 import org.activiti.engine.impl.context.ExecutionContext;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
@@ -60,11 +61,20 @@ public class ProcessEngineEventsAggregator extends BaseCommandContextEventsAggre
 
         // Let's find and cache ExecutionContext for executionId
         if(executionId != null && commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT) == null) {
-            ExecutionEntity executionEntity = commandContext.getExecutionEntityManager().findById(executionId);
+            ExecutionEntity executionEntity = commandContext.getExecutionEntityManager()
+                                                            .findById(executionId);
             
-            if(executionEntity != null)
-                commandContext.addAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT, new ExecutionContext(executionEntity));
+            ExecutionContext executionContext = createExecutionContext(executionEntity);
+            
+            if (executionEntity != null) {
+                commandContext.addAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT,
+                                            executionContext);
+            }
         }
+    }
+    
+    protected ExecutionContext createExecutionContext(ExecutionEntity executionEntity) {
+        return new CachingExecutionContext(executionEntity);
     }
 
     protected String resolveExecutionId(CloudRuntimeEvent<?, ?> element) {
