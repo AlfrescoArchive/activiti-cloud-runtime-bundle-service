@@ -166,8 +166,9 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     @Override
     public PagedResources<ProcessInstanceResource> subprocesses(@PathVariable String processInstanceId,
                                                                 Pageable pageable) {
-        Page<ProcessInstance> processInstancePage = processRuntime.subprocesses(pageConverter.toAPIPageable(pageable), 
-                                                                                ProcessPayloadBuilder.subprocesses(processInstanceId));
+        Page<ProcessInstance> processInstancePage = processRuntime.subprocesses(ProcessPayloadBuilder.subprocesses(processInstanceId),
+                                                                                pageConverter.toAPIPageable(pageable)
+                                                                                );
                 
               
         return pagedResourcesAssembler.toResource(pageable,
