@@ -37,6 +37,22 @@ import org.springframework.stereotype.Component;
 @EnableBinding(ConnectorIntegrationChannels.class)
 public class ServiceTaskConsumerHandler {
 
+    private static final String SERVICE_FULL_NAME = "serviceFullName";
+    private static final String SERVICE_VERSION = "serviceVersion";
+    private static final String SERVICE_TYPE = "serviceType";
+    private static final String SERVICE_NAME = "serviceName";
+    private static final String APP_VERSION = "appVersion";
+    private static final String APP_NAME = "appName";
+    private static final String PROCESS_DEFINITION_ID = "processDefinitionId";
+    private static final String PROCESS_INSTANCE_ID = "processInstanceId";
+    private static final String INTEGRATION_CONTEXT_ID = "integrationContextId";
+    private static final String CONNECTOR_TYPE = "connectorType";
+    private static final String BUSINESS_KEY = "businessKey";
+    private static final String PROCESS_DEFINITION_KEY = "processDefinitionKey";
+    private static final String PROCESS_DEFINITION_VERSION = "processDefinitionVersion";
+    private static final String MESSAGE_PAYLOAD_TYPE = "messagePayloadType";
+    private static final String ROUTING_KEY = "routingKey";
+    
     private final BinderAwareChannelResolver resolver;
     private final RuntimeBundleProperties runtimeBundleProperties;
 
@@ -53,22 +69,23 @@ public class ServiceTaskConsumerHandler {
         IntegrationContext integrationContext = integrationRequest.getIntegrationContext();
         
         Assertions.assertThat(headers)
-            .containsKey("routingKey")
-            .containsKey("messagePayloadType")
+            .containsKey(ROUTING_KEY)
+            .containsKey(MESSAGE_PAYLOAD_TYPE)
             // @TODO fix missing attributes in IntegrationContext 
             //.containsEntry("parentProcessInstanceId")
-            //.containsEntry("processDefinitionKey")
-            //.containsEntry("businessKey")
-            .containsEntry("connectorType", integrationContext.getConnectorType())
-            .containsEntry("integrationContextId", integrationContext.getId())
-            .containsEntry("processInstanceId", integrationContext.getProcessInstanceId())
-            .containsEntry("processDefinitionId", integrationContext.getProcessDefinitionId())
-            .containsEntry("appName", integrationRequest.getAppName())
-            .containsEntry("appVersion", integrationRequest.getAppVersion())
-            .containsEntry("serviceName", integrationRequest.getServiceName())
-            .containsEntry("serviceType", integrationRequest.getServiceType())
-            .containsEntry("serviceVersion", integrationRequest.getServiceVersion())
-            .containsEntry("serviceFullName", integrationRequest.getServiceFullName());        
+            .containsEntry(PROCESS_DEFINITION_VERSION, integrationContext.getProcessDefinitionVersion())
+            .containsEntry(PROCESS_DEFINITION_KEY, integrationContext.getProcessDefinitionKey())
+            .containsEntry(BUSINESS_KEY, integrationContext.getBusinessKey())
+            .containsEntry(CONNECTOR_TYPE, integrationContext.getConnectorType())
+            .containsEntry(INTEGRATION_CONTEXT_ID, integrationContext.getId())
+            .containsEntry(PROCESS_INSTANCE_ID, integrationContext.getProcessInstanceId())
+            .containsEntry(PROCESS_DEFINITION_ID, integrationContext.getProcessDefinitionId())
+            .containsEntry(APP_NAME, integrationRequest.getAppName())
+            .containsEntry(APP_VERSION, integrationRequest.getAppVersion())
+            .containsEntry(SERVICE_NAME, integrationRequest.getServiceName())
+            .containsEntry(SERVICE_TYPE, integrationRequest.getServiceType())
+            .containsEntry(SERVICE_VERSION, integrationRequest.getServiceVersion())
+            .containsEntry(SERVICE_FULL_NAME, integrationRequest.getServiceFullName());        
         
         Map<String, Object> requestVariables = integrationContext.getInBoundVariables();
         

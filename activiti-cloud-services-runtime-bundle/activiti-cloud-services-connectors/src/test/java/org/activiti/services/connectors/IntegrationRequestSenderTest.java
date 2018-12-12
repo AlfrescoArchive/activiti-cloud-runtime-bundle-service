@@ -1,6 +1,5 @@
 package org.activiti.services.connectors;
 
-import static org.activiti.services.test.DelegateExecutionBuilder.anExecution;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -22,6 +21,7 @@ import org.activiti.engine.impl.persistence.entity.integration.IntegrationContex
 import org.activiti.runtime.api.connector.IntegrationContextBuilder;
 import org.activiti.services.connectors.message.IntegrationContextMessageBuilderFactory;
 import org.activiti.services.connectors.message.IntegrationContextMessageHeaders;
+import org.activiti.services.test.DelegateExecutionBuilder;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +36,8 @@ import org.springframework.messaging.MessageChannel;
 
 public class IntegrationRequestSenderTest {
 
+    private static final String MY_PARENT_PROC_ID = "my-parent-proc-id";
+    private static final String MY_PROC_DEF_KEY = "my-proc-def-key";
     private static final String PAYMENT_CONNECTOR_TYPE = "payment";
     private static final String SERVICE_VERSION = "serviceVersion";
     private static final String SERVICE_TYPE = "serviceType";
@@ -45,7 +47,7 @@ public class IntegrationRequestSenderTest {
     private static final String EXECUTION_ID = "execId";
     private static final String PROC_INST_ID = "procInstId";
     private static final String PROC_DEF_ID = "procDefId";
-    private static final String BUSINESS_KEY = "businessKey";
+    private static final String BUSINESS_KEY = "my-business-key";
     private static final String INTEGRATION_CONTEXT_ID = "intContextId";
     private static final String FLOW_NODE_ID = "myServiceTask";
     private static final String APP_NAME = "appName";
@@ -131,12 +133,15 @@ public class IntegrationRequestSenderTest {
         ServiceTask serviceTask = new ServiceTask();
         serviceTask.setImplementation(CONNECTOR_TYPE);
 
-        delegateExecution = anExecution()
-                .withServiceTask(serviceTask)
-                .withProcessDefinitionId(PROC_DEF_ID)
-                .withProcessInstanceId(PROC_INST_ID)
-                .withBusinessKey(BUSINESS_KEY)
-                .build();
+        delegateExecution = DelegateExecutionBuilder.anExecution()
+                                                    .withServiceTask(serviceTask)
+                                                    .withProcessDefinitionId(PROC_DEF_ID)
+                                                    .withProcessInstanceId(PROC_INST_ID)
+                                                    .withBusinessKey(BUSINESS_KEY)
+                                                    .withProcessDefinitionKey(MY_PROC_DEF_KEY)
+                                                    .withProcessDefinitionVersion(1)
+                                                    .withParentProcessInstanceId(MY_PARENT_PROC_ID)
+                                                    .build();
     }
 
     private void configureProperties() {
@@ -188,10 +193,10 @@ public class IntegrationRequestSenderTest {
         Assertions.assertThat(message.getHeaders())
             .containsKey("routingKey")
             .containsKey("messagePayloadType")
-            // @TODO fix missing attributes in IntegrationContext 
-            //.containsKey("parentProcessInstanceId")
-            //.containsKey("processDefinitionKey")
-            //.containsKey("businessKey")
+            .containsEntry("parentProcessInstanceId",MY_PARENT_PROC_ID)
+            .containsEntry("processDefinitionKey", MY_PROC_DEF_KEY)
+            .containsEntry("processDefinitionVersion", 1)
+            .containsEntry("businessKey", BUSINESS_KEY)
             .containsEntry("connectorType", PAYMENT_CONNECTOR_TYPE)
             .containsEntry("integrationContextId", INTEGRATION_CONTEXT_ID)
             .containsEntry("processInstanceId", PROC_INST_ID)
