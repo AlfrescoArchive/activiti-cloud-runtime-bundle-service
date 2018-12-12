@@ -17,36 +17,19 @@
 package org.activiti.cloud.services.events.message;
 
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class AuditProducerRoutingKeyResolver implements RoutingKeyResolver<Map<String, Object>> {
+public class AuditProducerRoutingKeyResolver extends AbstractMessageHeadersRoutingKeyResolver {
     
-    private static final String UNDERSCORE = "_";
+    public final String[] HEADER_KEYS = {RuntimeBundleInfoMessageHeaders.SERVICE_NAME,
+                                     RuntimeBundleInfoMessageHeaders.APP_NAME,
+                                     ExecutionContextMessageHeaders.PROCESS_DEFINITION_KEY,
+                                     ExecutionContextMessageHeaders.PROCESS_INSTANCE_ID,
+                                     ExecutionContextMessageHeaders.BUSINESS_KEY
+                                    };
     
     @Override
     public String resolve(Map<String, Object> headers) {
-        return Stream.of(RuntimeBundleInfoMessageHeaders.SERVICE_NAME,
-                         RuntimeBundleInfoMessageHeaders.APP_NAME,
-                         ExecutionContextMessageHeaders.PROCESS_DEFINITION_KEY,
-                         ExecutionContextMessageHeaders.PROCESS_INSTANCE_ID,
-                         ExecutionContextMessageHeaders.BUSINESS_KEY)
-                     .map(headers::get)
-                     .map(Optional::ofNullable)
-                     .map(this::mapNullOrEmptyValue)
-                     .collect(Collectors.joining("."));
+        return build(headers, HEADER_KEYS);
     }
     
-    private String mapNullOrEmptyValue(Optional<Object> obj) {
-        return obj.map(Object::toString)
-                  .filter(value -> !value.isEmpty())
-                  .map(this::escapeIllegalCharacters)
-                  .orElse(UNDERSCORE);
-    }
-    
-    private String escapeIllegalCharacters(String value) {
-        return value.replaceAll("[\\t\\s\\.*#:]", "-");
-    }
-
 }
