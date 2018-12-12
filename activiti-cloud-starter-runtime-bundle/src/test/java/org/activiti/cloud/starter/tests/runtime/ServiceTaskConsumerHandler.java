@@ -23,11 +23,13 @@ import org.activiti.api.process.model.IntegrationContext;
 import org.activiti.cloud.api.process.model.IntegrationRequest;
 import org.activiti.cloud.api.process.model.impl.IntegrationResultImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
+import org.assertj.core.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
@@ -46,9 +48,30 @@ public class ServiceTaskConsumerHandler {
     }
 
     @StreamListener(value = ConnectorIntegrationChannels.INTEGRATION_EVENTS_CONSUMER)
-    public void receive(IntegrationRequest integrationRequest) {
+    public void receive(IntegrationRequest integrationRequest, @Headers Map<String, Object> headers) {
+        
         IntegrationContext integrationContext = integrationRequest.getIntegrationContext();
+        
+        Assertions.assertThat(headers)
+            .containsKey("routingKey")
+            .containsKey("messagePayloadType")
+            // @TODO fix missing attributes in IntegrationContext 
+            //.containsEntry("parentProcessInstanceId")
+            //.containsEntry("processDefinitionKey")
+            //.containsEntry("businessKey")
+            .containsEntry("connectorType", integrationContext.getConnectorType())
+            .containsEntry("integrationContextId", integrationContext.getId())
+            .containsEntry("processInstanceId", integrationContext.getProcessInstanceId())
+            .containsEntry("processDefinitionId", integrationContext.getProcessDefinitionId())
+            .containsEntry("appName", integrationRequest.getAppName())
+            .containsEntry("appVersion", integrationRequest.getAppVersion())
+            .containsEntry("serviceName", integrationRequest.getServiceName())
+            .containsEntry("serviceType", integrationRequest.getServiceType())
+            .containsEntry("serviceVersion", integrationRequest.getServiceVersion())
+            .containsEntry("serviceFullName", integrationRequest.getServiceFullName());        
+        
         Map<String, Object> requestVariables = integrationContext.getInBoundVariables();
+        
         String variableToUpdate = "age";
 
         HashMap<String, Object> resultVariables = new HashMap<>();

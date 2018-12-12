@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.activiti.services.connectors;
+package org.activiti.services.connectors.message;
 
 import org.activiti.api.process.model.IntegrationContext;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
@@ -38,6 +38,7 @@ public class IntegrationContextMessageBuilderFactory
         Assert.notNull(integrationContext, "integrationContext must not be null");
         
         return new MessageBuilderAppenderChain()
+                .routingKeyResolver(new IntegrationContextRoutingKeyResolver())
                 .chain(new RuntimeBundleInfoMessageBuilderAppender(properties))
                 .chain(new IntegrationContextMessageBuilderAppender(integrationContext));
     }

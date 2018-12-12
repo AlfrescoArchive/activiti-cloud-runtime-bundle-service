@@ -20,6 +20,8 @@ import org.activiti.cloud.services.events.converter.RuntimeBundleInfoAppender;
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.runtime.api.connector.IntegrationContextBuilder;
+import org.activiti.services.connectors.message.IntegrationContextMessageBuilderFactory;
+import org.activiti.services.connectors.message.IntegrationContextMessageHeaders;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +36,11 @@ import org.springframework.messaging.MessageChannel;
 
 public class IntegrationRequestSenderTest {
 
+    private static final String PAYMENT_CONNECTOR_TYPE = "payment";
+    private static final String SERVICE_VERSION = "serviceVersion";
+    private static final String SERVICE_TYPE = "serviceType";
+    private static final String SPRING_APP_NAME = "springAppName";
+    private static final String APP_VERSION = "appVersion";
     private static final String CONNECTOR_TYPE = "payment";
     private static final String EXECUTION_ID = "execId";
     private static final String PROC_INST_ID = "procInstId";
@@ -41,7 +48,7 @@ public class IntegrationRequestSenderTest {
     private static final String BUSINESS_KEY = "businessKey";
     private static final String INTEGRATION_CONTEXT_ID = "intContextId";
     private static final String FLOW_NODE_ID = "myServiceTask";
-    private static final String APP_NAME = "myApp";
+    private static final String APP_NAME = "appName";
 
     private IntegrationRequestSender integrationRequestSender;
 
@@ -57,11 +64,11 @@ public class IntegrationRequestSenderTest {
     @Spy
     private RuntimeBundleProperties runtimeBundleProperties = new RuntimeBundleProperties() {
         {
-            setAppName("appName");
-            setAppVersion("appVersion");
-            setServiceType("serviceType");
-            setServiceVersion("serviceVersion");
-            setRbSpringAppName("springAppName");
+            setAppName(APP_NAME);
+            setAppVersion(APP_VERSION);
+            setServiceType(SERVICE_TYPE);
+            setServiceVersion(SERVICE_VERSION);
+            setRbSpringAppName(SPRING_APP_NAME);
         }
     };
 
@@ -179,19 +186,22 @@ public class IntegrationRequestSenderTest {
         assertThat(message.getPayload()).isInstanceOf(CloudIntegrationRequestedImpl.class);
 
         Assertions.assertThat(message.getHeaders())
+            .containsKey("routingKey")
             .containsKey("messagePayloadType")
-            // TODO fix missing attributes in IntegrationContext 
+            // @TODO fix missing attributes in IntegrationContext 
             //.containsKey("parentProcessInstanceId")
+            //.containsKey("processDefinitionKey")
             //.containsKey("businessKey")
+            .containsEntry("connectorType", PAYMENT_CONNECTOR_TYPE)
             .containsEntry("integrationContextId", INTEGRATION_CONTEXT_ID)
             .containsEntry("processInstanceId", PROC_INST_ID)
             .containsEntry("processDefinitionId", PROC_DEF_ID)
-            .containsEntry("appName","appName")
-            .containsEntry("appVersion","appVersion")
-            .containsEntry("serviceName","springAppName")
-            .containsEntry("serviceType","serviceType")
-            .containsEntry("serviceVersion","serviceVersion")
-            .containsEntry("serviceFullName","myApp");        
+            .containsEntry("appName", APP_NAME)
+            .containsEntry("appVersion", APP_VERSION)
+            .containsEntry("serviceName",SPRING_APP_NAME)
+            .containsEntry("serviceType",SERVICE_TYPE)
+            .containsEntry("serviceVersion",SERVICE_VERSION)
+            .containsEntry("serviceFullName",APP_NAME);        
         
 
         CloudIntegrationRequestedImpl integrationRequested = (CloudIntegrationRequestedImpl) message.getPayload();

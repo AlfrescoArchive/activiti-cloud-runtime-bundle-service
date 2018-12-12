@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.activiti.services.connectors;
+package org.activiti.services.connectors.message;
 
 import org.activiti.api.process.model.IntegrationContext;
 import org.activiti.cloud.services.events.message.MessageBuilderAppender;
