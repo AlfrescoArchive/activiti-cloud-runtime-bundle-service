@@ -15,6 +15,8 @@
  */
 package org.activiti.cloud.services.events.converter;
 
+import java.util.Optional;
+
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.api.model.shared.impl.events.CloudRuntimeEventImpl;
 import org.activiti.engine.impl.context.ExecutionContext;
@@ -37,8 +39,13 @@ public class ExecutionContextInfoAppender {
 
             if(processInstance != null) { 
                 event.setProcessInstanceId(processInstance.getId());
-                event.setParentProcessInstanceId(processInstance.getSuperExecutionId());
                 event.setBusinessKey(processInstance.getBusinessKey());
+                
+                // Let's try extract parent info from super execution if exists
+                if(processInstance.getSuperExecutionId() != null) {
+                    Optional.ofNullable(processInstance.getSuperExecution())
+                        .ifPresent(superExecution -> event.setParentProcessInstanceId(superExecution.getProcessInstanceId()));
+                }
             }
 
             if(processDefinition != null) {

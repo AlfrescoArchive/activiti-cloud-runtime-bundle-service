@@ -52,39 +52,25 @@ import org.springframework.messaging.MessageChannel;
 public class MessageProducerCommandContextCloseListenerTest {
 
     private static final String MOCK_ROUTING_KEY = "springAppName.appName.mockProcessDefinitionKey.mockProcessInstanceId.mockBusinessKey";
-
     private static final String MOCK_PARENT_PROCESS_NAME = "mockParentProcessName";
-
     private static final String LORG_ACTIVITI_CLOUD_API_MODEL_SHARED_EVENTS_CLOUD_RUNTIME_EVENT = "[Lorg.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;";
-
     private static final String MOCK_PROCESS_NAME = "mockProcessName";
-
     private static final String SPRING_APP_NAME = "springAppName";
-
     private static final String SERVICE_VERSION = "serviceVersion";
-
     private static final String SERVICE_TYPE = "serviceType";
-
     private static final String APP_VERSION = "appVersion";
-
     private static final String APP_NAME = "appName";
-
     private static final String MOCK_DEPLOYMENT_NAME = "mockDeploymentName";
-
     private static final String MOCK_DEPLOYMENT_ID = "mockDeploymentId";
-
     private static final int MOCK_PROCESS_DEFINITION_VERSION = 0;
-
     private static final String MOCK_PROCESS_DEFINITION_KEY = "mockProcessDefinitionKey";
-
     private static final String MOCK_PROCESS_DEFINITION_ID = "mockProcessDefinitionId";
-
     private static final String MOCK_PARENT_PROCESS_INSTANCE_ID = "mockParentId";
-
     private static final String MOCK_PROCESS_INSTANCE_ID = "mockProcessInstanceId";
-
     private static final String MOCK_BUSINESS_KEY = "mockBusinessKey";
-
+    private static final String MOCK_SUPER_EXECTUION_ID = "mockSuperExectuionId";
+    private static final String MOCK_PROCESS_DEFINITION_NAME = "mockProcessDefinitionName";
+    
     @InjectMocks
     private MessageProducerCommandContextCloseListener closeListener;
 
@@ -238,22 +224,27 @@ public class MessageProducerCommandContextCloseListenerTest {
         when(context.getProcessDefinition()).thenReturn(processDefinition);
 
         when(processInstance.getId()).thenReturn(MOCK_PROCESS_INSTANCE_ID);
-        when(processInstance.getSuperExecutionId()).thenReturn(MOCK_PARENT_PROCESS_INSTANCE_ID);
         when(processInstance.getBusinessKey()).thenReturn(MOCK_BUSINESS_KEY);
         when(processInstance.getName()).thenReturn(MOCK_PROCESS_NAME);
 
         ExecutionEntity superExectuion = mock(ExecutionEntity.class);
+        when(processInstance.getSuperExecutionId()).thenReturn(MOCK_SUPER_EXECTUION_ID);
         when(processInstance.getSuperExecution()).thenReturn(superExectuion);
-        when(superExectuion.getName()).thenReturn(MOCK_PARENT_PROCESS_NAME);
+
+        ExecutionEntity parentProcessInstance = mock(ExecutionEntity.class);
+        when(superExectuion.getProcessInstanceId()).thenReturn(MOCK_PARENT_PROCESS_INSTANCE_ID);
+        when(superExectuion.getProcessInstance()).thenReturn(parentProcessInstance);
+        when(parentProcessInstance.getId()).thenReturn(MOCK_PARENT_PROCESS_INSTANCE_ID);
+        when(parentProcessInstance.getName()).thenReturn(MOCK_PARENT_PROCESS_NAME);
         
         when(processDefinition.getId()).thenReturn(MOCK_PROCESS_DEFINITION_ID);
         when(processDefinition.getKey()).thenReturn(MOCK_PROCESS_DEFINITION_KEY);
         when(processDefinition.getVersion()).thenReturn(MOCK_PROCESS_DEFINITION_VERSION);
+        when(processDefinition.getName()).thenReturn(MOCK_PROCESS_DEFINITION_NAME);
 
         when(deploymentEntity.getId()).thenReturn(MOCK_DEPLOYMENT_ID);
         when(deploymentEntity.getName()).thenReturn(MOCK_DEPLOYMENT_NAME);
         
         return context;
     }
-
 }

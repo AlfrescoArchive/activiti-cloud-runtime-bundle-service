@@ -15,10 +15,13 @@
  */
 package org.activiti.cloud.services.events.message;
 
+import java.util.Optional;
+
 import org.activiti.engine.impl.context.ExecutionContext;
 import org.activiti.engine.impl.persistence.entity.DeploymentEntity;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 import org.activiti.engine.repository.ProcessDefinition;
+import org.springframework.lang.Nullable;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
@@ -26,7 +29,7 @@ public class ExecutionContextMessageBuilderAppender implements MessageBuilderApp
 
     private final ExecutionContext executionContext;
 
-    public ExecutionContextMessageBuilderAppender(ExecutionContext executionContext) {
+    public ExecutionContextMessageBuilderAppender(@Nullable ExecutionContext executionContext) {
         this.executionContext = executionContext;
     }
 
@@ -41,13 +44,11 @@ public class ExecutionContextMessageBuilderAppender implements MessageBuilderApp
 
             if(processInstance != null) { 
                 request.setHeader(ExecutionContextMessageHeaders.BUSINESS_KEY, processInstance.getBusinessKey())
-                    .setHeader(ExecutionContextMessageHeaders.PARENT_PROCESS_INSTANCE_ID, processInstance.getSuperExecutionId())
                     .setHeader(ExecutionContextMessageHeaders.PROCESS_INSTANCE_ID, processInstance.getId())
                     .setHeader(ExecutionContextMessageHeaders.PROCESS_NAME, processInstance.getName());
-
-                if (processInstance.getSuperExecution() != null) {
-                    request.setHeader(ExecutionContextMessageHeaders.PARENT_PROCESS_INSTANCE_NAME, processInstance.getSuperExecution().getName());
-                }
+                
+                // Let's try extract parent process info from super execution if exists
+                applyParent(processInstance, request);
             }
 
             if(processDefinition != null) { 
@@ -67,5 +68,26 @@ public class ExecutionContextMessageBuilderAppender implements MessageBuilderApp
         return request;
 
     }
+    
+    protected <P> MessageBuilder<P> applyParent(ExecutionEntity processInstance, MessageBuilder<P> request) {
+        // Let's do it lazy way
+        if (processInstance.getSuperExecutionId() != null) {
+            Optional.ofNullable(processInstance.getSuperExecution())
+                .ifPresent(superExecution -> {
+                    request.setHeader(ExecutionContextMessageHeaders.PARENT_PROCESS_INSTANCE_ID, superExecution.getProcessInstanceId());
+                    
+                    // Let's do it lazy way
+                    if(superExecution.getProcessInstanceId() != null) { 
+                        Optional.ofNullable(superExecution.getProcessInstance())
+                            .ifPresent(parentInstance -> {
+                                request.setHeader(ExecutionContextMessageHeaders.PARENT_PROCESS_INSTANCE_NAME, parentInstance.getName());                                
+                            });
+                    }
+                });
+        }
+        
+        return request;
+    }
+    
 
 }
