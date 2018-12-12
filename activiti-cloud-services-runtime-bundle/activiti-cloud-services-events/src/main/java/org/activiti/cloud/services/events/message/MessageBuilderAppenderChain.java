@@ -33,8 +33,8 @@ public class MessageBuilderAppenderChain {
 
     private final List<MessageBuilderAppender> appenders = new ArrayList<>();
 
-    // Noop routing key resolver
-    private RoutingKeyResolver<Map<String, Object>> routingKeyResolver = new RoutingKeyResolver<Map<String,Object>>() { };
+    // Noop routing key resolver that resolves routing key for message payload type header
+    private RoutingKeyResolver<Map<String, Object>> routingKeyResolver = new DefaultRoutingKeyResolver();
     
     public MessageBuilderAppenderChain() {
         // Silence is golden
@@ -82,5 +82,16 @@ public class MessageBuilderAppenderChain {
 
         return this;
     }
+    
+    // Default implementation 
+    static class DefaultRoutingKeyResolver extends AbstractMessageHeadersRoutingKeyResolver {
+
+        @Override
+        public String resolve(Map<String, Object> headers) {
+            return build(headers, MESSAGE_PAYLOAD_TYPE);
+        }
+        
+    }
+   
     
 }
