@@ -41,7 +41,6 @@ public class ExecutionContextMessageBuilderAppender implements MessageBuilderApp
 
             if(processInstance != null) { 
                 request.setHeader(ExecutionContextMessageHeaders.BUSINESS_KEY, processInstance.getBusinessKey())
-                    .setHeader(ExecutionContextMessageHeaders.TENANT_ID, processInstance.getTenantId())
                     .setHeader(ExecutionContextMessageHeaders.PARENT_PROCESS_INSTANCE_ID, processInstance.getSuperExecutionId())
                     .setHeader(ExecutionContextMessageHeaders.PROCESS_INSTANCE_ID, processInstance.getId())
                     .setHeader(ExecutionContextMessageHeaders.PROCESS_NAME, processInstance.getName());

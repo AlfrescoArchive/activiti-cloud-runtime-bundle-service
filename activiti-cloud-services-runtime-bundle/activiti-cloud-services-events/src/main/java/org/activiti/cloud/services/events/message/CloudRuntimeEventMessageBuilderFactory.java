@@ -32,6 +32,8 @@ public class CloudRuntimeEventMessageBuilderFactory
 
     @Override
     public MessageBuilderAppenderChain create(CloudRuntimeEvent<?, ?> event) {
+        Assert.notNull(event, "event must not be null");
+
         return new MessageBuilderAppenderChain()
                 .routingKeyResolver(new AuditProducerRoutingKeyResolver())
                 .chain(new RuntimeBundleInfoMessageBuilderAppender(properties))

@@ -19,7 +19,6 @@ public class ExecutionContextMessageHeaders {
     
     public final static String MESSAGE_PAYLOAD_TYPE = "messagePayloadType";
     public final static String BUSINESS_KEY = "businessKey";
-    public final static String TENANT_ID = "tenantId";
     public final static String PARENT_PROCESS_INSTANCE_ID = "parentProcessInstanceId";
     public final static String PROCESS_INSTANCE_ID = "processInstanceId";
     public final static String PROCESS_NAME = "processName";

@@ -18,16 +18,10 @@ package org.activiti.cloud.services.events.message;
 public class CloudRuntimeEventMessageHeaders {
     
     public final static String BUSINESS_KEY = "businessKey";
-    public final static String TENANT_ID = "tenantId";
-    public final static String SUPER_EXECUTION_ID = "superExecutionId";
     public final static String PROCESS_INSTANCE_ID = "processInstanceId";
-    public final static String PROCESS_NAME = "processName";
     public final static String PROCESS_DEFINITION_ID = "processDefinitionId";
     public final static String PROCESS_DEFINITION_KEY = "processDefinitionKey";
     public final static String PROCESS_DEFINITION_VERSION = "processDefinitionVersion";
-    public final static String PROCESS_DEFINITION_NAME = "processDefinitionName";
-    public final static String DEPLOYMENT_ID = "deploymentId";
-    public final static String DEPLOYMENT_NAME = "deploymentName";
     public final static String PARENT_PROCESS_INSTANCE_ID = "parentProcessInstanceId";
     public static final String EVENT_TYPE = "eventType";
     
