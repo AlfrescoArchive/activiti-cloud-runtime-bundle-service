@@ -500,9 +500,7 @@ public class ProcessInstanceIT {
         //given
         ResponseEntity<CloudProcessInstance> startedProcessEntity = processInstanceRestTemplate.startProcessByKey(PARENT_PROCESS,
                                                                                                     null,
-                                                                                                    "business_key");
-        
-        
+                                                                                                    "business_key");   
         //when
         ResponseEntity<PagedResources<ProcessInstance>> processInstancesPage = restTemplate.exchange( 
                           PROCESS_INSTANCES_RELATIVE_URL + startedProcessEntity.getBody().getId()+"/subprocesses",
@@ -518,9 +516,6 @@ public class ProcessInstanceIT {
         assertThat(processInstancesPage.getBody().getContent().size()).isEqualTo(1);
         
         assertThat(processInstancesPage.getBody().getContent().iterator().next().getProcessDefinitionKey()).isEqualTo(SUB_PROCESS);
-        
- 
-        
     }
     
     private ResponseEntity<Void> adminExecuteRequestResumeProcess(ResponseEntity<CloudProcessInstance> processInstanceEntity) {
