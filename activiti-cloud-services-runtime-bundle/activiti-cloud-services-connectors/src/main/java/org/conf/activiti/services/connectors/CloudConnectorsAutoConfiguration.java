@@ -26,6 +26,7 @@ import org.activiti.services.connectors.message.IntegrationContextMessageBuilder
 import org.conf.activiti.runtime.api.ConnectorsAutoConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cloud.stream.binder.rabbit.properties.RabbitProducerProperties;
 import org.springframework.cloud.stream.binding.BinderAwareChannelResolver.NewDestinationBindingCallback;
@@ -48,9 +49,11 @@ public class CloudConnectorsAutoConfiguration {
     private String routingKeyExpression;
 
     /**
-     * Configures routing key expression for dynamic cloud connector destinations
+     * Configures routing key expression for dynamic cloud connector destinations if rabbit binder exists
      */
     @Bean
+    @ConditionalOnClass(RabbitProducerProperties.class)
+    @ConditionalOnMissingBean
     public NewDestinationBindingCallback<RabbitProducerProperties> dynamicConnectorDestinationsBindingCallback() {
         return (channelName, channel, producerProperties, extendedProducerProperties) -> {
             Expression expression = new SpelExpressionParser().parseExpression(routingKeyExpression);
