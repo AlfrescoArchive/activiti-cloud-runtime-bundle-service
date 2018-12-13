@@ -29,7 +29,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
 public class IntegrationRequestSender {
-
+    public static final String CONNECTOR_TYPE = "connectorType";
+    
     private final RuntimeBundleProperties runtimeBundleProperties;
     private final MessageChannel auditProducer;
     private final BinderAwareChannelResolver resolver;

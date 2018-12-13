@@ -15,7 +15,13 @@
  */
 package org.activiti.cloud.services.events.message;
 
-public class CloudRuntimeEventMessageHeaders {
+
+/**
+ * Holds message header key names used in messages with IntegrationContext payload type  
+ *
+ */
+
+class CloudRuntimeEventMessageHeaders {
     
     public final static String BUSINESS_KEY = "businessKey";
     public final static String PROCESS_INSTANCE_ID = "processInstanceId";

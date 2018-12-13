@@ -15,7 +15,11 @@
  */
 package org.activiti.services.connectors.message;
 
-public class IntegrationContextMessageHeaders {
+/**
+ * Holds message header key names used in messages with IntegrationContext payload type  
+ *
+ */
+class IntegrationContextMessageHeaders {
     public static final String CONNECTOR_TYPE = "connectorType";
     public static final String BUSINESS_KEY = "businessKey";
     public static final String INTEGRATION_CONTEXT_ID = "integrationContextId";

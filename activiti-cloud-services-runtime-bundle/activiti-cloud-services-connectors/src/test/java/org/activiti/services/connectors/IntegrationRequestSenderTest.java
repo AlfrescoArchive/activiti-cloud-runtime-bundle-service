@@ -35,7 +35,6 @@ import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.runtime.api.connector.IntegrationContextBuilder;
 import org.activiti.services.connectors.message.IntegrationContextMessageBuilderFactory;
-import org.activiti.services.connectors.message.IntegrationContextMessageHeaders;
 import org.activiti.services.test.DelegateExecutionBuilder;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -175,7 +174,7 @@ public class IntegrationRequestSenderTest {
 
         IntegrationRequest sentIntegrationRequestEvent = integrationRequestMessage.getPayload();
         assertThat(sentIntegrationRequestEvent).isEqualTo(integrationRequest);
-        assertThat(integrationRequestMessage.getHeaders().get(IntegrationContextMessageHeaders.CONNECTOR_TYPE)).isEqualTo(CONNECTOR_TYPE);
+        assertThat(integrationRequestMessage.getHeaders().get(IntegrationRequestSender.CONNECTOR_TYPE)).isEqualTo(CONNECTOR_TYPE);
     }
 
     @Test
