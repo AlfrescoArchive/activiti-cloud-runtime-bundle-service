@@ -75,7 +75,7 @@ public class ProcessInstanceIT {
 
     private static final String SIMPLE_PROCESS = "SimpleProcess";
     private static final String SUB_PROCESS = "SubProcess";
-    private static final String PARENT_PROCESS = "SimpleProcess";
+    private static final String PARENT_PROCESS = "ParentProcess";
     
     public static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
     
@@ -514,6 +514,12 @@ public class ProcessInstanceIT {
         //then
         assertThat(processInstancesPage.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(processInstancesPage.getBody()).isNotNull();
+        
+        assertThat(processInstancesPage.getBody().getContent().size()).isEqualTo(1);
+        
+        assertThat(processInstancesPage.getBody().getContent().iterator().next().getProcessDefinitionKey()).isEqualTo(SUB_PROCESS);
+        
+ 
         
     }
     
