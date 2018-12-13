@@ -72,7 +72,7 @@ public class CloudConnectorsAutoConfigurationIT {
     @MockBean
     private CloudProcessDeployedProducer processDeployedProducer;
     
-    @Value("${activiti.spring.cloud.stream.integrationRequestSender.routing-key-expression}")
+    @Value("${activiti.spring.cloud.stream.connector.integrationRequestSender.routing-key-expression}")
     private String routingKeyExpression;
     
 

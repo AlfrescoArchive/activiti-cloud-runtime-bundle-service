@@ -44,7 +44,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 @ComponentScan("org.activiti.core.common.spring.connector")
 public class CloudConnectorsAutoConfiguration {
 
-    @Value("${activiti.spring.cloud.stream.integrationRequestSender.routing-key-expression}")
+    @Value("${activiti.spring.cloud.stream.connector.integrationRequestSender.routing-key-expression}")
     private String routingKeyExpression;
 
     /**
