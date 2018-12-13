@@ -329,7 +329,7 @@ public class ProcessInstanceControllerImplIT {
         Page<ProcessInstance> processInstances = new PageImpl<>(processInstanceList,
                                                                 processInstanceList.size());
          
-        when(processRuntime.subprocesses(any(),any())).thenReturn(processInstances);
+        when(processRuntime.processInstances(any(),any())).thenReturn(processInstances);
         
               
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/subprocesses",
