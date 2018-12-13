@@ -84,7 +84,12 @@ public class DelegateExecutionBuilder {
         }
 
         public DelegateExecutionBuilder withParentProcessInstanceId(String parentProcessInstanceId) {
+            ExecutionEntity superExecution = mock(ExecutionEntity.class);
+            
             when(processInstance.getSuperExecutionId()).thenReturn(parentProcessInstanceId);
+            when(processInstance.getSuperExecution()).thenReturn(superExecution);
+            when(superExecution.getProcessInstanceId()).thenReturn(parentProcessInstanceId);
+            
             return this;
         }
         
