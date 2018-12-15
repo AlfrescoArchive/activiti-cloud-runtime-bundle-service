@@ -121,25 +121,23 @@ public class SignalIT {
     @Test
     public void shouldBroadcastSignalswithProcessInstanceRest() {
         //when
-        org.activiti.engine.runtime.ProcessInstance procInst1 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
-        assertThat(procInst1).isNotNull();
-        SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder.signal().withName("Test").build();
+        org.activiti.engine.runtime.ProcessInstance procInst = runtimeService.startProcessInstanceByKey("TwoSignalCatchEventsProcess");
+        assertThat(procInst).isNotNull();
+        SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder.signal().withName("Two Signal Catch Events Process").build();
         ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/signal",
                                                                     HttpMethod.POST,
                                                                     new HttpEntity<>(signalProcessInstancesCmd),
                                                                     new ParameterizedTypeReference<Void>() {
                                                                     });
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        org.activiti.engine.runtime.ProcessInstance procInst2 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
-        assertThat(procInst2).isNotNull();
 
         await("Broadcast Signals").untilAsserted(() -> {
-            List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").list();
+            List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("TwoSignalCatchEventsProcess").list();
             assertThat(processInstances).isEmpty();
         });
 
         //then
-        List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").list();
+        List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("TwoSignalCatchEventsProcess").list();
         assertThat(processInstances).isEmpty();
     }
 
