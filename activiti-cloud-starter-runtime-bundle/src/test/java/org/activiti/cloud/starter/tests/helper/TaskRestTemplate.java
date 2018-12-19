@@ -16,10 +16,13 @@
 
 package org.activiti.cloud.starter.tests.helper;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.Map;
 
 import org.activiti.api.task.model.Task;
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
+import org.activiti.api.task.model.payloads.AssignTaskPayload;
 import org.activiti.api.task.model.payloads.CreateTaskPayload;
 import org.activiti.api.task.model.payloads.SetTaskVariablesPayload;
 import org.activiti.api.task.model.payloads.UpdateTaskPayload;
@@ -36,12 +39,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @Component
 public class TaskRestTemplate {
 
     private static final String TASK_VAR_RELATIVE_URL = "/v1/tasks/";
+    private static final String ADMIN_TASK_VAR_RELATIVE_URL = "/admin/v1/tasks/";
 
     private static final ParameterizedTypeReference<CloudTask> TASK_RESPONSE_TYPE = new ParameterizedTypeReference<CloudTask>() {
     };
@@ -72,6 +74,15 @@ public class TaskRestTemplate {
         ResponseEntity<CloudTask> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + task.getId() + "/claim",
                                                                              HttpMethod.POST,
                                                                              null,
+                                                                             TASK_RESPONSE_TYPE);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return responseEntity;
+    }
+    
+    public ResponseEntity<CloudTask> assign(AssignTaskPayload assigntask) {
+        ResponseEntity<CloudTask> responseEntity = testRestTemplate.exchange(ADMIN_TASK_VAR_RELATIVE_URL + assigntask.getId() + "/assign",
+                                                                             HttpMethod.POST,
+                                                                             new HttpEntity<>(assigntask),
                                                                              TASK_RESPONSE_TYPE);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
@@ -114,8 +125,7 @@ public class TaskRestTemplate {
         return responseEntity;
     }
 
-    public void updateTask(
-                           UpdateTaskPayload updateTask) {
+    public void updateTask(UpdateTaskPayload updateTask) {
         ResponseEntity<Task> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + updateTask.getTaskId(),
                                                                         HttpMethod.PUT,
                                                                         new HttpEntity<>(updateTask),
