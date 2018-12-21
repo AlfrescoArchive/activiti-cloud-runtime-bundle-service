@@ -25,27 +25,27 @@ public interface TaskAdminController {
     TaskResource assign(@PathVariable("taskId") String taskId,
                         @RequestBody AssignTaskPayload assignTaskPayload);
 
-    @RequestMapping(value = "/{taskId}/candidateUsers", method = RequestMethod.POST)
+    @RequestMapping(value = "/{taskId}/candidate-users", method = RequestMethod.POST)
     void addCandidateUsers(@PathVariable("taskId") String taskId,
                            @RequestBody CandidateUsersPayload candidateUsersPayload);
     
-    @RequestMapping(value = "/{taskId}/candidateUsers", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/{taskId}/candidate-users", method = RequestMethod.DELETE)
     void deleteCandidateUsers(@PathVariable("taskId") String taskId,
                               @RequestBody CandidateUsersPayload candidateUsersPayload);
     
-    @RequestMapping(value = "/{taskId}/candidateUsers", method = RequestMethod.GET)
+    @RequestMapping(value = "/{taskId}/candidate-users", method = RequestMethod.GET)
     List<String> getUserCandidates(@PathVariable("taskId") String taskId);
     
     
-    @RequestMapping(value = "/{taskId}/candidateGroups", method = RequestMethod.POST)
+    @RequestMapping(value = "/{taskId}/candidate-groups", method = RequestMethod.POST)
     void addCandidateGroups(@PathVariable("taskId") String taskId,
                             @RequestBody CandidateGroupsPayload candidateGroupsPayload);
     
-    @RequestMapping(value = "/{taskId}/candidateGroups", method = RequestMethod.DELETE)
+    @RequestMapping(value = "/{taskId}/candidate-groups", method = RequestMethod.DELETE)
     void deleteCandidateGroups(@PathVariable("taskId") String taskId,
                                @RequestBody CandidateGroupsPayload candidateGroupsPayload);
     
        
-    @RequestMapping(value = "/{taskId}/candidateGroups", method = RequestMethod.GET)
+    @RequestMapping(value = "/{taskId}/candidate-groups", method = RequestMethod.GET)
     List<String> getGroupCandidates(@PathVariable("taskId") String taskId);
 }
