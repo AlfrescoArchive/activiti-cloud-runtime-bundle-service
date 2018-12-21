@@ -16,17 +16,17 @@
 
 package org.activiti.services.test;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import org.activiti.bpmn.model.ServiceTask;
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.impl.persistence.entity.ExecutionEntity;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 public class DelegateExecutionBuilder {
 
         private ExecutionEntity execution;
-        ExecutionEntity processInstance;
+        private ExecutionEntity processInstance;
 
         private DelegateExecutionBuilder() {
             execution = mock(ExecutionEntity.class);
@@ -84,12 +84,7 @@ public class DelegateExecutionBuilder {
         }
 
         public DelegateExecutionBuilder withParentProcessInstanceId(String parentProcessInstanceId) {
-            ExecutionEntity superExecution = mock(ExecutionEntity.class);
-            
-            when(processInstance.getSuperExecutionId()).thenReturn(parentProcessInstanceId);
-            when(processInstance.getSuperExecution()).thenReturn(superExecution);
-            when(superExecution.getProcessInstanceId()).thenReturn(parentProcessInstanceId);
-            
+            when(processInstance.getParentProcessInstanceId()).thenReturn(parentProcessInstanceId);
             return this;
         }
         
