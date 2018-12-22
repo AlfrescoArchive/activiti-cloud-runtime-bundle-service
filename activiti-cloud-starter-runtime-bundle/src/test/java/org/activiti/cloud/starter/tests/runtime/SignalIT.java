@@ -141,6 +141,44 @@ public class SignalIT {
     }
 
     @Test
+    public void shouldNotBroadcastSignalsWithProcessInstanceScope() throws InterruptedException {
+        //when
+        ((ProcessEngineConfigurationImpl) processEngineConfiguration).getCommandExecutor().execute(new Command<Void>() {
+            public Void execute(CommandContext commandContext) {
+                runtimeService.startProcessInstanceByKey("signalThrowEventWithProcessInstanceScopeProcess");
+                commandContext.addCloseListener(new CommandContextCloseListener() {
+                    @Override
+                    public void closing(CommandContext context) {
+                        runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+                    }
+                    @Override
+                    public void closed(CommandContext context) {}
+                    @Override
+                    public void closeFailure(CommandContext context) {}
+                    @Override
+                    public void afterSessionsFlush(CommandContext context) {}
+                });
+                return null;
+            }
+        });
+
+        long count = runtimeService.createProcessInstanceQuery().processDefinitionKey("signalThrowEventWithProcessInstanceScopeProcess").count();
+        assertThat(count).isEqualTo(0);
+
+        count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
+        assertThat(count).isEqualTo(1);
+
+        Thread.sleep(1000);
+
+        //then
+        count = runtimeService.createProcessInstanceQuery().processDefinitionKey("signalThrowEventWithProcessInstanceScopeProcess").count();
+        assertThat(count).isEqualTo(0);
+
+        count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
     public void shouldBroadcastSignalswithProcessInstanceRest() {
         //when
         testEventListener.setActive(true);
