@@ -33,12 +33,15 @@ import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.api.task.model.CloudTask;
 import org.activiti.cloud.starter.tests.definition.ProcessDefinitionIT;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
+import org.activiti.cloud.starter.tests.helper.TestEventListener;
 import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.impl.interceptor.Command;
 import org.activiti.engine.impl.interceptor.CommandContext;
+import org.activiti.engine.impl.interceptor.CommandContextCloseListener;
+import org.activiti.services.subscription.SignalSender;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,7 +58,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
+import org.springframework.test.util.ReflectionTestUtils;
 import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -65,6 +68,12 @@ import static org.awaitility.Awaitility.await;
 @TestPropertySource("classpath:application-test.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class SignalIT {
+
+    @Autowired
+    private TestEventListener testEventListener;
+
+    @Autowired
+    private SignalSender signalSender;
 
     @Autowired
     private RuntimeService runtimeService;
@@ -87,6 +96,7 @@ public class SignalIT {
 
     @Before
     public void setUp() {
+        ReflectionTestUtils.setField(signalSender, "serviceName", "dummyService");
         ResponseEntity<PagedResources<CloudProcessDefinition>> processDefinitions = getProcessDefinitions();
         assertThat(processDefinitions.getBody().getContent()).isNotNull();
         for (ProcessDefinition pd : processDefinitions.getBody().getContent()) {
@@ -98,15 +108,27 @@ public class SignalIT {
     @Test
     public void shouldBroadcastSignals() {
         //when
-        org.activiti.engine.runtime.ProcessInstance procInst1 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
-        org.activiti.engine.runtime.ProcessInstance procInst2 = ((ProcessEngineConfigurationImpl) processEngineConfiguration).getCommandExecutor().execute(new Command<org.activiti.engine.runtime.ProcessInstance>() {
-            public org.activiti.engine.runtime.ProcessInstance execute(CommandContext commandContext) {
+        ((ProcessEngineConfigurationImpl) processEngineConfiguration).getCommandExecutor().execute(new Command<Void>() {
+            public Void execute(CommandContext commandContext) {
                 runtimeService.startProcessInstanceByKey("broadcastSignalEventProcess");
-                return runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+                commandContext.addCloseListener(new CommandContextCloseListener() {
+                    @Override
+                    public void closing(CommandContext context) {
+                        runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+                    }
+                    @Override
+                    public void closed(CommandContext context) {}
+                    @Override
+                    public void closeFailure(CommandContext context) {}
+                    @Override
+                    public void afterSessionsFlush(CommandContext context) {}
+                });
+                return null;
             }
         });
-        assertThat(procInst1).isNotNull();
-        assertThat(procInst2).isNotNull();
+
+        long count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
+        assertThat(count).isEqualTo(1);
 
         await("Broadcast Signals").untilAsserted(() -> {
             List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").list();
@@ -121,9 +143,8 @@ public class SignalIT {
     @Test
     public void shouldBroadcastSignalswithProcessInstanceRest() {
         //when
-        org.activiti.engine.runtime.ProcessInstance procInst = runtimeService.startProcessInstanceByKey("TwoSignalCatchEventsProcess");
-        assertThat(procInst).isNotNull();
-        SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder.signal().withName("Two Signal Catch Events Process").build();
+        testEventListener.setActive(true);
+        SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder.signal().withName("Test").build();
         ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/signal",
                                                                     HttpMethod.POST,
                                                                     new HttpEntity<>(signalProcessInstancesCmd),
@@ -131,14 +152,18 @@ public class SignalIT {
                                                                     });
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
 
+        long count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
+        assertThat(count).isEqualTo(1);
+
         await("Broadcast Signals").untilAsserted(() -> {
-            List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("TwoSignalCatchEventsProcess").list();
+            List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").list();
             assertThat(processInstances).isEmpty();
         });
 
         //then
-        List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("TwoSignalCatchEventsProcess").list();
+        List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").list();
         assertThat(processInstances).isEmpty();
+        testEventListener.setActive(false);
     }
 
     @Test
