@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class TestEventListener {
 
+    @Autowired
+    private RuntimeService runtimeService;
+
     private boolean isActive;
 
     public boolean isActive() {
@@ -18,9 +21,6 @@ public class TestEventListener {
     public void setActive(boolean isActive) {
         this.isActive = isActive;
     }
-
-    @Autowired
-    private RuntimeService runtimeService;
 
     @EventListener
     public void sendSignal(SignalPayload signalPayload) {
