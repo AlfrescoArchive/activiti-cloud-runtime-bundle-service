@@ -46,7 +46,7 @@ public class JobExecutorIT {
     
     @Test(timeout=10000)
     public void shouldCompleteAsyncJobsViaMessageBasedJobExecutor() throws InterruptedException {
-        int jobCount = 1000;
+        int jobCount = 100;
         CountDownLatch jobsCompleted = new CountDownLatch(jobCount);
         
         runtimeService.addEventListener(new AbstractActvitiEventListener() {
