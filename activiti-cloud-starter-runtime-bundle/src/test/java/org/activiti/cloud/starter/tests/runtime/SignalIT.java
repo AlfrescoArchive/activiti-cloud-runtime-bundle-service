@@ -46,6 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
@@ -68,6 +69,9 @@ import static org.awaitility.Awaitility.await;
 @TestPropertySource("classpath:application-test.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class SignalIT {
+
+    @Value("${spring.application.name")
+    private String serviceName;
 
     @Autowired
     private TestEventListener testEventListener;
@@ -96,7 +100,6 @@ public class SignalIT {
 
     @Before
     public void setUp() {
-        ReflectionTestUtils.setField(signalSender, "serviceName", "dummyService");
         ResponseEntity<PagedResources<CloudProcessDefinition>> processDefinitions = getProcessDefinitions();
         assertThat(processDefinitions.getBody().getContent()).isNotNull();
         for (ProcessDefinition pd : processDefinitions.getBody().getContent()) {
@@ -108,6 +111,8 @@ public class SignalIT {
     @Test
     public void shouldBroadcastSignals() {
         //when
+        runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+        ReflectionTestUtils.setField(signalSender, "serviceName", "dummyService");
         ((ProcessEngineConfigurationImpl) processEngineConfiguration).getCommandExecutor().execute(new Command<Void>() {
             public Void execute(CommandContext commandContext) {
                 runtimeService.startProcessInstanceByKey("broadcastSignalEventProcess");
@@ -138,11 +143,47 @@ public class SignalIT {
         //then
         List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").list();
         assertThat(processInstances).isEmpty();
+
+        ReflectionTestUtils.setField(signalSender, "serviceName", serviceName);
+    }
+
+    @Test
+    public void shouldNotBroadcastSignalsWithSameRuntimeBundle() throws InterruptedException {
+        //when
+        runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+        ((ProcessEngineConfigurationImpl) processEngineConfiguration).getCommandExecutor().execute(new Command<Void>() {
+            public Void execute(CommandContext commandContext) {
+                runtimeService.startProcessInstanceByKey("broadcastSignalEventProcess");
+                commandContext.addCloseListener(new CommandContextCloseListener() {
+                    @Override
+                    public void closing(CommandContext context) {
+                        runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+                    }
+                    @Override
+                    public void closed(CommandContext context) {}
+                    @Override
+                    public void closeFailure(CommandContext context) {}
+                    @Override
+                    public void afterSessionsFlush(CommandContext context) {}
+                });
+                return null;
+            }
+        });
+
+        long count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
+        assertThat(count).isEqualTo(1);
+
+        Thread.sleep(1000);
+
+        //then
+        count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
+        assertThat(count).isEqualTo(1);
     }
 
     @Test
     public void shouldNotBroadcastSignalsWithProcessInstanceScope() throws InterruptedException {
         //when
+        ReflectionTestUtils.setField(signalSender, "serviceName", "dummyService");
         ((ProcessEngineConfigurationImpl) processEngineConfiguration).getCommandExecutor().execute(new Command<Void>() {
             public Void execute(CommandContext commandContext) {
                 runtimeService.startProcessInstanceByKey("signalThrowEventWithProcessInstanceScopeProcess");
@@ -176,11 +217,15 @@ public class SignalIT {
 
         count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
         assertThat(count).isEqualTo(1);
+
+        // cleanUp
+        ReflectionTestUtils.setField(signalSender, "serviceName", serviceName);
     }
 
     @Test
-    public void shouldBroadcastSignalswithProcessInstanceRest() {
+    public void shouldBroadcastSignalsWithProcessInstanceRest() {
         //when
+        ReflectionTestUtils.setField(signalSender, "serviceName", "dummyService");
         testEventListener.setActive(true);
         SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder.signal().withName("Test").build();
         ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/signal",
@@ -201,12 +246,40 @@ public class SignalIT {
         //then
         List<org.activiti.engine.runtime.ProcessInstance> processInstances = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").list();
         assertThat(processInstances).isEmpty();
+
+        // cleanUp
+        testEventListener.setActive(false);
+        ReflectionTestUtils.setField(signalSender, "serviceName", serviceName);
+    }
+
+    @Test
+    public void shouldBroadcastSignalsWithProcessInstanceRestAndSameRuntimeBundle() throws InterruptedException {
+        //when
+        testEventListener.setActive(true);
+        runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
+        SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder.signal().withName("Test").build();
+        ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/signal",
+                                                                    HttpMethod.POST,
+                                                                    new HttpEntity<>(signalProcessInstancesCmd),
+                                                                    new ParameterizedTypeReference<Void>() {
+                                                                    });
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        long count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
+        assertThat(count).isEqualTo(1);
+
+        Thread.sleep(1000);
+
+        //then
+        count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
+        assertThat(count).isEqualTo(1);
         testEventListener.setActive(false);
     }
 
     @Test
     public void shouldBroadcastSignalsWithVariables() {
         //when
+        ReflectionTestUtils.setField(signalSender, "serviceName", "dummyService");
         org.activiti.engine.runtime.ProcessInstance procInst1 = runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess2");
         org.activiti.engine.runtime.ProcessInstance procInst2 = ((ProcessEngineConfigurationImpl)processEngineConfiguration).getCommandExecutor().execute(new Command<org.activiti.engine.runtime.ProcessInstance>() {
             public org.activiti.engine.runtime.ProcessInstance execute(CommandContext commandContext) {
@@ -227,6 +300,8 @@ public class SignalIT {
         //then
         assertThat(runtimeService.getVariables(procInst1.getId()).get("myVar")).isEqualTo("myContent");
         assertThat(runtimeService.getVariables(procInst2.getId()).get("myVar")).isEqualTo("myContent");
+
+        ReflectionTestUtils.setField(signalSender, "serviceName", serviceName);
     }
 
     @Test
