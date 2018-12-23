@@ -122,11 +122,17 @@ public class SignalIT {
                         runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
                     }
                     @Override
-                    public void closed(CommandContext context) {}
+                    public void closed(CommandContext context) {
+                        // Do nothing
+                    }
                     @Override
-                    public void closeFailure(CommandContext context) {}
+                    public void closeFailure(CommandContext context) {
+                        // Do nothing
+                    }
                     @Override
-                    public void afterSessionsFlush(CommandContext context) {}
+                    public void afterSessionsFlush(CommandContext context) {
+                        // Do nothing
+                    }
                 });
                 return null;
             }
@@ -160,11 +166,17 @@ public class SignalIT {
                         runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
                     }
                     @Override
-                    public void closed(CommandContext context) {}
+                    public void closed(CommandContext context) {
+                        // Do nothing
+                    }
                     @Override
-                    public void closeFailure(CommandContext context) {}
+                    public void closeFailure(CommandContext context) {
+                        // Do nothing
+                    }
                     @Override
-                    public void afterSessionsFlush(CommandContext context) {}
+                    public void afterSessionsFlush(CommandContext context) {
+                        // Do nothing
+                    }
                 });
                 return null;
             }
@@ -193,11 +205,17 @@ public class SignalIT {
                         runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
                     }
                     @Override
-                    public void closed(CommandContext context) {}
+                    public void closed(CommandContext context) {
+                        // Do nothing
+                    }
                     @Override
-                    public void closeFailure(CommandContext context) {}
+                    public void closeFailure(CommandContext context) {
+                        // Do nothing
+                    }
                     @Override
-                    public void afterSessionsFlush(CommandContext context) {}
+                    public void afterSessionsFlush(CommandContext context) {
+                        // Do nothing
+                    }
                 });
                 return null;
             }
