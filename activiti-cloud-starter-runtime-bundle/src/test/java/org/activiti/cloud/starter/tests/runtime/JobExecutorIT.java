@@ -17,6 +17,7 @@
 package org.activiti.cloud.starter.tests.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -64,11 +65,13 @@ public class JobExecutorIT {
                           .start();
 
         // then
-        jobsCompleted.await();
+        await("the async executions should complete and no more jobs should exist")
+                .untilAsserted(() -> {
+                    assertThat(runtimeService.createExecutionQuery().processDefinitionKey("asyncTask").count()).isEqualTo(0); 
+                    assertThat(managementService.createJobQuery().count()).isEqualTo(0); 
+                });
         
-        // then
-        assertThat(runtimeService.createExecutionQuery().processDefinitionKey("asyncTask").count()).isEqualTo(0); 
-        assertThat(managementService.createJobQuery().count()).isEqualTo(0); 
+        assertThat(jobsCompleted.getCount()).isEqualTo(0);
     }
     
     abstract class AbstractActvitiEventListener implements ActivitiEventListener {
