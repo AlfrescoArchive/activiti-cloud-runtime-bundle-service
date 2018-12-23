@@ -67,7 +67,7 @@ public class JobExecutorIT {
         jobsCompleted.await();
         
         // then
-        assertThat(runtimeService.createExecutionQuery().count()).isEqualTo(0); 
+        assertThat(runtimeService.createExecutionQuery().processDefinitionKey("asyncTask").count()).isEqualTo(0); 
         assertThat(managementService.createJobQuery().count()).isEqualTo(0); 
     }
     
