@@ -28,10 +28,6 @@ public class BroadcastSignaEventHandler {
 
     @StreamListener(ProcessEngineSignalChannels.SIGNAL_CONSUMER)
     public void receive(@Payload SignalPayload signalPayload, @Header("sourceService") String serviceName) {
-        if (this.serviceName.equals(serviceName)) {
-            return;
-        }
-
         if ((signalPayload.getVariables() == null) || (signalPayload.getVariables().isEmpty())) {
             runtimeService.signalEventReceived(signalPayload.getName());
         } else {
