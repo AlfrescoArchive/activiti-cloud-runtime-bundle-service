@@ -10,6 +10,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+/**
+ * Overrides default SignalPayloadEventListener implementation to 
+ * broadcast signals into Runtime Bundle instances via Cloud Stream
+ */
 @Component
 public class SignalSender implements SignalPayloadEventListener {
 

@@ -16,11 +16,17 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
+import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.activiti.api.model.shared.model.VariableInstance;
 import org.activiti.api.process.model.ProcessDefinition;
@@ -37,6 +43,9 @@ import org.activiti.cloud.starter.tests.helper.TestEventListener;
 import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
+import org.activiti.engine.delegate.event.ActivitiEvent;
+import org.activiti.engine.delegate.event.ActivitiEventListener;
+import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.impl.interceptor.Command;
 import org.activiti.engine.impl.interceptor.CommandContext;
@@ -60,9 +69,6 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
-import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -154,7 +160,24 @@ public class SignalIT {
     }
 
     @Test
-    public void shouldNotBroadcastSignalsWithSameRuntimeBundle() throws InterruptedException {
+    public void shouldBroadcastSignalsWithSameRuntimeBundle() throws InterruptedException {
+        // given
+        CountDownLatch signalLatch = new CountDownLatch(1);
+        ActivitiEventListener signalEventListener = new ActivitiEventListener() {
+            
+            @Override
+            public void onEvent(ActivitiEvent event) {
+                signalLatch.countDown();
+            }
+            
+            @Override
+            public boolean isFailOnException() {
+                return false;
+            }
+        };
+                
+        runtimeService.addEventListener(signalEventListener, ActivitiEventType.ACTIVITY_SIGNALED);
+        
         //when
         runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
         ((ProcessEngineConfigurationImpl) processEngineConfiguration).getCommandExecutor().execute(new Command<Void>() {
@@ -182,14 +205,15 @@ public class SignalIT {
             }
         });
 
-        long count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
-        assertThat(count).isEqualTo(1);
+        
+        // then signal has been received
+        assertThat(signalLatch.await(2, TimeUnit.SECONDS)).isTrue();
 
-        Thread.sleep(1000);
-
-        //then
-        count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
-        assertThat(count).isEqualTo(1);
+        // then
+        assertThat(runtimeService.createProcessInstanceQuery()
+                                 .processDefinitionKey("broadcastSignalCatchEventProcess")
+                                 .count())
+                                 .isEqualTo(1);
     }
 
     @Test
@@ -272,8 +296,24 @@ public class SignalIT {
 
     @Test
     public void shouldBroadcastSignalsWithProcessInstanceRestAndSameRuntimeBundle() throws InterruptedException {
+        // given
+        CountDownLatch signalLatch = new CountDownLatch(1);
+        ActivitiEventListener signalEventListener = new ActivitiEventListener() {
+            
+            @Override
+            public void onEvent(ActivitiEvent event) {
+                signalLatch.countDown();
+            }
+            
+            @Override
+            public boolean isFailOnException() {
+                return false;
+            }
+        };
+        
+        runtimeService.addEventListener(signalEventListener, ActivitiEventType.ACTIVITY_SIGNALED);
+        
         //when
-        testEventListener.setActive(true);
         runtimeService.startProcessInstanceByKey("broadcastSignalCatchEventProcess");
         SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder.signal().withName("Test").build();
         ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/signal",
@@ -282,16 +322,17 @@ public class SignalIT {
                                                                     new ParameterizedTypeReference<Void>() {
                                                                     });
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        
+        assertThat(signalLatch.await(2, TimeUnit.SECONDS)).isTrue();
 
-        long count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
-        assertThat(count).isEqualTo(1);
-
-        Thread.sleep(1000);
-
-        //then
-        count = runtimeService.createProcessInstanceQuery().processDefinitionKey("broadcastSignalCatchEventProcess").count();
-        assertThat(count).isEqualTo(1);
-        testEventListener.setActive(false);
+        // then
+        await("Broadcast Signals").untilAsserted(() -> {
+            assertThat(runtimeService.createProcessInstanceQuery()
+                                     .processDefinitionKey("broadcastSignalCatchEventProcess")
+                                     .count())
+                                     .isEqualTo(0);
+        });
+        
     }
 
     @Test
