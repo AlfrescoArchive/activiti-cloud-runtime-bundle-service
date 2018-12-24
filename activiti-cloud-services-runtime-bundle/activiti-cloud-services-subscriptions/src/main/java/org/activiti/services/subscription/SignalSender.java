@@ -1,6 +1,7 @@
 package org.activiti.services.subscription;
 
 import org.activiti.api.process.model.payloads.SignalPayload;
+import org.activiti.runtime.api.signal.SignalPayloadEventListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
 import org.springframework.messaging.Message;
@@ -10,7 +11,7 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 @Component
-public class SignalSender {
+public class SignalSender implements SignalPayloadEventListener {
 
     @Value("${spring.application.name")
     private String serviceName;
