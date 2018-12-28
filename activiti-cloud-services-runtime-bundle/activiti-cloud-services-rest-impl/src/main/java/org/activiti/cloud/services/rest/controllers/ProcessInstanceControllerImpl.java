@@ -17,6 +17,8 @@ package org.activiti.cloud.services.rest.controllers;
 
 import static java.util.Collections.emptyList;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.activiti.api.process.model.ProcessInstance;
@@ -35,8 +37,10 @@ import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.rest.api.ProcessInstanceController;
 import org.activiti.cloud.services.rest.api.resources.ProcessInstanceResource;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssembler;
+import org.activiti.engine.ActivitiException;
 import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.engine.RepositoryService;
+import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.image.exception.ActivitiInterchangeInfoNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -117,7 +121,7 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     }
 
     @Override
-    public String getProcessDiagram(@PathVariable String processInstanceId) {
+    public String getProcessInstanceDiagramSVG(@PathVariable String processInstanceId) {
         ProcessInstance processInstance = processRuntime.processInstance(processInstanceId);
 
         BpmnModel bpmnModel = repositoryService.getBpmnModel(processInstance.getProcessDefinitionId());
@@ -127,6 +131,19 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
                                                                           .getActiveActivitiesIds(),
                                                                   emptyList()),
                           StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public String getProcessInstanceDiagramJson(String processInstanceId) {
+        ProcessInstance processInstance = processRuntime.processInstance(processInstanceId);
+        try (final InputStream resourceStream = repositoryService.getProcessModel(processInstance.getProcessDefinitionId())) {
+            return new String(IoUtil.readInputStream(resourceStream,
+                    null),
+                    StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new ActivitiException("Error occurred while getting process model '" + processInstanceId + "' : " + e.getMessage(),
+                    e);
+        }
     }
 
     @Override

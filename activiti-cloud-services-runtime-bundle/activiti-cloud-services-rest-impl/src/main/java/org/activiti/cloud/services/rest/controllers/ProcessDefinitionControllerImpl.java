@@ -106,11 +106,11 @@ public class ProcessDefinitionControllerImpl implements ProcessDefinitionControl
 
         try (final InputStream resourceStream = repositoryService.getProcessModel(id)) {
             return new String(IoUtil.readInputStream(resourceStream,
-                                                     null),
-                              StandardCharsets.UTF_8);
+                    null),
+                    StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new ActivitiException("Error occured while getting process model '" + id + "' : " + e.getMessage(),
-                                        e);
+            throw new ActivitiException("Error occurred while getting process model '" + id + "' : " + e.getMessage(),
+                    e);
         }
     }
 

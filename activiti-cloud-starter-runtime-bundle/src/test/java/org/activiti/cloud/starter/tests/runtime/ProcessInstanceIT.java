@@ -216,7 +216,7 @@ public class ProcessInstanceIT {
     }
 
     @Test
-    public void shouldRetrieveProcessInstanceDiagram() throws Exception {
+    public void shouldRetrieveProcessInstanceDiagramSVG() throws Exception {
 
         //given
         ResponseEntity<CloudProcessInstance> startedProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
@@ -258,6 +258,23 @@ public class ProcessInstanceIT {
                                           "UTF-8");
             assertThat(responseData).isEqualTo(sourceSvg);
         }
+    }
+
+    @Test
+    public void shouldRetrieveProcessInstanceDiagramJSON() throws Exception {
+
+        //given
+        ResponseEntity<CloudProcessInstance> startedProcessEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+
+        //when
+        String responseData = executeRequest(
+                PROCESS_INSTANCES_RELATIVE_URL + startedProcessEntity.getBody()
+                        .getId() + "/model",
+                HttpMethod.GET,
+                "application/json");
+
+        //then
+        assertThat(responseData).isNotNull();
     }
 
     @Test
@@ -539,15 +556,15 @@ public class ProcessInstanceIT {
 
     private String executeRequest(String url,
                                   HttpMethod method,
-                                  String contentType) {
+                                  String accepts) {
         return restTemplate.execute(url,
                                     method,
                                     new RequestCallback() {
                                         @Override
                                         public void doWithRequest(ClientHttpRequest request) throws IOException {
-                                            if (contentType != null && !contentType.isEmpty()) {
-                                                request.getHeaders().add("Content-Type",
-                                                                         contentType);
+                                            if (accepts != null && !accepts.isEmpty()) {
+                                                request.getHeaders().add("Accept",
+                                                                         accepts);
                                             }
                                         }
                                     },

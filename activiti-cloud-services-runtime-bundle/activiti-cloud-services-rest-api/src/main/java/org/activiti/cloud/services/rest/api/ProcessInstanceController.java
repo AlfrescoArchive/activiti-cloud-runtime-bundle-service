@@ -31,7 +31,13 @@ public interface ProcessInstanceController {
             method = RequestMethod.GET,
             produces = "image/svg+xml")
     @ResponseBody
-    String getProcessDiagram(@PathVariable String processInstanceId);
+    String getProcessInstanceDiagramSVG(@PathVariable String processInstanceId);
+
+    @RequestMapping(value = "/{processInstanceId}/model",
+            method = RequestMethod.GET,
+            produces = "application/json")
+    @ResponseBody
+    String getProcessInstanceDiagramJson(@PathVariable String processInstanceId);
 
     @RequestMapping(value = "/signal")
     ResponseEntity<Void> sendSignal(@RequestBody SignalPayload signalPayload);

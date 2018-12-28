@@ -36,6 +36,7 @@ import static org.springframework.restdocs.request.RequestDocumentation.pathPara
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.ByteArrayInputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -205,7 +206,7 @@ public class ProcessInstanceControllerImplIT {
     }
 
     @Test
-    public void getProcessDiagram() throws Exception {
+    public void getProcessDiagramSVG() throws Exception {
         ProcessInstance processInstance = mock(ProcessInstance.class);
         when(processRuntime.processInstance(anyString())).thenReturn(processInstance);
         when(repositoryService.getBpmnModel(processInstance.getProcessDefinitionId())).thenReturn(mock(BpmnModel.class));
@@ -219,10 +220,29 @@ public class ProcessInstanceControllerImplIT {
                 .thenReturn("diagram".getBytes());
 
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/model",
-                                 1).contentType("image/svg+xml"))
+                                 1).accept("image/svg+xml"))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/diagram",
                                 pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
+    }
+
+    @Test
+    public void getProcessDiagramJSON() throws Exception {
+        ProcessInstance processInstance = mock(ProcessInstance.class);
+        when(processRuntime.processInstance(anyString())).thenReturn(processInstance);
+        when(repositoryService.getBpmnModel(processInstance.getProcessDefinitionId())).thenReturn(mock(BpmnModel.class));
+        ProcessInstanceMeta processInstanceMeta = mock(ProcessInstanceMeta.class);
+        when(processRuntime.processInstanceMeta(any())).thenReturn(processInstanceMeta);
+        when(processInstanceMeta.getActiveActivitiesIds()).thenReturn(Collections.emptyList());
+
+        when(repositoryService.getProcessModel(processInstance.getProcessDefinitionId()))
+                .thenReturn(new ByteArrayInputStream("{ \"json\" : \"content\"}".getBytes()));
+
+        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/model",
+                1).accept("application/json"))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/diagram/json",
+                        pathParameters(parameterWithName("processInstanceId").description("The process instance id"))));
     }
 
     @Test
@@ -231,7 +251,7 @@ public class ProcessInstanceControllerImplIT {
         when(processRuntime.processInstance(processInstanceId))
                 .thenThrow(new NotFoundException("not found"));
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/model",
-                                 processInstanceId).contentType("image/svg+xml"))
+                                 processInstanceId).accept("image/svg+xml"))
                 .andExpect(status().isNotFound());
     }
 
@@ -250,7 +270,7 @@ public class ProcessInstanceControllerImplIT {
                 .thenThrow(new ActivitiInterchangeInfoNotFoundException("No interchange information found."));
 
         this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/model",
-                                 1).contentType("image/svg+xml"))
+                                 1).accept("image/svg+xml"))
                 .andExpect(status().isNoContent());
     }
 
