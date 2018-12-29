@@ -28,8 +28,8 @@ public class BroadcastSignalEventActivityBehavior extends IntermediateThrowSigna
     }
 
     public void execute(DelegateExecution execution) {
-        super.execute(execution);
         if (processInstanceScope) {
+          super.execute(execution);
           return;
         }
 
