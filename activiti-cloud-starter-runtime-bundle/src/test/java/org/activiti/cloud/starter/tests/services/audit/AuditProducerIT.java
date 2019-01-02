@@ -133,7 +133,7 @@ public class AuditProducerIT {
                                                                                                                    .withVariable("name",
                                                                                                                                  "peter")
                                                                                                                    .withProcessInstanceName("my instance name")
-                                                                                                                   .withBusinessKey("my business key")
+                                                                                                                   .withBusinessKey("my business key") 
                                                                                                                    .build());
 
         //then
