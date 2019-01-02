@@ -258,7 +258,7 @@ public class ProcessInstanceControllerImplIT {
     public void sendSignal() throws Exception {
         SignalPayload cmd = ProcessPayloadBuilder.signal().withName("signalInstance").build();
 
-        this.mockMvc.perform(get("/v1/process-instances/signal").contentType(MediaType.APPLICATION_JSON)
+        this.mockMvc.perform(post("/v1/process-instances/signal").contentType(MediaType.APPLICATION_JSON)
                                      .content(mapper.writeValueAsString(cmd)))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/signal"));
@@ -319,5 +319,21 @@ public class ProcessInstanceControllerImplIT {
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/update"));
         
+    }
+    
+    @Test
+    public void subprocesses() throws Exception {
+        
+        //Simply check here that controller is working
+        List<ProcessInstance> processInstanceList = Collections.singletonList(defaultProcessInstance());
+        Page<ProcessInstance> processInstances = new PageImpl<>(processInstanceList,
+                                                                processInstanceList.size());
+         
+        when(processRuntime.processInstances(any(),any())).thenReturn(processInstances);
+        
+              
+        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/subprocesses",
+                                 1))
+                .andExpect(status().isOk());
     }
 }

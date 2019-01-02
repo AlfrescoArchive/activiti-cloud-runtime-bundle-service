@@ -33,7 +33,7 @@ public interface ProcessInstanceController {
     @ResponseBody
     String getProcessDiagram(@PathVariable String processInstanceId);
 
-    @RequestMapping(value = "/signal")
+    @RequestMapping(value = "/signal", method = RequestMethod.POST) 
     ResponseEntity<Void> sendSignal(@RequestBody SignalPayload signalPayload);
 
     @RequestMapping(value = "{processInstanceId}/suspend", method = RequestMethod.POST)
@@ -48,4 +48,8 @@ public interface ProcessInstanceController {
     @RequestMapping(value = "/{processInstanceId}", method = RequestMethod.PUT)
     ProcessInstanceResource updateProcess(@PathVariable("processInstanceId") String processInstanceId,
                                     @RequestBody UpdateProcessPayload payload);
+    
+    @RequestMapping(value = "/{processInstanceId}/subprocesses", method = RequestMethod.GET)
+    PagedResources<ProcessInstanceResource> subprocesses(@PathVariable("processInstanceId") String processInstanceId,
+                                                         Pageable pageable);
 }
