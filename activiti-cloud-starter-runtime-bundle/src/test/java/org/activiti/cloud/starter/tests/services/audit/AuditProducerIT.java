@@ -478,6 +478,12 @@ public class AuditProducerIT {
         assertThat(userCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(userCandidates.getBody().size()).isEqualTo(1);
         assertThat(userCandidates.getBody().get(0)).isEqualTo("hruser");
+        
+        //Delete task
+        taskRestTemplate.delete(task);
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+        });
     }
     
     @Test
@@ -551,6 +557,12 @@ public class AuditProducerIT {
         assertThat(groupCandidates).isNotNull();
         assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(groupCandidates.getBody().size()).isEqualTo(0);
+        
+        //Delete task
+        taskRestTemplate.delete(task);
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+        });
     }
 
     private ResponseEntity<PagedResources<CloudProcessDefinition>> getProcessDefinitions() {
