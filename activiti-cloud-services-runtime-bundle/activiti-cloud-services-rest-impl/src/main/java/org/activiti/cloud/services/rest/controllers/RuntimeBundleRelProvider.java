@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.activiti.cloud.api.process.model.impl.CloudProcessDefinitionImpl;
 import org.activiti.cloud.api.process.model.impl.CloudProcessInstanceImpl;
+import org.activiti.cloud.api.task.model.impl.CloudTaskImpl;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.hateoas.RelProvider;
@@ -38,6 +39,9 @@ public class RuntimeBundleRelProvider implements RelProvider {
         resourceRelationDescriptors.put(CloudProcessInstanceImpl.class,
                                         new ResourceRelationDescriptor("processInstance",
                                                                        "processInstances"));
+        resourceRelationDescriptors.put(CloudTaskImpl.class,
+                                        new ResourceRelationDescriptor("task",
+                                                                       "tasks"));
     }
 
     @Override
