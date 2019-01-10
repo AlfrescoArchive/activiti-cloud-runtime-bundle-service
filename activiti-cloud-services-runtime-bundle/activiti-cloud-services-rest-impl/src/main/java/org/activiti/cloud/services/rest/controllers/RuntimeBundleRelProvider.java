@@ -19,6 +19,7 @@ package org.activiti.cloud.services.rest.controllers;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.activiti.cloud.api.model.shared.impl.CloudVariableInstanceImpl;
 import org.activiti.cloud.api.process.model.impl.CloudProcessDefinitionImpl;
 import org.activiti.cloud.api.process.model.impl.CloudProcessInstanceImpl;
 import org.activiti.cloud.api.task.model.impl.CloudTaskImpl;
@@ -42,6 +43,10 @@ public class RuntimeBundleRelProvider implements RelProvider {
         resourceRelationDescriptors.put(CloudTaskImpl.class,
                                         new ResourceRelationDescriptor("task",
                                                                        "tasks"));
+        
+        resourceRelationDescriptors.put(CloudVariableInstanceImpl.class,
+                                        new ResourceRelationDescriptor("variable",
+                                                                       "variables"));
     }
 
     @Override
