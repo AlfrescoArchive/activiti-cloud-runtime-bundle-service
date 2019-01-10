@@ -18,6 +18,7 @@ package org.activiti.cloud.services.rest.controllers;
 
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
+import static org.activiti.alfresco.rest.docs.HALDocumentation.pagedProcessInstanceFields;
 import static org.activiti.cloud.services.rest.controllers.ProcessInstanceSamples.defaultProcessInstance;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -141,8 +142,7 @@ public class ProcessInstanceControllerImplIT {
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
                                 pageRequestParameters(),
-                                pagedResourcesResponseFields()
-
+                                pagedProcessInstanceFields()
                 ));
     }  
 
