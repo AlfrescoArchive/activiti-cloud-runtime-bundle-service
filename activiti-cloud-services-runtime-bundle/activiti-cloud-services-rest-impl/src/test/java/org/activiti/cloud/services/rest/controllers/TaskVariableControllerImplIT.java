@@ -56,6 +56,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -123,7 +124,7 @@ public class TaskVariableControllerImplIT {
         given(taskRuntime.variables(TaskPayloadBuilder.variables().withTaskId(TASK_ID).build())).willReturn(Arrays.asList(name,
                                                                                                                           age));
         this.mockMvc.perform(get("/v1/tasks/{taskId}/variables",
-                                 TASK_ID))
+                                 TASK_ID).accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
