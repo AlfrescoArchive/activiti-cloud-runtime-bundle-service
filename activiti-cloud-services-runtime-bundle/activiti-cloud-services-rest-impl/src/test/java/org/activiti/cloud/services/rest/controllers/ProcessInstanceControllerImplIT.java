@@ -29,11 +29,10 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
-import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
 import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
 import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Collections;
@@ -124,22 +123,28 @@ public class ProcessInstanceControllerImplIT {
         assertThat(processEngineChannels).isNotNull();
         assertThat(processDeployedProducer).isNotNull();
     }
-
+    
     @Test
     public void getProcessInstances() throws Exception {
-
+        //given
         List<ProcessInstance> processInstanceList = Collections.singletonList(defaultProcessInstance());
-        Page<ProcessInstance> processInstances = new PageImpl<>(processInstanceList,
-                                                                processInstanceList.size());
-        when(processRuntime.processInstances(any())).thenReturn(processInstances);
-
-        this.mockMvc.perform(get("/v1/process-instances"))
+        Page<ProcessInstance> processInstancePage = new PageImpl<>(processInstanceList,
+                                                                   processInstanceList.size());
+        
+        when(processRuntime.processInstances(any())).thenReturn(processInstancePage);
+                
+        //when
+        mockMvc.perform(get("/v1/process-instances?skipCount=10&maxItems=10")
+                .accept(MediaType.APPLICATION_JSON))
+                //then
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
-                                responseFields(subsectionWithPath("page").description("Pagination details."),
-                                               subsectionWithPath("_links").description("The hypermedia links."),
-                                               subsectionWithPath("_embedded").description("The process definitions."))));
-    }
+                                pageRequestParameters(),
+                                pagedResourcesResponseFields()
+
+                ));
+    }  
 
     @Test
     public void getProcessInstancesShouldUseAlfrescoGuidelineWhenMediaTypeIsApplicationJson() throws Exception {
@@ -336,4 +341,5 @@ public class ProcessInstanceControllerImplIT {
                                  1))
                 .andExpect(status().isOk());
     }
+    
 }
