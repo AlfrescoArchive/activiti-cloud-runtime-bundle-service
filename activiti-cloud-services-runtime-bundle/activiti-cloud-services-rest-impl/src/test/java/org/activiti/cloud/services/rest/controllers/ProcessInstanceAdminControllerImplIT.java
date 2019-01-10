@@ -58,6 +58,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -108,7 +109,7 @@ public class ProcessInstanceAdminControllerImplIT {
         when(processAdminRuntime.processInstances(any())).thenReturn(processInstances);
 
         this.mockMvc.perform(get("/admin/v1/process-instances?skipCount=10&maxItems=10")
-                             .accept(MediaType.APPLICATION_JSON))
+                             .accept(MediaTypes.HAL_JSON_VALUE))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
