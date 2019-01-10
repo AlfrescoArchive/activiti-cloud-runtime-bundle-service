@@ -18,6 +18,7 @@ package org.activiti.cloud.services.rest.controllers;
 
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
+import static org.activiti.alfresco.rest.docs.HALDocumentation.pagedTasksFields;
 import static org.activiti.api.task.model.Task.TaskStatus.CREATED;
 import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildDefaultAssignedTask;
 import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildStandAloneTask;
@@ -133,15 +134,16 @@ public class TaskControllerImplIT {
 
         List<Task> taskList = Collections.singletonList(buildDefaultAssignedTask());
         Page<Task> tasks = new PageImpl<>(taskList,
-                                                                                                             taskList.size());
+                taskList.size());
         when(taskRuntime.tasks(any())).thenReturn(tasks);
 
-        this.mockMvc.perform(get("/v1/tasks"))
+        this.mockMvc.perform(get("/v1/tasks?skipCount=10&maxItems=10"))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
-                                responseFields(subsectionWithPath("page").description("Pagination details."),
-                                               subsectionWithPath("_links").description("The hypermedia links."),
-                                               subsectionWithPath("_embedded").description("The process definitions."))));
+                                pageRequestParameters(),
+                                pagedTasksFields()
+                                ));
     }
 
     @Test

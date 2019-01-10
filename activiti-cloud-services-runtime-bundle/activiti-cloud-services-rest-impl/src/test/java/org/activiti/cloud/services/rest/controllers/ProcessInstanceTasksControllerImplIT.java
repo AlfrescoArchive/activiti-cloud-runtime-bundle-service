@@ -16,6 +16,19 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.processInstanceIdParameter;
+import static org.activiti.alfresco.rest.docs.HALDocumentation.pagedTasksFields;
+import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildDefaultAssignedTask;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -45,21 +58,6 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-
-import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
-import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
-import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.processInstanceIdParameter;
-import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildDefaultAssignedTask;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
-import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(ProcessInstanceTasksControllerImpl.class)
@@ -104,18 +102,18 @@ public class ProcessInstanceTasksControllerImplIT {
         Page<Task> tasks = new PageImpl<>(taskList,
                                           taskList.size());
 
-        when(taskRuntime.tasks(any(),
-                                            any())).thenReturn(tasks);
+        when(taskRuntime.tasks(any(),any())).thenReturn(tasks);
 
-        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/tasks",
+        this.mockMvc.perform(get("/v1/process-instances/{processInstanceId}/tasks?skipCount=10&maxItems=10",
                                  1,
                                  1).accept(MediaTypes.HAL_JSON_VALUE))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
-                                pathParameters(parameterWithName("processInstanceId").description("The process instance id")),
-                                responseFields(subsectionWithPath("page").description("Pagination details."),
-                                               subsectionWithPath("_links").description("The hypermedia links."),
-                                               subsectionWithPath("_embedded").description("The process definitions."))));
+                                processInstanceIdParameter(),
+                                pageRequestParameters(),
+                                pagedTasksFields()
+                                ));
     }
 
     @Test
