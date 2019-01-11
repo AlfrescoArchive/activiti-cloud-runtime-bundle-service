@@ -102,7 +102,7 @@ public class ServicesRestAutoConfiguration implements WebMvcConfigurer {
     
     @Bean
     @ConditionalOnMissingBean
-    public RuntimeBundleRelProvider processDefinitionRelProvider() {
+    public RuntimeBundleRelProvider runtimeBundleRelProvider() {
         return new RuntimeBundleRelProvider();
     }
 }
