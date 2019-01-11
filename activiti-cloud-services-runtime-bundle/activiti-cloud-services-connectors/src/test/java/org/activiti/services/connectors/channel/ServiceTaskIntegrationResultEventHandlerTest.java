@@ -34,7 +34,6 @@ import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ExecutionQuery;
 import org.activiti.runtime.api.connector.ConnectorActionDefinitionFinder;
 import org.activiti.runtime.api.connector.VariablesMatchHelper;
-import org.activiti.runtime.api.model.impl.IntegrationContextImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

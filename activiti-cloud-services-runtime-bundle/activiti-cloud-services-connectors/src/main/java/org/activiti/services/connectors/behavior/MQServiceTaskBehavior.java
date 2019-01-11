@@ -20,11 +20,11 @@ import org.activiti.bpmn.model.ServiceTask;
 import org.activiti.cloud.api.process.model.IntegrationRequest;
 import org.activiti.cloud.api.process.model.impl.IntegrationRequestImpl;
 import org.activiti.cloud.services.events.converter.RuntimeBundleInfoAppender;
+import org.activiti.core.common.model.connector.ActionDefinition;
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.impl.delegate.TriggerableActivityBehavior;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextEntity;
 import org.activiti.engine.impl.persistence.entity.integration.IntegrationContextManager;
-import org.activiti.model.connector.ActionDefinition;
 import org.activiti.runtime.api.connector.ConnectorActionDefinitionFinder;
 import org.activiti.runtime.api.connector.DefaultServiceTaskBehavior;
 import org.activiti.runtime.api.connector.IntegrationContextBuilder;
@@ -87,9 +87,6 @@ public class MQServiceTaskBehavior extends DefaultServiceTaskBehavior implements
      */
     private void publishSpringEvent(DelegateExecution execution,
                                       IntegrationContextEntity integrationContext) {
-        IntegrationRequestImpl integrationRequest = new IntegrationRequestImpl(integrationContextBuilder.from(integrationContext,
-                                                                                                              execution, null));
-                                    IntegrationContextEntity integrationContext) {
 
         String implementation = ((ServiceTask) execution.getCurrentFlowElement()).getImplementation();
 
