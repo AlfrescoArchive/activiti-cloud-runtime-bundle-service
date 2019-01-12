@@ -44,7 +44,6 @@ public class MQServiceTaskBehavior extends DefaultServiceTaskBehavior implements
     private final ApplicationEventPublisher eventPublisher;
     private final IntegrationContextBuilder integrationContextBuilder;
     private final ConnectorActionDefinitionFinder connectorActionDefinitionFinder;
-    private final VariablesMatchHelper variablesMatchHelper;
     private final RuntimeBundleInfoAppender runtimeBundleInfoAppender;
 
     public MQServiceTaskBehavior(IntegrationContextManager integrationContextManager,
@@ -60,7 +59,6 @@ public class MQServiceTaskBehavior extends DefaultServiceTaskBehavior implements
         this.eventPublisher = eventPublisher;
         this.integrationContextBuilder = integrationContextBuilder;
         this.connectorActionDefinitionFinder = connectorActionDefinitionFinder;
-        this.variablesMatchHelper = variablesMatchHelper;
         this.runtimeBundleInfoAppender = runtimeBundleInfoAppender;
     }
 

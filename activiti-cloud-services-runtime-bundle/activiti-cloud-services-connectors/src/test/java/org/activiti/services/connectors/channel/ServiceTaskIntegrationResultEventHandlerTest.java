@@ -16,10 +16,6 @@
 
 package org.activiti.services.connectors.channel;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import org.activiti.api.runtime.model.impl.IntegrationContextImpl;
 import org.activiti.cloud.api.process.model.IntegrationResult;
 import org.activiti.cloud.api.process.model.impl.IntegrationRequestImpl;
@@ -32,8 +28,6 @@ import org.activiti.engine.impl.persistence.entity.integration.IntegrationContex
 import org.activiti.engine.integration.IntegrationContextService;
 import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ExecutionQuery;
-import org.activiti.runtime.api.connector.ConnectorActionDefinitionFinder;
-import org.activiti.runtime.api.connector.VariablesMatchHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -43,14 +37,13 @@ import org.mockito.Mock;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 
+import java.util.Collections;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public class ServiceTaskIntegrationResultEventHandlerTest {
@@ -81,12 +74,6 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
     @Mock
     private RuntimeBundleProperties.RuntimeBundleEventsProperties eventsProperties;
 
-    @Mock
-    private ConnectorActionDefinitionFinder connectorActionDefinitionFinder;
-
-    @Mock
-    private VariablesMatchHelper variablesMatchHelper;
-
     @Captor
     private ArgumentCaptor<Message<CloudIntegrationResultReceivedImpl>> messageCaptor;
 
@@ -116,7 +103,7 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
                 .willReturn(integrationContextEntity);
         given(executionQuery.list()).willReturn(Collections.singletonList(mock(Execution.class)));
         Map<String, Object> variables = Collections.singletonMap("var1",
-                                                                 "v");
+                "v");
 
         IntegrationContextImpl integrationContext = buildIntegrationContext(variables);
 
@@ -126,7 +113,7 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
         //then
         verify(integrationContextService).deleteIntegrationContext(integrationContextEntity);
         verify(runtimeService).trigger(EXECUTION_ID,
-                                       variables);
+                variables);
     }
 
     @Test
@@ -136,7 +123,7 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
                 .willReturn(null);
         given(executionQuery.list()).willReturn(Collections.singletonList(mock(Execution.class)));
         Map<String, Object> variables = Collections.singletonMap("var1",
-                                                                 "v");
+                "v");
 
         IntegrationContextImpl integrationContext = buildIntegrationContext(variables);
 
@@ -158,7 +145,7 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
 
         given(integrationContextService.findById(ENTITY_ID)).willReturn(integrationContextEntity);
         Map<String, Object> variables = Collections.singletonMap("var1",
-                                                                 "v");
+                "v");
 
         given(runtimeBundleProperties.getServiceFullName()).willReturn("myApp");
         given(runtimeBundleProperties.getEventsProperties().isIntegrationAuditEventsEnabled()).willReturn(true);
@@ -199,7 +186,7 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
 
         given(integrationContextService.findById(executionId)).willReturn(integrationContextEntity);
         Map<String, Object> variables = Collections.singletonMap("var1",
-                                                                 "v");
+                "v");
 
         IntegrationContextImpl integrationContext = buildIntegrationContext(variables);
 
@@ -211,6 +198,6 @@ public class ServiceTaskIntegrationResultEventHandlerTest {
 
         //then
         verify(auditProducer,
-               never()).send(any(Message.class));
+                never()).send(any(Message.class));
     }
 }
