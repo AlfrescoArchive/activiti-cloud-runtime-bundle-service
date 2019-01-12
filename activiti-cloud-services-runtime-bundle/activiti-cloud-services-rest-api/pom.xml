@@ -11,7 +11,7 @@
   <name>Activiti Cloud Services :: REST APIs</name>
   <dependencies>
     <dependency>
-      <groupId>org.activiti</groupId>
+      <groupId>org.activiti.core.common</groupId>
       <artifactId>activiti-connector-model</artifactId>
     </dependency>
     <dependency>
