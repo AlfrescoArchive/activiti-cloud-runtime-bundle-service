@@ -1,44 +1,5 @@
 package org.activiti.cloud.starter.tests.services.audit;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
-
-import org.activiti.api.process.model.ProcessDefinition;
-import org.activiti.api.process.model.ProcessInstance;
-import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
-import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
-import org.activiti.api.process.model.events.BPMNActivityEvent;
-import org.activiti.api.process.model.events.ProcessDefinitionEvent;
-import org.activiti.api.task.model.Task;
-import org.activiti.api.task.model.TaskCandidateUser;
-import org.activiti.api.task.model.builders.TaskPayloadBuilder;
-import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
-import org.activiti.cloud.api.process.model.CloudProcessDefinition;
-import org.activiti.cloud.api.process.model.CloudProcessInstance;
-import org.activiti.cloud.api.process.model.events.CloudBPMNActivityStartedEvent;
-import org.activiti.cloud.api.task.model.CloudTask;
-import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
-import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.hateoas.PagedResources;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.junit4.SpringRunner;
-
 import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_CREATED;
 import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_UPDATED;
 import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_CANCELLED;
@@ -65,6 +26,48 @@ import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TAS
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.activiti.api.process.model.ProcessDefinition;
+import org.activiti.api.process.model.ProcessInstance;
+import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
+import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
+import org.activiti.api.process.model.events.BPMNActivityEvent;
+import org.activiti.api.process.model.events.ProcessDefinitionEvent;
+import org.activiti.api.task.model.Task;
+import org.activiti.api.task.model.TaskCandidateGroup;
+import org.activiti.api.task.model.TaskCandidateUser;
+import org.activiti.api.task.model.builders.TaskPayloadBuilder;
+import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
+import org.activiti.cloud.api.process.model.CloudProcessDefinition;
+import org.activiti.cloud.api.process.model.CloudProcessInstance;
+import org.activiti.cloud.api.process.model.events.CloudBPMNActivityStartedEvent;
+import org.activiti.cloud.api.process.model.events.CloudProcessResumedEvent;
+import org.activiti.cloud.api.process.model.events.CloudProcessSuspendedEvent;
+import org.activiti.cloud.api.task.model.CloudTask;
+import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
+import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.hateoas.PagedResources;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(AuditProducerIT.AUDIT_PRODUCER_IT)
@@ -119,7 +122,7 @@ public class AuditProducerIT {
         //then
         assertThat(receivedEvents)
                 .filteredOn(event -> ProcessDefinitionEvent.ProcessDefinitionEvents.PROCESS_DEPLOYED.name().equals(event.getEventType().name()))
-                .extracting(event -> ((ProcessDefinition)event.getEntity()).getKey())
+                .extracting(event -> ((ProcessDefinition) event.getEntity()).getKey())
                 .contains(SIMPLE_PROCESS);
     }
 
@@ -133,7 +136,7 @@ public class AuditProducerIT {
                                                                                                                    .withVariable("name",
                                                                                                                                  "peter")
                                                                                                                    .withProcessInstanceName("my instance name")
-                .withBusinessKey("businessKey")
+                                                                                                                   .withBusinessKey("my business key") 
                                                                                                                    .build());
 
         //then
@@ -159,39 +162,49 @@ public class AuditProducerIT {
                     .filteredOn(event -> ACTIVITY_STARTED.equals(event.getEventType()))
                     .extracting(event -> ((CloudBPMNActivityStartedEvent) event).getEntity().getActivityType())
                     .containsExactly("startEvent",
-                            "userTask");
+                                     "userTask");
+            assertThat(receivedEvents).filteredOn(cloudRuntimeEvent -> PROCESS_CREATED.equals(cloudRuntimeEvent.getEventType()))
+                    .extracting(cloudRuntimeEvent -> ((ProcessInstance) cloudRuntimeEvent.getEntity()).getBusinessKey())
+                    .containsExactly("my business key");
             assertThat(receivedEvents).filteredOn(cloudRuntimeEvent -> PROCESS_STARTED.equals(cloudRuntimeEvent.getEventType()))
-                    .extracting(cloudRuntimeEvent -> ((ProcessInstance)cloudRuntimeEvent.getEntity()).getName())
+                    .extracting(cloudRuntimeEvent -> ((ProcessInstance) cloudRuntimeEvent.getEntity()).getName())
                     .containsExactly("my instance name");
         });
 
         //when
         processInstanceRestTemplate.suspend(startProcessEntity);
-
-        //then
+        
+       //then
         await().untilAsserted(() -> {
-
-            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+           List<CloudRuntimeEvent<?, ?>> receivedEvents1 = streamHandler.getLatestReceivedEvents();
+           assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
             
-            assertThat(streamHandler.getLatestReceivedEvents())
+           assertThat(receivedEvents1)
                 .extracting(event -> event.getEventType().name())
                 .containsExactly(PROCESS_SUSPENDED.name(),
-                        TASK_SUSPENDED.name());
-        });
+                                 TASK_SUSPENDED.name());
 
+           assertThat(receivedEvents1.get(0).getEntity()).isInstanceOf(ProcessInstance.class);
+           assertThat(((CloudProcessSuspendedEvent)receivedEvents1.get(0)).getProcessDefinitionKey()).isEqualTo(SIMPLE_PROCESS);
+        });
+           
         //when
         processInstanceRestTemplate.resume(startProcessEntity);
-
+        
         //then
         await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents2 = streamHandler.getLatestReceivedEvents();
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
             
-            assertThat(streamHandler.getLatestReceivedEvents())
+            assertThat(receivedEvents2)
                 .extracting(event -> event.getEventType().name())
                 .containsExactly(PROCESS_RESUMED.name(),
-                        TASK_ACTIVATED.name());
-        });
+                                 TASK_ACTIVATED.name());
 
+           assertThat(receivedEvents2.get(0).getEntity()).isInstanceOf(ProcessInstance.class);
+           assertThat(((CloudProcessResumedEvent)receivedEvents2.get(0)).getProcessDefinitionKey()).isEqualTo(SIMPLE_PROCESS);
+        });
+            
         //when
         processInstanceRestTemplate.setVariables(startProcessEntity.getBody().getId(),
                 Collections.singletonMap("name",
@@ -394,6 +407,161 @@ public class AuditProducerIT {
             assertThat(((Task) receivedEvents.get(0).getEntity()).getId()).isEqualTo(task.getId());
             assertThat(receivedEvents.get(0).getEntityId()).isEqualTo(task.getId());
             assertThat(((Task) receivedEvents.get(0).getEntity()).getDescription()).isEqualTo("short description");
+        });
+    }
+    
+    @Test
+    public void shouldEmitEventsForTaskAddDeleteUserCandidates() {
+        //given
+        CloudTask task = taskRestTemplate.createTask(TaskPayloadBuilder.create().withName("task1").withDescription(
+                "task description").withAssignee("hruser").build());
+
+        //when
+        taskRestTemplate.addUserCandidates(TaskPayloadBuilder.addCandidateUsers().withTaskId(task.getId()).withCandidateUser("testuser").build());
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
+
+            assertThat(receivedEvents)
+                    .hasSize(1)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getEntityId)
+                    .containsExactly(tuple(TASK_CANDIDATE_USER_ADDED,
+                                           "testuser")
+                    );
+
+
+            assertThat(receivedEvents.get(0).getEntity()).isNotNull();
+            assertThat(receivedEvents.get(0).getEntity()).isInstanceOf(TaskCandidateUser.class);
+            assertThat(((TaskCandidateUser) receivedEvents.get(0).getEntity()).getTaskId()).isEqualTo(task.getId());
+            assertThat(((TaskCandidateUser) receivedEvents.get(0).getEntity()).getUserId()).isEqualTo("testuser");
+           
+        });
+        
+        ResponseEntity<List<String>> userCandidates = taskRestTemplate.getUserCandidates(task.getId());
+        assertThat(userCandidates).isNotNull();
+        assertThat(userCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(userCandidates.getBody().size()).isEqualTo(2);
+        assertThat(userCandidates.getBody().get(0)).isEqualTo("hruser");
+        assertThat(userCandidates.getBody().get(1)).isEqualTo("testuser");
+        
+        //when
+        taskRestTemplate.deleteUserCandidates(TaskPayloadBuilder.deleteCandidateUsers().withTaskId(task.getId()).withCandidateUser("testuser").build());
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
+
+            assertThat(receivedEvents)
+                    .hasSize(1)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getEntityId)
+                    .containsExactly(tuple(TASK_CANDIDATE_USER_REMOVED,
+                                           "testuser")
+                    );
+
+
+            assertThat(receivedEvents.get(0).getEntity()).isNotNull();
+            assertThat(receivedEvents.get(0).getEntity()).isInstanceOf(TaskCandidateUser.class);
+            assertThat(((TaskCandidateUser) receivedEvents.get(0).getEntity()).getTaskId()).isEqualTo(task.getId());
+            assertThat(((TaskCandidateUser) receivedEvents.get(0).getEntity()).getUserId()).isEqualTo("testuser");
+           
+        });
+        
+        userCandidates = taskRestTemplate.getUserCandidates(task.getId());
+        assertThat(userCandidates).isNotNull();
+        assertThat(userCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(userCandidates.getBody().size()).isEqualTo(1);
+        assertThat(userCandidates.getBody().get(0)).isEqualTo("hruser");
+        
+        //Delete task
+        taskRestTemplate.delete(task);
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+        });
+    }
+    
+    @Test
+    public void shouldEmitEventsForTaskAddDeleteGroupCandidates() {
+        //given
+        CloudTask task = taskRestTemplate.createTask(TaskPayloadBuilder.create().withName("task2").withDescription(
+                "test task description").withAssignee("hruser").build());
+
+        ResponseEntity<List<String>> groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
+        assertThat(groupCandidates).isNotNull();
+        assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(groupCandidates.getBody().size()).isEqualTo(0);
+        
+        //when
+        taskRestTemplate.addGroupCandidates(TaskPayloadBuilder.addCandidateGroups().withTaskId(task.getId()).withCandidateGroup("hr").build());
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
+
+            assertThat(receivedEvents)
+                    .hasSize(1)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getEntityId)
+                    .containsExactly(tuple(TASK_CANDIDATE_GROUP_ADDED,
+                                           "hr")
+                    );
+
+
+            assertThat(receivedEvents.get(0).getEntity()).isNotNull();
+            assertThat(receivedEvents.get(0).getEntity()).isInstanceOf(TaskCandidateGroup.class);
+            assertThat(((TaskCandidateGroup) receivedEvents.get(0).getEntity()).getTaskId()).isEqualTo(task.getId());
+            assertThat(((TaskCandidateGroup) receivedEvents.get(0).getEntity()).getGroupId()).isEqualTo("hr");
+           
+        });
+        
+        groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
+        assertThat(groupCandidates).isNotNull();
+        assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(groupCandidates.getBody().size()).isEqualTo(1);
+        assertThat(groupCandidates.getBody().get(0)).isEqualTo("hr");
+        
+        //when
+        taskRestTemplate.deleteGroupCandidates(TaskPayloadBuilder.deleteCandidateGroups().withTaskId(task.getId()).withCandidateGroup("hr").build());
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
+
+            assertThat(receivedEvents)
+                    .hasSize(1)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getEntityId)
+                    .containsExactly(tuple(TASK_CANDIDATE_GROUP_REMOVED,
+                                           "hr")
+                    );
+
+
+            assertThat(receivedEvents.get(0).getEntity()).isNotNull();
+            assertThat(receivedEvents.get(0).getEntity()).isInstanceOf(TaskCandidateGroup.class);
+            assertThat(((TaskCandidateGroup) receivedEvents.get(0).getEntity()).getTaskId()).isEqualTo(task.getId());
+            assertThat(((TaskCandidateGroup) receivedEvents.get(0).getEntity()).getGroupId()).isEqualTo("hr");
+           
+        });
+        
+        groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
+        assertThat(groupCandidates).isNotNull();
+        assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(groupCandidates.getBody().size()).isEqualTo(0);
+        
+        //Delete task
+        taskRestTemplate.delete(task);
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
         });
     }
 
