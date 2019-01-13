@@ -15,7 +15,7 @@
 
 package org.activiti.cloud.services.rest.api.resources;
 
-import org.activiti.model.connector.ConnectorDefinition;
+import org.activiti.core.common.model.connector.ConnectorDefinition;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 
