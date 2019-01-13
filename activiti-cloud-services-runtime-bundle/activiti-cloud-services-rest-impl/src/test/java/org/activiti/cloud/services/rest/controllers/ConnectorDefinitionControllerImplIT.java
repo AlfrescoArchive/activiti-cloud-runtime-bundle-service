@@ -19,6 +19,7 @@ package org.activiti.cloud.services.rest.controllers;
 import org.activiti.cloud.services.rest.assemblers.ConnectorDefinitionResourceAssembler;
 import org.activiti.core.common.model.connector.ConnectorDefinition;
 import org.activiti.core.common.spring.connector.autoconfigure.ConnectorAutoConfiguration;
+import org.conf.activiti.runtime.api.ConnectorsAutoConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
