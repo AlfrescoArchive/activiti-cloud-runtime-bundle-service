@@ -52,20 +52,22 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
+import static org.activiti.alfresco.rest.docs.HALDocumentation.pagedTasksFields;
 import static org.activiti.api.task.model.Task.TaskStatus.CREATED;
 import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildDefaultAssignedTask;
 import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildStandAloneTask;
 import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildSubTask;
 import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildTask;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.halLinks;
 import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
@@ -133,15 +135,15 @@ public class TaskControllerImplIT {
 
         List<Task> taskList = Collections.singletonList(buildDefaultAssignedTask());
         Page<Task> tasks = new PageImpl<>(taskList,
-                                                                                                             taskList.size());
+                taskList.size());
         when(taskRuntime.tasks(any())).thenReturn(tasks);
 
-        this.mockMvc.perform(get("/v1/tasks"))
+        this.mockMvc.perform(get("/v1/tasks?page=10&size=10").accept(MediaTypes.HAL_JSON_VALUE))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
-                                responseFields(subsectionWithPath("page").description("Pagination details."),
-                                               subsectionWithPath("_links").description("The hypermedia links."),
-                                               subsectionWithPath("_embedded").description("The process definitions."))));
+                                pagedTasksFields()
+                                ));
     }
 
     @Test
@@ -275,7 +277,7 @@ public class TaskControllerImplIT {
         CreateTaskPayload createTaskCmd = TaskPayloadBuilder.create().withName("new-task").withDescription(
                 "description").build();
         createTaskCmd.setPriority(50);
-        this.mockMvc.perform(post("/v1/tasks/{taskId}/subtask",
+        this.mockMvc.perform(post("/v1/tasks/",
                                   parentTaskId).contentType(MediaType.APPLICATION_JSON)
                                      .content(mapper.writeValueAsString(createTaskCmd)))
                 .andExpect(status().isOk())

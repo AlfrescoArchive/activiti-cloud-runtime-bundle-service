@@ -158,15 +158,6 @@ public class TaskRestTemplate {
         return responseEntity;
     }
     
-    public CloudTask createSubTask(CreateTaskPayload createTask) {
-        ResponseEntity<CloudTask> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + createTask.getParentTaskId() + "/subtask",
-                                                                             HttpMethod.POST,
-                                                                             new HttpEntity<>(createTask),
-                                                                             TASK_RESPONSE_TYPE);
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return responseEntity.getBody();
-    }
-
     public PagedResources<CloudTask> getSubTasks(CloudTask parentTask) {
         ResponseEntity<PagedResources<CloudTask>> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + parentTask.getId() + "/subtasks",
                                                                                              HttpMethod.GET,
@@ -203,10 +194,19 @@ public class TaskRestTemplate {
                                                                         });
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
+    
+    public void updateTask(String taskId,UpdateTaskPayload updateTask) {
+        ResponseEntity<Task> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + taskId,
+                                                                        HttpMethod.PUT,
+                                                                        new HttpEntity<>(updateTask),
+                                                                        new ParameterizedTypeReference<Task>() {
+                                                                        });
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
 
     public ResponseEntity<Void> setVariables(String taskId,
                                              Map<String, Object> variables) {
-        SetTaskVariablesPayload setTaskVariablesPayload = TaskPayloadBuilder.setVariables().withTaskId(taskId).withVariables(variables).build();
+        SetTaskVariablesPayload setTaskVariablesPayload = TaskPayloadBuilder.setVariables().withVariables(variables).build();
 
         HttpEntity<SetTaskVariablesPayload> requestEntity = new HttpEntity<>(
                 setTaskVariablesPayload,
