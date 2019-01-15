@@ -35,7 +35,7 @@ public interface ProcessInstanceController {
 
     @RequestMapping(value = "/{processInstanceId}/model",
             method = RequestMethod.GET,
-            produces = "application/json")
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     String getProcessInstanceDiagramJson(@PathVariable String processInstanceId);
 
