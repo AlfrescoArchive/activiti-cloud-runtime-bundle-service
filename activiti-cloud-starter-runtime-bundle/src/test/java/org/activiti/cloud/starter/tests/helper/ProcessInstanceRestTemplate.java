@@ -154,6 +154,18 @@ public class ProcessInstanceRestTemplate {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }
+    
+    public ResponseEntity<CloudProcessInstance> adminGetProcessInstance(ResponseEntity<CloudProcessInstance> processInstanceEntity) {
+
+        assertThat(processInstanceEntity.getBody()).isNotNull();
+        ResponseEntity<CloudProcessInstance> responseEntity = testRestTemplate.exchange(PROCESS_INSTANCES_ADMIN_RELATIVE_URL + processInstanceEntity.getBody().getId(),
+                                                                                        HttpMethod.GET,
+                                                                                        null,
+                                                                                        new ParameterizedTypeReference<CloudProcessInstance>() {
+                                                                                        });
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return responseEntity;
+    }
 
     public ResponseEntity<CloudProcessInstance> delete(ResponseEntity<CloudProcessInstance> processInstanceEntity) {
 

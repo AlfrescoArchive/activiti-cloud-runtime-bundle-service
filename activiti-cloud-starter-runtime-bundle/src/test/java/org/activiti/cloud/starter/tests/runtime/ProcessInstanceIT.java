@@ -488,7 +488,7 @@ public class ProcessInstanceIT {
 
         //then
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.getProcessInstance(responseEntity);
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.adminGetProcessInstance(responseEntity);
        
         assertThat(processInstanceEntity.getBody().getBusinessKey()).isEqualTo(newBusinessKey);
         assertThat(processInstanceEntity.getBody().getName()).isEqualTo(newName);
