@@ -72,7 +72,7 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
     }
 
     @Override
-    public PagedResources<ProcessInstanceResource> getAllProcessInstances(Pageable pageable) {
+    public PagedResources<ProcessInstanceResource> getProcessInstances(Pageable pageable) {
         Page<ProcessInstance> processInstancePage = processAdminRuntime.processInstances(pageConverter.toAPIPageable(pageable));
         return pagedResourcesAssembler.toResource(pageable,
                                                   pageConverter.toSpringPage(pageable, processInstancePage),
@@ -82,6 +82,11 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
     @Override
     public ProcessInstanceResource startProcess(@RequestBody StartProcessPayload startProcessPayload) {
         return resourceAssembler.toResource(processAdminRuntime.start(startProcessPayload));
+    }
+    
+    @Override
+    public ProcessInstanceResource getProcessInstanceById(@PathVariable String processInstanceId) {
+        return resourceAssembler.toResource(processAdminRuntime.processInstance(processInstanceId));
     }
 
     @Override
