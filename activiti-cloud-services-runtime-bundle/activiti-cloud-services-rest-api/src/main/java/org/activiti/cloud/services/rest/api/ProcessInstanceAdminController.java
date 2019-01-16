@@ -28,6 +28,9 @@ public interface ProcessInstanceAdminController {
     @RequestMapping(method = RequestMethod.POST,value = "{processInstanceId}/resume")
     ProcessInstanceResource resume(@PathVariable String processInstanceId);
     
+    @RequestMapping(value = "/{processInstanceId}", method = RequestMethod.DELETE)
+    ProcessInstanceResource deleteProcessInstance(@PathVariable String processInstanceId);
+    
     @RequestMapping(value = "/{processInstanceId}", method = RequestMethod.PUT)
     ProcessInstanceResource updateProcess(@PathVariable("processInstanceId") String processInstanceId,
                                     @RequestBody UpdateProcessPayload payload);

@@ -96,6 +96,11 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
 	}
 	
     @Override
+    public ProcessInstanceResource deleteProcessInstance(@PathVariable String processInstanceId) {
+        return resourceAssembler.toResource(processAdminRuntime.delete(ProcessPayloadBuilder.delete(processInstanceId)));
+    }
+    
+    @Override
     public ProcessInstanceResource updateProcess(@PathVariable String processInstanceId,
                                                  @RequestBody UpdateProcessPayload payload) {
         if (payload!=null) {
