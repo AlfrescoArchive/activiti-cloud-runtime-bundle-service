@@ -519,7 +519,7 @@ public class ProcessInstanceIT {
     }
     
     @Test
-    public void shouldDeleteProcessInstance() {
+    public void nonAdminShouldBeAbleToDeleteProcessInstance() {
         //given
        ResponseEntity<CloudProcessInstance> processEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS),
                                                                                                           null, 
