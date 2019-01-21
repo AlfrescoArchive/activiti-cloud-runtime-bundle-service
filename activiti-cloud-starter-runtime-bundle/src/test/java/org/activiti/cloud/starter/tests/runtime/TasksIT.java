@@ -280,6 +280,21 @@ public class TasksIT {
     }
 
     @Test
+    public void adminShouldBeAbleToDeleteTask() {
+        //given
+        CloudTask standaloneTask = taskRestTemplate.createTask(TaskPayloadBuilder.create().withName("parent task").withDescription("This is my parent task").build());
+        //when
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("testadmin");
+        ResponseEntity<CloudTask> delete = taskRestTemplate.adminDelete(standaloneTask);
+
+        //then
+        assertThat(delete.getStatusCodeValue()).isEqualTo(HttpStatus.OK.value());
+        
+        //restore user
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hruser");
+    }
+    
+    @Test
     public void shouldGetTaskById() {
         //given
         ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
