@@ -365,11 +365,10 @@ public class TasksIT {
                                                                                                                                                 "any")).build();
 
         //when
-        ResponseEntity<Task> responseEntity = testRestTemplate.exchange(TASKS_URL + task.getId() + "/complete",
-                                                                        HttpMethod.POST,
-                                                                        new HttpEntity<>(completeTaskPayload),
-                                                                        new ParameterizedTypeReference<>() {
-                                                                        });
+        ResponseEntity<CloudTask> responseEntity = testRestTemplate.exchange(TASKS_URL + task.getId() + "/complete",
+                                                                             HttpMethod.POST,
+                                                                             new HttpEntity<>(completeTaskPayload),
+                                                                             TASK_RESPONSE_TYPE);
 
         //then
         assertThat(responseEntity.getStatusCodeValue()).isEqualTo(HttpStatus.OK.value());
