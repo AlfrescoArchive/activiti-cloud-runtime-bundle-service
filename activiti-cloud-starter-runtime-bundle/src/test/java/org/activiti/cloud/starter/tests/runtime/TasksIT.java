@@ -16,8 +16,6 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,6 +53,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource({"classpath:application-test.properties", "classpath:access-control.properties"})
@@ -64,9 +64,9 @@ public class TasksIT {
     private static final String TASKS_URL = "/v1/tasks/";
     private static final String ADMIN_TASKS_URL = "/admin/v1/tasks/";
     private static final String SIMPLE_PROCESS = "SimpleProcess";
-    private static final ParameterizedTypeReference<CloudTask> TASK_RESPONSE_TYPE = new ParameterizedTypeReference<CloudTask>() {
+    private static final ParameterizedTypeReference<CloudTask> TASK_RESPONSE_TYPE = new ParameterizedTypeReference<>() {
     };
-    private static final ParameterizedTypeReference<PagedResources<CloudTask>> PAGED_TASKS_RESPONSE_TYPE = new ParameterizedTypeReference<PagedResources<CloudTask>>() {
+    private static final ParameterizedTypeReference<PagedResources<CloudTask>> PAGED_TASKS_RESPONSE_TYPE = new ParameterizedTypeReference<>() {
     };
     private static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
 
@@ -289,9 +289,6 @@ public class TasksIT {
 
         //then
         assertThat(delete.getStatusCodeValue()).isEqualTo(HttpStatus.OK.value());
-        
-        //restore user
-        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hruser");
     }
     
     @Test
@@ -371,7 +368,7 @@ public class TasksIT {
         ResponseEntity<Task> responseEntity = testRestTemplate.exchange(TASKS_URL + task.getId() + "/complete",
                                                                         HttpMethod.POST,
                                                                         new HttpEntity<>(completeTaskPayload),
-                                                                        new ParameterizedTypeReference<Task>() {
+                                                                        new ParameterizedTypeReference<>() {
                                                                         });
 
         //then
@@ -404,9 +401,6 @@ public class TasksIT {
         assertThat(assignResponseEntity).isNotNull();
         assertThat(assignResponseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(assignResponseEntity.getBody().getAssignee()).isEqualTo("hruser");
-        
-        //restore user
-        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hruser");
     }
     
     @Test
@@ -565,7 +559,7 @@ public class TasksIT {
     }
  
     private ResponseEntity<PagedResources<CloudProcessDefinition>> getProcessDefinitions() {
-        ParameterizedTypeReference<PagedResources<CloudProcessDefinition>> responseType = new ParameterizedTypeReference<PagedResources<CloudProcessDefinition>>() {
+        ParameterizedTypeReference<PagedResources<CloudProcessDefinition>> responseType = new ParameterizedTypeReference<>() {
         };
 
         return testRestTemplate.exchange(PROCESS_DEFINITIONS_URL,
