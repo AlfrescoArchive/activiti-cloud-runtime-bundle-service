@@ -214,6 +214,15 @@ public class TaskRestTemplate {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
     
+    public void adminUpdateTask(UpdateTaskPayload updateTask) {
+        ResponseEntity<Task> responseEntity = testRestTemplate.exchange(ADMIN_TASK_VAR_RELATIVE_URL + updateTask.getTaskId(),
+                                                                        HttpMethod.PUT,
+                                                                        new HttpEntity<>(updateTask),
+                                                                        new ParameterizedTypeReference<Task>() {
+                                                                        });
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+    
     public void updateTask(String taskId,UpdateTaskPayload updateTask) {
         ResponseEntity<Task> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + taskId,
                                                                         HttpMethod.PUT,
