@@ -361,6 +361,7 @@ public class TasksIT {
         Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
     
         //when
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("testadmin");
         ResponseEntity<Task> responseEntity = taskRestTemplate.adminComplete(task);
 
         //then
