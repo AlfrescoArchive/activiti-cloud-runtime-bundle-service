@@ -225,7 +225,6 @@ public class ProcessInstanceRestTemplate {
                                                                         null,
                                                                         new ParameterizedTypeReference<Void>() {
                                                                         });
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }
 
@@ -245,7 +244,6 @@ public class ProcessInstanceRestTemplate {
                                                                         null,
                                                                         new ParameterizedTypeReference<Void>() {
                                                                         });
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }
 
