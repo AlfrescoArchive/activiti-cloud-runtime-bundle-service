@@ -152,6 +152,8 @@ public class CommandEndpointIT {
         setTaskVariables(task);
 
         setAndRemoveProcessVariables(processInstanceId);
+        
+        setAndAdminRemoveProcessVariables(processInstanceId);
 
         claimTask(task);
 
@@ -249,6 +251,39 @@ public class CommandEndpointIT {
 
         RemoveProcessVariablesPayload removeProcessVariables = ProcessPayloadBuilder.removeVariables()
                 .withProcessInstanceId(proInstanceId)
+                .withVariableNames(Collections.singletonList("procVar")).build();
+
+        clientStream.myCmdProducer().send(MessageBuilder.withPayload(removeProcessVariables).setHeader("cmdId",
+                                                                                                       removeProcessVariables.getId()).build());
+
+        await("Variable to be removed").untilTrue(streamHandler.getRemoveProcessVariablesAck());
+
+        retrievedVars = processInstanceRestTemplate.getVariables(proInstanceId);
+        assertThat(retrievedVars.getBody().getContent())
+                .extracting(VariableInstance::getName,
+                            VariableInstance::getValue)
+                .doesNotContain(tuple("procVar",
+                                      "v2"));
+    }
+    
+    private void setAndAdminRemoveProcessVariables(String proInstanceId) {
+        Map<String, Object> variables = Collections.singletonMap("procVar",
+                                                                 "v2");
+        SetProcessVariablesPayload setProcessVariables = ProcessPayloadBuilder.setVariables().withVariables(variables).build();
+
+        clientStream.myCmdProducer().send(MessageBuilder.withPayload(setProcessVariables).setHeader("cmdId",
+                                                                                                    setProcessVariables.getId()).build());
+
+        await("Variable to be set").untilTrue(streamHandler.getSetProcessVariablesAck());
+
+        ResponseEntity<Resources<CloudVariableInstance>> retrievedVars = processInstanceRestTemplate.getVariables(proInstanceId);
+        assertThat(retrievedVars.getBody().getContent())
+                .extracting(VariableInstance::getName,
+                            VariableInstance::getValue)
+                .contains(tuple("procVar",
+                                "v2"));
+
+        RemoveProcessVariablesPayload removeProcessVariables = ProcessPayloadBuilder.removeVariables()
                 .withVariableNames(Collections.singletonList("procVar")).build();
 
         clientStream.myCmdProducer().send(MessageBuilder.withPayload(removeProcessVariables).setHeader("cmdId",
