@@ -160,6 +160,15 @@ public class ProcessInstanceRestTemplate {
                                                                                                     });
         return responseEntity;
     }
+    
+    public ResponseEntity<String> callGetVariablesWithErrorResponse(String processInstanceId) {
+        ResponseEntity<String> responseEntity = testRestTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + processInstanceId + "/variables",
+                                                                                                    HttpMethod.GET,
+                                                                                                    null,
+                                                                                                    new ParameterizedTypeReference<String>() {
+                                                                                                    });
+        return responseEntity;
+    }
 
     public ResponseEntity<CloudProcessInstance> getProcessInstance(ResponseEntity<CloudProcessInstance> processInstanceEntity) {
         assertThat(processInstanceEntity.getBody()).isNotNull();

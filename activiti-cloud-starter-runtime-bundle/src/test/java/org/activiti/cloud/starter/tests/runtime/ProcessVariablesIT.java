@@ -257,7 +257,7 @@ public class ProcessVariablesIT {
 
         await().untilAsserted(() -> {
 
-            ResponseEntity<Resources<CloudVariableInstance>> variablesResponse = processInstanceRestTemplate.getVariablesNoReplyCheck(startResponse.getBody().getId());
+            ResponseEntity<String> variablesResponse = processInstanceRestTemplate.callGetVariablesWithErrorResponse(startResponse.getBody().getId());
             assertThat(variablesResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
             
         });
