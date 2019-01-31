@@ -153,7 +153,7 @@ public class CommandEndpointIT {
 
         setAndRemoveProcessVariables(processInstanceId);
         
-        setAndAdminRemoveProcessVariables(processInstanceId);
+        //setAndAdminRemoveProcessVariables(processInstanceId);
 
         claimTask(task);
 
