@@ -278,23 +278,6 @@ public class ProcessInstanceRestTemplate {
         return responseEntity;
     }
 
-    public ResponseEntity<Void> removeVariables(String processId,
-                                                List<String> variableNames) {
-        RemoveProcessVariablesPayload removeProcessVariablesPayload = ProcessPayloadBuilder.removeVariables()
-                .withProcessInstanceId(processId).withVariableNames(variableNames).build();
-
-        HttpEntity<RemoveProcessVariablesPayload> requestEntity = new HttpEntity<>(
-                removeProcessVariablesPayload,
-                null);
-        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + processId + "/variables/",
-                                                                        HttpMethod.DELETE,
-                                                                        requestEntity,
-                                                                        new ParameterizedTypeReference<Void>() {
-                                                                        });
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return responseEntity;
-    }
-    
     public ResponseEntity<Void> adminRemoveVariables(String processId,
                                                      List<String> variableNames) {
         RemoveProcessVariablesPayload removeProcessVariablesPayload = ProcessPayloadBuilder.removeVariables()

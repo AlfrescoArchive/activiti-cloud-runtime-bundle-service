@@ -149,28 +149,6 @@ public class ProcessVariablesIT {
     }
 
     @Test
-    public void shouldDeleteProcessVariables() {
-        //given
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("firstName",
-                      "Peter");
-        variables.put("lastName",
-                      "Silver");
-        variables.put("age",
-                      19);
-        
-        List<String> variablesNames = new ArrayList<>(variables.keySet());
-        ResponseEntity<CloudProcessInstance> startResponse = processInstanceRestTemplate.startProcess(processDefinitionIds.get(PROCESS_WITH_VARIABLES2),
-                                                                                                      variables);
-        
-        //when
-        ResponseEntity<Void> variablesResponse= processInstanceRestTemplate.removeVariables(startResponse.getBody().getId(),variablesNames);
-
-        //then
-        assertThat(variablesResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-    }
-    
-    @Test
     public void adminShouldDeleteProcessVariables() {
         //given
         Map<String, Object> variables = new HashMap<>();
