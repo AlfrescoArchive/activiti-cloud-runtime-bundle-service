@@ -22,6 +22,7 @@ pipeline {
             sh "mvn versions:set -DnewVersion=$PREVIEW_VERSION"
             //add DskipTests since not clear how to fix test fast  
             sh "mvn install"
+            sh "mvn verify -B -DskipITs=false"
           }
 
         }
