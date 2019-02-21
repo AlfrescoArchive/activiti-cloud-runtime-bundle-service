@@ -40,7 +40,9 @@ import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
 import org.activiti.api.process.model.events.BPMNActivityEvent;
+import org.activiti.api.process.model.events.BPMNSignalEvent;
 import org.activiti.api.process.model.events.ProcessDefinitionEvent;
+import org.activiti.api.process.model.payloads.SignalPayload;
 import org.activiti.api.task.model.Task;
 import org.activiti.api.task.model.TaskCandidateGroup;
 import org.activiti.api.task.model.TaskCandidateUser;
@@ -65,6 +67,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.PagedResources;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -72,6 +75,34 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_CREATED;
+import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_UPDATED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_CANCELLED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CANCELLED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_COMPLETED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CREATED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_RESUMED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_STARTED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_SUSPENDED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_UPDATED;
+import static org.activiti.api.process.model.events.SequenceFlowEvent.SequenceFlowEvents.SEQUENCE_FLOW_TAKEN;
+import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_ADDED;
+import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_REMOVED;
+import static org.activiti.api.task.model.events.TaskCandidateUserEvent.TaskCandidateUserEvents.TASK_CANDIDATE_USER_ADDED;
+import static org.activiti.api.task.model.events.TaskCandidateUserEvent.TaskCandidateUserEvents.TASK_CANDIDATE_USER_REMOVED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ACTIVATED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ASSIGNED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CANCELLED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_COMPLETED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CREATED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_SUSPENDED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_UPDATED;
+import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.awaitility.Awaitility.await;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(AuditProducerIT.AUDIT_PRODUCER_IT)
@@ -91,6 +122,8 @@ public class AuditProducerIT {
 
     public static final String AUDIT_PRODUCER_IT = "AuditProducerIT";
     private static final String SIMPLE_PROCESS = "SimpleProcess";
+    private static final String SIGNAL_PROCESS = "broadcastSignalCatchEventProcess";
+
     private static final String PROCESS_DEFINITIONS_URL = "/v1/process-definitions/";
     @Value("${activiti.keycloak.test-user}")
     protected String keycloakTestUser;
@@ -103,7 +136,7 @@ public class AuditProducerIT {
     @Autowired
     private AuditConsumerStreamHandler streamHandler;
     private Map<String, String> processDefinitionIds = new HashMap<>();
-    
+
     @Autowired
     private RuntimeService runtimeService;
 
@@ -561,15 +594,15 @@ public class AuditProducerIT {
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
         });
     }
-    
-    
+
+
     @Test
     public void testTwoSubProcesses() {
         //given
         ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get(CALL_TWO_SUB_PROCESSES));
-        
+
         String processInstanceId = processInstance.getBody().getId();
-        
+
         // when
         List<String> subprocessIds = runtimeService.createProcessInstanceQuery()
                                                    .superProcessInstanceId(processInstanceId)
@@ -579,17 +612,17 @@ public class AuditProducerIT {
                                                    .collect(Collectors.toList());
         // then
         assertThat(subprocessIds).hasSize(2);
-        
+
         String subProcessId1 = subprocessIds.get(0);
         String subProcessId2 = subprocessIds.get(1);
-        
+
         await().untilAsserted(() -> {
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
 
             assertThat(streamHandler.getLatestReceivedEvents())
-                    .extracting(CloudRuntimeEvent::getEventType, 
+                    .extracting(CloudRuntimeEvent::getEventType,
                                 CloudRuntimeEvent::getProcessInstanceId,
-                                CloudRuntimeEvent::getParentProcessInstanceId, 
+                                CloudRuntimeEvent::getParentProcessInstanceId,
                                 CloudRuntimeEvent::getProcessDefinitionKey)
                     .containsExactly(tuple(PROCESS_CREATED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
                                      tuple(PROCESS_STARTED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
@@ -602,10 +635,10 @@ public class AuditProducerIT {
                                      tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
                                      tuple(ACTIVITY_STARTED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
                                      tuple(PROCESS_CREATED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),
-                                     tuple(PROCESS_STARTED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),                                     
+                                     tuple(PROCESS_STARTED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),
                                      tuple(ACTIVITY_STARTED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
                                      tuple(PROCESS_CREATED, subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2),
-                                     tuple(PROCESS_STARTED, subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2),                                     
+                                     tuple(PROCESS_STARTED, subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2),
                                      tuple(ACTIVITY_STARTED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),
                                      tuple(ACTIVITY_STARTED, subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2),
                                      tuple(ACTIVITY_COMPLETED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),
@@ -623,8 +656,120 @@ public class AuditProducerIT {
         runtimeService.deleteProcessInstance(processInstanceId, "Clean up");
 
     }
-    
-    
+
+
+
+    @Test
+    public void shouldProduceEventsForProcessWithSignal() {
+
+    	//given
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
+        																										   .withProcessDefinitionKey(SIGNAL_PROCESS)
+                                                                                                                   .withName("processInstanceName1")
+                                                                                                                   .withBusinessKey("businessKey1")
+                                                                                                                   .withVariables(Collections.emptyMap())
+                                                                                                                   .build());
+
+        //then
+        await().untilAsserted(() -> {
+          	ResponseEntity<PagedResources<ProcessInstance>> processInstances = processInstanceRestTemplate.getPagedProcessInstances();
+          	  assertThat(processInstances).isNotNull();
+              assertThat(processInstances.getStatusCode()).isEqualTo(HttpStatus.OK);
+              assertThat(processInstances.getBody().getContent()).hasSize(1);
+
+              assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
+
+              List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+              assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+              assertThat(receivedEvents)
+              .extracting(event -> event.getEventType().name())
+              .containsExactly(PROCESS_CREATED.name(),
+              				PROCESS_STARTED.name(),
+              				ACTIVITY_STARTED.name()/*start event*/,
+              				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*start event*/,
+              				SEQUENCE_FLOW_TAKEN.name(),
+              				ACTIVITY_STARTED.name());
+
+
+        });
+
+        startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
+																													.withProcessDefinitionKey(SIGNAL_PROCESS)
+																									                .withName("processInstanceName2")
+																									                .withBusinessKey("businessKey2")
+																									                .withVariables(Collections.emptyMap())
+																									                .build());
+
+        //then
+        await().untilAsserted(() -> {
+          	ResponseEntity<PagedResources<ProcessInstance>> processInstances = processInstanceRestTemplate.getPagedProcessInstances();
+              assertThat(processInstances).isNotNull();
+              assertThat(processInstances.getStatusCode()).isEqualTo(HttpStatus.OK);
+              assertThat(processInstances.getBody().getContent()).hasSize(2);
+
+              assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
+
+              List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+              assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+              assertThat(receivedEvents)
+              .extracting(event -> event.getEventType().name())
+              .containsExactly(PROCESS_CREATED.name(),
+              				PROCESS_STARTED.name(),
+              				ACTIVITY_STARTED.name()/*start event*/,
+              				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*start event*/,
+              				SEQUENCE_FLOW_TAKEN.name(),
+              				ACTIVITY_STARTED.name());
+
+
+        });
+
+
+        SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder.signal().withName("Test").build();
+
+        //when
+        ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/signal",
+                                                                    HttpMethod.POST,
+                                                                    new HttpEntity<>(signalProcessInstancesCmd),
+                                                                    new ParameterizedTypeReference<Void>() {
+                                                                    });
+
+        await("Broadcast Signals").untilAsserted(() -> {
+        	ResponseEntity<PagedResources<ProcessInstance>> processInstances = processInstanceRestTemplate.getPagedProcessInstances();
+        	assertThat(processInstances).isNotNull();
+            assertThat(processInstances.getStatusCode()).isEqualTo(HttpStatus.OK);
+            assertThat(processInstances.getBody().getContent()).hasSize(0);
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
+
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+            assertThat(receivedEvents)
+            .extracting(event -> event.getEventType().name())
+            .containsExactly(
+            				BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED.name(),
+            				BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED.name(),
+            				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name(),
+            				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name(),
+            				SEQUENCE_FLOW_TAKEN.name(),
+            				SEQUENCE_FLOW_TAKEN.name(),
+            				BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED.name(),
+            				BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED.name(),
+            				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name(),
+            				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name(),
+            				PROCESS_COMPLETED.name(),
+            				PROCESS_COMPLETED.name());
+
+
+        });
+
+    }
+
     private ResponseEntity<PagedResources<CloudProcessDefinition>> getProcessDefinitions() {
         ParameterizedTypeReference<PagedResources<CloudProcessDefinition>> responseType = new ParameterizedTypeReference<PagedResources<CloudProcessDefinition>>() {
         };
