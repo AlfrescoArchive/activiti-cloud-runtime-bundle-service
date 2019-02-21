@@ -672,11 +672,6 @@ public class AuditProducerIT {
 
         //then
         await().untilAsserted(() -> {
-          	ResponseEntity<PagedResources<ProcessInstance>> processInstances = processInstanceRestTemplate.getPagedProcessInstances();
-          	  assertThat(processInstances).isNotNull();
-              assertThat(processInstances.getStatusCode()).isEqualTo(HttpStatus.OK);
-              assertThat(processInstances.getBody().getContent()).hasSize(1);
-
               assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
 
               List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
@@ -696,19 +691,14 @@ public class AuditProducerIT {
         });
 
         startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
-																													.withProcessDefinitionKey(SIGNAL_PROCESS)
-																									                .withName("processInstanceName2")
-																									                .withBusinessKey("businessKey2")
-																									                .withVariables(Collections.emptyMap())
-																									                .build());
-
+																			.withProcessDefinitionKey(SIGNAL_PROCESS)
+															                .withName("processInstanceName2")
+															                .withBusinessKey("businessKey2")
+															                .withVariables(Collections.emptyMap())
+															                .build());
+                
         //then
         await().untilAsserted(() -> {
-          	ResponseEntity<PagedResources<ProcessInstance>> processInstances = processInstanceRestTemplate.getPagedProcessInstances();
-              assertThat(processInstances).isNotNull();
-              assertThat(processInstances.getStatusCode()).isEqualTo(HttpStatus.OK);
-              assertThat(processInstances.getBody().getContent()).hasSize(2);
-
               assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
 
               List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
