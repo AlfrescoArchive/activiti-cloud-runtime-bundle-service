@@ -57,6 +57,7 @@ import org.activiti.cloud.api.task.model.events.CloudTaskCancelledEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserRemovedEvent;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
+import org.awaitility.Duration;
 import org.activiti.engine.RuntimeService;
 import org.junit.Before;
 import org.junit.Test;
@@ -663,12 +664,14 @@ public class AuditProducerIT {
     public void shouldProduceEventsForProcessWithSignal() {
 
     	//given
-        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
+    	String procId1, procId2;
+        ResponseEntity<CloudProcessInstance> startProcessEntity1 = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
         																										   .withProcessDefinitionKey(SIGNAL_PROCESS)
                                                                                                                    .withName("processInstanceName1")
                                                                                                                    .withBusinessKey("businessKey1")
                                                                                                                    .withVariables(Collections.emptyMap())
                                                                                                                    .build());
+        procId1 = startProcessEntity1.getBody().getId();
 
         //then
         await().untilAsserted(() -> {
@@ -679,40 +682,46 @@ public class AuditProducerIT {
               assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
 
               assertThat(receivedEvents)
-              .extracting(event -> event.getEventType().name())
-              .containsExactly(PROCESS_CREATED.name(),
-              				PROCESS_STARTED.name(),
-              				ACTIVITY_STARTED.name()/*start event*/,
-              				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*start event*/,
-              				SEQUENCE_FLOW_TAKEN.name(),
-              				ACTIVITY_STARTED.name());
+              .extracting("eventType","processInstanceId")
+              .containsExactly(
+            		  		tuple(PROCESS_CREATED,procId1),
+            		  		tuple(PROCESS_STARTED,procId1),
+            		  		tuple(ACTIVITY_STARTED,procId1),
+            		  		tuple(BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED,procId1),
+            		  		tuple(SEQUENCE_FLOW_TAKEN,procId1),
+            		  		tuple(ACTIVITY_STARTED,procId1));
 
 
         });
+        
+        streamHandler.getAllReceivedEvents().clear();
 
-        startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
+        ResponseEntity<CloudProcessInstance> startProcessEntity2 = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
 																			.withProcessDefinitionKey(SIGNAL_PROCESS)
 															                .withName("processInstanceName2")
 															                .withBusinessKey("businessKey2")
 															                .withVariables(Collections.emptyMap())
 															                .build());
-                
+
+        procId2 = startProcessEntity2.getBody().getId();
+
         //then
         await().untilAsserted(() -> {
               assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
 
-              List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+              List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
 
               assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
 
               assertThat(receivedEvents)
-              .extracting(event -> event.getEventType().name())
-              .containsExactly(PROCESS_CREATED.name(),
-              				PROCESS_STARTED.name(),
-              				ACTIVITY_STARTED.name()/*start event*/,
-              				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name()/*start event*/,
-              				SEQUENCE_FLOW_TAKEN.name(),
-              				ACTIVITY_STARTED.name());
+              .extracting("eventType","processInstanceId")
+              .containsExactly(
+            		  		tuple(PROCESS_CREATED,procId2),
+            		  		tuple(PROCESS_STARTED,procId2),
+            		  		tuple(ACTIVITY_STARTED,procId2),
+            		  		tuple(BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED,procId2),
+            		  		tuple(SEQUENCE_FLOW_TAKEN,procId2),
+            		  		tuple(ACTIVITY_STARTED,procId2));
 
 
         });
@@ -720,6 +729,7 @@ public class AuditProducerIT {
 
         SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder.signal().withName("Test").build();
 
+        streamHandler.getAllReceivedEvents().clear();
         //when
         ResponseEntity<Void> responseEntity = restTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/signal",
                                                                     HttpMethod.POST,
@@ -727,35 +737,25 @@ public class AuditProducerIT {
                                                                     new ParameterizedTypeReference<Void>() {
                                                                     });
 
-        await("Broadcast Signals").untilAsserted(() -> {
-        	ResponseEntity<PagedResources<ProcessInstance>> processInstances = processInstanceRestTemplate.getPagedProcessInstances();
-        	assertThat(processInstances).isNotNull();
-            assertThat(processInstances.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(processInstances.getBody().getContent()).hasSize(0);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
 
+
+        //To do: check that event.getEntity().getProcessInstanceId() is same like event.getProcessInstanceId()
+        await("Broadcast Signals").between(Duration.ZERO, Duration.FOREVER).untilAsserted(() -> {
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
 
-            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
 
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
 
             assertThat(receivedEvents)
-            .extracting(event -> event.getEventType().name())
-            .containsExactly(
-            				BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED.name(),
-            				BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED.name(),
-            				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name(),
-            				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name(),
-            				SEQUENCE_FLOW_TAKEN.name(),
-            				SEQUENCE_FLOW_TAKEN.name(),
-            				BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED.name(),
-            				BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED.name(),
-            				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name(),
-            				BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED.name(),
-            				PROCESS_COMPLETED.name(),
-            				PROCESS_COMPLETED.name());
-
-
+            .filteredOn(event -> BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED.name().equals(event.getEventType().name()))
+            .hasSize(2)
+            .extracting("eventType","entity.processInstanceId")
+            .contains(
+          		  		tuple(BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED,procId1),
+          		  		tuple(BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED,procId2));
+            
         });
 
     }
