@@ -9,13 +9,13 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SetTaskVariablesCmdExecutor implements CommandExecutor<SetTaskVariablesPayload> {
+public class SetTaskVariableCmdExecutor implements CommandExecutor<SetTaskVariablesPayload> {
 
     private TaskAdminRuntime taskAdminRuntime;
     private MessageChannel commandResults;
 
     @Autowired
-    public SetTaskVariablesCmdExecutor(TaskAdminRuntime taskAdminRuntime,
+    public SetTaskVariableCmdExecutor(TaskAdminRuntime taskAdminRuntime,
                                        MessageChannel commandResults) {
         this.taskAdminRuntime = taskAdminRuntime;
         this.commandResults = commandResults;
@@ -28,7 +28,7 @@ public class SetTaskVariablesCmdExecutor implements CommandExecutor<SetTaskVaria
 
     @Override
     public void execute(SetTaskVariablesPayload setTaskVariablesPayload) {
-        taskAdminRuntime.setVariables(setTaskVariablesPayload);
+        taskAdminRuntime.newVariable(setTaskVariablesPayload);
         commandResults.send(MessageBuilder.withPayload(new EmptyResult(setTaskVariablesPayload)).build());
     }
 }
