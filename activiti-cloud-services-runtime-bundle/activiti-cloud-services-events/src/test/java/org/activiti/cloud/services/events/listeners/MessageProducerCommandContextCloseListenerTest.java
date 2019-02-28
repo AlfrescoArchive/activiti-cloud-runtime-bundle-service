@@ -45,13 +45,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 
 public class MessageProducerCommandContextCloseListenerTest {
 
-    private static final String MOCK_ROUTING_KEY = "engineEvents.springAppName.appName.mockProcessDefinitionKey.mockProcessInstanceId.mockBusinessKey";
+    private static final String MOCK_ROUTING_KEY = "engineEvents.springAppName.appName";
     private static final String MOCK_PARENT_PROCESS_NAME = "mockParentProcessName";
     private static final String LORG_ACTIVITI_CLOUD_API_MODEL_SHARED_EVENTS_CLOUD_RUNTIME_EVENT = "[Lorg.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;";
     private static final String MOCK_PROCESS_NAME = "mockProcessName";
@@ -92,9 +93,12 @@ public class MessageProducerCommandContextCloseListenerTest {
     private ExecutionContextMessageBuilderFactory messageBuilderChainFactory = 
                 new ExecutionContextMessageBuilderFactory(properties);
 
+    private ProcessEngineEventsAggregator processEngineEventsAggregator;
+
     @Spy
     private RuntimeBundleInfoAppender runtimeBundleInfoAppender = 
                 new RuntimeBundleInfoAppender(properties);
+    
     
     @Mock
     private MessageChannel auditChannel;
@@ -113,9 +117,13 @@ public class MessageProducerCommandContextCloseListenerTest {
         event = new CloudProcessCreatedEventImpl();
         
         when(producer.auditProducer()).thenReturn(auditChannel);
+
+        processEngineEventsAggregator = Mockito.spy(new ProcessEngineEventsAggregator(closeListener));
+        
+        when(processEngineEventsAggregator.getCurrentCommandContext()).thenReturn(commandContext);
         
         ExecutionContext executionContext = mockExecutionContext();
-        given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.EXECUTION_CONTEXT))
+        given(commandContext.getGenericAttribute(event.getEntityId()))
                 .willReturn(executionContext);
         
     }
@@ -123,6 +131,7 @@ public class MessageProducerCommandContextCloseListenerTest {
     @Test
     public void closedShouldSendEventsRegisteredOnTheCommandContext() {
         // given
+        processEngineEventsAggregator.add(event);
         given(commandContext.getGenericAttribute(MessageProducerCommandContextCloseListener.PROCESS_ENGINE_EVENTS))
                 .willReturn(Collections.singletonList(event));
 
