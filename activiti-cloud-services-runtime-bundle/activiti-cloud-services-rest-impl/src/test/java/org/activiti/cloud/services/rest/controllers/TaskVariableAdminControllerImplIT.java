@@ -143,16 +143,16 @@ public class TaskVariableAdminControllerImplIT {
 
 
     @Test
-    public void newVariable() throws Exception {
+    public void createVariable() throws Exception {
         this.mockMvc.perform(post("/admin/v1/tasks/{taskId}/variables/",
                                   TASK_ID).contentType(MediaType.APPLICATION_JSON).content(
-                mapper.writeValueAsString(TaskPayloadBuilder.setVariables().withTaskId(TASK_ID)
-                                                  .withVariable("name","Alice").build())))
+                mapper.writeValueAsString(TaskPayloadBuilder.createVariable().withTaskId(TASK_ID)
+                                          .withVariable("name","Alice").build())))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/set",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
 
-        verify(taskRuntime).newVariable(any());
+        verify(taskRuntime).createVariable(any());
     }
     
     @Test
@@ -163,8 +163,8 @@ public class TaskVariableAdminControllerImplIT {
     	//WHEN
         ResultActions resultActions = this.mockMvc.perform(put("/admin/v1/tasks/{taskId}/variables/",
                                   TASK_ID).contentType(MediaType.APPLICATION_JSON).content(
-                mapper.writeValueAsString(TaskPayloadBuilder.setVariables().withTaskId(TASK_ID)
-                                                  .withVariable("name","Alice").build())))
+                mapper.writeValueAsString(TaskPayloadBuilder.updateVariable().withTaskId(TASK_ID)
+                                          .withVariable("name","Alice").build())))
                 .andExpect(status().isOk());
         
         MvcResult result = resultActions.andReturn();

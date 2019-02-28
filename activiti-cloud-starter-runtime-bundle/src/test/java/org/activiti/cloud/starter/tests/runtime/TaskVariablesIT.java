@@ -94,10 +94,13 @@ public class TaskVariablesIT {
 
         String taskId = tasks.getBody().getContent().iterator().next().getId();
       
-        //
         taskRestTemplate.claim(taskId);
         
-        taskRestTemplate.newVariable(taskId, "var2", "test2");
+        //taskRestTemplate.createVariable(taskId, "var2", "test2");
+        Map<String, Object> taskVariables = new HashMap<>();
+        taskVariables.put("var2",
+                          "test2");
+        taskRestTemplate.setVariables(taskId, taskVariables);
 
         //when
         ResponseEntity<Resources<CloudVariableInstance>> variablesResponse = taskRestTemplate.getVariables(taskId);
@@ -118,7 +121,14 @@ public class TaskVariablesIT {
 
         // give
         taskRestTemplate.updateVariable(taskId, "var2", "test2-update" );
-        taskRestTemplate.newVariable(taskId, "var3", "test3" );
+        
+        
+        //taskRestTemplate.createVariable(taskId, "var3", "test3" );
+        taskVariables = new HashMap<>();
+        taskVariables.put("var3",
+                          "test3");
+        taskRestTemplate.setVariables(taskId, taskVariables);
+        
 
         // when
         variablesResponse = taskRestTemplate.getVariables(taskId);
@@ -157,7 +167,7 @@ public class TaskVariablesIT {
         String taskId = tasks.getBody().getContent().iterator().next().getId();
         
         keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("testadmin");
-        taskRestTemplate.adminNewVariable(taskId, "var2", "test2");
+        taskRestTemplate.adminCreateVariable(taskId, "var2", "test2");
 
         //when
         ResponseEntity<Resources<CloudVariableInstance>> variablesResponse = taskRestTemplate.adminGetVariables(taskId);
@@ -170,7 +180,7 @@ public class TaskVariablesIT {
     
         //given
         taskRestTemplate.adminUpdateVariable(taskId, "var2","test2-update");
-        taskRestTemplate.adminNewVariable(taskId, "var3","test3");
+        taskRestTemplate.adminCreateVariable(taskId, "var3","test3");
 
         // when
         variablesResponse = taskRestTemplate.adminGetVariables(taskId);
