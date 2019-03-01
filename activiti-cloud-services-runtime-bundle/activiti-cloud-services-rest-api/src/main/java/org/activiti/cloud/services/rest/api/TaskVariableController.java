@@ -1,7 +1,6 @@
 package org.activiti.cloud.services.rest.api;
 
 import org.activiti.api.task.model.payloads.CreateTaskVariablePayload;
-import org.activiti.api.task.model.payloads.SetTaskVariablesPayload;
 import org.activiti.api.task.model.payloads.UpdateTaskVariablePayload;
 import org.activiti.cloud.services.rest.api.resources.VariableInstanceResource;
 import org.springframework.hateoas.MediaTypes;
@@ -19,18 +18,13 @@ public interface TaskVariableController {
 
     @RequestMapping(method = RequestMethod.GET)
     Resources<VariableInstanceResource> getVariables(@PathVariable String taskId);
-    
-    //To do: check if we need this method
-    @RequestMapping(method = RequestMethod.POST)
-    ResponseEntity<Void> setVariables(@PathVariable String taskId,
-                                      @RequestBody SetTaskVariablesPayload setTaskVariablesPayload);
 
-    //We have to use setVariables or createVariable
-//    @RequestMapping(method = RequestMethod.POST)
-//    ResponseEntity<Void> createVariable(@PathVariable String taskId,
-//                                     	@RequestBody CreateTaskVariablePayload createTaskVariablePayload);
-    
-    @RequestMapping(method = RequestMethod.PUT)
+    @RequestMapping(method = RequestMethod.POST)
+    ResponseEntity<Void> createVariable(@PathVariable String taskId,
+                                        @RequestBody CreateTaskVariablePayload createTaskVariablePayload);
+
+    @RequestMapping(value = "/{variableName}", method = RequestMethod.PUT)
     ResponseEntity<Void> updateVariable(@PathVariable String taskId,
-                                      	@RequestBody UpdateTaskVariablePayload updateTaskVariablePayload);
+                                        @PathVariable String variableName,
+                                        @RequestBody UpdateTaskVariablePayload updateTaskVariablePayload);
 }

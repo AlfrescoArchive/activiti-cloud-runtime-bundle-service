@@ -17,9 +17,6 @@
 package org.activiti.cloud.services.rest.controllers;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,8 +46,6 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
 
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.taskIdParameter;
 import static org.activiti.alfresco.rest.docs.HALDocumentation.unpagedVariableFields;
@@ -142,48 +137,29 @@ public class TaskVariableControllerImplIT {
     }
 
 
-//    @Test
-//    public void createVariable() throws Exception {
-//        this.mockMvc.perform(post("/v1/tasks/{taskId}/variables/",
-//                                  TASK_ID).contentType(MediaType.APPLICATION_JSON).content(
-//                mapper.writeValueAsString(TaskPayloadBuilder.createVariable().withTaskId(TASK_ID)
-//                                          .withVariable("name","Alice").build())))
-//                .andExpect(status().isOk())
-//                .andDo(document(DOCUMENTATION_IDENTIFIER + "/set",
-//                                pathParameters(parameterWithName("taskId").description("The task id"))));
-//
-//        verify(taskRuntime).createVariable(any());
-//    }
-    
     @Test
-    public void setVariables() throws Exception {
+    public void createVariable() throws Exception {
         this.mockMvc.perform(post("/v1/tasks/{taskId}/variables/",
                                   TASK_ID).contentType(MediaType.APPLICATION_JSON).content(
-                mapper.writeValueAsString(TaskPayloadBuilder.setVariables().withTaskId(TASK_ID)
-                                                  .withVariables(Collections.emptyMap()).build())))
+                mapper.writeValueAsString(TaskPayloadBuilder.createVariable().withTaskId(TASK_ID)
+                                          .withVariable("name","Alice").build())))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/set",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
 
-        verify(taskRuntime).setVariables(any());
+        verify(taskRuntime).createVariable(any());
     }
-    
+
     @Test
     public void updateVariable() throws Exception {
-    	Map<String, Object> variables = new HashMap<>();
-        variables.put("name", "Alice");
-        String expectedResponseBody = "";
-    	//WHEN
-        ResultActions resultActions = this.mockMvc.perform(put("/v1/tasks/{taskId}/variables/",
-                                  TASK_ID).contentType(MediaType.APPLICATION_JSON).content(
+        //WHEN
+        this.mockMvc.perform(put("/v1/tasks/{taskId}/variables/{variableName}",
+                                  TASK_ID,
+                                 "name").contentType(MediaType.APPLICATION_JSON).content(
                 mapper.writeValueAsString(TaskPayloadBuilder.updateVariable().withTaskId(TASK_ID)
                                           .withVariable("name","Alice").build())))
                 .andExpect(status().isOk());
-        
-        MvcResult result = resultActions.andReturn();
-        String actualResponseBody = result.getResponse().getContentAsString();
-        
-        assertThat(expectedResponseBody).isEqualTo(actualResponseBody);
+
         verify(taskRuntime).updateVariable(any());
     }
 }

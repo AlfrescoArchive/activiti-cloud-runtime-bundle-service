@@ -41,9 +41,9 @@ public class TaskVariableAdminControllerImpl implements TaskVariableAdminControl
 
     @Autowired
     public TaskVariableAdminControllerImpl(TaskVariableInstanceResourceAssembler variableResourceAssembler,
-                                      	   ResourcesAssembler resourcesAssembler,
-                                      	   TaskAdminRuntime taskRuntime) {
-    	
+                                           ResourcesAssembler resourcesAssembler,
+                                           TaskAdminRuntime taskRuntime) {
+
         this.variableResourceAssembler = variableResourceAssembler;
         this.resourcesAssembler = resourcesAssembler;
         this.taskRuntime = taskRuntime;
@@ -60,8 +60,8 @@ public class TaskVariableAdminControllerImpl implements TaskVariableAdminControl
     @Override
     public ResponseEntity<Void> createVariable(@PathVariable String taskId,
                                                @RequestBody CreateTaskVariablePayload createTaskVariablePayload) {
-        
-    	createTaskVariablePayload.setTaskId(taskId);
+
+        createTaskVariablePayload.setTaskId(taskId);
         taskRuntime.createVariable(createTaskVariablePayload);
         
         return new ResponseEntity<>(HttpStatus.OK);
@@ -69,10 +69,12 @@ public class TaskVariableAdminControllerImpl implements TaskVariableAdminControl
     
     @Override
     public ResponseEntity<Void> updateVariable(@PathVariable String taskId,
- 	 		 								   @RequestBody UpdateTaskVariablePayload updateTaskVariablePayload) {
-    	
-    	updateTaskVariablePayload.setTaskId(taskId);
-    	taskRuntime.updateVariable(updateTaskVariablePayload);
+                                               @PathVariable String variableName,
+                                               @RequestBody UpdateTaskVariablePayload updateTaskVariablePayload) {
+
+        updateTaskVariablePayload.setTaskId(taskId);
+        updateTaskVariablePayload.setName(variableName);
+        taskRuntime.updateVariable(updateTaskVariablePayload);
    
         return new ResponseEntity<>(HttpStatus.OK);
     }

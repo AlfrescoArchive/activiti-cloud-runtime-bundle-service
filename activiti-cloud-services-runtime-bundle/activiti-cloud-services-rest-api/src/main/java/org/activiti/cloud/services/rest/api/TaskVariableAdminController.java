@@ -16,14 +16,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
         produces = {MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE})
 public interface TaskVariableAdminController {
 
-	   @RequestMapping(method = RequestMethod.GET)
-	    Resources<VariableInstanceResource> getVariables(@PathVariable String taskId);
+    @RequestMapping(method = RequestMethod.GET)
+    Resources<VariableInstanceResource> getVariables(@PathVariable String taskId);
 
-	    @RequestMapping(method = RequestMethod.POST)
-	    ResponseEntity<Void> createVariable(@PathVariable String taskId,
-	                                     	@RequestBody CreateTaskVariablePayload createTaskVariablePayload);
-	    
-	    @RequestMapping(method = RequestMethod.PUT)
-	    ResponseEntity<Void> updateVariable(@PathVariable String taskId,
-	                                      	@RequestBody UpdateTaskVariablePayload updateTaskVariablePayload);
+    @RequestMapping(method = RequestMethod.POST)
+    ResponseEntity<Void> createVariable(@PathVariable String taskId,
+                                        @RequestBody CreateTaskVariablePayload createTaskVariablePayload);
+
+    @RequestMapping(value = "/{variableName}", method = RequestMethod.PUT)
+    ResponseEntity<Void> updateVariable(@PathVariable String taskId,
+                                        @PathVariable String variableName,
+                                        @RequestBody UpdateTaskVariablePayload updateTaskVariablePayload);
 }

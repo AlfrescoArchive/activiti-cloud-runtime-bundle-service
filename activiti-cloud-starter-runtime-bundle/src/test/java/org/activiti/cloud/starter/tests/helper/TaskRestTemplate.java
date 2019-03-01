@@ -17,7 +17,6 @@
 package org.activiti.cloud.starter.tests.helper;
 
 import java.util.List;
-import java.util.Map;
 
 import org.activiti.api.task.model.Task;
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
@@ -27,7 +26,6 @@ import org.activiti.api.task.model.payloads.CandidateUsersPayload;
 import org.activiti.api.task.model.payloads.CompleteTaskPayload;
 import org.activiti.api.task.model.payloads.CreateTaskPayload;
 import org.activiti.api.task.model.payloads.CreateTaskVariablePayload;
-import org.activiti.api.task.model.payloads.SetTaskVariablesPayload;
 import org.activiti.api.task.model.payloads.UpdateTaskPayload;
 import org.activiti.api.task.model.payloads.UpdateTaskVariablePayload;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
@@ -295,30 +293,13 @@ public class TaskRestTemplate {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
-//This method is currently not supported    
-//    public ResponseEntity<Void> createVariable(String taskId,
-//                                               String name,
-//                                               Object value) {
-//        CreateTaskVariablePayload createTaskVariablePayload = TaskPayloadBuilder.createVariable().withVariable(name,value).build();
-//
-//        HttpEntity<CreateTaskVariablePayload> requestEntity = new HttpEntity<>(
-//        		createTaskVariablePayload,
-//                null);
-//        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(TaskRestTemplate.TASK_VAR_RELATIVE_URL + taskId + "/variables/",
-//                                                                        HttpMethod.POST,
-//                                                                        requestEntity,
-//                                                                        VOID_RESPONSE_TYPE);
-//        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-//        return responseEntity;
-//    }
-    
+    public ResponseEntity<Void> createVariable(String taskId,
+                                               String name,
+                                               Object value) {
+        CreateTaskVariablePayload createTaskVariablePayload = TaskPayloadBuilder.createVariable().withVariable(name,value).build();
 
-    public ResponseEntity<Void> setVariables(String taskId,
-                                             Map<String, Object> variables) {
-        SetTaskVariablesPayload setTaskVariablesPayload = TaskPayloadBuilder.setVariables().withVariables(variables).build();
-
-        HttpEntity<SetTaskVariablesPayload> requestEntity = new HttpEntity<>(
-                setTaskVariablesPayload,
+        HttpEntity<CreateTaskVariablePayload> requestEntity = new HttpEntity<>(
+                createTaskVariablePayload,
                 null);
         ResponseEntity<Void> responseEntity = testRestTemplate.exchange(TaskRestTemplate.TASK_VAR_RELATIVE_URL + taskId + "/variables/",
                                                                         HttpMethod.POST,
@@ -327,9 +308,7 @@ public class TaskRestTemplate {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }
-
-
-
+    
 
     public ResponseEntity<Void> updateVariable(String taskId,
                                                String name,
@@ -337,12 +316,13 @@ public class TaskRestTemplate {
         UpdateTaskVariablePayload updateTaskVariablePayload = TaskPayloadBuilder.updateVariable().withVariable(name,value).build();
 
         HttpEntity<UpdateTaskVariablePayload> requestEntity = new HttpEntity<>(
-        		updateTaskVariablePayload,
+                updateTaskVariablePayload,
                 null);
-        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(TaskRestTemplate.TASK_VAR_RELATIVE_URL + taskId + "/variables/",
+        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(TaskRestTemplate.TASK_VAR_RELATIVE_URL + taskId + "/variables/{variableName}",
                                                                         HttpMethod.PUT,
                                                                         requestEntity,
-                                                                        VOID_RESPONSE_TYPE);
+                                                                        VOID_RESPONSE_TYPE,
+                                                                        name);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }
@@ -358,38 +338,40 @@ public class TaskRestTemplate {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }
-    
+
     public ResponseEntity<Void> adminCreateVariable(String taskId,
-    											 	String name,
-    											 	Object value) {
-    	CreateTaskVariablePayload createTaskVariablePayload = TaskPayloadBuilder.createVariable().withVariable(name,value).build();
+                                                    String name,
+                                                    Object value) {
+        CreateTaskVariablePayload createTaskVariablePayload = TaskPayloadBuilder.createVariable().withVariable(name,
+                                                                                                               value).build();
 
-    	HttpEntity<CreateTaskVariablePayload> requestEntity = new HttpEntity<>(
-    							createTaskVariablePayload,
-    							null);
-    	ResponseEntity<Void> responseEntity = testRestTemplate.exchange(TaskRestTemplate.ADMIN_TASK_VAR_RELATIVE_URL + taskId + "/variables/",
-                                       HttpMethod.POST,
-                                       requestEntity,
-                                       VOID_RESPONSE_TYPE);
-    	assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-    	return responseEntity;
+        HttpEntity<CreateTaskVariablePayload> requestEntity = new HttpEntity<>(
+                createTaskVariablePayload,
+                null);
+        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(TaskRestTemplate.ADMIN_TASK_VAR_RELATIVE_URL + taskId + "/variables/",
+                                                                        HttpMethod.POST,
+                                                                        requestEntity,
+                                                                        VOID_RESPONSE_TYPE);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return responseEntity;
     }
-    
-    
-    public ResponseEntity<Void> adminUpdateVariable(String taskId,
-    											 	String name,
-    											 	Object value) {
-    	UpdateTaskVariablePayload updateTaskVariablePayload = TaskPayloadBuilder.updateVariable().withVariable(name,value).build();
 
-    	HttpEntity<UpdateTaskVariablePayload> requestEntity = new HttpEntity<>(
-    							updateTaskVariablePayload,
-    							null);
-    	ResponseEntity<Void> responseEntity = testRestTemplate.exchange(TaskRestTemplate.ADMIN_TASK_VAR_RELATIVE_URL + taskId + "/variables/",
-                                       HttpMethod.PUT,
-                                       requestEntity,
-                                       VOID_RESPONSE_TYPE);
-    	assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-    	return responseEntity;
+    public ResponseEntity<Void> adminUpdateVariable(String taskId,
+                                                    String name,
+                                                    Object value) {
+        UpdateTaskVariablePayload updateTaskVariablePayload = TaskPayloadBuilder.updateVariable().withVariable(name,
+                                                                                                               value).build();
+
+        HttpEntity<UpdateTaskVariablePayload> requestEntity = new HttpEntity<>(
+                updateTaskVariablePayload,
+                null);
+        ResponseEntity<Void> responseEntity = testRestTemplate.exchange(TaskRestTemplate.ADMIN_TASK_VAR_RELATIVE_URL + taskId + "/variables/{variableName}",
+                                                                        HttpMethod.PUT,
+                                                                        requestEntity,
+                                                                        VOID_RESPONSE_TYPE,
+                                                                        name);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return responseEntity;
     }
         
     

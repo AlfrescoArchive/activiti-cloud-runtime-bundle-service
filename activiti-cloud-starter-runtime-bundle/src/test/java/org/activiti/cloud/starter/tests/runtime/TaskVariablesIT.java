@@ -73,8 +73,8 @@ public class TaskVariablesIT {
     
     @Before
     public void setUp() {
-    	keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hruser");
-    	
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hruser");
+
         ResponseEntity<PagedResources<CloudProcessDefinition>> processDefinitions = getProcessDefinitions();
         assertThat(processDefinitions.getStatusCode()).isEqualTo(HttpStatus.OK);
         for (ProcessDefinition pd : processDefinitions.getBody().getContent()) {
@@ -96,11 +96,7 @@ public class TaskVariablesIT {
       
         taskRestTemplate.claim(taskId);
         
-        //taskRestTemplate.createVariable(taskId, "var2", "test2");
-        Map<String, Object> taskVariables = new HashMap<>();
-        taskVariables.put("var2",
-                          "test2");
-        taskRestTemplate.setVariables(taskId, taskVariables);
+        taskRestTemplate.createVariable(taskId, "var2", "test2");
 
         //when
         ResponseEntity<Resources<CloudVariableInstance>> variablesResponse = taskRestTemplate.getVariables(taskId);
@@ -123,12 +119,8 @@ public class TaskVariablesIT {
         taskRestTemplate.updateVariable(taskId, "var2", "test2-update" );
         
         
-        //taskRestTemplate.createVariable(taskId, "var3", "test3" );
-        taskVariables = new HashMap<>();
-        taskVariables.put("var3",
-                          "test3");
-        taskRestTemplate.setVariables(taskId, taskVariables);
-        
+        taskRestTemplate.createVariable(taskId, "var3", "test3" );
+
 
         // when
         variablesResponse = taskRestTemplate.getVariables(taskId);

@@ -17,7 +17,6 @@ package org.activiti.cloud.services.rest.controllers;
 
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.api.task.model.payloads.CreateTaskVariablePayload;
-import org.activiti.api.task.model.payloads.SetTaskVariablesPayload;
 import org.activiti.api.task.model.payloads.UpdateTaskVariablePayload;
 import org.activiti.api.task.runtime.TaskRuntime;
 import org.activiti.cloud.services.rest.api.TaskVariableController;
@@ -52,38 +51,29 @@ public class TaskVariableControllerImpl implements TaskVariableController {
     @Override
     public Resources<VariableInstanceResource> getVariables(@PathVariable String taskId) {
         return resourcesAssembler.toResources(taskRuntime.variables(TaskPayloadBuilder.variables()
-                                                      				.withTaskId(taskId)
-                                                      				.build()),
+                                                                            .withTaskId(taskId)
+                                                                            .build()),
                                               variableResourceAssembler);
     }
 
-//    @Override
-//    public ResponseEntity<Void> createVariable(@PathVariable String taskId,
-//                                            	@RequestBody CreateTaskVariablePayload createTaskVariablePayload) {
-//        
-//    	createTaskVariablePayload.setTaskId(taskId);
-//        taskRuntime.createVariable(createTaskVariablePayload);
-//        
-//        return new ResponseEntity<>(HttpStatus.OK);
-//    }
-    
     @Override
-    public ResponseEntity<Void> updateVariable(@PathVariable String taskId,
-                                               @RequestBody UpdateTaskVariablePayload updateTaskVariablePayload) {
-        
-    	updateTaskVariablePayload.setTaskId(taskId);
-        taskRuntime.updateVariable(updateTaskVariablePayload);
-        
+    public ResponseEntity<Void> createVariable(@PathVariable String taskId,
+                                               @RequestBody CreateTaskVariablePayload createTaskVariablePayload) {
+
+        createTaskVariablePayload.setTaskId(taskId);
+        taskRuntime.createVariable(createTaskVariablePayload);
+
         return new ResponseEntity<>(HttpStatus.OK);
     }
-    
+
     @Override
-    public ResponseEntity<Void> setVariables(@PathVariable String taskId,
-                                             @RequestBody SetTaskVariablesPayload setTaskVariablesCmd) {
-        
-        setTaskVariablesCmd.setTaskId(taskId);
-        taskRuntime.setVariables(setTaskVariablesCmd);
-        
+    public ResponseEntity<Void> updateVariable(@PathVariable String taskId,
+                                               @PathVariable String variableName,
+                                               @RequestBody UpdateTaskVariablePayload updateTaskVariablePayload) {
+
+        updateTaskVariablePayload.setTaskId(taskId);
+        taskRuntime.updateVariable(updateTaskVariablePayload);
+
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
