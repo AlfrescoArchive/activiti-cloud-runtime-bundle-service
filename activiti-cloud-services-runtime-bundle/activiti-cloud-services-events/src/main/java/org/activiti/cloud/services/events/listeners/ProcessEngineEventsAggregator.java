@@ -17,11 +17,18 @@
 package org.activiti.cloud.services.events.listeners;
 
 import org.activiti.api.model.shared.model.VariableInstance;
+import org.activiti.api.process.model.BPMNActivity;
+import org.activiti.api.process.model.BPMNSequenceFlow;
 import org.activiti.api.task.model.Task;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.api.model.shared.events.CloudVariableEvent;
 import org.activiti.cloud.api.model.shared.impl.events.CloudRuntimeEventImpl;
+import org.activiti.cloud.api.process.model.events.CloudBPMNActivityEvent;
+import org.activiti.cloud.api.process.model.events.CloudIntegrationEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessRuntimeEvent;
+import org.activiti.cloud.api.process.model.events.CloudSequenceFlowEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCandidateGroupEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskRuntimeEvent;
 import org.activiti.cloud.services.events.converter.CachingExecutionContext;
 import org.activiti.cloud.services.events.converter.ExecutionContextInfoAppender;
@@ -109,6 +116,16 @@ public class ProcessEngineEventsAggregator extends BaseCommandContextEventsAggre
             return ((VariableInstance) element.getEntity()).getProcessInstanceId();
         } else if(element instanceof CloudTaskRuntimeEvent) {
             return ((Task) element.getEntity()).getProcessInstanceId();
+        } else if(element instanceof CloudBPMNActivityEvent) {
+            return ((BPMNActivity) element.getEntity()).getProcessInstanceId();
+        } else if(element instanceof CloudSequenceFlowEvent) {
+            return ((BPMNSequenceFlow) element.getEntity()).getProcessInstanceId();
+        } else if(element instanceof CloudIntegrationEvent) {
+            return ((CloudIntegrationEvent) element).getEntity().getProcessInstanceId();
+        } else if(element instanceof CloudTaskCandidateUserEvent) {
+            return ((CloudTaskCandidateUserEvent) element).getProcessInstanceId();
+        } else if(element instanceof CloudTaskCandidateGroupEvent) {
+            return ((CloudTaskCandidateGroupEvent) element).getProcessInstanceId();
         }
         
         return null;

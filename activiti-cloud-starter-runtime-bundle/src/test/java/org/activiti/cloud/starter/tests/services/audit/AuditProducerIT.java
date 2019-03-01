@@ -3,6 +3,7 @@ package org.activiti.cloud.starter.tests.services.audit;
 import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_CREATED;
 import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_UPDATED;
 import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_CANCELLED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED;
 import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
 import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CANCELLED;
 import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_COMPLETED;
@@ -53,6 +54,7 @@ import org.activiti.cloud.api.task.model.events.CloudTaskCancelledEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserRemovedEvent;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
+import org.activiti.engine.RuntimeService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -97,6 +99,9 @@ public class AuditProducerIT {
     @Autowired
     private AuditConsumerStreamHandler streamHandler;
     private Map<String, String> processDefinitionIds = new HashMap<>();
+    
+    @Autowired
+    RuntimeService runtimeService;
 
     @Before
     public void setUp() {
@@ -552,7 +557,67 @@ public class AuditProducerIT {
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
         });
     }
+    
+    
+    @Test
+    public void testTwoSubProcesses() {
+        //given
+        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get("callTwoSubProcesses"));
+        
+        String processInstanceId = processInstance.getBody().getId();
+        
+        // when
+        List<String> subprocessIds = runtimeService.createProcessInstanceQuery()
+                                                   .superProcessInstanceId(processInstanceId)
+                                                   .list()
+                                                   .stream()
+                                                   .map(it -> it.getProcessInstanceId())
+                                                   .collect(Collectors.toList());
+        // then
+        assertThat(subprocessIds).hasSize(2);
+        
+        String subProcessId1 = subprocessIds.get(0);
+        String subProcessId2 = subprocessIds.get(1);
+        
+        await().untilAsserted(() -> {
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
 
+            assertThat(streamHandler.getLatestReceivedEvents())
+                    .extracting("eventType","processInstanceId","parentProcessInstanceId", "processDefinitionKey")
+                    .containsExactly(tuple(PROCESS_CREATED,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(PROCESS_STARTED,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(ACTIVITY_COMPLETED,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(ACTIVITY_COMPLETED,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(PROCESS_CREATED, subProcessId1, processInstanceId, "simpleSubProcess1"),
+                                     tuple(PROCESS_STARTED, subProcessId1, processInstanceId, "simpleSubProcess1"),                                     
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, "callTwoSubProcesses"),
+                                     tuple(PROCESS_CREATED, subProcessId2, processInstanceId, "simpleSubProcess2"),
+                                     tuple(PROCESS_STARTED, subProcessId2, processInstanceId, "simpleSubProcess2"),                                     
+                                     tuple(ACTIVITY_STARTED, subProcessId1, processInstanceId, "simpleSubProcess1"),
+                                     tuple(ACTIVITY_STARTED, subProcessId2, processInstanceId, "simpleSubProcess2"),
+                                     tuple(ACTIVITY_COMPLETED, subProcessId1, processInstanceId, "simpleSubProcess1"),
+                                     tuple(ACTIVITY_COMPLETED, subProcessId2, processInstanceId, "simpleSubProcess2"),
+                                     tuple(SEQUENCE_FLOW_TAKEN,subProcessId1, processInstanceId, "simpleSubProcess1"),
+                                     tuple(SEQUENCE_FLOW_TAKEN,subProcessId2, processInstanceId, "simpleSubProcess2"),
+                                     tuple(ACTIVITY_STARTED, subProcessId1, processInstanceId, "simpleSubProcess1"),
+                                     tuple(TASK_CREATED, subProcessId1, processInstanceId, "simpleSubProcess1"),
+                                     tuple(ACTIVITY_STARTED,subProcessId2, processInstanceId, "simpleSubProcess2"),
+                                     tuple(TASK_CREATED, subProcessId2, processInstanceId, "simpleSubProcess2")
+                    );
+        });
+
+        // Clean up
+        runtimeService.deleteProcessInstance(processInstanceId, "Test cascading");
+
+    }
+    
+    
     private ResponseEntity<PagedResources<CloudProcessDefinition>> getProcessDefinitions() {
         ParameterizedTypeReference<PagedResources<CloudProcessDefinition>> responseType = new ParameterizedTypeReference<PagedResources<CloudProcessDefinition>>() {
         };
