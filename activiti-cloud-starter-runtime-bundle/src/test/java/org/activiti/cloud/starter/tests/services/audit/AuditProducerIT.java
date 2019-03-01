@@ -101,7 +101,7 @@ public class AuditProducerIT {
     private Map<String, String> processDefinitionIds = new HashMap<>();
     
     @Autowired
-    RuntimeService runtimeService;
+    private RuntimeService runtimeService;
 
     @Before
     public void setUp() {
@@ -613,7 +613,7 @@ public class AuditProducerIT {
         });
 
         // Clean up
-        runtimeService.deleteProcessInstance(processInstanceId, "Test cascading");
+        runtimeService.deleteProcessInstance(processInstanceId, "Clean up");
 
     }
     
