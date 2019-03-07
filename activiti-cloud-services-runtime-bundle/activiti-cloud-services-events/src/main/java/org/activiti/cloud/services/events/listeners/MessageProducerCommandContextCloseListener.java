@@ -32,7 +32,6 @@ import org.springframework.util.Assert;
 public class MessageProducerCommandContextCloseListener implements CommandContextCloseListener {
 
     public static final String PROCESS_ENGINE_EVENTS = "processEngineEvents";
-    public static final String EXECUTION_CONTEXT = "executionContext";
 
     private final ProcessEngineChannels producer;
     private final MessageBuilderChainFactory<ExecutionContext> messageBuilderChainFactory;

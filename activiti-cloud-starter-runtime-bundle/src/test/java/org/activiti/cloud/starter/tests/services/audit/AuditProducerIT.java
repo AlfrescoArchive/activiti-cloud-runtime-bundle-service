@@ -80,6 +80,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class AuditProducerIT {
 
+    private static final String SIMPLE_SUB_PROCESS1 = "simpleSubProcess1";
+    private static final String SIMPLE_SUB_PROCESS2 = "simpleSubProcess2";
+    private static final String CALL_TWO_SUB_PROCESSES = "callTwoSubProcesses";
     public static final String ROUTING_KEY_HEADER = "routingKey";
     public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
     public static final String[] ALL_REQUIRED_HEADERS = Stream.of(RUNTIME_BUNDLE_INFO_HEADERS)
@@ -563,7 +566,7 @@ public class AuditProducerIT {
     @Test
     public void testTwoSubProcesses() {
         //given
-        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get("callTwoSubProcesses"));
+        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get(CALL_TWO_SUB_PROCESSES));
         
         String processInstanceId = processInstance.getBody().getId();
         
@@ -584,32 +587,35 @@ public class AuditProducerIT {
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
 
             assertThat(streamHandler.getLatestReceivedEvents())
-                    .extracting("eventType","processInstanceId","parentProcessInstanceId", "processDefinitionKey")
-                    .containsExactly(tuple(PROCESS_CREATED,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(PROCESS_STARTED,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(ACTIVITY_STARTED,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(ACTIVITY_COMPLETED,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(ACTIVITY_STARTED,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(ACTIVITY_COMPLETED,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(ACTIVITY_STARTED,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(PROCESS_CREATED, subProcessId1, processInstanceId, "simpleSubProcess1"),
-                                     tuple(PROCESS_STARTED, subProcessId1, processInstanceId, "simpleSubProcess1"),                                     
-                                     tuple(ACTIVITY_STARTED,processInstanceId, null, "callTwoSubProcesses"),
-                                     tuple(PROCESS_CREATED, subProcessId2, processInstanceId, "simpleSubProcess2"),
-                                     tuple(PROCESS_STARTED, subProcessId2, processInstanceId, "simpleSubProcess2"),                                     
-                                     tuple(ACTIVITY_STARTED, subProcessId1, processInstanceId, "simpleSubProcess1"),
-                                     tuple(ACTIVITY_STARTED, subProcessId2, processInstanceId, "simpleSubProcess2"),
-                                     tuple(ACTIVITY_COMPLETED, subProcessId1, processInstanceId, "simpleSubProcess1"),
-                                     tuple(ACTIVITY_COMPLETED, subProcessId2, processInstanceId, "simpleSubProcess2"),
-                                     tuple(SEQUENCE_FLOW_TAKEN,subProcessId1, processInstanceId, "simpleSubProcess1"),
-                                     tuple(SEQUENCE_FLOW_TAKEN,subProcessId2, processInstanceId, "simpleSubProcess2"),
-                                     tuple(ACTIVITY_STARTED, subProcessId1, processInstanceId, "simpleSubProcess1"),
-                                     tuple(TASK_CREATED, subProcessId1, processInstanceId, "simpleSubProcess1"),
-                                     tuple(ACTIVITY_STARTED,subProcessId2, processInstanceId, "simpleSubProcess2"),
-                                     tuple(TASK_CREATED, subProcessId2, processInstanceId, "simpleSubProcess2")
+                    .extracting(CloudRuntimeEvent::getEventType, 
+                                CloudRuntimeEvent::getProcessInstanceId,
+                                CloudRuntimeEvent::getParentProcessInstanceId, 
+                                CloudRuntimeEvent::getProcessDefinitionKey)
+                    .containsExactly(tuple(PROCESS_CREATED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(PROCESS_STARTED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(ACTIVITY_COMPLETED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(ACTIVITY_COMPLETED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(PROCESS_CREATED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(PROCESS_STARTED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),                                     
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, CALL_TWO_SUB_PROCESSES),
+                                     tuple(PROCESS_CREATED, subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2),
+                                     tuple(PROCESS_STARTED, subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2),                                     
+                                     tuple(ACTIVITY_STARTED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(ACTIVITY_STARTED, subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2),
+                                     tuple(ACTIVITY_COMPLETED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(ACTIVITY_COMPLETED, subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2),
+                                     tuple(SEQUENCE_FLOW_TAKEN,subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(SEQUENCE_FLOW_TAKEN,subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2),
+                                     tuple(ACTIVITY_STARTED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(TASK_CREATED, subProcessId1, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(ACTIVITY_STARTED,subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2),
+                                     tuple(TASK_CREATED, subProcessId2, processInstanceId, SIMPLE_SUB_PROCESS2)
                     );
         });
 
