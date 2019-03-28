@@ -134,7 +134,7 @@ public class SignalAuditProducerIT {
                                   null, // not available for start catch signal
                                   null, // not available for start catch signal
                                   processWithSignalStart.getId(),
-                                  null, // not available for start signal
+                                  null, // not available for start signal, should be checked once!
                                   "theStart",
                                   "Test",
                                   Collections.singletonMap("signalVar", "timeToGo")
