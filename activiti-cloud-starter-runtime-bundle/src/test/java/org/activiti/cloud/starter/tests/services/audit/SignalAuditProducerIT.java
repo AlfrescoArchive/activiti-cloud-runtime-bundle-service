@@ -16,6 +16,12 @@
 
 package org.activiti.cloud.starter.tests.services.audit;
 
+import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.ALL_REQUIRED_HEADERS;
+import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.RUNTIME_BUNDLE_INFO_HEADERS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.awaitility.Awaitility.await;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,23 +41,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import static org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate.PROCESS_INSTANCES_RELATIVE_URL;
-import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.ALL_REQUIRED_HEADERS;
-import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.RUNTIME_BUNDLE_INFO_HEADERS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-import static org.awaitility.Awaitility.await;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(AuditProducerIT.AUDIT_PRODUCER_IT)
@@ -125,6 +119,8 @@ public class SignalAuditProducerIT {
                     .extracting( CloudRuntimeEvent::getEventType,
                                  CloudRuntimeEvent::getProcessDefinitionId,
                                  CloudRuntimeEvent::getProcessInstanceId,
+                                 CloudRuntimeEvent::getProcessDefinitionKey,
+                                 CloudRuntimeEvent::getProcessDefinitionVersion,
                                  event -> event.getEntity().getProcessDefinitionId(),
                                  event -> event.getEntity().getProcessInstanceId(),
                                  event -> event.getEntity().getElementId(),
@@ -134,9 +130,11 @@ public class SignalAuditProducerIT {
                     .contains(
                             tuple(BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED,
                                   processWithSignalStart.getId(),
-                                  null,
+                                  null, // not available for start catch signal
+                                  null, // not available for start catch signal
+                                  null, // not available for start catch signal
                                   processWithSignalStart.getId(),
-                                  null,
+                                  null, // not available for start signal
                                   "theStart",
                                   "Test",
                                   Collections.singletonMap("signalVar", "timeToGo")
@@ -144,6 +142,8 @@ public class SignalAuditProducerIT {
                             tuple(BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED,
                                   startProcessEntity1.getBody().getProcessDefinitionId(),
                                   startProcessEntity1.getBody().getId(),
+                                  startProcessEntity1.getBody().getProcessDefinitionKey(),
+                                  1, // version
                                   startProcessEntity1.getBody().getProcessDefinitionId(),
                                   startProcessEntity1.getBody().getId(),
                                   "signalintermediatecatchevent1",
@@ -153,6 +153,8 @@ public class SignalAuditProducerIT {
                             tuple(BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED,
                                   startProcessEntity2.getBody().getProcessDefinitionId(),
                                   startProcessEntity2.getBody().getId(),
+                                  startProcessEntity2.getBody().getProcessDefinitionKey(),
+                                  1, // version
                                   startProcessEntity2.getBody().getProcessDefinitionId(),
                                   startProcessEntity2.getBody().getId(),
                                   "signalintermediatecatchevent1",
