@@ -17,6 +17,8 @@ package org.activiti.cloud.services.rest.controllers;
 
 import java.util.List;
 
+import org.activiti.api.model.shared.model.ActivitiError;
+import org.activiti.api.runtime.model.impl.ActivitiErrorImpl;
 import org.activiti.cloud.services.rest.api.ConnectorDefinitionController;
 import org.activiti.cloud.services.rest.assemblers.ConnectorDefinitionResourceAssembler;
 import org.activiti.core.common.model.connector.ConnectorDefinition;
@@ -63,8 +65,8 @@ public class ConnectorDefinitionControllerImpl implements ConnectorDefinitionCon
 
     @ExceptionHandler(ActivitiObjectNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleAppException(ActivitiObjectNotFoundException ex) {
-        return ex.getMessage();
+    public Resource<ActivitiError> handleAppException(ActivitiObjectNotFoundException ex) {
+        return new Resource<>(new ActivitiErrorImpl(HttpStatus.NOT_FOUND, ex.getMessage()));
     }
 
 }
