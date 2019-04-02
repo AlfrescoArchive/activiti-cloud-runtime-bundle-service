@@ -29,11 +29,8 @@ import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.payloads.RemoveProcessVariablesPayload;
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
-import org.activiti.api.runtime.shared.NotFoundException;
-import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.rest.api.ProcessInstanceVariableAdminController;
 import org.activiti.engine.ActivitiException;
-import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.activiti.spring.process.model.Extension;
 import org.activiti.spring.process.model.ProcessExtensionModel;
 import org.activiti.spring.process.model.VariableDefinition;
@@ -61,24 +58,6 @@ public class ProcessInstanceVariableAdminControllerImpl implements ProcessInstan
         this.processAdminRuntime = processAdminRuntime;
         this.processExtensionModelMap = processExtensionModelMap;
         this.variableValidationService = variableValidationService;
-    }
-
-    @ExceptionHandler(ActivitiForbiddenException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public String handleAppException(ActivitiForbiddenException ex) {
-        return ex.getMessage();
-    }
-
-    @ExceptionHandler(ActivitiObjectNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleAppException(ActivitiObjectNotFoundException ex) {
-        return ex.getMessage();
-    }
-
-    @ExceptionHandler(NotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleAppException(NotFoundException ex) {
-        return ex.getMessage();
     }
 
     @Override

@@ -28,7 +28,6 @@ import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
-import org.activiti.cloud.services.core.ActivitiForbiddenException;
 import org.activiti.cloud.services.core.ProcessDiagramGeneratorWrapper;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.rest.api.ProcessInstanceController;
@@ -64,12 +63,6 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     private final ProcessRuntime processRuntime;
 
     private final SpringPageConverter pageConverter;
-
-    @ExceptionHandler(ActivitiForbiddenException.class)
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public String handleAppException(ActivitiForbiddenException ex) {
-        return ex.getMessage();
-    }
 
     @ExceptionHandler({ActivitiObjectNotFoundException.class, NotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
