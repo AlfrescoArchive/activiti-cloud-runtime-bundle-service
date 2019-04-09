@@ -19,6 +19,9 @@ package org.activiti.cloud.starter.tests.swagger;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,6 +81,8 @@ public class SwaggerIT {
                 .andDo((result) -> {
                     FileUtils.writeStringToFile(new File("target/swagger.json"), result.getResponse().getContentAsString(),
                                                 StandardCharsets.UTF_8);
+                    JsonNode jsonNodeTree = new ObjectMapper().readTree(result.getResponse().getContentAsString());
+                    FileUtils.writeStringToFile(new File("target/swagger.yaml"), new YAMLMapper().writeValueAsString(jsonNodeTree));
                 });
         mockMvc.perform(MockMvcRequestBuilders.get("/v2/api-docs?group=hal").accept(MediaType.APPLICATION_JSON))
                 .andDo((result) -> {
