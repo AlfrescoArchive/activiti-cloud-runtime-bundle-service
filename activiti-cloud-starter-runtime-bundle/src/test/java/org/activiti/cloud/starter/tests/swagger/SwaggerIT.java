@@ -82,12 +82,14 @@ public class SwaggerIT {
                     FileUtils.writeStringToFile(new File("target/swagger.json"), result.getResponse().getContentAsString(),
                                                 StandardCharsets.UTF_8);
                     JsonNode jsonNodeTree = new ObjectMapper().readTree(result.getResponse().getContentAsString());
-                    FileUtils.writeStringToFile(new File("target/swagger.yaml"), new YAMLMapper().writeValueAsString(jsonNodeTree));
+                    FileUtils.writeStringToFile(new File("target/swagger.yaml"), new YAMLMapper().writeValueAsString(jsonNodeTree),
+                                                StandardCharsets.UTF_8);
                 });
         mockMvc.perform(MockMvcRequestBuilders.get("/v2/api-docs?group=hal").accept(MediaType.APPLICATION_JSON))
                 .andDo((result) -> {
                     FileUtils.writeStringToFile(new File("target/swagger-hal.json"), result.getResponse().getContentAsString(),
                                                 StandardCharsets.UTF_8);
+                    // TODO: 09/04/2019 the yaml generated out this json file will be produced once we make sure clients can be generated with swagger-hal.json
                 });
     }
 
