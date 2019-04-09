@@ -22,8 +22,10 @@ pipeline {
             sh "mvn versions:set -DnewVersion=$PREVIEW_VERSION"
             //add DskipTests since not clear how to fix test fast  
             sh "mvn install"
+            sh "mvn verify -B -DskipITs=false"
+            sh "mvn install:install-file -Dfile=activiti-cloud-starter-runtime-bundle/swagger.json  -DgroupId=org.activiti.cloud.rb -DartifactId=swagger.json -Dclassifier=api-docs -Dversion=$PREVIEW_VERSION  -Dpackaging=json"
+            sh "mvn deploy:deploy-file -P !alfresco -P central -Dfile=activiti-cloud-starter-runtime-bundle/swagger.json  -DgroupId=org.activiti.cloud.rb -DartifactId=swagger.json -Dclassifier=api-docs -Dversion=$PREVIEW_VERSION  -Dpackaging=json"
           }
-
         }
       }
       stage('Build Release') {
