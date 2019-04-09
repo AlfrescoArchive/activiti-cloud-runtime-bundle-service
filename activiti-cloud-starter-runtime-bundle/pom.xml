@@ -255,7 +255,7 @@
                     </ports>
                     <wait>
                       <log>Keycloak .* started in</log>
-                      <time>60000</time>
+                      <time>80000</time>
                       <shutdown>5000</shutdown>
                       <kill>1000</kill>
                     </wait>
