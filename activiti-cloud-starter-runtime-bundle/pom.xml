@@ -257,17 +257,23 @@
                 </goals>
                 <configuration>
                   <artifacts>
-                    <!-- Alfresco format-->
+                    <!-- Alfresco format JSON-->
                     <artifact>
                       <file>target/swagger.json</file>
                       <type>json</type>
                       <classifier>api-docs</classifier>
                     </artifact>
-                    <!-- HAL format -->
+                    <!-- HAL format JSON-->
                     <artifact>
                       <file>target/swagger-hal.json</file>
                       <type>json</type>
                       <classifier>api-docs-hal</classifier>
+                    </artifact>
+                    <!-- Swagger YAML-->
+                    <artifact>
+                      <file>target/swagger.yaml</file>
+                      <type>yaml</type>
+                      <classifier>api-docs-yaml</classifier>
                     </artifact>
                   </artifacts>
                 </configuration>
