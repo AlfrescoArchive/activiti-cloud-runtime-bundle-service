@@ -195,7 +195,7 @@ public class AuditProducerIT {
                     .containsExactly("my instance name");
             assertThat(receivedEvents)
                     .filteredOn(event -> TASK_CREATED.equals(event.getEventType()))
-                    .extracting(event -> ((Task) event.getEntity()).getProcessDefinitionVersion())
+                    .extracting(event -> event.getProcessDefinitionVersion())
                     .containsExactly(startProcessEntity.getBody().getProcessDefinitionVersion());
         });
 
