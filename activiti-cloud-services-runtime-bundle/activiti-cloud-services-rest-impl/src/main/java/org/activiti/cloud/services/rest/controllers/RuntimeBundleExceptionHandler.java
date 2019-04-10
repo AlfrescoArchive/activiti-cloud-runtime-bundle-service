@@ -21,7 +21,7 @@ public class RuntimeBundleExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Resource<ActivitiError> handleAppException(ActivitiObjectNotFoundException ex, HttpServletResponse response) {
         response.setContentType("application/json");
-        return new Resource<>(new ActivitiErrorImpl(HttpStatus.NOT_FOUND, ex.getMessage()));
+        return new Resource<>(new ActivitiErrorImpl(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
     }
 
     @ExceptionHandler(ActivitiInterchangeInfoNotFoundException.class)
@@ -35,13 +35,13 @@ public class RuntimeBundleExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public Resource<ActivitiError> handleAppException(ActivitiForbiddenException ex, HttpServletResponse response) {
         response.setContentType("application/json");
-        return new Resource<>(new ActivitiErrorImpl(HttpStatus.FORBIDDEN, ex.getMessage()));
+        return new Resource<>(new ActivitiErrorImpl(HttpStatus.FORBIDDEN.value(), ex.getMessage()));
     }
 
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Resource<ActivitiError> handleAppException(NotFoundException ex, HttpServletResponse response) {
         response.setContentType("application/json");
-        return new Resource<>(new ActivitiErrorImpl(HttpStatus.NOT_FOUND, ex.getMessage()));
+        return new Resource<>(new ActivitiErrorImpl(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
     }
 }
