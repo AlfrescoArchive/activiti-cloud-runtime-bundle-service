@@ -22,7 +22,12 @@ import java.nio.charset.StandardCharsets;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import org.apache.commons.io.FileUtils;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,11 +84,13 @@ public class SwaggerIT {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
         mockMvc.perform(MockMvcRequestBuilders.get("/v2/api-docs").accept(MediaType.APPLICATION_JSON))
                 .andDo((result) -> {
-                    FileUtils.writeStringToFile(new File("target/swagger.json"), result.getResponse().getContentAsString(),
+                    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                    JsonParser jp = new JsonParser();
+                    JsonElement je = jp.parse(result.getResponse().getContentAsString());
+                    FileUtils.writeStringToFile(new File("target/swagger.json"),
+                                                gson.toJson(je),
                                                 StandardCharsets.UTF_8);
-                    JsonNode jsonNodeTree = new ObjectMapper().readTree(result.getResponse().getContentAsString());
-                    FileUtils.writeStringToFile(new File("target/swagger.yaml"), new YAMLMapper().writeValueAsString(jsonNodeTree),
-                                                StandardCharsets.UTF_8);
+
                 });
         mockMvc.perform(MockMvcRequestBuilders.get("/v2/api-docs?group=hal").accept(MediaType.APPLICATION_JSON))
                 .andDo((result) -> {
