@@ -323,6 +323,7 @@
                 </goals>
                 <configuration>
                   <includes>
+                    <!-- use a custom suffix to be able to skip integration tests and still build swagger specification-->
                     <include>**/*ITSupport.java</include>
                   </includes>
                   <skipTests>false</skipTests>
@@ -342,6 +343,7 @@
                 </goals>
                 <configuration>
                   <artifacts>
+                    <!-- these are artifacts are produced by *ITSupport test-->
                     <!-- Alfresco format JSON-->
                     <artifact>
                       <file>target/swagger.json</file>
