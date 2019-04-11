@@ -16,32 +16,15 @@
 
 package org.activiti.cloud.starter.tests.swagger;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import org.apache.commons.io.FileUtils;
-import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -52,9 +35,6 @@ public class SwaggerIT {
 
     @Autowired
     private TestRestTemplate testRestTemplate;
-
-    @Autowired
-    private WebApplicationContext context;
 
     @Test
     public void defaultSpecificationFileShouldBeAlfrescoFormat() {
@@ -74,30 +54,6 @@ public class SwaggerIT {
                 .doesNotContain("PagedResources«")
                 .doesNotContain("Resources«Resource«")
                 .doesNotContain("Resource«");
-    }
-
-    /**
-     * This is more than a simple test. It's actually generating the swagger.json definition of the service
-     */
-    @Test
-    public void generateSwagger() throws Exception {
-        MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
-        mockMvc.perform(MockMvcRequestBuilders.get("/v2/api-docs").accept(MediaType.APPLICATION_JSON))
-                .andDo((result) -> {
-                    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                    JsonParser jp = new JsonParser();
-                    JsonElement je = jp.parse(result.getResponse().getContentAsString());
-                    FileUtils.writeStringToFile(new File("target/swagger.json"),
-                                                gson.toJson(je),
-                                                StandardCharsets.UTF_8);
-
-                });
-        mockMvc.perform(MockMvcRequestBuilders.get("/v2/api-docs?group=hal").accept(MediaType.APPLICATION_JSON))
-                .andDo((result) -> {
-                    FileUtils.writeStringToFile(new File("target/swagger-hal.json"), result.getResponse().getContentAsString(),
-                                                StandardCharsets.UTF_8);
-                    // TODO: 09/04/2019 the yaml generated out this json file will be produced once we make sure clients can be generated with swagger-hal.json
-                });
     }
 
 }

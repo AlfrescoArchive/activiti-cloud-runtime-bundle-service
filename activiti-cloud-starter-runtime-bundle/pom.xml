@@ -250,41 +250,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>build-helper-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-artifacts</id>
-                <phase>post-integration-test</phase>
-                <goals>
-                  <goal>attach-artifact</goal>
-                </goals>
-                <configuration>
-                  <artifacts>
-                    <!-- Alfresco format JSON-->
-                    <artifact>
-                      <file>target/swagger.json</file>
-                      <type>json</type>
-                      <classifier>api-docs</classifier>
-                    </artifact>
-                    <!-- HAL format JSON-->
-                    <artifact>
-                      <file>target/swagger-hal.json</file>
-                      <type>json</type>
-                      <classifier>api-docs-hal</classifier>
-                    </artifact>
-                    <!-- Swagger YAML-->
-                    <artifact>
-                      <file>target/swagger.yaml</file>
-                      <type>yaml</type>
-                      <classifier>api-docs-yaml</classifier>
-                    </artifact>
-                  </artifacts>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
             <groupId>io.fabric8</groupId>
             <artifactId>docker-maven-plugin</artifactId>
             <configuration>
@@ -336,6 +301,72 @@
         </plugins>
       </build>
 
+    </profile>
+    <profile>
+      <id>generate-swagger</id>
+      <activation>
+        <property>
+          <name>!skipSwaggerGen</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>generate-swagger</id>
+                <goals>
+                  <goal>integration-test</goal>
+                  <goal>verify</goal>
+                </goals>
+                <configuration>
+                  <includes>
+                    <include>**/*ITSupport.java</include>
+                  </includes>
+                  <skipTests>false</skipTests>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-artifacts</id>
+                <phase>post-integration-test</phase>
+                <goals>
+                  <goal>attach-artifact</goal>
+                </goals>
+                <configuration>
+                  <artifacts>
+                    <!-- Alfresco format JSON-->
+                    <artifact>
+                      <file>target/swagger.json</file>
+                      <type>json</type>
+                      <classifier>api-docs</classifier>
+                    </artifact>
+                    <!-- HAL format JSON-->
+                    <artifact>
+                      <file>target/swagger-hal.json</file>
+                      <type>json</type>
+                      <classifier>api-docs-hal</classifier>
+                    </artifact>
+                    <!-- Swagger YAML-->
+                    <artifact>
+                      <file>target/swagger.yaml</file>
+                      <type>yaml</type>
+                      <classifier>api-docs</classifier>
+                    </artifact>
+                  </artifacts>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>
