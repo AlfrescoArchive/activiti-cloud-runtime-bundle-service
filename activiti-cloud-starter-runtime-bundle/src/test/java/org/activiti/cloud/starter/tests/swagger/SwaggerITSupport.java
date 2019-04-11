@@ -55,6 +55,10 @@ public class SwaggerITSupport {
     @MockBean
     private ProcessDeployedEventProducer producer;
 
+    private Gson formatter = new GsonBuilder().setPrettyPrinting().create();
+
+    private JsonParser parser = new JsonParser();
+
     @Before
     public void setUp() {
         assertThat(producer).isNotNull();
@@ -68,11 +72,9 @@ public class SwaggerITSupport {
         MockMvc mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
         mockMvc.perform(MockMvcRequestBuilders.get("/v2/api-docs").accept(MediaType.APPLICATION_JSON))
                 .andDo((result) -> {
-                    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                    JsonParser jp = new JsonParser();
-                    JsonElement je = jp.parse(result.getResponse().getContentAsString());
+                    JsonElement je = parser.parse(result.getResponse().getContentAsString());
                     FileUtils.writeStringToFile(new File("target/swagger.json"),
-                                                gson.toJson(je),
+                                                formatter.toJson(je),
                                                 StandardCharsets.UTF_8);
                     JsonNode jsonNodeTree = new ObjectMapper().readTree(result.getResponse().getContentAsString());
                     FileUtils.writeStringToFile(new File("target/swagger.yaml"),
@@ -81,8 +83,9 @@ public class SwaggerITSupport {
                 });
         mockMvc.perform(MockMvcRequestBuilders.get("/v2/api-docs?group=hal").accept(MediaType.APPLICATION_JSON))
                 .andDo((result) -> {
+                    JsonElement je = parser.parse(result.getResponse().getContentAsString());
                     FileUtils.writeStringToFile(new File("target/swagger-hal.json"),
-                                                result.getResponse().getContentAsString(),
+                                                formatter.toJson(je),
                                                 StandardCharsets.UTF_8);
                     // TODO: 09/04/2019 the yaml generated out this json file will be produced once we make sure clients can be generated with swagger-hal.json
                 });
