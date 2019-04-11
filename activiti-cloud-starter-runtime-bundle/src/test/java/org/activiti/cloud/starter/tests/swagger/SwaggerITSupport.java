@@ -19,6 +19,9 @@ package org.activiti.cloud.starter.tests.swagger;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -71,11 +74,15 @@ public class SwaggerITSupport {
                     FileUtils.writeStringToFile(new File("target/swagger.json"),
                                                 gson.toJson(je),
                                                 StandardCharsets.UTF_8);
-
+                    JsonNode jsonNodeTree = new ObjectMapper().readTree(result.getResponse().getContentAsString());
+                    FileUtils.writeStringToFile(new File("target/swagger.yaml"),
+                                                new YAMLMapper().writeValueAsString(jsonNodeTree),
+                                                StandardCharsets.UTF_8);
                 });
         mockMvc.perform(MockMvcRequestBuilders.get("/v2/api-docs?group=hal").accept(MediaType.APPLICATION_JSON))
                 .andDo((result) -> {
-                    FileUtils.writeStringToFile(new File("target/swagger-hal.json"), result.getResponse().getContentAsString(),
+                    FileUtils.writeStringToFile(new File("target/swagger-hal.json"),
+                                                result.getResponse().getContentAsString(),
                                                 StandardCharsets.UTF_8);
                     // TODO: 09/04/2019 the yaml generated out this json file will be produced once we make sure clients can be generated with swagger-hal.json
                 });
