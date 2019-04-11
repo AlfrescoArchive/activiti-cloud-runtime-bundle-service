@@ -28,10 +28,10 @@ pipeline {
           container('maven') {
             sh "mvn versions:set -DnewVersion=$PREVIEW_VERSION"
             //add DskipTests since not clear how to fix test fast  
-            //sh "mvn install"
+            sh "mvn install"
             //sh "mvn verify -B -DskipITs=false"
             // sh "mvn clean deploy -DskipITs=false -Dit.test=SwaggerIT"
-            sh "mvn deploy -DskipITs=false"
+            //sh "mvn deploy -DskipITs=false"
             //sh "mvn install:install-file -Dfile=activiti-cloud-starter-runtime-bundle/swagger.json  -DgroupId=org.activiti.cloud.rb -DartifactId=swagger.json -Dclassifier=api-docs -Dversion=$PREVIEW_VERSION  -Dpackaging=json"
             //sh "mvn deploy:deploy-file -P !alfresco -P central -Dfile=activiti-cloud-starter-runtime-bundle/swagger.json  -DgroupId=org.activiti.cloud.rb -DartifactId=swagger.json -Dclassifier=api-docs -Dversion=$PREVIEW_VERSION  -Dpackaging=json"
           }
@@ -61,7 +61,7 @@ pipeline {
             }
           }
           container('maven') {
-            sh 'mvn clean deploy -DskipTests'
+            sh 'mvn clean deploy -DskipTests -DskipITs=false'
 
             sh 'export VERSION=`cat VERSION`'
 
@@ -93,7 +93,7 @@ pipeline {
           }
           container('maven') {
             sh '''
-              mvn clean deploy -P !alfresco -P central
+              mvn clean deploy -P !alfresco -P central -DskipITs=false
               '''
 
             sh 'export VERSION=`cat VERSION`'// && skaffold build -f skaffold.yaml'
