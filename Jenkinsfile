@@ -1,6 +1,13 @@
 pipeline {
-    agent {
-      label "jenkins-maven-java11"
+   agent {
+      kubernetes {
+              // Change the name of jenkins-maven label to be able to use yaml configuration snippet
+              label "maven-dind"
+              // Inherit from Jx Maven pod template
+              inheritFrom "maven-java11"
+              // Add pod configuration to Jenkins builder pod template
+              yamlFile "maven-dind.yaml"
+      }
     }
     environment {
       ORG               = 'activiti'
@@ -22,8 +29,12 @@ pipeline {
             sh "mvn versions:set -DnewVersion=$PREVIEW_VERSION"
             //add DskipTests since not clear how to fix test fast  
             sh "mvn install"
+            //sh "mvn verify -B -DskipITs=false"
+            // sh "mvn clean deploy -DskipITs=false -Dit.test=SwaggerIT"
+            //sh "mvn deploy -DskipITs=false"
+            //sh "mvn install:install-file -Dfile=activiti-cloud-starter-runtime-bundle/swagger.json  -DgroupId=org.activiti.cloud.rb -DartifactId=swagger.json -Dclassifier=api-docs -Dversion=$PREVIEW_VERSION  -Dpackaging=json"
+            //sh "mvn deploy:deploy-file -P !alfresco -P central -Dfile=activiti-cloud-starter-runtime-bundle/swagger.json  -DgroupId=org.activiti.cloud.rb -DartifactId=swagger.json -Dclassifier=api-docs -Dversion=$PREVIEW_VERSION  -Dpackaging=json"
           }
-
         }
       }
       stage('Build Release') {
@@ -50,7 +61,7 @@ pipeline {
             }
           }
           container('maven') {
-            sh 'mvn clean deploy -DskipTests'
+            sh 'mvn clean deploy -DskipTests -DskipITs=false'
 
             sh 'export VERSION=`cat VERSION`'
 
@@ -82,7 +93,7 @@ pipeline {
           }
           container('maven') {
             sh '''
-              mvn clean deploy -P !alfresco -P central
+              mvn clean deploy -P !alfresco -P central -DskipITs=false
               '''
 
             sh 'export VERSION=`cat VERSION`'// && skaffold build -f skaffold.yaml'
