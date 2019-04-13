@@ -21,7 +21,6 @@ import org.activiti.api.process.model.payloads.SignalPayload;
 import org.activiti.api.process.model.payloads.StartProcessPayload;
 import org.activiti.api.process.model.payloads.UpdateProcessPayload;
 import org.activiti.api.process.runtime.ProcessRuntime;
-import org.activiti.api.runtime.shared.NotFoundException;
 import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
@@ -37,7 +36,9 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
 
@@ -57,12 +58,6 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     private final ProcessRuntime processRuntime;
 
     private final SpringPageConverter pageConverter;
-
-    @ExceptionHandler(NotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleAppException(RuntimeException ex) {
-        return ex.getMessage();
-    }
 
     @Autowired
     public ProcessInstanceControllerImpl(RepositoryService repositoryService,
