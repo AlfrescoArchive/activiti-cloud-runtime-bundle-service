@@ -21,7 +21,6 @@ import org.activiti.api.process.runtime.ProcessRuntime;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.activiti.cloud.services.rest.api.ProcessInstanceVariableController;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceVariableResourceAssembler;
-import org.activiti.engine.ActivitiObjectNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
@@ -35,12 +34,6 @@ public class ProcessInstanceVariableControllerImpl implements ProcessInstanceVar
     private final ProcessInstanceVariableResourceAssembler variableResourceAssembler;
     private final ProcessRuntime processRuntime;
     private final ResourcesAssembler resourcesAssembler;
-
-    @ExceptionHandler(ActivitiObjectNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleAppException(ActivitiObjectNotFoundException ex) {
-        return ex.getMessage();
-    }
 
     @Autowired
     public ProcessInstanceVariableControllerImpl(ProcessInstanceVariableResourceAssembler variableResourceAssembler,

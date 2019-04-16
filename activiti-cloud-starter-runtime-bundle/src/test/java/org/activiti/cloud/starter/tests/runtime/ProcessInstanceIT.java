@@ -44,6 +44,7 @@ import org.activiti.cloud.starter.tests.util.TestResourceUtil;
 import org.activiti.engine.impl.util.IoUtil;
 import org.activiti.image.ProcessDiagramGenerator;
 import org.junit.Before;
+import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.web.client.RestClientException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -148,7 +148,7 @@ public class ProcessInstanceIT {
         //testuser does not have access to SIMPLE_PROCESS according to access-control.properties
         keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("testuser");
 
-        assertThatExceptionOfType(RestClientException.class).isThrownBy(() ->
+        assertThatExceptionOfType(ComparisonFailure.class).isThrownBy(() ->
                                                                                 processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS)));
     }
 
@@ -472,7 +472,7 @@ public class ProcessInstanceIT {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         
         
-        assertThatExceptionOfType(RestClientException.class).isThrownBy(() ->
+        assertThatExceptionOfType(ComparisonFailure.class).isThrownBy(() ->
         processInstanceRestTemplate.getProcessInstance(processEntity));
     }
     
@@ -496,7 +496,7 @@ public class ProcessInstanceIT {
         //then
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        assertThatExceptionOfType(RestClientException.class).isThrownBy(() ->
+        assertThatExceptionOfType(ComparisonFailure.class).isThrownBy(() ->
         processInstanceRestTemplate.getProcessInstance(processEntity));
     }
 }
