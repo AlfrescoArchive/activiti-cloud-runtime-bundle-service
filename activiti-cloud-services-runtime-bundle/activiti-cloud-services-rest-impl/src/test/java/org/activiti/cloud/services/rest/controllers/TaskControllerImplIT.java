@@ -210,6 +210,16 @@ public class TaskControllerImplIT {
     }
 
     @Test
+    public void saveTask() throws Exception {
+        this.mockMvc.perform(post("/v1/tasks/{taskId}/save",
+                                  1))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/save",
+                                pathParameters(parameterWithName("taskId").description("The task id"))));
+    }
+    
+    @Test
     public void deleteTask() throws Exception {
         given(taskRuntime.delete(any())).willReturn(buildDefaultAssignedTask());
         this.mockMvc.perform(delete("/v1/tasks/{taskId}",
