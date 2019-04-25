@@ -627,6 +627,8 @@ public class TasksIT {
         assertThat(variablesResponse).isNotNull();
         assertThat(variablesResponse.getBody().getContent()).extracting(CloudVariableInstance::getName, CloudVariableInstance::getValue)
                                                             .containsExactly(tuple("myVar", "any"));
+        // cleanup
+        processInstanceRestTemplate.delete(processInstanceEntity);
         
     }
     
@@ -644,6 +646,9 @@ public class TasksIT {
 
         //then
         assertThat(responseEntity.getStatusCodeValue()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+
+        // cleanup
+        processInstanceRestTemplate.delete(processInstanceEntity);
     }
     
         
