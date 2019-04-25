@@ -40,7 +40,7 @@ public interface TaskController {
 
     @RequestMapping(value = "/{taskId}/save", method = RequestMethod.POST)
     void saveTask(@PathVariable String taskId,
-                  @RequestBody(required = false) SaveTaskPayload saveTaskPayload);
+                  @RequestBody(required=true) SaveTaskPayload saveTaskPayload);
     
     @RequestMapping(value = "/{taskId}", method = RequestMethod.DELETE)
     Resource<CloudTask> deleteTask(@PathVariable String taskId);

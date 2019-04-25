@@ -199,12 +199,8 @@ public class TaskControllerImpl implements TaskController {
 
     @Override
     public void saveTask(@PathVariable String taskId,
-                         @RequestBody(required = false) SaveTaskPayload saveTaskPayload) {
-        if (saveTaskPayload == null) {
-            saveTaskPayload = TaskPayloadBuilder.save()
-                                                .withTaskId(taskId)
-                                                .build();
-        } else {
+                         @RequestBody SaveTaskPayload saveTaskPayload) {
+        if (saveTaskPayload != null) {
             saveTaskPayload.setTaskId(taskId);
         }
         

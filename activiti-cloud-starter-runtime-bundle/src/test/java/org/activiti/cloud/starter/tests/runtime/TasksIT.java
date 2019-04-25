@@ -629,5 +629,22 @@ public class TasksIT {
                                                             .containsExactly(tuple("myVar", "any"));
         
     }
+    
+    @Test()
+    public void shouldNotSaveATaskWithEmptyPayload() {
+        //given
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+        Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
+        taskRestTemplate.claim(task);
+
+        SaveTaskPayload saveTaskPayload = null;
+        
+        //when
+        ResponseEntity<Void> responseEntity = taskRestTemplate.save(task, saveTaskPayload);
+
+        //then
+        assertThat(responseEntity.getStatusCodeValue()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+    }
+    
         
 }

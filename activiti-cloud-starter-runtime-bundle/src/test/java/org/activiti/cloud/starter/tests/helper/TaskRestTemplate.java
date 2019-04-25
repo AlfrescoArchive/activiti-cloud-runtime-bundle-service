@@ -395,7 +395,6 @@ public class TaskRestTemplate {
                                                                              saveTaskPayload!=null ?  new HttpEntity<>(saveTaskPayload) : null,
                                                                              VOID_RESPONSE_TYPE);
 
-        assertThat(responseEntity.getStatusCodeValue()).isEqualTo(HttpStatus.OK.value());
         return responseEntity;
     }
 
