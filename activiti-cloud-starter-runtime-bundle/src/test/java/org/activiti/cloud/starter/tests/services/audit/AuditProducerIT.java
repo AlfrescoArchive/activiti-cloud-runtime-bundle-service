@@ -20,6 +20,7 @@ import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.api.process.model.CloudProcessDefinition;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
+import org.activiti.cloud.api.process.model.events.CloudBPMNActivityEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNActivityStartedEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessDeployedEvent;
 import org.activiti.cloud.api.task.model.CloudTask;
@@ -83,6 +84,7 @@ public class AuditProducerIT {
     private static final String SIMPLE_SUB_PROCESS1 = "simpleSubProcess1";
     private static final String SIMPLE_SUB_PROCESS2 = "simpleSubProcess2";
     private static final String CALL_TWO_SUB_PROCESSES = "callTwoSubProcesses";
+    private static final String SIMPLE_EMBEDDED_SUB_PROCESS = "startSimpleSubProcess";
     public static final String ROUTING_KEY_HEADER = "routingKey";
     public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
     public static final String[] ALL_REQUIRED_HEADERS = Stream.of(RUNTIME_BUNDLE_INFO_HEADERS)
@@ -634,6 +636,54 @@ public class AuditProducerIT {
 
     }
 
+    @Test
+    public void testEmbeddedSubProcesses() {
+        //given
+        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_EMBEDDED_SUB_PROCESS));
+
+        String processInstanceId = processInstance.getBody().getId();
+
+        await().untilAsserted(() -> {
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+            assertThat(receivedEvents)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getProcessInstanceId,
+                                CloudRuntimeEvent::getParentProcessInstanceId,
+                                CloudRuntimeEvent::getProcessDefinitionKey)
+                    .containsExactly(tuple(PROCESS_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(PROCESS_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(ACTIVITY_COMPLETED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(TASK_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS)
+                    );
+            
+            assertThat(receivedEvents)
+            .filteredOn(event -> ACTIVITY_STARTED.equals(event.getEventType()))
+            .extracting(event -> ((CloudBPMNActivityStartedEvent) event).getEntity().getActivityType(),
+                        event -> ((CloudBPMNActivityStartedEvent) event).getEntity().getActivityName()
+                        )
+            .containsExactly(tuple("startEvent", null),
+                             tuple("subProcess", "subProcess"),
+                             tuple("startEvent", null),
+                             tuple("userTask", "Task in subprocess")
+                             );
+
+        });
+
+        // Clean up
+        runtimeService.deleteProcessInstance(processInstanceId, "Clean up");
+
+    }
+    
 
     private ResponseEntity<PagedResources<CloudProcessDefinition>> getProcessDefinitions() {
         ParameterizedTypeReference<PagedResources<CloudProcessDefinition>> responseType = new ParameterizedTypeReference<PagedResources<CloudProcessDefinition>>() {
