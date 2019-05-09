@@ -160,4 +160,16 @@ public class ServiceTaskConsumerHandler {
         resolver.resolveDestination("integrationResult_" + runtimeBundleProperties.getServiceFullName()).send(message);
     }
 
+    @StreamListener(value = ConnectorIntegrationChannels.REST_CONNECTOR_CONSUMER)
+    public void receiveRestConnector(IntegrationRequest integrationRequest) {
+        IntegrationContext integrationContext = integrationRequest.getIntegrationContext();
+        Map<String, Object> inBoundVariables = integrationContext.getInBoundVariables();
+
+        integrationContext.addOutBoundVariable("restResult", "fromConnector");
+
+        IntegrationResultImpl integrationResult = new IntegrationResultImpl(integrationRequest, integrationContext);
+        Message<IntegrationResultImpl> message = MessageBuilder.withPayload(integrationResult).build();
+        resolver.resolveDestination("integrationResult_" + runtimeBundleProperties.getServiceFullName()).send(message);
+    }
+
 }

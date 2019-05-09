@@ -28,6 +28,7 @@ import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.api.task.model.CloudTask;
 import org.activiti.cloud.services.test.identity.keycloak.interceptor.KeycloakTokenProducer;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
+import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -64,6 +65,9 @@ public class MQServiceTaskIT {
 
     @Autowired
     private ProcessInstanceRestTemplate processInstanceRestTemplate;
+
+    @Autowired
+    private TaskRestTemplate taskRestTemplate;
 
     @Value("${activiti.keycloak.test-user:hruser}")
     protected String keycloakTestUser;
@@ -205,5 +209,39 @@ public class MQServiceTaskIT {
         assertThat(tasks.getBody().getContent())
                 .extracting(CloudTask::getName)
                 .containsExactly("My user task");
+    }
+
+    @Test
+    public void shouldHandleVariableMappingsRest() {
+        //given
+        ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
+                ProcessPayloadBuilder.start()
+                        .withProcessDefinitionKey("process-f0d643a4-27d7-474f-b71f-4d7f04989843")
+                        .build());
+
+        ResponseEntity<PagedResources<CloudTask>> availableTasks = processInstanceRestTemplate.getTasks(processInstanceResponseEntity);
+        CloudTask task = availableTasks.getBody().getContent().iterator().next();
+        taskRestTemplate.claim(task);
+        taskRestTemplate.complete(task);
+
+        await().untilAsserted(() -> {
+            //when
+            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
+
+            //then
+            assertThat(responseEntity.getBody()).isNotNull();
+            assertThat(responseEntity.getBody().getContent())
+                    .isNotNull()
+                    .extracting(CloudVariableInstance::getName,
+                                CloudVariableInstance::getValue)
+                    .containsOnly(tuple("restResult",
+                                        "fromConnector"));//kept unchanging because no connector output is updating it
+        });
+
+        ResponseEntity<PagedResources<CloudTask>> tasks = processInstanceRestTemplate.getTasks(processInstanceResponseEntity);
+        assertThat(tasks.getBody()).isNotNull();
+        assertThat(tasks.getBody().getContent())
+                .extracting(CloudTask::getName)
+                .containsExactly("Result Form Task");
     }
 }
