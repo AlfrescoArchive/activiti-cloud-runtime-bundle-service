@@ -16,6 +16,10 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.awaitility.Awaitility.await;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,10 +48,6 @@ import org.springframework.hateoas.Resources;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-import static org.awaitility.Awaitility.await;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application-test.properties")
@@ -175,6 +175,7 @@ public class MQServiceTaskIT {
         ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
                 ProcessPayloadBuilder.start()
                         .withProcessDefinitionKey("connectorVarMapping")
+                        .withBusinessKey("businessKey")
                         .build());
 
         await().untilAsserted(() -> {
@@ -217,6 +218,7 @@ public class MQServiceTaskIT {
         ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
                 ProcessPayloadBuilder.start()
                         .withProcessDefinitionKey("process-f0d643a4-27d7-474f-b71f-4d7f04989843")
+                        .withBusinessKey("businessKey")
                         .build());
 
         ResponseEntity<PagedResources<CloudTask>> availableTasks = processInstanceRestTemplate.getTasks(processInstanceResponseEntity);
