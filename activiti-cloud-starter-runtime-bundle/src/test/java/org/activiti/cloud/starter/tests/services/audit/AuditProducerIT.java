@@ -20,12 +20,13 @@ import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.api.process.model.CloudProcessDefinition;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
-import org.activiti.cloud.api.process.model.events.CloudBPMNActivityEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNActivityStartedEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessDeployedEvent;
 import org.activiti.cloud.api.task.model.CloudTask;
+import org.activiti.cloud.api.task.model.events.CloudTaskAssignedEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskCancelledEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserRemovedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCreatedEvent;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
 import org.activiti.engine.RuntimeService;
@@ -352,6 +353,10 @@ public class AuditProducerIT {
                     .extracting(entity -> entity.getBusinessKey())
                     .containsExactly("businessKey");
         });
+        
+        // Clean up
+        runtimeService.deleteProcessInstance(startProcessEntity.getBody().getId(), "Clean up");
+
     }
 
     @Test
@@ -642,11 +647,13 @@ public class AuditProducerIT {
         ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_EMBEDDED_SUB_PROCESS));
 
         String processInstanceId = processInstance.getBody().getId();
-
+        
         await().untilAsserted(() -> {
-            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            
+          assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
             
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+            
 
             assertThat(receivedEvents)
                     .extracting(CloudRuntimeEvent::getEventType,
@@ -663,8 +670,10 @@ public class AuditProducerIT {
                                      tuple(ACTIVITY_COMPLETED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
                                      tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
                                      tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(TASK_CANDIDATE_GROUP_ADDED,null, null, null),
                                      tuple(TASK_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS)
                     );
+            
             
             assertThat(receivedEvents)
             .filteredOn(event -> ACTIVITY_STARTED.equals(event.getEventType()))
@@ -676,11 +685,87 @@ public class AuditProducerIT {
                              tuple("startEvent", null),
                              tuple("userTask", "Task in subprocess")
                              );
+            
+            String subProcessInstanceId = receivedEvents.get(1).getEntityId();
+            
+            //We have here event.getProcessInstanceId and event.getEntity().getProcessInstanceId() different!!! 
+            assertThat(receivedEvents)
+            .filteredOn(event -> TASK_CREATED.equals(event.getEventType()))
+            .extracting(CloudRuntimeEvent::getProcessInstanceId,
+                        event -> ((CloudTaskCreatedEvent) event).getEntity().getProcessInstanceId()
+                        )
+            .containsExactly(tuple(processInstanceId, subProcessInstanceId));
+            
+            
 
         });
+       
+        ResponseEntity<PagedResources<CloudTask>> tasks = processInstanceRestTemplate.getTasks(processInstance);
+        Task task = tasks.getBody().iterator().next();
+        
+        //when
+        taskRestTemplate.claim(task);
+        
+        await().untilAsserted(() -> {
+        
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+            
+            assertThat(receivedEvents)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getProcessInstanceId,
+                                CloudRuntimeEvent::getParentProcessInstanceId,
+                                CloudRuntimeEvent::getProcessDefinitionKey
+                                )
+                    .containsExactly(tuple(TASK_ASSIGNED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS),
+                                     tuple(TASK_UPDATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS));
 
-        // Clean up
-        runtimeService.deleteProcessInstance(processInstanceId, "Clean up");
+            
+            //We have here event.getProcessInstanceId and event.getEntity().getProcessInstanceId() different!!! 
+            String entityProcessInstanceId = ((CloudTaskAssignedEvent) receivedEvents.get(0)).getEntity().getProcessInstanceId();
+            assertThat(entityProcessInstanceId).isNotNull();
+            assertThat(entityProcessInstanceId).isNotSameAs(processInstanceId);
+            
+        });
+        
+        //Check that subprocess is not created as a separate process
+        ResponseEntity<PagedResources<ProcessInstance>> processes = processInstanceRestTemplate.getPagedProcessInstances();
+        //then
+        assertThat(processes).isNotNull();
+        assertThat(processes.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(processes.getBody().getContent()).hasSize(1);
+
+        
+        //when
+        taskRestTemplate.complete(task);
+      
+        //then
+        await().untilAsserted(() -> {
+          assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+          List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+          assertThat(receivedEvents)
+                  .extracting(CloudRuntimeEvent::getEventType,
+                      CloudRuntimeEvent::getProcessInstanceId,
+                      CloudRuntimeEvent::getProcessDefinitionKey)
+                  .containsExactly(tuple(TASK_COMPLETED,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS),
+                                   tuple(TASK_CANDIDATE_GROUP_REMOVED,null,null),
+                                   tuple(ACTIVITY_COMPLETED,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS),
+                                   tuple(SEQUENCE_FLOW_TAKEN,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS),
+                                   tuple(ACTIVITY_STARTED,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS),
+                                   tuple(ACTIVITY_COMPLETED,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS),
+                                   tuple(ACTIVITY_COMPLETED,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS)/*subProcess*/,
+                                   tuple(SEQUENCE_FLOW_TAKEN,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS),
+                                   tuple(ACTIVITY_STARTED,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS),
+                                   tuple(ACTIVITY_COMPLETED,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS),
+                                   tuple(PROCESS_COMPLETED,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS));
+          
+                  String entityProcessInstanceId = receivedEvents.get(6).getEntityId();
+                  assertThat(entityProcessInstanceId).isNotNull();
+                  assertThat(entityProcessInstanceId).isNotSameAs(processInstanceId);
+        });
+
+ 
 
     }
     
