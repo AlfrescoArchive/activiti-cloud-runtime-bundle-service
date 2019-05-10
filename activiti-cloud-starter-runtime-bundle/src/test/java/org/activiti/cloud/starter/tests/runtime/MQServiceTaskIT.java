@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
+import org.activiti.cloud.api.process.model.IntegrationRequest;
 import org.activiti.cloud.api.task.model.CloudTask;
 import org.activiti.cloud.services.test.identity.keycloak.interceptor.KeycloakTokenProducer;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
@@ -212,8 +213,12 @@ public class MQServiceTaskIT {
                 .containsExactly("My user task");
     }
 
+    /**
+     * Covers https://github.com/Activiti/Activiti/issues/2736
+     * @see ServiceTaskConsumerHandler#receiveRestConnector(IntegrationRequest, Map) for headers assertions
+     */
     @Test
-    public void shouldHandleVariableMappingsRest() {
+    public void integrationRequestShouldAlwaysHaveProcessDefinitionVersionSet() {
         //given
         ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
                 ProcessPayloadBuilder.start()
@@ -221,8 +226,7 @@ public class MQServiceTaskIT {
                         .withBusinessKey("businessKey")
                         .build());
 
-        ResponseEntity<PagedResources<CloudTask>> availableTasks = processInstanceRestTemplate.getTasks(processInstanceResponseEntity);
-        CloudTask task = availableTasks.getBody().getContent().iterator().next();
+        CloudTask task = getTaskToExecute(processInstanceResponseEntity);
         taskRestTemplate.claim(task);
         taskRestTemplate.complete(task);
 
@@ -245,5 +249,12 @@ public class MQServiceTaskIT {
         assertThat(tasks.getBody().getContent())
                 .extracting(CloudTask::getName)
                 .containsExactly("Result Form Task");
+    }
+
+    private CloudTask getTaskToExecute(ResponseEntity<CloudProcessInstance> processInstanceResponseEntity) {
+        ResponseEntity<PagedResources<CloudTask>> availableTasks = processInstanceRestTemplate.getTasks(processInstanceResponseEntity);
+        assertThat(availableTasks).isNotNull();
+        assertThat(availableTasks.getBody()).isNotEmpty();
+        return availableTasks.getBody().getContent().iterator().next();
     }
 }
