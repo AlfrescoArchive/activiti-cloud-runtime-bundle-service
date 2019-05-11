@@ -86,6 +86,8 @@ public class AuditProducerIT {
     private static final String SIMPLE_SUB_PROCESS2 = "simpleSubProcess2";
     private static final String CALL_TWO_SUB_PROCESSES = "callTwoSubProcesses";
     private static final String SIMPLE_EMBEDDED_SUB_PROCESS = "startSimpleSubProcess";
+    private static final String SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY = "startSimpleSubProcessWithCallActivity";
+    
     public static final String ROUTING_KEY_HEADER = "routingKey";
     public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
     public static final String[] ALL_REQUIRED_HEADERS = Stream.of(RUNTIME_BUNDLE_INFO_HEADERS)
@@ -637,6 +639,10 @@ public class AuditProducerIT {
         });
 
         // Clean up
+        // Clean up
+        runtimeService.deleteProcessInstance(subProcessId1, "Clean up");
+        runtimeService.deleteProcessInstance(subProcessId2, "Clean up");
+
         runtimeService.deleteProcessInstance(processInstanceId, "Clean up");
 
     }
@@ -769,6 +775,144 @@ public class AuditProducerIT {
 
     }
     
+    
+    @Test
+    public void testEmbeddedSubProcessWithCallActivity() {
+        //given
+        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY));
+
+        String processInstanceId = processInstance.getBody().getId();
+        
+        await().untilAsserted(() -> {
+            
+          assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+            
+
+            assertThat(receivedEvents)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getProcessInstanceId,
+                                CloudRuntimeEvent::getParentProcessInstanceId,
+                                CloudRuntimeEvent::getProcessDefinitionKey)
+                    .containsExactly(tuple(PROCESS_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(PROCESS_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(ACTIVITY_COMPLETED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(SEQUENCE_FLOW_TAKEN,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(TASK_CANDIDATE_GROUP_ADDED,null, null, null),
+                                     tuple(TASK_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY)
+                    );
+            
+            
+            assertThat(receivedEvents)
+            .filteredOn(event -> ACTIVITY_STARTED.equals(event.getEventType()))
+            .extracting(event -> ((CloudBPMNActivityStartedEvent) event).getEntity().getActivityType(),
+                        event -> ((CloudBPMNActivityStartedEvent) event).getEntity().getActivityName()
+                        )
+            .containsExactly(tuple("startEvent", null),
+                             tuple("subProcess", "subProcess"),
+                             tuple("startEvent", null),
+                             tuple("userTask", "Task in subprocess")
+                             );
+            
+
+        });
+       
+        ResponseEntity<PagedResources<CloudTask>> tasks = processInstanceRestTemplate.getTasks(processInstance);
+        Task task = tasks.getBody().iterator().next();
+        
+        String subProcessInstanceId = task.getProcessInstanceId();
+        assertThat(subProcessInstanceId).isNotNull();
+        assertThat(subProcessInstanceId).isNotSameAs(processInstanceId);
+        
+        //when
+        taskRestTemplate.claim(task);
+        
+        await().untilAsserted(() -> {
+            
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+            
+            assertThat(receivedEvents)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getProcessInstanceId,
+                                CloudRuntimeEvent::getParentProcessInstanceId,
+                                CloudRuntimeEvent::getProcessDefinitionKey
+                                )
+                    .containsExactly(tuple(TASK_ASSIGNED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(TASK_UPDATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY));
+        });
+
+        
+        //when
+        taskRestTemplate.complete(task);
+        
+        //Check we have two processes and one of them is callActivity process
+        // when
+        List<org.activiti.engine.runtime.ProcessInstance> processes = runtimeService.createProcessInstanceQuery()
+                                                   .list()
+                                                   .stream()
+                                                   .collect(Collectors.toList());
+        // then
+        assertThat(processes)
+        .hasSize(2)
+        .extracting(p -> p.getParentProcessInstanceId(),
+                    p -> p.getProcessDefinitionKey())
+        .contains(tuple(null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                  tuple(processInstanceId,SIMPLE_SUB_PROCESS1));
+        
+        // Check that superProcessInstanceId is filtered properly
+        processes = runtimeService.createProcessInstanceQuery()
+                                                   .superProcessInstanceId(processInstanceId)
+                                                   .list()
+                                                   .stream()
+                                                   .collect(Collectors.toList());
+        assertThat(processes).hasSize(1);
+        String callActivityProcessId = processes.get(0).getProcessInstanceId();
+        // 
+        
+        
+        
+        await().untilAsserted(() -> {
+        
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+           
+            assertThat(receivedEvents)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getProcessInstanceId,
+                                CloudRuntimeEvent::getParentProcessInstanceId,
+                                CloudRuntimeEvent::getProcessDefinitionKey
+                                )
+                    .containsExactly(tuple(TASK_COMPLETED,processInstanceId,null,SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(TASK_CANDIDATE_GROUP_REMOVED,null,null,null),
+                                     tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(ACTIVITY_STARTED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
+                                     tuple(PROCESS_CREATED, callActivityProcessId, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(PROCESS_STARTED, callActivityProcessId, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(ACTIVITY_STARTED, callActivityProcessId, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(ACTIVITY_COMPLETED, callActivityProcessId, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(SEQUENCE_FLOW_TAKEN, callActivityProcessId, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(ACTIVITY_STARTED, callActivityProcessId, processInstanceId, SIMPLE_SUB_PROCESS1),
+                                     tuple(TASK_CREATED, callActivityProcessId, processInstanceId, SIMPLE_SUB_PROCESS1)
+                            );
+
+            
+        });
+        
+
+        // Clean up
+        runtimeService.deleteProcessInstance(callActivityProcessId, "Clean up");
+        runtimeService.deleteProcessInstance(processInstanceId, "Clean up");
+ 
+    }
 
     private ResponseEntity<PagedResources<CloudProcessDefinition>> getProcessDefinitions() {
         ParameterizedTypeReference<PagedResources<CloudProcessDefinition>> responseType = new ParameterizedTypeReference<PagedResources<CloudProcessDefinition>>() {
