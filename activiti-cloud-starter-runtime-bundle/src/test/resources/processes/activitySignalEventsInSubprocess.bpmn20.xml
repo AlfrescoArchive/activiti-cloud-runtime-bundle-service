@@ -17,7 +17,7 @@
 
  	<sequenceFlow id="flow3" sourceRef="theStart" targetRef="eventSubProcess" />
  
-	<subProcess id="eventSubProcess" name="eventSubProcess" triggeredByEvent="true">
+	<subProcess id="eventSubProcess" name="eventSubProcess">
       <startEvent id="startCatchSignal">
       </startEvent>
       
