@@ -20,6 +20,7 @@ import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.api.process.model.CloudProcessDefinition;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
+import org.activiti.cloud.api.process.model.events.CloudBPMNActivityCompletedEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNActivityStartedEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessDeployedEvent;
 import org.activiti.cloud.api.task.model.CloudTask;
@@ -680,29 +681,27 @@ public class AuditProducerIT {
                                      tuple(TASK_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS)
                     );
             
-            
             assertThat(receivedEvents)
-            .filteredOn(event -> ACTIVITY_STARTED.equals(event.getEventType()))
-            .extracting(event -> ((CloudBPMNActivityStartedEvent) event).getEntity().getActivityType(),
-                        event -> ((CloudBPMNActivityStartedEvent) event).getEntity().getActivityName()
-                        )
-            .containsExactly(tuple("startEvent", null),
-                             tuple("subProcess", "subProcess"),
-                             tuple("startEvent", null),
-                             tuple("userTask", "Task in subprocess")
-                             );
-            
-            String subProcessInstanceId = receivedEvents.get(1).getEntityId();
-            
-            //We have here event.getProcessInstanceId and event.getEntity().getProcessInstanceId() different!!! 
-            assertThat(receivedEvents)
-            .filteredOn(event -> TASK_CREATED.equals(event.getEventType()))
-            .extracting(CloudRuntimeEvent::getProcessInstanceId,
-                        event -> ((CloudTaskCreatedEvent) event).getEntity().getProcessInstanceId()
-                        )
-            .containsExactly(tuple(processInstanceId, subProcessInstanceId));
+                .filteredOn(event -> TASK_CREATED.equals(event.getEventType()))
+                .extracting(CloudRuntimeEvent::getProcessInstanceId,
+                            event -> ((CloudTaskCreatedEvent) event).getEntity().getProcessInstanceId())
+                .containsExactly(tuple(processInstanceId, processInstanceId));
             
             
+           List<CloudRuntimeEvent<?, ?>> activitiStartedEvents = receivedEvents.stream()
+                                                                    .filter(event -> ACTIVITY_STARTED.equals(event.getEventType()))
+                                                                    .collect(Collectors.toList());
+            
+           assertThat(activitiStartedEvents)
+               .filteredOn(event -> ACTIVITY_STARTED.equals(event.getEventType()))
+               .extracting(event -> ((CloudBPMNActivityStartedEvent) event).getEntity().getActivityType(),
+                           event -> ((CloudBPMNActivityStartedEvent) event).getEntity().getActivityName())
+               .containsExactly(tuple("startEvent", null),
+                                tuple("subProcess", "subProcess"),
+                                tuple("startEvent", null),
+                                tuple("userTask", "Task in subprocess"));
+            
+
 
         });
        
@@ -727,10 +726,9 @@ public class AuditProducerIT {
                                      tuple(TASK_UPDATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS));
 
             
-            //We have here event.getProcessInstanceId and event.getEntity().getProcessInstanceId() different!!! 
             String entityProcessInstanceId = ((CloudTaskAssignedEvent) receivedEvents.get(0)).getEntity().getProcessInstanceId();
             assertThat(entityProcessInstanceId).isNotNull();
-            assertThat(entityProcessInstanceId).isNotSameAs(processInstanceId);
+            assertThat(entityProcessInstanceId).isEqualTo(processInstanceId);
             
         });
         
@@ -766,12 +764,15 @@ public class AuditProducerIT {
                                    tuple(ACTIVITY_COMPLETED,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS),
                                    tuple(PROCESS_COMPLETED,processInstanceId,SIMPLE_EMBEDDED_SUB_PROCESS));
           
-                  String entityProcessInstanceId = receivedEvents.get(6).getEntityId();
-                  assertThat(entityProcessInstanceId).isNotNull();
-                  assertThat(entityProcessInstanceId).isNotSameAs(processInstanceId);
+          CloudBPMNActivityCompletedEvent subprocessCompletedEvent = (CloudBPMNActivityCompletedEvent)receivedEvents.stream()
+                  .filter(event -> ACTIVITY_COMPLETED.equals(event.getEventType()) && 
+                                  "subProcess".equals(((CloudBPMNActivityCompletedEvent) event).getEntity().getActivityType()))
+                  .collect(Collectors.toList())
+                  .get(0);
+          
+                  assertThat(subprocessCompletedEvent).isNotNull();
+                  assertThat(subprocessCompletedEvent.getProcessInstanceId()).isEqualTo(processInstanceId);
         });
-
- 
 
     }
     
@@ -829,7 +830,7 @@ public class AuditProducerIT {
         
         String subProcessInstanceId = task.getProcessInstanceId();
         assertThat(subProcessInstanceId).isNotNull();
-        assertThat(subProcessInstanceId).isNotSameAs(processInstanceId);
+        assertThat(subProcessInstanceId).isEqualTo(processInstanceId);
         
         //when
         taskRestTemplate.claim(task);
