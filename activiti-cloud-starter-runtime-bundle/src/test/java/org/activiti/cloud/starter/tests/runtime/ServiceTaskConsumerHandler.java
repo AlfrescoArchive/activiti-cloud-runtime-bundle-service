@@ -152,8 +152,6 @@ public class ServiceTaskConsumerHandler {
         assertIntegrationContextHeaders(integrationRequest, headers);        
 
         IntegrationContext integrationContext = integrationRequest.getIntegrationContext();
-        Map<String, Object> inBoundVariables = integrationContext.getInBoundVariables();
-
         integrationContext.addOutBoundVariable("restResult", "fromConnector");
 
         IntegrationResultImpl integrationResult = new IntegrationResultImpl(integrationRequest, integrationContext);
