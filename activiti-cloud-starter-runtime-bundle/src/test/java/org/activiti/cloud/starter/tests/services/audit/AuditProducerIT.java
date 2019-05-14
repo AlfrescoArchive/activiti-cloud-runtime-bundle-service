@@ -54,7 +54,6 @@ import org.activiti.cloud.api.task.model.CloudTask;
 import org.activiti.cloud.api.task.model.events.CloudTaskCancelledEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserRemovedEvent;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
-import org.activiti.cloud.starter.tests.helper.SignalRestTemplate;
 import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
 import org.activiti.engine.RuntimeService;
 import org.junit.Before;
@@ -197,8 +196,12 @@ public class AuditProducerIT {
                     .containsExactly("my instance name");
             assertThat(receivedEvents)
                     .filteredOn(event -> TASK_CREATED.equals(event.getEventType()))
-                    .extracting(event -> event.getProcessDefinitionVersion())
-                    .containsExactly(startProcessEntity.getBody().getProcessDefinitionVersion());
+                    .extracting(event -> event.getProcessDefinitionVersion(),
+                                event -> event.getBusinessKey())
+                    .containsExactly(tuple(startProcessEntity.getBody().getProcessDefinitionVersion(),
+                                           startProcessEntity.getBody().getBusinessKey()));
+            
+            
         });
 
         //when
