@@ -13,6 +13,7 @@ import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
 import org.activiti.api.process.model.events.BPMNActivityEvent;
 import org.activiti.api.process.model.events.ProcessDefinitionEvent;
+import org.activiti.api.process.model.payloads.SignalPayload;
 import org.activiti.api.task.model.Task;
 import org.activiti.api.task.model.TaskCandidateGroup;
 import org.activiti.api.task.model.TaskCandidateUser;
@@ -29,8 +30,10 @@ import org.activiti.cloud.api.task.model.events.CloudTaskCancelledEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserRemovedEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskCreatedEvent;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
+import org.activiti.cloud.starter.tests.helper.SignalRestTemplate;
 import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
 import org.activiti.engine.RuntimeService;
+import org.activiti.engine.runtime.Execution;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -72,6 +75,7 @@ import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TAS
 import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CREATED;
 import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_SUSPENDED;
 import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_UPDATED;
+import static org.activiti.api.process.model.events.BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
@@ -88,6 +92,9 @@ public class AuditProducerIT {
     private static final String CALL_TWO_SUB_PROCESSES = "callTwoSubProcesses";
     private static final String SIMPLE_EMBEDDED_SUB_PROCESS = "startSimpleSubProcess";
     private static final String SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY = "startSimpleSubProcessWithCallActivity";
+    private static final String SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT = "signalSubProcess";
+    
+    
     
     public static final String ROUTING_KEY_HEADER = "routingKey";
     public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
@@ -107,6 +114,10 @@ public class AuditProducerIT {
 
     @Autowired
     private ProcessInstanceRestTemplate processInstanceRestTemplate;
+    
+    @Autowired
+    private SignalRestTemplate signalRestTemplate;
+    
 
     @Autowired
     private TaskRestTemplate taskRestTemplate;
@@ -732,14 +743,6 @@ public class AuditProducerIT {
             
         });
         
-        //Check that subprocess is not created as a separate process
-        ResponseEntity<PagedResources<ProcessInstance>> processes = processInstanceRestTemplate.getPagedProcessInstances();
-        //then
-        assertThat(processes).isNotNull();
-        assertThat(processes.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(processes.getBody().getContent()).hasSize(1);
-
-        
         //when
         taskRestTemplate.complete(task);
       
@@ -857,29 +860,15 @@ public class AuditProducerIT {
         //Check we have two processes and one of them is callActivity process
         // when
         List<org.activiti.engine.runtime.ProcessInstance> processes = runtimeService.createProcessInstanceQuery()
-                                                   .list()
-                                                   .stream()
-                                                   .collect(Collectors.toList());
-        // then
-        assertThat(processes)
-        .hasSize(2)
-        .extracting(p -> p.getParentProcessInstanceId(),
-                    p -> p.getProcessDefinitionKey())
-        .contains(tuple(null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY),
-                  tuple(processInstanceId,SIMPLE_SUB_PROCESS1));
-        
-        // Check that superProcessInstanceId is filtered properly
-        processes = runtimeService.createProcessInstanceQuery()
                                                    .superProcessInstanceId(processInstanceId)
                                                    .list()
                                                    .stream()
                                                    .collect(Collectors.toList());
         assertThat(processes).hasSize(1);
         String callActivityProcessId = processes.get(0).getProcessInstanceId();
-        // 
         
-        
-        
+        assertThat(processes.get(0).getProcessDefinitionKey()).isEqualTo(SIMPLE_SUB_PROCESS1);
+  
         await().untilAsserted(() -> {
         
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
@@ -913,6 +902,69 @@ public class AuditProducerIT {
         runtimeService.deleteProcessInstance(callActivityProcessId, "Clean up");
         runtimeService.deleteProcessInstance(processInstanceId, "Clean up");
  
+    }
+      
+    @Test
+    public void testEmbeddedSubProcessWithSignalEvent() {
+        //given
+        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT));
+
+        String processInstanceId = processInstance.getBody().getId();
+        
+        await().untilAsserted(() -> {
+            
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+            assertThat(receivedEvents)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getProcessInstanceId,
+                                CloudRuntimeEvent::getParentProcessInstanceId,
+                                CloudRuntimeEvent::getProcessDefinitionKey)
+                    .containsExactly(tuple(PROCESS_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(PROCESS_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(TASK_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT)
+                    );
+        });
+    
+        SignalPayload signalProcessInstancesCmd = ProcessPayloadBuilder
+              .signal()
+              .withName("mySignal")
+              .build();
+    
+        //when
+        signalRestTemplate.signal(signalProcessInstancesCmd);   
+
+        await().untilAsserted(() -> {
+            
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+              
+            assertThat(receivedEvents)
+            .extracting(CloudRuntimeEvent::getEventType,
+                        CloudRuntimeEvent::getProcessInstanceId,
+                        CloudRuntimeEvent::getParentProcessInstanceId,
+                        CloudRuntimeEvent::getProcessDefinitionKey)
+            .containsExactly(tuple(SIGNAL_RECEIVED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                             tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                             tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                             tuple(ACTIVITY_STARTED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                             tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                             tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                             tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                             tuple(ACTIVITY_STARTED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT),
+                             tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT)
+            );
+        });
+        
     }
 
     private ResponseEntity<PagedResources<CloudProcessDefinition>> getProcessDefinitions() {
