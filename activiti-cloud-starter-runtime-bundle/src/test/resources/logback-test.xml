@@ -13,4 +13,8 @@
     <appender-ref ref="consoleAppender" />
   </root>
 
+  <logger name="springfox.documentation.spring.web" level="warn">
+    <appender-ref ref="consoleAppender"/>
+  </logger>
+
 </configuration>
