@@ -12,15 +12,15 @@
   
     <task id="task1" name="Task 1" />
     
-    <sequenceFlow id="flow2" sourceRef="task1" targetRef="exclusiveGateway" />
+    <sequenceFlow id="flow2" sourceRef="task1" targetRef="parallelGateway" />
     
-     <parallelGateway id="exclusiveGateway"/>
+     <parallelGateway id="parallelGateway"/>
   
-  	<sequenceFlow id="flow3" sourceRef="exclusiveGateway" targetRef="task2" />
+  	<sequenceFlow id="flow3" sourceRef="parallelGateway" targetRef="task2" />
     <task id="task2" name="Task 2" />
     <sequenceFlow id="flow4" sourceRef="task2" targetRef="theEnd1" />
     
-    <sequenceFlow id="flow5" sourceRef="exclusiveGateway" targetRef="task3" />
+    <sequenceFlow id="flow5" sourceRef="parallelGateway" targetRef="task3" />
     <task id="task3" name="Task 3" />
     <sequenceFlow id="flow6" sourceRef="task3" targetRef="theEnd2" />
     
