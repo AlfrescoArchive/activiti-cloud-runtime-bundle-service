@@ -155,8 +155,8 @@ public class ParallelGatewayAuditProducerIT {
             
             
             assertThat(receivedEvents)
-            .filteredOn(event -> (event.getEventType().equals(BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED) ||
-                                  event.getEventType().equals(BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED)) && 
+            .filteredOn(event -> (event.getEventType().equals(ACTIVITY_STARTED) ||
+                                  event.getEventType().equals(ACTIVITY_COMPLETED)) && 
                                  ((BPMNActivity) event.getEntity()).getActivityType().equals("parallelGateway"))
             .extracting(CloudRuntimeEvent::getEventType,
                         event -> ((BPMNActivity) event.getEntity()).getActivityType(),
