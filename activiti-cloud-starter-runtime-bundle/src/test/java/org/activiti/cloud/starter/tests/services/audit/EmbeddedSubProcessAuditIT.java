@@ -70,9 +70,9 @@ public class EmbeddedSubProcessAuditIT {
     private static final String SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT = "signalSubProcess";
     private static final String SIMPLE_EMBEDDED_SUB_PROCESS_WITH_MESSAGE_EVENT = "messageSubProcess";
        
-    public static final String ROUTING_KEY_HEADER = "routingKey";
-    public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
-    public static final String[] ALL_REQUIRED_HEADERS = Stream.of(RUNTIME_BUNDLE_INFO_HEADERS)
+    private static final String ROUTING_KEY_HEADER = "routingKey";
+    private static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
+    private static final String[] ALL_REQUIRED_HEADERS = Stream.of(RUNTIME_BUNDLE_INFO_HEADERS)
             .flatMap(Stream::of)
             .toArray(String[]::new);
 
@@ -116,7 +116,7 @@ public class EmbeddedSubProcessAuditIT {
     }
 
     @Test
-    public void testEmbeddedSubProcesses() {
+    public void shouldExecuteProcessWithEmbeddedSubProcess() {
         //given
         ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_EMBEDDED_SUB_PROCESS));
 
@@ -237,7 +237,7 @@ public class EmbeddedSubProcessAuditIT {
     
     
     @Test
-    public void testEmbeddedSubProcessWithCallActivity() {
+    public void shouldExecuteProcessWithEmbeddedSubProcessContainingCallActivity() {
         //given
         ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY));
 
@@ -362,7 +362,7 @@ public class EmbeddedSubProcessAuditIT {
     }
       
     @Test
-    public void testEmbeddedSubProcessWithSignalEvent() {
+    public void shouldExecuteProcessWithEmbeddedSubProcessContainingSignalIntermediateCatchEvent() {
         //given
         ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT));
 
@@ -428,7 +428,7 @@ public class EmbeddedSubProcessAuditIT {
   
     
     @Test
-    public void testEmbeddedSubProcessWithMessageEvent() {
+    public void shouldExecuteProcessWithMessageEventSubProcess() {
         //given
         ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_EMBEDDED_SUB_PROCESS_WITH_MESSAGE_EVENT));
 
