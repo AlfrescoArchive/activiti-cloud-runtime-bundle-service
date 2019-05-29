@@ -167,7 +167,13 @@ public class JsonNodeVariableExclusiveGatewayAuditProducerIT {
 
 
         //when
+        //define here the way: set value -1 or 1
         goValue = -1;
+        String expectedTaskId = goValue <=0 ? "task3" : "task2";
+        String expectedFlow1 = goValue <=0 ? "flow21" : "flow22";
+        String expectedFlow2 = goValue <=0 ? "flow4" : "flow3";
+        Integer expectedGo = goValue <=0 ? -2 : 2;
+        
         CompleteTaskPayload completeTaskPayload = TaskPayloadBuilder
                                         .complete()
                                         .withTaskId(taskId)
@@ -219,10 +225,10 @@ public class JsonNodeVariableExclusiveGatewayAuditProducerIT {
                                     "exclusiveGateway"),
                               tuple(SEQUENCE_FLOW_TAKEN,
                                     processInstanceId,
-                                    "flow21"),
+                                    expectedFlow1),
                               tuple(ACTIVITY_STARTED,
                                     processInstanceId,
-                                    "task3"),
+                                    expectedTaskId),
                               tuple(VARIABLE_CREATED,
                                     processInstanceId,
                                     "varEntity"),
@@ -238,7 +244,7 @@ public class JsonNodeVariableExclusiveGatewayAuditProducerIT {
         streamHandler.getAllReceivedEvents().clear();
         
         //when
-        goValue = 2;
+        goValue = expectedGo;
         completeTaskPayload = TaskPayloadBuilder
                 .complete()
                 .withTaskId(newTaskId)
@@ -269,10 +275,10 @@ public class JsonNodeVariableExclusiveGatewayAuditProducerIT {
                                     newTaskId),
                               tuple(ACTIVITY_COMPLETED,
                                     processInstanceId,
-                                    "task3"),
+                                    expectedTaskId),
                               tuple(SEQUENCE_FLOW_TAKEN,
                                     processInstanceId,
-                                    "flow4"),
+                                    expectedFlow2),
                               tuple(ACTIVITY_STARTED,
                                     processInstanceId,
                                     "theEnd"),
@@ -297,7 +303,7 @@ public class JsonNodeVariableExclusiveGatewayAuditProducerIT {
             
             checkVarEntity(((VariableInstance) receivedEvents.get(1).getEntity()).getValue(), 
                            idValue,
-                           2);
+                           expectedGo);
         });
 
     }
