@@ -1,4 +1,4 @@
-package org.activiti.cloud.starter.tests.services.audit;
+package org.activiti.cloud.starter.tests.services.audit; 
 
 import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_CREATED;
 import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_UPDATED;
