@@ -23,7 +23,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.activiti.api.model.shared.event.RuntimeEvent;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
+import org.activiti.steps.EventProvider;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.context.annotation.Profile;
@@ -35,7 +37,7 @@ import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.AU
 @Profile(AUDIT_PRODUCER_IT)
 @Component
 @EnableBinding(AuditConsumer.class)
-public class AuditConsumerStreamHandler {
+public class AuditConsumerStreamHandler implements EventProvider {
 
     private Map<String, Object> receivedHeaders = Collections.emptyMap();
 
@@ -61,4 +63,8 @@ public class AuditConsumerStreamHandler {
         return receivedHeaders;
     }
 
+    @Override
+    public List<RuntimeEvent<?, ?>> getEvents() {
+        return new ArrayList<>(allReceivedEvents);
+    }
 }

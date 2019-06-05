@@ -224,6 +224,11 @@
       <artifactId>activiti-cloud-services-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.activiti.steps</groupId>
+      <artifactId>activiti-steps-assertions-api</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

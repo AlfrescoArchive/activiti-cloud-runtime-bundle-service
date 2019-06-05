@@ -1,32 +1,4 @@
-package org.activiti.cloud.starter.tests.services.audit; 
-
-import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_CREATED;
-import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_UPDATED;
-import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_CANCELLED;
-import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED;
-import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CANCELLED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_COMPLETED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CREATED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_RESUMED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_STARTED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_SUSPENDED;
-import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_UPDATED;
-import static org.activiti.api.process.model.events.SequenceFlowEvent.SequenceFlowEvents.SEQUENCE_FLOW_TAKEN;
-import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_ADDED;
-import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_REMOVED;
-import static org.activiti.api.task.model.events.TaskCandidateUserEvent.TaskCandidateUserEvents.TASK_CANDIDATE_USER_ADDED;
-import static org.activiti.api.task.model.events.TaskCandidateUserEvent.TaskCandidateUserEvents.TASK_CANDIDATE_USER_REMOVED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ACTIVATED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ASSIGNED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CANCELLED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_COMPLETED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CREATED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_SUSPENDED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_UPDATED;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-import static org.awaitility.Awaitility.await;
+package org.activiti.cloud.starter.tests.services.audit;
 
 import java.io.File;
 import java.util.Collections;
@@ -56,6 +28,9 @@ import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserRemovedEve
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
 import org.activiti.engine.RuntimeService;
+import org.activiti.steps.matchers.TaskMatchers;
+import org.activiti.steps.operations.ProcessOperations;
+import org.activiti.steps.operations.TaskOperations;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,6 +48,39 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_CREATED;
+import static org.activiti.api.model.shared.event.VariableEvent.VariableEvents.VARIABLE_UPDATED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_CANCELLED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CANCELLED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_COMPLETED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CREATED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_RESUMED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_STARTED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_SUSPENDED;
+import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_UPDATED;
+import static org.activiti.api.process.model.events.SequenceFlowEvent.SequenceFlowEvents.SEQUENCE_FLOW_TAKEN;
+import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_ADDED;
+import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_REMOVED;
+import static org.activiti.api.task.model.events.TaskCandidateUserEvent.TaskCandidateUserEvents.TASK_CANDIDATE_USER_ADDED;
+import static org.activiti.api.task.model.events.TaskCandidateUserEvent.TaskCandidateUserEvents.TASK_CANDIDATE_USER_REMOVED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ACTIVATED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ASSIGNED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CANCELLED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_COMPLETED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CREATED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_SUSPENDED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_UPDATED;
+import static org.activiti.steps.matchers.BPMNStartEventMatchers.startEvent;
+import static org.activiti.steps.matchers.EndEventMatchers.endEvent;
+import static org.activiti.steps.matchers.ProcessInstanceMatchers.processInstance;
+import static org.activiti.steps.matchers.ProcessTaskMatchers.task;
+import static org.activiti.steps.matchers.ProcessVariableMatchers.processVariable;
+import static org.activiti.steps.matchers.SequenceFlowMatchers.sequenceFlow;
+import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
+
 @RunWith(SpringRunner.class)
 @ActiveProfiles(AuditProducerIT.AUDIT_PRODUCER_IT)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -83,7 +91,7 @@ public class AuditProducerIT {
     private static final String SIMPLE_SUB_PROCESS1 = "simpleSubProcess1";
     private static final String SIMPLE_SUB_PROCESS2 = "simpleSubProcess2";
     private static final String CALL_TWO_SUB_PROCESSES = "callTwoSubProcesses";
-       
+
     public static final String ROUTING_KEY_HEADER = "routingKey";
     public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
     public static final String[] ALL_REQUIRED_HEADERS = Stream.of(RUNTIME_BUNDLE_INFO_HEADERS)
@@ -102,7 +110,7 @@ public class AuditProducerIT {
 
     @Autowired
     private ProcessInstanceRestTemplate processInstanceRestTemplate;
-    
+
     @Autowired
     private TaskRestTemplate taskRestTemplate;
 
@@ -113,6 +121,12 @@ public class AuditProducerIT {
 
     @Autowired
     private RuntimeService runtimeService;
+
+    @Autowired
+    private ProcessOperations processOperations;
+
+    @Autowired
+    private TaskOperations taskOperations;
 
     @Before
     public void setUp() {
@@ -200,8 +214,8 @@ public class AuditProducerIT {
                                 event -> event.getBusinessKey())
                     .containsExactly(tuple(startProcessEntity.getBody().getProcessDefinitionVersion(),
                                            startProcessEntity.getBody().getBusinessKey()));
-            
-            
+
+
         });
 
         //when
@@ -295,6 +309,61 @@ public class AuditProducerIT {
     }
 
     @Test
+    public void shouldProduceEventsDuringSimpleProcessExecutionUsingStepsLibrary() {
+
+        //when
+        ProcessInstance processInstance = processOperations.start(ProcessPayloadBuilder
+                                                                          .start()
+                                                                          .withProcessDefinitionKey(SIMPLE_PROCESS)
+                                                                          .withVariable("name",
+                                                                                        "peter")
+                                                                          .withName("my instance name")
+                                                                          .withBusinessKey("my business key")
+                                                                          .build())
+                .expect(
+                        processVariable("name",
+                                        "peter")
+                                .hasBeenCreated(),
+                        processInstance()
+                                .hasBeenStarted(),
+                        startEvent("startEvent1")
+                                .hasBeenCompleted(),
+                        sequenceFlow("sid-68945AF1-396F-4B8A-B836-FC318F62313F")
+                                .hasBeenTaken(),
+                        task("Perform action")
+                                .hasBeenCreated()
+                ).expect(
+                        processInstance()
+                                .hasBusinessKey("my business key"),
+                        processInstance().hasName("my instance name")
+                ).andReturn();
+
+        //given
+        ResponseEntity<PagedResources<CloudTask>> tasks = processInstanceRestTemplate.getTasks(processInstance.getId());
+        Task task = tasks.getBody().iterator().next();
+
+        //when
+        taskOperations.claim(TaskPayloadBuilder.claim().withTaskId(task.getId()).build())
+                .expect(
+                        TaskMatchers.task().hasBeenAssigned()
+                );
+
+        //when
+        taskOperations.complete(TaskPayloadBuilder.complete().withTaskId(task.getId()).build())
+                .expect(
+                        TaskMatchers.task()
+                                .hasBeenCompleted(),
+                        sequenceFlow("sid-3C0516C4-1BF7-48F8-88CF-04C41810FE00")
+                                .hasBeenTaken(),
+                        endEvent("sid-9F938772-895F-436D-A7D1-051B7A69D676")
+                                .hasBeenCompleted(),
+                        processInstance()
+                                .hasBeenCompleted()
+                );
+
+    }
+
+    @Test
     public void shouldProduceEventsForAProcessDeletion() {
         //given
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
@@ -355,10 +424,10 @@ public class AuditProducerIT {
                     .extracting(entity -> entity.getBusinessKey())
                     .containsExactly("businessKey");
         });
-        
-        // Clean up
-        runtimeService.deleteProcessInstance(startProcessEntity.getBody().getId(), "Clean up");
 
+        // Clean up
+        runtimeService.deleteProcessInstance(startProcessEntity.getBody().getId(),
+                                             "Clean up");
     }
 
     @Test
@@ -390,7 +459,7 @@ public class AuditProducerIT {
             CloudRuntimeEvent<?, ?> cloudTaskCandidateUserRemoved = receivedEvents
                     .stream()
                     .filter(cloudRuntimeEvent -> cloudRuntimeEvent instanceof CloudTaskCandidateUserRemovedEvent
-                            && ((TaskCandidateUser)cloudRuntimeEvent.getEntity()).getTaskId().equals(task.getId()))
+                            && ((TaskCandidateUser) cloudRuntimeEvent.getEntity()).getTaskId().equals(task.getId()))
                     .findFirst()
                     .orElse(null);
             assertThat(cloudTaskCandidateUserRemoved).isNotNull();
@@ -581,7 +650,6 @@ public class AuditProducerIT {
         });
     }
 
-
     @Test
     public void testTwoSubProcesses() {
         //given
@@ -646,7 +714,7 @@ public class AuditProducerIT {
         runtimeService.deleteProcessInstance(processInstanceId, "Clean up");
 
     }
-      
+
     private ResponseEntity<PagedResources<CloudProcessDefinition>> getProcessDefinitions() {
         ParameterizedTypeReference<PagedResources<CloudProcessDefinition>> responseType = new ParameterizedTypeReference<PagedResources<CloudProcessDefinition>>() {
         };
@@ -656,6 +724,6 @@ public class AuditProducerIT {
                                      null,
                                      responseType);
     }
-    
+
 
 }

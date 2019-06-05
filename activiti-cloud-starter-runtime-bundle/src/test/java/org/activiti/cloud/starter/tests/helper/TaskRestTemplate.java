@@ -16,8 +16,6 @@
 
 package org.activiti.cloud.starter.tests.helper;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.util.List;
 
 import org.activiti.api.task.model.Task;
@@ -42,6 +40,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import static org.assertj.core.api.Assertions.*;
 
 @TestComponent
 public class TaskRestTemplate {
@@ -85,20 +85,35 @@ public class TaskRestTemplate {
                         ADMIN_TASK_VAR_RELATIVE_URL,
                         completeTaskPayload);
     }
+
+    public ResponseEntity<CloudTask> complete(String taskId, CompleteTaskPayload completeTaskPayload) {
+        return complete(taskId,
+                        TASK_VAR_RELATIVE_URL,
+                        completeTaskPayload);
+    }
     
 
     private ResponseEntity<CloudTask> complete(Task task,
                                                String baseURL,
                                                CompleteTaskPayload completeTaskPayload
                                                ) {
-        ResponseEntity<CloudTask> responseEntity = testRestTemplate.exchange(baseURL + task.getId() + "/complete",
+        return complete(task.getId(),
+                        baseURL,
+                        completeTaskPayload
+        );
+    }
+
+    private ResponseEntity<CloudTask> complete(String taskId,
+                                               String baseURL,
+                                               CompleteTaskPayload completeTaskPayload) {
+        ResponseEntity<CloudTask> responseEntity = testRestTemplate.exchange(baseURL + taskId + "/complete",
                                                                              HttpMethod.POST,
                                                                              completeTaskPayload!=null ?  new HttpEntity<>(completeTaskPayload) : null,
                                                                              TASK_RESPONSE_TYPE);
         assertThat(responseEntity.getStatusCodeValue()).isEqualTo(HttpStatus.OK.value());
         return responseEntity;
     }
-    
+
     public ResponseEntity<CloudTask> delete(Task task) {
         return delete(task,
                       TASK_VAR_RELATIVE_URL);
