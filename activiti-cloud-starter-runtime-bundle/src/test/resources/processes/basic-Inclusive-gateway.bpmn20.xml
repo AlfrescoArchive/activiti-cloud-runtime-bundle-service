@@ -37,15 +37,19 @@
 
     <userTask id="theTask1" name="Send e-mail"  activiti:candidateUsers="hruser"/>
     
-    <sequenceFlow id="flow6" sourceRef="theTask1" targetRef="theEnd" />
+    <sequenceFlow id="flow6" sourceRef="theTask1" targetRef="inclusiveGatewayEnd" />
     
     <userTask id="theTask2" name="Check account"  activiti:candidateUsers="hruser"/>
     
-    <sequenceFlow id="flow7" sourceRef="theTask2" targetRef="theEnd" />
+    <sequenceFlow id="flow7" sourceRef="theTask2" targetRef="inclusiveGatewayEnd" />
     
     <userTask id="theTask3" name="Call customer"   activiti:candidateUsers="hruser"/>
     
-    <sequenceFlow id="flow8" sourceRef="theTask3" targetRef="theEnd" />    
+    <sequenceFlow id="flow8" sourceRef="theTask3" targetRef="inclusiveGatewayEnd" />  
+     
+    <inclusiveGateway id="inclusiveGatewayEnd" name="Inclusive Gateway End" />
+     
+    <sequenceFlow id="flow9" sourceRef="inclusiveGatewayEnd" targetRef="theEnd" />    
     
     <endEvent id="theEnd" />
     
