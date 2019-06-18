@@ -45,6 +45,8 @@ import org.activiti.cloud.services.events.listeners.CloudTaskCompletedProducer;
 import org.activiti.cloud.services.events.listeners.CloudTaskCreatedProducer;
 import org.activiti.cloud.services.events.listeners.CloudTaskSuspendedProducer;
 import org.activiti.cloud.services.events.listeners.CloudTaskUpdatedProducer;
+import org.activiti.cloud.services.events.listeners.CloudTimerFiredProducer;
+import org.activiti.cloud.services.events.listeners.CloudTimerScheduledProducer;
 import org.activiti.cloud.services.events.listeners.CloudVariableCreatedProducer;
 import org.activiti.cloud.services.events.listeners.CloudVariableDeletedProducer;
 import org.activiti.cloud.services.events.listeners.CloudVariableUpdatedProducer;
@@ -314,6 +316,22 @@ public class CloudEventsAutoConfiguration {
     public CloudSignalReceivedProducer cloudSignalReceivedProducer(ToCloudProcessRuntimeEventConverter converter,
                                                                    ProcessEngineEventsAggregator eventsAggregator) {
         return new CloudSignalReceivedProducer(converter,
+                                               eventsAggregator);
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public CloudTimerFiredProducer cloudTimerFiredProducer(ToCloudProcessRuntimeEventConverter converter,
+                                                           ProcessEngineEventsAggregator eventsAggregator) {
+        return new CloudTimerFiredProducer(converter,
+                                           eventsAggregator);
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public CloudTimerScheduledProducer cloudTimerScheduledProducer(ToCloudProcessRuntimeEventConverter converter,
+                                                                   ProcessEngineEventsAggregator eventsAggregator) {
+        return new CloudTimerScheduledProducer(converter,
                                                eventsAggregator);
     }
 
