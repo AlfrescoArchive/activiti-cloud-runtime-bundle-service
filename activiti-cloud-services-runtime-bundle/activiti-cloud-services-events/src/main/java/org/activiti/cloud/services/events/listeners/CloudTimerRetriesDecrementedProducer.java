@@ -16,23 +16,23 @@
 
 package org.activiti.cloud.services.events.listeners;
 
-import org.activiti.api.process.model.events.BPMNTimerFiredEvent;
+import org.activiti.api.process.model.events.BPMNTimerRetriesDecrementedEvent;
 import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
 import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
 
-public class CloudTimerFiredProducer implements BPMNElementEventListener<BPMNTimerFiredEvent> {
+public class CloudTimerRetriesDecrementedProducer implements BPMNElementEventListener<BPMNTimerRetriesDecrementedEvent> {
 
     private final ToCloudProcessRuntimeEventConverter eventConverter;
     private final ProcessEngineEventsAggregator eventsAggregator;
 
-    public CloudTimerFiredProducer(ToCloudProcessRuntimeEventConverter eventConverter,
-                                   ProcessEngineEventsAggregator eventsAggregator) {
+    public CloudTimerRetriesDecrementedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
+                                              ProcessEngineEventsAggregator eventsAggregator) {
         this.eventConverter = eventConverter;
         this.eventsAggregator = eventsAggregator;
     }
 
     @Override
-    public void onEvent(BPMNTimerFiredEvent event) {
+    public void onEvent(BPMNTimerRetriesDecrementedEvent event) {
         eventsAggregator.add(eventConverter.from(event));
     }
 }
