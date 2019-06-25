@@ -212,6 +212,51 @@ public class MQServiceTaskIT {
                 .extracting(CloudTask::getName)
                 .containsExactly("My user task");
     }
+    
+    @Test
+    public void shouldHandleVariableMappingsForTask() {
+        //given
+        ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
+                ProcessPayloadBuilder.start()
+                        .withProcessDefinitionKey("connectorTaskVarMapping")
+                        .withBusinessKey("businessKey")
+                        .build());
+
+        await().untilAsserted(() -> {
+            //when
+            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
+
+            //then
+            assertThat(responseEntity.getBody()).isNotNull();
+            assertThat(responseEntity.getBody().getContent())
+                    .isNotNull()
+                    .extracting(CloudVariableInstance::getName,
+                                CloudVariableInstance::getValue)
+                    .containsOnly(tuple("name",
+                                        "outName"), //mapped from connector outputs based on extension mappings
+                                  tuple("age",
+                                        25),        //mapped from connector outputs based on extension mappings
+                                  tuple("input-unmapped-variable-with-matching-name",
+                                        "inTest"), //kept unchanging because no connector output is updating it
+                                  tuple("input-unmapped-variable-with-non-matching-connector-input-name",
+                                        "inTest"), //kept unchanging because no connector output is updating it
+                                  tuple("nickName",
+                                        "testName"),//kept unchanging because no connector output is updating it
+                                  tuple("out-unmapped-variable-matching-name",
+                                        "outTest"),//not present in extension mappings, but it's updated because
+                                                    // the process variable have the same name as the connector output
+                                  tuple("output-unmapped-variable-with-non-matching-connector-output-name",
+                                        "default"));//kept unchanging because no connector output is updating it
+        });
+
+        ResponseEntity<PagedResources<CloudTask>> tasks = processInstanceRestTemplate.getTasks(processInstanceResponseEntity);
+        assertThat(tasks.getBody()).isNotNull();
+        assertThat(tasks.getBody().getContent())
+                .extracting(CloudTask::getName)
+                .containsExactly("My user task");
+    }
+    
+    
 
     /**
      * Covers https://github.com/Activiti/Activiti/issues/2736
