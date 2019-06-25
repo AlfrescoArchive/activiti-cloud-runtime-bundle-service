@@ -10,7 +10,7 @@
 
         <sequenceFlow id="flow1" sourceRef="start" targetRef="simpleTask"/>
 
-        <userTask id="simpleTask" name="testSimpleTask" implementation="Variable Mapping Connector.variableMappingActionName"  activiti:candidateGroups="hr"/>
+        <userTask id="simpleTask" name="testSimpleTask" activiti:candidateGroups="hr"/>
 
         <sequenceFlow id="flow2" sourceRef="simpleTask" targetRef="userTask"/>
 
