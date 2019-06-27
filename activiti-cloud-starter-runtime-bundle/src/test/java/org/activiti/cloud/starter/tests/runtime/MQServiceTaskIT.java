@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +28,9 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
+import org.activiti.api.task.model.Task.TaskStatus;
+import org.activiti.api.task.model.builders.TaskPayloadBuilder;
+import org.activiti.api.task.model.payloads.CompleteTaskPayload;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.api.process.model.IntegrationRequest;
@@ -244,6 +248,61 @@ public class MQServiceTaskIT {
         assertThat(tasks.getBody().getContent())
                 .extracting(CloudTask::getName)
                 .containsExactly("testSimpleTask");
+        
+        String taskId = tasks.getBody().getContent().iterator().next().getId();
+        
+        //Check Task Variables
+        await().untilAsserted(() -> {
+            //when
+            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = taskRestTemplate.getVariables(taskId);
+            //then
+            assertThat(responseEntity.getBody()).isNotNull();
+            assertThat(responseEntity.getBody().getContent())
+                    .isNotNull()
+                    .extracting(CloudVariableInstance::getName,
+                                CloudVariableInstance::getValue)
+                    .containsOnly(tuple("process variable inputmap 1",
+                                        "inputmap1Value"),
+                                  tuple("process variable unmapped 1",  //Should be present only without mapping - remove after implementation!!!
+                                        "unmapped1Value"),                          
+                                  tuple("process variable outputmap 1", //Should be present only without mapping - remove after implementation!!!
+                                        "outputmap1Value"));
+        });
+        
+        
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("task-input-variable-name-1", "outputValue"); //This should not be set to 'process variable inputmap 1'
+        variables.put("task-output-variable-name-1", "outputTaskValue"); //This should be set to 'process variable outputmap 1'
+        
+              
+        claimAndCompleteTask(taskId, variables);
+        
+        await().untilAsserted(() -> {
+            //when
+            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
+            //then
+            assertThat(responseEntity.getBody()).isNotNull();
+            assertThat(responseEntity.getBody().getContent())
+                    .isNotNull()
+                    .extracting(CloudVariableInstance::getName,
+                                CloudVariableInstance::getValue)
+                    .containsOnly(tuple("process variable unmapped 1",
+                                        "unmapped1Value"), 
+                                  tuple("process variable inputmap 1",
+                                        "inputmap1Value"),          //Should be unchanged
+                                  tuple("process variable outputmap 1",
+                                        "outputmap1Value"),         //Should be changed to 'outputTaskValue' after implementation of mapping
+                                  
+                                  tuple("task-input-variable-name-1",   //This is Stange: after completion of task taskVariable is set to processVariable
+                                        "outputValue"),
+                                  tuple("task-output-variable-name-1",  //This is Stange: after completion of task taskVariable is set to processVariable
+                                         "outputTaskValue")                                  
+                            );       
+        });
+        
+     // cleanup
+        processInstanceRestTemplate.delete(processInstanceResponseEntity);
+
     }
     
     
@@ -291,5 +350,23 @@ public class MQServiceTaskIT {
         assertThat(availableTasks).isNotNull();
         assertThat(availableTasks.getBody()).isNotEmpty();
         return availableTasks.getBody().getContent().iterator().next();
+    }
+    
+    private void claimAndCompleteTask(String taskId, Map<String, Object> variables) {
+        //claim task
+        ResponseEntity<CloudTask> claimTask = taskRestTemplate.claim(taskId);
+        assertThat(claimTask.getBody()).isNotNull();
+        assertThat(claimTask.getBody().getStatus()).isEqualTo(TaskStatus.ASSIGNED);
+        
+        CompleteTaskPayload completeTaskPayload = TaskPayloadBuilder
+                                                    .complete()
+                                                    .withTaskId(taskId)
+                                                    .withVariables(variables)
+                                                    .build();
+
+        ResponseEntity<CloudTask> completeTask = taskRestTemplate.complete(claimTask.getBody(),completeTaskPayload);
+        assertThat(completeTask.getBody()).isNotNull();
+        assertThat(completeTask.getBody().getStatus()).isEqualTo(TaskStatus.COMPLETED);    
+        
     }
 }

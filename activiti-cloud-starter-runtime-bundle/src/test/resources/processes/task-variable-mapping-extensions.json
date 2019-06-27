@@ -36,7 +36,8 @@
         "outputs": {
           "task-output-variable-name-1": {
             "type": "variable",
-            "value" : "process-variable-outputmap-1-id"}
+            "value" : "process variable outputmap 1"
+           }
         }
       }
     }
