@@ -4,7 +4,7 @@
              xmlns:activiti="http://activiti.org/bpmn"
              targetNamespace="processDefinitions">
 
-    <process id="connectorTaskVarMapping">
+    <process id="taskVarMapping">
 
         <startEvent id="start"/>
 

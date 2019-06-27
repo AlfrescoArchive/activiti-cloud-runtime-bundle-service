@@ -1,80 +1,42 @@
 {
-  "id":"connectorTaskVarMapping",
+  "id":"taskVarMapping",
   "name":"myProcess.bpmn",
   "extensions": {
     "properties": {
-      "age-id": {
-        "id": "age-id",
-        "name": "age",
-        "type": "integer",
-        "value": 20
-      },
-      "name-id": {
-        "id": "name-id",
-        "name": "name",
+     "process-variable-unmapped-1-id": {
+        "id": "process-variable-unmapped-1-id",
+        "name": "process variable unmapped 1",
         "type": "string",
         "required": true,
-        "value": "inName"
+        "value": "unmapped1Value"
       },
-      "nick-name-id": {
-        "id": "nick-name-id",
-        "name": "nickName",
+      "process-variable-inputmap-1-id": {
+        "id": "process-variable-inputmap-1-id",
+        "name": "process variable inputmap 1",
         "type": "string",
-        "required": false,
-        "value": "testName"
+        "required": true,
+        "value": "inputmap1Value"
       },
-      "input-unmapped-variable-with-matching-name-id": {
-        "id": "input-unmapped-variable-with-matching-name-id",
-        "name": "input-unmapped-variable-with-matching-name",
+      "process-variable-outputmap-1-id": {
+        "id": "process-variable-outputmap-1-id",
+        "name": "process variable outputmap 1",
         "type": "string",
-        "required": false,
-        "value": "inTest"
-      },
-      "input-unmapped-variable-with-non-matching-name-id": {
-        "id": "input-unmapped-variable-with-non-matching-connector-input-name-id",
-        "name": "input-unmapped-variable-with-non-matching-connector-input-name",
-        "type": "string",
-        "required": false,
-        "value": "inTest"
-      },
-      "out-unmapped-variable-matching-name-id": {
-        "id": "out-unmapped-variable-matching-name-id",
-        "name": "out-unmapped-variable-matching-name",
-        "type": "string",
-        "required": false,
-        "value": "default"
-      },
-      "output-unmapped-variable-with-non-matching-name-id": {
-        "id": "output-unmapped-variable-with-non-matching-name-id",
-        "name": "output-unmapped-variable-with-non-matching-connector-output-name",
-        "type": "string",
-        "required": false,
-        "value": "default"
+        "required": true,
+        "value": "outputmap1Value"
       }
     },
     "mappings": {
       "simpleTask": {
         "inputs": {
-          "input-variable-name-1": {
+          "task-input-variable-name-1": {
             "type": "variable",
-            "value": "name"
-          },
-          "input-variable-name-2": {
-            "type": "variable",
-            "value": "age"
-          },
-          "input-variable-name-3": {
-            "type": "value",
-            "value": 5
+            "value": "process variable inputmap 1"
           }
         },
         "outputs": {
-          "name": {
+          "task-output-variable-name-1": {
             "type": "variable",
-            "value" : "out-variable-name-1"},
-          "age": {
-            "type": "variable",
-            "value" : "out-variable-name-2"}
+            "value" : "process-variable-outputmap-1-id"}
         }
       }
     }

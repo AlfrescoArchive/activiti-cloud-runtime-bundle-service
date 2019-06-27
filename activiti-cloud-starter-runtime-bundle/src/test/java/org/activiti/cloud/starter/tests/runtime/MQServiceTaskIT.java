@@ -218,42 +218,32 @@ public class MQServiceTaskIT {
         //given
         ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
                 ProcessPayloadBuilder.start()
-                        .withProcessDefinitionKey("connectorTaskVarMapping")
+                        .withProcessDefinitionKey("taskVarMapping")
                         .withBusinessKey("businessKey")
                         .build());
 
         await().untilAsserted(() -> {
             //when
             ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
-
             //then
             assertThat(responseEntity.getBody()).isNotNull();
             assertThat(responseEntity.getBody().getContent())
                     .isNotNull()
                     .extracting(CloudVariableInstance::getName,
                                 CloudVariableInstance::getValue)
-                    .containsOnly(tuple("name",
-                                        "outName"), //mapped from connector outputs based on extension mappings
-                                  tuple("age",
-                                        25),        //mapped from connector outputs based on extension mappings
-                                  tuple("input-unmapped-variable-with-matching-name",
-                                        "inTest"), //kept unchanging because no connector output is updating it
-                                  tuple("input-unmapped-variable-with-non-matching-connector-input-name",
-                                        "inTest"), //kept unchanging because no connector output is updating it
-                                  tuple("nickName",
-                                        "testName"),//kept unchanging because no connector output is updating it
-                                  tuple("out-unmapped-variable-matching-name",
-                                        "outTest"),//not present in extension mappings, but it's updated because
-                                                    // the process variable have the same name as the connector output
-                                  tuple("output-unmapped-variable-with-non-matching-connector-output-name",
-                                        "default"));//kept unchanging because no connector output is updating it
+                    .containsOnly(tuple("process variable unmapped 1",
+                                        "unmapped1Value"), 
+                                  tuple("process variable inputmap 1",
+                                        "inputmap1Value"),        
+                                  tuple("process variable outputmap 1",
+                                        "outputmap1Value"));
         });
 
         ResponseEntity<PagedResources<CloudTask>> tasks = processInstanceRestTemplate.getTasks(processInstanceResponseEntity);
         assertThat(tasks.getBody()).isNotNull();
         assertThat(tasks.getBody().getContent())
                 .extracting(CloudTask::getName)
-                .containsExactly("My user task");
+                .containsExactly("testSimpleTask");
     }
     
     
