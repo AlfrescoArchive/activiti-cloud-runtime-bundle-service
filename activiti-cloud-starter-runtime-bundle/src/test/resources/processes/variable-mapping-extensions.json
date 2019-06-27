@@ -1,5 +1,5 @@
 {
-  "id":"connectorVarMapping",
+  "id":"ParentProcessVariableMappingCallActivity",
   "name":"myProcess.bpmn",
   "extensions": {
     "properties": {
