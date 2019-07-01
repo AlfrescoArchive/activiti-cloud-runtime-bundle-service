@@ -235,11 +235,11 @@ public class MQServiceTaskIT {
                     .isNotNull()
                     .extracting(CloudVariableInstance::getName,
                                 CloudVariableInstance::getValue)
-                    .containsOnly(tuple("process variable unmapped 1",
+                    .containsOnly(tuple("process_variable_unmapped_1",
                                         "unmapped1Value"), 
-                                  tuple("process variable inputmap 1",
+                                  tuple("process_variable_inputmap_1",
                                         "inputmap1Value"),        
-                                  tuple("process variable outputmap 1",
+                                  tuple("process_variable_outputmap_1",
                                         "outputmap1Value"));
         });
 
@@ -251,7 +251,7 @@ public class MQServiceTaskIT {
         
         String taskId = tasks.getBody().getContent().iterator().next().getId();
         
-        //Check Task Variables
+        //Check Task Variables: should will not work with implementation of mapping
         await().untilAsserted(() -> {
             //when
             ResponseEntity<Resources<CloudVariableInstance>> responseEntity = taskRestTemplate.getVariables(taskId);
@@ -261,18 +261,18 @@ public class MQServiceTaskIT {
                     .isNotNull()
                     .extracting(CloudVariableInstance::getName,
                                 CloudVariableInstance::getValue)
-                    .containsOnly(tuple("process variable inputmap 1",
+                    .containsOnly(tuple("process_variable_inputmap_1",
                                         "inputmap1Value"),
-                                  tuple("process variable unmapped 1",  //Should be present only without mapping - remove after implementation!!!
+                                  tuple("process_variable_unmapped_1",  //Should be present only without mapping - remove after implementation!!!
                                         "unmapped1Value"),                          
-                                  tuple("process variable outputmap 1", //Should be present only without mapping - remove after implementation!!!
+                                  tuple("process_variable_outputmap_1", //Should be present only without mapping - remove after implementation!!!
                                         "outputmap1Value"));
         });
         
         
         Map<String, Object> variables = new HashMap<>();
-        variables.put("task-input-variable-name-1", "outputValue"); //This should not be set to 'process variable inputmap 1'
-        variables.put("task-output-variable-name-1", "outputTaskValue"); //This should be set to 'process variable outputmap 1'
+        variables.put("task_input_variable_name_1", "outputValue"); //This should not be set to 'process variable inputmap 1'
+        variables.put("task_output_variable_name_1", "outputTaskValue"); //This should be set to 'process variable outputmap 1'
         
               
         claimAndCompleteTask(taskId, variables);
@@ -286,16 +286,16 @@ public class MQServiceTaskIT {
                     .isNotNull()
                     .extracting(CloudVariableInstance::getName,
                                 CloudVariableInstance::getValue)
-                    .containsOnly(tuple("process variable unmapped 1",
+                    .containsOnly(tuple("process_variable_unmapped_1",
                                         "unmapped1Value"), 
-                                  tuple("process variable inputmap 1",
+                                  tuple("process_variable_inputmap_1",
                                         "inputmap1Value"),          //Should be unchanged
-                                  tuple("process variable outputmap 1",
+                                  tuple("process_variable_outputmap_1",
                                         "outputmap1Value"),         //Should be changed to 'outputTaskValue' after implementation of mapping
                                   
-                                  tuple("task-input-variable-name-1",   //This is Stange: after completion of task taskVariable is set to processVariable
+                                  tuple("task_input_variable_name_1",   //after completion of task taskVariable is set to processVariable
                                         "outputValue"),
-                                  tuple("task-output-variable-name-1",  //This is Stange: after completion of task taskVariable is set to processVariable
+                                  tuple("task_output_variable_name_1",  //after completion of task taskVariable is set to processVariable
                                          "outputTaskValue")                                  
                             );       
         });
