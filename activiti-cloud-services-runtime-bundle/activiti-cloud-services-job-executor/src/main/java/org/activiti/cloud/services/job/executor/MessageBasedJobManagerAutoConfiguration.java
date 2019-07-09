@@ -17,8 +17,9 @@
 package org.activiti.cloud.services.job.executor;
 
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.engine.cfg.ProcessEngineConfigurator;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
 import org.springframework.cloud.stream.binding.BindingService;
@@ -28,6 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@ConditionalOnProperty(name = "activiti.cloud.jobExecutor.enabled", havingValue = "true", matchIfMissing = false)
 public class MessageBasedJobManagerAutoConfiguration {
     
     @Bean
@@ -41,6 +43,7 @@ public class MessageBasedJobManagerAutoConfiguration {
     }
     
     @Bean
+    @ConditionalOnMissingBean
     public JobMessageInputChannelFactory jobMessageInputChannelFactory(SubscribableChannelBindingTargetFactory bindingTargetFactory,
                                                    BindingServiceProperties bindingServiceProperties,
                                                    ConfigurableListableBeanFactory beanFactory) {
@@ -49,15 +52,21 @@ public class MessageBasedJobManagerAutoConfiguration {
     }    
     
     @Bean
-    public ProcessEngineConfigurator messageBasedJobManagerConfigurator(RuntimeBundleProperties runtimeBundleProperties,
-                                                                        BinderAwareChannelResolver resolver,
-                                                                        BindingService bindingService,
+    @ConditionalOnMissingBean
+    public MessageBasedJobManagerFactory messageBasedJobManagerFactory(RuntimeBundleProperties runtimeBundleProperties,
+                                                                       BinderAwareChannelResolver resolver) {
+        return new DefaultMessageBasedJobManagerFactory(runtimeBundleProperties, resolver);
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public MessageBasedJobManagerConfigurator messageBasedJobManagerConfigurator(BindingService bindingService,
                                                                         JobMessageInputChannelFactory jobMessageInputChannelFactory,
+                                                                        MessageBasedJobManagerFactory messageBasedJobManagerFactory,
                                                                         ConsumerProperties messageJobConsumerProperties) {
-        return new MessageBasedJobManagerConfigurator(runtimeBundleProperties,
-                                                      resolver,
-                                                      bindingService,
+        return new MessageBasedJobManagerConfigurator(bindingService,
                                                       jobMessageInputChannelFactory,
+                                                      messageBasedJobManagerFactory,
                                                       messageJobConsumerProperties);
     }
 

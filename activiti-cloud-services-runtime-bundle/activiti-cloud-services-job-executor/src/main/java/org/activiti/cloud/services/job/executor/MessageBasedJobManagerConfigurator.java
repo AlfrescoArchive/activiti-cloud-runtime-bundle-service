@@ -16,11 +16,9 @@
 
 package org.activiti.cloud.services.job.executor;
 
-import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.cfg.ProcessEngineConfigurator;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
-import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
 import org.springframework.cloud.stream.binding.BindingService;
 import org.springframework.cloud.stream.config.BindingProperties;
 import org.springframework.context.SmartLifecycle;
@@ -29,13 +27,12 @@ import org.springframework.messaging.SubscribableChannel;
 
 public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigurator, SmartLifecycle {
     
-    private static final String JOB_MESSAGE_CONSUMER = "jobMessageConsumer";
+    public static final String JOB_MESSAGE_CONSUMER = "jobMessageConsumer";
     
-    private final RuntimeBundleProperties runtimeBundleProperties;
-    private final BinderAwareChannelResolver resolver;
     private final BindingService bindingService;
     private final JobMessageInputChannelFactory inputChannelFactory;
     private final ConsumerProperties consumerProperties;
+    private final MessageBasedJobManagerFactory messageBasedJobManagerFactory;
     
     private MessageBasedJobManager messageBasedJobManager;
     private MessageHandler jobMessageHandler;
@@ -44,16 +41,14 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     
     private boolean running = false;    
     
-    public MessageBasedJobManagerConfigurator(RuntimeBundleProperties runtimeBundleProperties,
-                                              BinderAwareChannelResolver resolver,
-                                              BindingService bindingService,
+    public MessageBasedJobManagerConfigurator(BindingService bindingService,
                                               JobMessageInputChannelFactory inputChannelFactory,
+                                              MessageBasedJobManagerFactory messageBasedJobManagerFactory,
                                               ConsumerProperties consumerProperties) {
-        this.runtimeBundleProperties = runtimeBundleProperties;
-        this.resolver = resolver;
         this.bindingService = bindingService;
         this.inputChannelFactory = inputChannelFactory;
         this.consumerProperties = consumerProperties;
+        this.messageBasedJobManagerFactory = messageBasedJobManagerFactory;
     }
     
     protected MessageHandler createMessageHandler(ProcessEngineConfigurationImpl configuration) {
@@ -70,9 +65,8 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     @Override
     public void beforeInit(ProcessEngineConfigurationImpl configuration) {
         
-        messageBasedJobManager = new MessageBasedJobManager(configuration,
-                                                            runtimeBundleProperties,
-                                                            resolver);
+        messageBasedJobManager = messageBasedJobManagerFactory.create(configuration);
+        
         // Let's manage async executor lifecycle manually on start/stop
         configuration.setAsyncExecutorActivate(false);
         configuration.setAsyncExecutorMessageQueueMode(true);
