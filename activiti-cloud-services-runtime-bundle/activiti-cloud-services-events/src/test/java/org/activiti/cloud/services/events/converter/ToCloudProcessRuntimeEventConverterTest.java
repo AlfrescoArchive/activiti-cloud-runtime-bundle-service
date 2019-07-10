@@ -20,15 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import org.activiti.api.process.model.payloads.TimerPayload;
 import org.activiti.api.runtime.event.impl.BPMNSignalReceivedEventImpl;
-import org.activiti.api.runtime.event.impl.BPMNTimerFiredEventImpl;
 import org.activiti.api.runtime.model.impl.BPMNSignalImpl;
-import org.activiti.api.runtime.model.impl.BPMNTimerImpl;
 import org.activiti.api.runtime.model.impl.ProcessInstanceImpl;
 import org.activiti.cloud.api.model.shared.impl.events.CloudRuntimeEventImpl;
 import org.activiti.cloud.api.process.model.events.CloudBPMNSignalReceivedEvent;
-import org.activiti.cloud.api.process.model.events.CloudBPMNTimerFiredEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessStartedEvent;
 import org.activiti.runtime.api.event.impl.ProcessStartedEventImpl;
 import org.junit.Before;
@@ -86,27 +82,6 @@ public class ToCloudProcessRuntimeEventConverterTest {
         //when
         CloudBPMNSignalReceivedEvent cloudEvent = converter.from(signalReceivedEvent);
         assertThat(cloudEvent.getEntity()).isEqualTo(signal);
-        assertThat(cloudEvent.getProcessDefinitionId()).isEqualTo("procDefId");
-        assertThat(cloudEvent.getProcessInstanceId()).isEqualTo("procInstId");
-
-        //then
-        verify(runtimeBundleInfoAppender).appendRuntimeBundleInfoTo(ArgumentMatchers.any(CloudRuntimeEventImpl.class));
-    }
-    
-    @Test
-    public void shouldConvertBPMNTimerFiredEventToCloudBPMNTimerFiredEvent() {
-        //given
-        BPMNTimerImpl timer = new BPMNTimerImpl("entityId");
-        timer.setProcessInstanceId("procInstId");
-        timer.setProcessDefinitionId("procDefId");
-        TimerPayload timerPayload = new TimerPayload();
-
-        timer.setTimerPayload(timerPayload);
-        BPMNTimerFiredEventImpl timerFiredEvent = new BPMNTimerFiredEventImpl(timer);
-
-        //when
-        CloudBPMNTimerFiredEvent cloudEvent = converter.from(timerFiredEvent);
-        assertThat(cloudEvent.getEntity()).isEqualTo(timer);
         assertThat(cloudEvent.getProcessDefinitionId()).isEqualTo("procDefId");
         assertThat(cloudEvent.getProcessInstanceId()).isEqualTo("procInstId");
 
