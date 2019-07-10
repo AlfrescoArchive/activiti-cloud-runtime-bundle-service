@@ -30,16 +30,22 @@ import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
 import org.activiti.api.process.model.events.BPMNTimerEvent;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
+import org.activiti.cloud.api.process.model.events.CloudBPMNTimerEvent;
+import org.activiti.cloud.api.process.model.events.CloudBPMNTimerExecutedEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerFiredEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerScheduledEvent;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
-import org.activiti.engine.ManagementService;
 import org.activiti.engine.ProcessEngineConfiguration;
-import org.activiti.engine.impl.test.JobTestHelper;
+import org.activiti.engine.ProcessEngines;
+import org.activiti.spring.SpringProcessEngineConfiguration;
+import org.activiti.spring.boot.ProcessEngineConfigurationConfigurer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
@@ -61,11 +67,28 @@ public class TimerAuditProducerIT {
     @Autowired
     private AuditConsumerStreamHandler streamHandler;
     
-    @Autowired
-    ProcessEngineConfiguration processEngineConfiguration;
+    private ProcessEngineConfiguration processEngineConfiguration;
     
-    @Autowired
-    private ManagementService managementService;
+    @TestConfiguration
+    static class JobExecutorITProcessEngineConfigurer implements ProcessEngineConfigurationConfigurer {
+        
+        @Override
+        public void configure(SpringProcessEngineConfiguration processEngineConfiguration) {
+            processEngineConfiguration.setAsyncExecutorDefaultTimerJobAcquireWaitTime(100);
+            processEngineConfiguration.setAsyncExecutorDefaultAsyncJobAcquireWaitTime(100);
+            processEngineConfiguration.setAsyncExecutorActivate(true);
+        };
+    }
+    
+    @Before
+    public void setUp() {
+        processEngineConfiguration = ProcessEngines.getProcessEngine("default").getProcessEngineConfiguration();
+    }
+    
+    @After
+    public void tearDown() {
+        processEngineConfiguration.getClock().reset();
+    }
 
     @Test
     public void shouldProduceEventsForIntermediateTimerEvent() {
@@ -99,9 +122,7 @@ public class TimerAuditProducerIT {
                                  CloudRuntimeEvent::getProcessDefinitionVersion,
                                  event -> event.getEntity().getProcessDefinitionId(),
                                  event -> event.getEntity().getProcessInstanceId(),
-                                 event -> event.getEntity().getTimerPayload().getJobHandlerConfiguration(),
-                                 event -> event.getEntity().getTimerPayload().getJobType(),
-                                 event -> event.getEntity().getTimerPayload().getJobHandlerType()  
+                                 event -> event.getEntityId()
                     )
                     .contains(
                             tuple(BPMNTimerEvent.TimerEvents.TIMER_SCHEDULED,
@@ -112,70 +133,62 @@ public class TimerAuditProducerIT {
                                   startProcessEntity.getBody().getProcessDefinitionVersion(),
                                   startProcessEntity.getBody().getProcessDefinitionId(),
                                   startProcessEntity.getBody().getId(),
-                                  "{\"activityId\":\"timer\"}",
-                                  "timer",
-                                  "trigger-timer"
-                                  
+                                  "timer" 
                             )
                     );
-
         });
-            
-         
-        long waitTime = 50 * 60 * 1000;
+           
+        //when
+        long waitTime = 5 * 60 * 1000;
         Date dueDate = new Date(startTime.getTime() + waitTime);
-        
-        // After setting the clock to time '50minutes and 5 seconds', the second timer should fire
+
+        // After setting the clock to time '5minutes and 5 seconds', the second timer should fire
         processEngineConfiguration.getClock().setCurrentTime(new Date(dueDate.getTime() + 5000));
-        waitForJobExecutorToProcessAllJobs(5000L, 25L);
-        
+       
         //when
         await().untilAsserted(() -> {
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
 
-            List<CloudBPMNTimerFiredEvent> timerEvents = receivedEvents
+            List<CloudBPMNTimerEvent> timerEvents = receivedEvents
                     .stream()
-                    .filter(CloudBPMNTimerFiredEvent.class::isInstance)
-                    .map(CloudBPMNTimerFiredEvent.class::cast)
+                    .filter(event -> (CloudBPMNTimerFiredEvent.class.isInstance(event) ||
+                                      CloudBPMNTimerExecutedEvent.class.isInstance(event)))
+                    .map(CloudBPMNTimerEvent.class::cast)
                     .collect(Collectors.toList());
 
             assertThat(timerEvents)
-                    .extracting( CloudRuntimeEvent::getEventType,
-                                 CloudRuntimeEvent::getBusinessKey,
-                                 CloudRuntimeEvent::getProcessDefinitionId,
-                                 CloudRuntimeEvent::getProcessInstanceId,
-                                 CloudRuntimeEvent::getProcessDefinitionKey,
-                                 CloudRuntimeEvent::getProcessDefinitionVersion,
-                                 event -> event.getEntity().getProcessDefinitionId(),
-                                 event -> event.getEntity().getProcessInstanceId(),
-                                 event -> event.getEntity().getTimerPayload().getJobHandlerConfiguration(),
-                                 event -> event.getEntity().getTimerPayload().getJobType(),
-                                 event -> event.getEntity().getTimerPayload().getJobHandlerType()  
-                    )
-                    .contains(
-                            tuple(BPMNTimerEvent.TimerEvents.TIMER_FIRED,
-                                  "businessKey",
-                                  startProcessEntity.getBody().getProcessDefinitionId(),
-                                  startProcessEntity.getBody().getId(),
-                                  startProcessEntity.getBody().getProcessDefinitionKey(),
-                                  startProcessEntity.getBody().getProcessDefinitionVersion(),
-                                  startProcessEntity.getBody().getProcessDefinitionId(),
-                                  startProcessEntity.getBody().getId(),
-                                  "{\"activityId\":\"timer\"}",
-                                  "timer",
-                                  "trigger-timer"
-                                  
-                            )
-                    );
-
+            .extracting( CloudRuntimeEvent::getEventType,
+                         CloudRuntimeEvent::getBusinessKey,
+                         CloudRuntimeEvent::getProcessDefinitionId,
+                         CloudRuntimeEvent::getProcessInstanceId,
+                         CloudRuntimeEvent::getProcessDefinitionKey,
+                         CloudRuntimeEvent::getProcessDefinitionVersion,
+                         event -> event.getEntity().getProcessDefinitionId(),
+                         event -> event.getEntity().getProcessInstanceId(),
+                         event -> event.getEntityId()
+            )
+            .containsOnly(
+                    tuple(BPMNTimerEvent.TimerEvents.TIMER_FIRED,
+                          "businessKey",
+                          startProcessEntity.getBody().getProcessDefinitionId(),
+                          startProcessEntity.getBody().getId(),
+                          startProcessEntity.getBody().getProcessDefinitionKey(),
+                          startProcessEntity.getBody().getProcessDefinitionVersion(),
+                          startProcessEntity.getBody().getProcessDefinitionId(),
+                          startProcessEntity.getBody().getId(),
+                          "timer"),
+                    tuple(BPMNTimerEvent.TimerEvents.TIMER_EXECUTED,
+                          "businessKey",
+                          startProcessEntity.getBody().getProcessDefinitionId(),
+                          startProcessEntity.getBody().getId(),
+                          startProcessEntity.getBody().getProcessDefinitionKey(),
+                          startProcessEntity.getBody().getProcessDefinitionVersion(),
+                          startProcessEntity.getBody().getProcessDefinitionId(),
+                          startProcessEntity.getBody().getId(),
+                          "timer")
+            );
         });
-
     }
-    
-    public void waitForJobExecutorToProcessAllJobs(long maxMillisToWait, long intervalMillis) {
-        JobTestHelper.waitForJobExecutorToProcessAllJobs(processEngineConfiguration, managementService, maxMillisToWait, intervalMillis);
-    }
-
 }
