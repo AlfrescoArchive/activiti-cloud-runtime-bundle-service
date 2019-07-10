@@ -45,9 +45,9 @@ import org.activiti.cloud.services.events.listeners.CloudTaskCompletedProducer;
 import org.activiti.cloud.services.events.listeners.CloudTaskCreatedProducer;
 import org.activiti.cloud.services.events.listeners.CloudTaskSuspendedProducer;
 import org.activiti.cloud.services.events.listeners.CloudTaskUpdatedProducer;
-import org.activiti.cloud.services.events.listeners.CloudTimerCanceledProducer;
-import org.activiti.cloud.services.events.listeners.CloudTimerExecutionFailureProducer;
-import org.activiti.cloud.services.events.listeners.CloudTimerExecutionSuccessProducer;
+import org.activiti.cloud.services.events.listeners.CloudTimerCancelledProducer;
+import org.activiti.cloud.services.events.listeners.CloudTimerExecutedProducer;
+import org.activiti.cloud.services.events.listeners.CloudTimerFailedProducer;
 import org.activiti.cloud.services.events.listeners.CloudTimerFiredProducer;
 import org.activiti.cloud.services.events.listeners.CloudTimerRetriesDecrementedProducer;
 import org.activiti.cloud.services.events.listeners.CloudTimerScheduledProducer;
@@ -341,26 +341,26 @@ public class CloudEventsAutoConfiguration {
     
     @Bean
     @ConditionalOnMissingBean
-    public CloudTimerCanceledProducer cloudTimerCanceledProducer(ToCloudProcessRuntimeEventConverter converter,
+    public CloudTimerCancelledProducer cloudTimerCancelledProducer(ToCloudProcessRuntimeEventConverter converter,
+                                                                   ProcessEngineEventsAggregator eventsAggregator) {
+        return new CloudTimerCancelledProducer(converter,
+                                               eventsAggregator);
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public CloudTimerFailedProducer cloudTimerFailedProducer(ToCloudProcessRuntimeEventConverter converter,
+                                                             ProcessEngineEventsAggregator eventsAggregator) {
+        return new CloudTimerFailedProducer(converter,
+                                            eventsAggregator);
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public CloudTimerExecutedProducer cloudTimerExecutedProducer(ToCloudProcessRuntimeEventConverter converter,
                                                                  ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTimerCanceledProducer(converter,
+        return new CloudTimerExecutedProducer(converter,
                                               eventsAggregator);
-    }
-    
-    @Bean
-    @ConditionalOnMissingBean
-    public CloudTimerExecutionFailureProducer cloudTimerExecutionFailureProducer(ToCloudProcessRuntimeEventConverter converter,
-                                                                                 ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTimerExecutionFailureProducer(converter,
-                                                      eventsAggregator);
-    }
-    
-    @Bean
-    @ConditionalOnMissingBean
-    public CloudTimerExecutionSuccessProducer cloudTimerExecutionSuccessProducer(ToCloudProcessRuntimeEventConverter converter,
-                                                                                 ProcessEngineEventsAggregator eventsAggregator) {
-        return new CloudTimerExecutionSuccessProducer(converter,
-                                                      eventsAggregator);
     }
     
     @Bean

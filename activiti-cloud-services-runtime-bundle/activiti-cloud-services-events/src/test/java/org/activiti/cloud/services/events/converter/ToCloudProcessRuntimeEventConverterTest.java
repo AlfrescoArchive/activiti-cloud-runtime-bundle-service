@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.payloads.TimerPayload;
 import org.activiti.api.runtime.event.impl.BPMNSignalReceivedEventImpl;
 import org.activiti.api.runtime.event.impl.BPMNTimerFiredEventImpl;
@@ -31,7 +30,6 @@ import org.activiti.cloud.api.model.shared.impl.events.CloudRuntimeEventImpl;
 import org.activiti.cloud.api.process.model.events.CloudBPMNSignalReceivedEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerFiredEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessStartedEvent;
-import org.activiti.engine.impl.persistence.entity.JobEntity;
 import org.activiti.runtime.api.event.impl.ProcessStartedEventImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -101,9 +99,7 @@ public class ToCloudProcessRuntimeEventConverterTest {
         BPMNTimerImpl timer = new BPMNTimerImpl("entityId");
         timer.setProcessInstanceId("procInstId");
         timer.setProcessDefinitionId("procDefId");
-        TimerPayload timerPayload = ProcessPayloadBuilder.timer()
-                                    .withJobType(JobEntity.JOB_TYPE_TIMER)
-                                    .build();
+        TimerPayload timerPayload = new TimerPayload();
 
         timer.setTimerPayload(timerPayload);
         BPMNTimerFiredEventImpl timerFiredEvent = new BPMNTimerFiredEventImpl(timer);

@@ -16,23 +16,23 @@
 
 package org.activiti.cloud.services.events.listeners;
 
-import org.activiti.api.process.model.events.BPMNTimerCanceledEvent;
+import org.activiti.api.process.model.events.BPMNTimerExecutedEvent;
 import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
 import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
 
-public class CloudTimerCanceledProducer implements BPMNElementEventListener<BPMNTimerCanceledEvent> {
+public class CloudTimerExecutedProducer implements BPMNElementEventListener<BPMNTimerExecutedEvent> {
 
     private final ToCloudProcessRuntimeEventConverter eventConverter;
     private final ProcessEngineEventsAggregator eventsAggregator;
 
-    public CloudTimerCanceledProducer(ToCloudProcessRuntimeEventConverter eventConverter,
-                                       ProcessEngineEventsAggregator eventsAggregator) {
+    public CloudTimerExecutedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
+                                      ProcessEngineEventsAggregator eventsAggregator) {
         this.eventConverter = eventConverter;
         this.eventsAggregator = eventsAggregator;
     }
 
     @Override
-    public void onEvent(BPMNTimerCanceledEvent event) {
+    public void onEvent(BPMNTimerExecutedEvent event) {
         eventsAggregator.add(eventConverter.from(event));
     }
 }

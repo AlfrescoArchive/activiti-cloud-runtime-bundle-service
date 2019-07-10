@@ -26,7 +26,7 @@ public class CloudTimerRetriesDecrementedProducer implements BPMNElementEventLis
     private final ProcessEngineEventsAggregator eventsAggregator;
 
     public CloudTimerRetriesDecrementedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
-                                              ProcessEngineEventsAggregator eventsAggregator) {
+                                                ProcessEngineEventsAggregator eventsAggregator) {
         this.eventConverter = eventConverter;
         this.eventsAggregator = eventsAggregator;
     }
