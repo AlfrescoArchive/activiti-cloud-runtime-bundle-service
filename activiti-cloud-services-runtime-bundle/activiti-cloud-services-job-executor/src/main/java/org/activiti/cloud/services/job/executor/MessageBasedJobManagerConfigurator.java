@@ -27,8 +27,10 @@ import org.springframework.messaging.SubscribableChannel;
 
 public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigurator, SmartLifecycle {
     
-    public static final String JOB_MESSAGE_CONSUMER = "jobMessageConsumer";
-    
+    public static final String APPLICATION_JSON = "application/json";
+
+    public static final String JOB_MESSAGE_HANDLER = "jobMessageHandler";
+
     private final BindingService bindingService;
     private final JobMessageInputChannelFactory inputChannelFactory;
     private final ConsumerProperties consumerProperties;
@@ -55,10 +57,6 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
         return new JobMessageHandler(configuration);
     }
     
-    protected String getInputChannelName() {
-        return JOB_MESSAGE_CONSUMER;
-    }
-    
     /**
      * Configures MessageBasedJobManager 
      */
@@ -80,15 +78,18 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     public void configure(ProcessEngineConfigurationImpl configuration) {
         this.configuration = configuration;
         
+        String channelName = messageBasedJobManager.getInputChannelName();
+        String destination = messageBasedJobManager.getDestination();
+        
         BindingProperties bindingProperties = new BindingProperties();
         bindingProperties.setConsumer(consumerProperties);
-        bindingProperties.setContentType("application/json");
-        bindingProperties.setGroup("jobMessageHandler");
+        bindingProperties.setContentType(APPLICATION_JSON);
+        bindingProperties.setGroup(JOB_MESSAGE_HANDLER);
         // Let's use message job producer destination scope
-        bindingProperties.setDestination(messageBasedJobManager.getDestination());
+        bindingProperties.setDestination(destination);
 
         // Let's create input channel 
-        inputChannel = inputChannelFactory.createInputChannel(getInputChannelName(), bindingProperties);
+        inputChannel = inputChannelFactory.createInputChannel(channelName, bindingProperties);
     }
 
     @Override
@@ -102,7 +103,7 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
         
         // Let's subscribe and bind consumer channel   
         inputChannel.subscribe(jobMessageHandler);
-        bindingService.bindConsumer(inputChannel, getInputChannelName());
+        bindingService.bindConsumer(inputChannel, messageBasedJobManager.getInputChannelName());
 
         // Now start async executor
         if (!configuration.getAsyncExecutor().isActive()) {
@@ -117,7 +118,7 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     public void stop() {
         try {
             // Let's unbind consumer from input channel
-            bindingService.unbindConsumers(getInputChannelName());
+            bindingService.unbindConsumers(messageBasedJobManager.getInputChannelName());
             inputChannel.unsubscribe(jobMessageHandler);
 
             // Let's gracefully shutdown executor

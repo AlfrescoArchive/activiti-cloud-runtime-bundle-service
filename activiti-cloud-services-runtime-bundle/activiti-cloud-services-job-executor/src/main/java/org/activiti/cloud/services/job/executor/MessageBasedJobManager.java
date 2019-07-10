@@ -72,11 +72,14 @@ public class MessageBasedJobManager extends DefaultJobManager {
      * 
      */
     public String getDestination() {
-        return runtimeBundleProperties.getServiceName() + "." + this.getClass().getSimpleName();
+        return runtimeBundleProperties.getServiceName() + "." + this.getInputChannelName();
     }
    
+    protected String getInputChannelName() {
+        return this.getClass().getSimpleName();
+    }
 
-    protected void sendMessage(final Job jobEntity) {
+    public void sendMessage(final Job jobEntity) {
         Context.getTransactionContext()
                .addTransactionListener(TransactionState.COMMITTED, new JobMessageProducer(jobEntity));
     }
