@@ -50,6 +50,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 @TestPropertySource("classpath:application-test.properties")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "activiti.cloud.jobExecutor.enabled=true")
 public class JobExecutorIT {
+    private static final String TEST_BOUNDARY_TIMER_EVENT = "testBoundaryTimerEvent";
+
+
     private static final String START_TIMER_EVENT_EXAMPLE = "startTimerEventExample";
 
 
@@ -243,6 +246,66 @@ public class JobExecutorIT {
                                                             .isTrue();
     }
     
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testBoundaryTimerEvent() throws Exception {
+        CountDownLatch jobsCompleted = new CountDownLatch(1);
+        CountDownLatch timerScheduled = new CountDownLatch(1);
+        CountDownLatch timerFired = new CountDownLatch(1);
+
+        // Set the clock fixed
+        Date startTime = new Date();
+
+        runtimeService.addEventListener(new CountDownLatchActvitiEventListener(timerScheduled),
+                                        ActivitiEventType.TIMER_SCHEDULED);
+
+        runtimeService.addEventListener(new CountDownLatchActvitiEventListener(timerFired),
+                                        ActivitiEventType.TIMER_FIRED);
+
+        runtimeService.addEventListener(new CountDownLatchActvitiEventListener(jobsCompleted),
+                                        ActivitiEventType.JOB_EXECUTION_SUCCESS);
+
+        // when
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey(TEST_BOUNDARY_TIMER_EVENT);
+
+        // then
+        assertThat(pi).isNotNull();
+        
+        await("the timer job should be created")
+            .untilAsserted(() -> {
+                assertThat(managementService.createTimerJobQuery()
+                                            .processInstanceId(pi.getId())
+                                            .count()).isEqualTo(1);
+            });
+
+        // After setting the clock to time '5 minutes and 5 seconds', the timer should fire
+        processEngineConfiguration.getClock().setCurrentTime(new Date(startTime.getTime() + ((5 * 60 * 1000) + 5000)));
+
+        // timer event has been scheduled
+        assertThat(timerScheduled.await(1, TimeUnit.MINUTES)).as("should schedule timer")
+                                                             .isTrue();
+        
+        // then
+        await("the async executions should complete and no more jobs should exist")
+           .untilAsserted(() -> {
+               assertThat(runtimeService.createProcessInstanceQuery()
+                                        .processDefinitionKey(pi.getProcessDefinitionKey())
+                                        .count()).isEqualTo(0);
+               
+               assertThat(managementService.createTimerJobQuery()
+                                           .processInstanceId(pi.getId())
+                                           .count()).isEqualTo(0);
+           });
+
+        // timer event has been fired
+        assertThat(timerFired.await(1, TimeUnit.MINUTES)).as("should fire timer")
+                                                         .isTrue();
+
+        // job event has been completed
+        assertThat(jobsCompleted.await(1, TimeUnit.MINUTES)).as("should complete job")
+                                                            .isTrue();
+    }
+    
     abstract class AbstractActvitiEventListener implements ActivitiEventListener {
         
         @Override
@@ -267,5 +330,6 @@ public class JobExecutorIT {
         }
     }
     
+
     
 }
