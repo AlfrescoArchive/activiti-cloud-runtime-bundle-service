@@ -116,7 +116,9 @@ public class JobExecutorIT {
         // then
         await("the async executions should complete and no more jobs should exist")
                 .untilAsserted(() -> {
-                    assertThat(runtimeService.createExecutionQuery().processDefinitionKey(ASYNC_TASK).count()).isEqualTo(0); 
+                    assertThat(runtimeService.createExecutionQuery()
+                                             .processDefinitionKey(ASYNC_TASK).count()).isEqualTo(0);
+                    
                     assertThat(managementService.createJobQuery()
                                .processDefinitionId(processDefinitionId)
                                .count()).isEqualTo(0); 
@@ -152,7 +154,7 @@ public class JobExecutorIT {
         // then
         assertThat(pi).isNotNull();
         
-        await("the async execution should be created")
+        await("the timer job should be created")
             .untilAsserted(() -> {
                 assertThat(managementService.createTimerJobQuery()
                                             .processInstanceId(pi.getId())
@@ -167,9 +169,9 @@ public class JobExecutorIT {
                                                              .isTrue();
         
         // then
-        await("the async executions should complete and no more jobs should exist")
+        await("the process instance should complete and no more jobs should exist")
            .untilAsserted(() -> {
-               assertThat(runtimeService.createExecutionQuery()
+               assertThat(runtimeService.createProcessInstanceQuery()
                                         .processDefinitionKey(pi.getProcessDefinitionKey())
                                         .count()).isEqualTo(0);
                
@@ -214,7 +216,7 @@ public class JobExecutorIT {
         // then
         assertThat(pi).isNull();
         
-        await("the async timer should be created")
+        await("the timer job should be created")
             .untilAsserted(() -> {
                 assertThat(managementService.createTimerJobQuery()
                                             .processDefinitionId(processDefinitionId)
@@ -286,7 +288,7 @@ public class JobExecutorIT {
                                                              .isTrue();
         
         // then
-        await("the async executions should complete and no more jobs should exist")
+        await("the process instance should complete and no more timer jobs should exist")
            .untilAsserted(() -> {
                assertThat(runtimeService.createProcessInstanceQuery()
                                         .processDefinitionKey(pi.getProcessDefinitionKey())
