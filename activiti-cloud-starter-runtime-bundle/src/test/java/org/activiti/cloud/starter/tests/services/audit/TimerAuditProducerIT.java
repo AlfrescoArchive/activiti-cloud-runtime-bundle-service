@@ -30,6 +30,7 @@ import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
 import org.activiti.api.process.model.events.BPMNTimerEvent;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
+import org.activiti.cloud.api.process.model.events.CloudBPMNTimerCancelledEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerExecutedEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerFiredEvent;
@@ -190,5 +191,55 @@ public class TimerAuditProducerIT {
                           "timer")
             );
         });
+        
     }
+    
+    @Test
+    public void shouldGetTimerCanceledEventByProcessDelete() {
+        // GIVEN
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
+                                                                                                           .withProcessDefinitionKey(PROCESS_INTERMEDIATE_TIMER_EVENT)
+                                                                                                           .withName("processInstanceName")
+                                                                                                           .withBusinessKey("businessKey")
+                                                                                                           .build());
+        // WHEN
+        processInstanceRestTemplate.delete(startProcessEntity);
+        
+        //when
+        await().untilAsserted(() -> {
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(RUNTIME_BUNDLE_INFO_HEADERS);
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
+
+            List<CloudBPMNTimerEvent> timerEvents = receivedEvents
+                    .stream()
+                    .filter(CloudBPMNTimerCancelledEvent.class::isInstance)
+                    .map(CloudBPMNTimerEvent.class::cast)
+                    .collect(Collectors.toList());
+
+            assertThat(timerEvents)
+            .extracting( CloudRuntimeEvent::getEventType,
+                         CloudRuntimeEvent::getBusinessKey,
+                         CloudRuntimeEvent::getProcessDefinitionId,
+                         CloudRuntimeEvent::getProcessInstanceId,
+                         CloudRuntimeEvent::getProcessDefinitionKey,
+                         CloudRuntimeEvent::getProcessDefinitionVersion,
+                         event -> event.getEntity().getProcessDefinitionId(),
+                         event -> event.getEntity().getProcessInstanceId(),
+                         event -> event.getEntityId()
+            )
+            .contains(
+                    tuple(BPMNTimerEvent.TimerEvents.TIMER_CANCELLED,
+                          "businessKey",
+                          startProcessEntity.getBody().getProcessDefinitionId(),
+                          startProcessEntity.getBody().getId(),
+                          startProcessEntity.getBody().getProcessDefinitionKey(),
+                          startProcessEntity.getBody().getProcessDefinitionVersion(),
+                          startProcessEntity.getBody().getProcessDefinitionId(),
+                          startProcessEntity.getBody().getId(),
+                          "timer")
+            );
+        });
+    }
+
 }
