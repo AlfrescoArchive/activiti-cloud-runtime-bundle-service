@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import org.activiti.engine.ManagementService;
 import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.ProcessEngines;
+import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.delegate.event.ActivitiEvent;
 import org.activiti.engine.delegate.event.ActivitiEventListener;
@@ -49,6 +50,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 @TestPropertySource("classpath:application-test.properties")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "activiti.cloud.jobExecutor.enabled=true")
 public class JobExecutorIT {
+    private static final String START_TIMER_EVENT_EXAMPLE = "startTimerEventExample";
+
+
     private static final Logger logger = LoggerFactory.getLogger(JobExecutorIT.class);
 
     
@@ -61,6 +65,9 @@ public class JobExecutorIT {
 
     @Autowired
     private ManagementService managementService;
+
+    @Autowired
+    private RepositoryService repositoryService;
     
     private ProcessEngineConfiguration processEngineConfiguration;
 
@@ -74,7 +81,6 @@ public class JobExecutorIT {
         };
     }
     
-    
     @Before
     public void setUp() {
         processEngineConfiguration = ProcessEngines.getProcessEngine("default").getProcessEngineConfiguration();
@@ -85,6 +91,7 @@ public class JobExecutorIT {
         processEngineConfiguration.getClock().reset();
     }
     
+    @SuppressWarnings("deprecation")
     @Test
     public void testCompleteAsyncJobsViaMessageBasedJobExecutor() throws InterruptedException {
         int jobCount = 100;
@@ -92,17 +99,24 @@ public class JobExecutorIT {
         
         runtimeService.addEventListener(new CountDownLatchActvitiEventListener(jobsCompleted), 
                                         ActivitiEventType.JOB_EXECUTION_SUCCESS );
+        
+        String processDefinitionId = repositoryService.createProcessDefinitionQuery()
+                                                      .processDefinitionKey(ASYNC_TASK)
+                                                      .singleResult()
+                                                      .getId();
         //when
         for(int i=0; i<jobCount; i++)
             runtimeService.createProcessInstanceBuilder()
-                          .processDefinitionKey(ASYNC_TASK)
+                          .processDefinitionId(processDefinitionId)
                           .start();
 
         // then
         await("the async executions should complete and no more jobs should exist")
                 .untilAsserted(() -> {
                     assertThat(runtimeService.createExecutionQuery().processDefinitionKey(ASYNC_TASK).count()).isEqualTo(0); 
-                    assertThat(managementService.createJobQuery().count()).isEqualTo(0); 
+                    assertThat(managementService.createJobQuery()
+                               .processDefinitionId(processDefinitionId)
+                               .count()).isEqualTo(0); 
                 });
 
         assertThat(jobsCompleted.await(1, TimeUnit.MINUTES)).as("should complete all jobs")
@@ -110,6 +124,7 @@ public class JobExecutorIT {
         
     }
     
+    @SuppressWarnings("deprecation")
     @Test
     public void testCatchingTimerEvent() throws Exception {
         CountDownLatch jobsCompleted = new CountDownLatch(1);
@@ -137,6 +152,7 @@ public class JobExecutorIT {
         await("the async execution should be created")
             .untilAsserted(() -> {
                 assertThat(managementService.createTimerJobQuery()
+                                            .processInstanceId(pi.getId())
                                             .count()).isEqualTo(1);
             });
 
@@ -155,6 +171,7 @@ public class JobExecutorIT {
                                         .count()).isEqualTo(0);
                
                assertThat(managementService.createTimerJobQuery()
+                                           .processInstanceId(pi.getId())
                                            .count()).isEqualTo(0);
            });
 
@@ -164,6 +181,65 @@ public class JobExecutorIT {
 
         // job event has been completed
         assertThat(jobsCompleted.await(1, TimeUnit.MINUTES)).as("should complete job")
+                                                            .isTrue();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testStartTimeEvent() throws InterruptedException {
+        CountDownLatch jobCompleted = new CountDownLatch(1);
+        CountDownLatch timerFired = new CountDownLatch(1);
+
+        // Set the clock fixed
+        Date startTime = new Date();
+
+
+        runtimeService.addEventListener(new CountDownLatchActvitiEventListener(timerFired),
+                                        ActivitiEventType.TIMER_FIRED);
+
+        runtimeService.addEventListener(new CountDownLatchActvitiEventListener(jobCompleted),
+                                        ActivitiEventType.JOB_EXECUTION_SUCCESS);
+
+        //when
+        String processDefinitionId = repositoryService.createProcessDefinitionQuery()
+                                                      .processDefinitionKey(START_TIMER_EVENT_EXAMPLE)
+                                                      .singleResult()
+                                                      .getId();
+        // when
+        ProcessInstance pi = runtimeService.createProcessInstanceQuery().processDefinitionKey(START_TIMER_EVENT_EXAMPLE).singleResult();
+
+        // then
+        assertThat(pi).isNull();
+        
+        await("the async timer should be created")
+            .untilAsserted(() -> {
+                assertThat(managementService.createTimerJobQuery()
+                                            .processDefinitionId(processDefinitionId)
+                                            .count()).isEqualTo(1);
+            });
+
+        // After setting the clock to time '1 hour and 5 seconds', the timer should fire
+        processEngineConfiguration.getClock()
+                                  .setCurrentTime(new Date(startTime.getTime() + ((60 * 60 * 1000) + 5000)));
+
+        // then
+        await("the process should start and no more timer jobs should exist")
+           .untilAsserted(() -> {
+               assertThat(runtimeService.createProcessInstanceQuery()
+                                        .processDefinitionId(processDefinitionId)
+                                        .count()).isEqualTo(1);
+               
+               assertThat(managementService.createTimerJobQuery()
+                                           .processDefinitionId(processDefinitionId)
+                                           .count()).isEqualTo(0);
+           });
+
+        // timer event has been fired
+        assertThat(timerFired.await(1, TimeUnit.MINUTES)).as("should fire timer")
+                                                         .isTrue();
+
+        // job event has been completed
+        assertThat(jobCompleted.await(1, TimeUnit.MINUTES)).as("should complete job")
                                                             .isTrue();
     }
     
