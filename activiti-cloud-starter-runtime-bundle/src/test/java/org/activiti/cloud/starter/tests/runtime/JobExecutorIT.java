@@ -44,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -53,6 +54,7 @@ import org.springframework.test.context.junit4.SpringRunner;
         "activiti.cloud.rb.job-executor.enabled=true",
         "activiti.cloud.rb.job-executor.message-job-consumer.max-attempts=4"
 })
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class JobExecutorIT {
     private static final Logger logger = LoggerFactory.getLogger(JobExecutorIT.class);
 
