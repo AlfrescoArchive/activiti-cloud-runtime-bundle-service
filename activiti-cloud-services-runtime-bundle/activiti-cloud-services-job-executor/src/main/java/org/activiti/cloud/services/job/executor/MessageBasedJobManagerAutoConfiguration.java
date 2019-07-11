@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConditionalOnProperty(name = "activiti.cloud.rb.job-executor.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(name = "activiti.cloud.rb.job-executor.enabled", havingValue = "true", matchIfMissing = true)
 public class MessageBasedJobManagerAutoConfiguration {
     
     @Bean
