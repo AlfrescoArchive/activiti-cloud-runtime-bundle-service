@@ -22,7 +22,6 @@ import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.impl.interceptor.Command;
 import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.JobEntity;
-import org.activiti.engine.runtime.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
@@ -47,7 +46,7 @@ public class JobMessageHandler  implements MessageHandler {
             logger.info("Received job message with id: " + jobId);
             
             // Let's try to find existing job by jobId
-            Job job = processEngineConfiguration.getCommandExecutor().execute(new Command<JobEntity>() {
+            JobEntity job = processEngineConfiguration.getCommandExecutor().execute(new Command<JobEntity>() {
                 @Override
                 public JobEntity execute(CommandContext commandContext) {
                   return commandContext.getJobEntityManager().findById(jobId);
