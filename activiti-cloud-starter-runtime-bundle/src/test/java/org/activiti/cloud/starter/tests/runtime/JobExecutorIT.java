@@ -43,34 +43,36 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application-test.properties")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "activiti.cloud.jobExecutor.enabled=true")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
+        "activiti.cloud.rb.job-executor.enabled=true",
+        "activiti.cloud.rb.job-executor.message-job-consumer.max-attempts=4"
+})
 public class JobExecutorIT {
-    private static final String TEST_BOUNDARY_TIMER_EVENT = "testBoundaryTimerEvent";
-
-
-    private static final String START_TIMER_EVENT_EXAMPLE = "startTimerEventExample";
-
-
     private static final Logger logger = LoggerFactory.getLogger(JobExecutorIT.class);
 
-    
+    private static final String TEST_BOUNDARY_TIMER_EVENT = "testBoundaryTimerEvent";
+    private static final String START_TIMER_EVENT_EXAMPLE = "startTimerEventExample";
     private static final String INTERMEDIATE_TIMER_EVENT_EXAMPLE = "intermediateTimerEventExample";
 
     private static final String ASYNC_TASK = "asyncTask";
 
     @Autowired
     private RuntimeService runtimeService;
-
+    
     @Autowired
     private ManagementService managementService;
 
     @Autowired
     private RepositoryService repositoryService;
+
+    @Autowired
+    private ConsumerProperties messageJobConsumerProperties;
     
     private ProcessEngineConfiguration processEngineConfiguration;
 
@@ -92,6 +94,12 @@ public class JobExecutorIT {
     @After
     public void tearDown() {
         processEngineConfiguration.getClock().reset();
+    }
+
+    @Test
+    public void testMessageJobConsumerProperties() {
+        assertThat(messageJobConsumerProperties.getMaxAttempts()).as("should configure consumer properties")
+                                                                 .isEqualTo(4);
     }
     
     @SuppressWarnings("deprecation")

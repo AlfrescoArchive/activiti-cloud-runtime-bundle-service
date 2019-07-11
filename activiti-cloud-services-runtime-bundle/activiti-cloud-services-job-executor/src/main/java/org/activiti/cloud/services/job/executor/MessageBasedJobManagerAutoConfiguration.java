@@ -20,6 +20,7 @@ import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
 import org.springframework.cloud.stream.binding.BindingService;
@@ -29,17 +30,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConditionalOnProperty(name = "activiti.cloud.jobExecutor.enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(name = "activiti.cloud.rb.job-executor.enabled", havingValue = "true", matchIfMissing = false)
 public class MessageBasedJobManagerAutoConfiguration {
     
     @Bean
+    @ConditionalOnMissingBean
+    @ConfigurationProperties(prefix = "activiti.cloud.rb.job-executor.message-job-consumer")
     public ConsumerProperties messageJobConsumerProperties() {
-        ConsumerProperties consumerProperties = new ConsumerProperties();
-        consumerProperties.setConcurrency(1);
-        consumerProperties.setMaxAttempts(3);
-        consumerProperties.setInstanceCount(1);
-        
-        return consumerProperties;
+        return new ConsumerProperties();
     }
     
     @Bean
