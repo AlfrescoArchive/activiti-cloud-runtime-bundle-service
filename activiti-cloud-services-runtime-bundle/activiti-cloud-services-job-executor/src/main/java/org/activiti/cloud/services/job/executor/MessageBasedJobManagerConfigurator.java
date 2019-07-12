@@ -23,14 +23,14 @@ import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.cloud.stream.binding.BindingService;
 import org.springframework.cloud.stream.config.BindingProperties;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.http.MediaType;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.SubscribableChannel;
 
 public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigurator, SmartLifecycle {
-    
-    public static final String APPLICATION_JSON = "application/json";
-
     public static final String JOB_MESSAGE_HANDLER = "jobMessageHandler";
+
+    private String contentType = MediaType.APPLICATION_JSON_VALUE;
 
     private final BindingService bindingService;
     private final JobMessageInputChannelFactory inputChannelFactory;
@@ -94,7 +94,7 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
         
         BindingProperties bindingProperties = new BindingProperties();
         bindingProperties.setConsumer(consumerProperties);
-        bindingProperties.setContentType(APPLICATION_JSON);
+        bindingProperties.setContentType(contentType);
         bindingProperties.setGroup(JOB_MESSAGE_HANDLER);
         // Let's use message job producer destination scope
         bindingProperties.setDestination(destination);
@@ -146,6 +146,11 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     @Override
     public boolean isRunning() {
         return running;
+    }
+
+    
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
 }
