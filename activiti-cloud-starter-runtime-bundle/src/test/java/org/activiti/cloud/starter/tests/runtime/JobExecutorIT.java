@@ -125,7 +125,7 @@ public class JobExecutorIT {
     }
 
     @Test
-    public void testMessageJobConsumerProperties() {
+    public void shouldConfigureConsumerProperties() {
         assertThat(messageJobConsumerProperties.getMaxAttempts()).as("should configure consumer properties")
                                                                  .isEqualTo(4);
     }
