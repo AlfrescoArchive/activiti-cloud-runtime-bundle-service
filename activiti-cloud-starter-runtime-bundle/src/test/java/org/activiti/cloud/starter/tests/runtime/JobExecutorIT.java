@@ -18,11 +18,15 @@ package org.activiti.cloud.starter.tests.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.activiti.cloud.services.job.executor.JobMessageHandler;
+import org.activiti.cloud.services.job.executor.JobMessageHandlerFactory;
 import org.activiti.engine.ManagementService;
 import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.ProcessEngines;
@@ -31,6 +35,7 @@ import org.activiti.engine.RuntimeService;
 import org.activiti.engine.delegate.event.ActivitiEvent;
 import org.activiti.engine.delegate.event.ActivitiEventListener;
 import org.activiti.engine.delegate.event.ActivitiEventType;
+import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.activiti.spring.boot.ProcessEngineConfigurationConfigurer;
@@ -38,12 +43,17 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHandler;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -77,6 +87,9 @@ public class JobExecutorIT {
     private ConsumerProperties messageJobConsumerProperties;
     
     private ProcessEngineConfiguration processEngineConfiguration;
+    
+    @Autowired
+    private MessageHandler jobMessageHandler;
 
     @TestConfiguration
     static class JobExecutorITProcessEngineConfigurer implements ProcessEngineConfigurationConfigurer {
@@ -85,11 +98,24 @@ public class JobExecutorIT {
         public void configure(SpringProcessEngineConfiguration processEngineConfiguration) {
             processEngineConfiguration.setAsyncExecutorDefaultTimerJobAcquireWaitTime(1000);
             processEngineConfiguration.setAsyncExecutorDefaultAsyncJobAcquireWaitTime(1000);
-        };
+        }
+        
+        @Bean
+        public JobMessageHandlerFactory jobMessageHandlerFactory() {
+            return new JobMessageHandlerFactory() {
+
+                @Override
+                public MessageHandler create(ProcessEngineConfigurationImpl configuration) {
+                    return Mockito.spy(new JobMessageHandler(configuration));
+                }
+            };
+        }
     }
     
     @Before
     public void setUp() {
+        Mockito.reset(jobMessageHandler);
+
         processEngineConfiguration = ProcessEngines.getProcessEngine("default").getProcessEngineConfiguration();
     }
     
@@ -103,12 +129,19 @@ public class JobExecutorIT {
         assertThat(messageJobConsumerProperties.getMaxAttempts()).as("should configure consumer properties")
                                                                  .isEqualTo(4);
     }
+
+    @Test
+    public void testJobMessageHandler() {
+        assertThat(jobMessageHandler).as("should register JobMessageHandler bean")
+                                     .isInstanceOf(JobMessageHandler.class);
+    }
     
     @SuppressWarnings("deprecation")
     @Test
-    public void testCompleteAsyncJobsViaMessageBasedJobExecutor() throws InterruptedException {
+    public void testAsyncJobs() throws InterruptedException {
         int jobCount = 100;
         CountDownLatch jobsCompleted = new CountDownLatch(jobCount);
+        //MessageHandler jobMessageHandlerSpy = Mockito.spy(jobMessageHandler);
         
         runtimeService.addEventListener(new CountDownLatchActvitiEventListener(jobsCompleted), 
                                         ActivitiEventType.JOB_EXECUTION_SUCCESS );
@@ -136,7 +169,8 @@ public class JobExecutorIT {
 
         assertThat(jobsCompleted.await(1, TimeUnit.MINUTES)).as("should complete all jobs")
                                                             .isTrue();
-        
+        // message handler is invoked
+        verify(jobMessageHandler, times(jobCount)).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
     
     @SuppressWarnings("deprecation")
@@ -197,6 +231,8 @@ public class JobExecutorIT {
         // job event has been completed
         assertThat(jobsCompleted.await(1, TimeUnit.MINUTES)).as("should complete job")
                                                             .isTrue();
+        // message handler is invoked
+        verify(jobMessageHandler).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
 
     @SuppressWarnings("deprecation")
@@ -256,6 +292,8 @@ public class JobExecutorIT {
         // job event has been completed
         assertThat(jobCompleted.await(1, TimeUnit.MINUTES)).as("should complete job")
                                                             .isTrue();
+        // message handler is invoked
+        verify(jobMessageHandler).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
     
     @SuppressWarnings("deprecation")
@@ -316,6 +354,8 @@ public class JobExecutorIT {
         // job event has been completed
         assertThat(jobsCompleted.await(1, TimeUnit.MINUTES)).as("should complete job")
                                                             .isTrue();
+        // message handler is invoked
+        verify(jobMessageHandler).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
     
     abstract class AbstractActvitiEventListener implements ActivitiEventListener {

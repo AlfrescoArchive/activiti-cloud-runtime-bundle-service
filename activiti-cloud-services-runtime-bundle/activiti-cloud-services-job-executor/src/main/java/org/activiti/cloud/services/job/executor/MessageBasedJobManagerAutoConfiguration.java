@@ -55,16 +55,26 @@ public class MessageBasedJobManagerAutoConfiguration {
                                                                        BinderAwareChannelResolver resolver) {
         return new DefaultMessageBasedJobManagerFactory(runtimeBundleProperties, resolver);
     }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public JobMessageHandlerFactory jobMessageHandlerFactory() {
+        return new DefaultJobMessageHandlerFactory();
+    }
     
     @Bean
     @ConditionalOnMissingBean
-    public MessageBasedJobManagerConfigurator messageBasedJobManagerConfigurator(BindingService bindingService,
-                                                                        JobMessageInputChannelFactory jobMessageInputChannelFactory,
-                                                                        MessageBasedJobManagerFactory messageBasedJobManagerFactory,
-                                                                        ConsumerProperties messageJobConsumerProperties) {
-        return new MessageBasedJobManagerConfigurator(bindingService,
+    public MessageBasedJobManagerConfigurator messageBasedJobManagerConfigurator(ConfigurableListableBeanFactory beanFactory,
+                                                                                 BindingService bindingService,
+                                                                                 JobMessageInputChannelFactory jobMessageInputChannelFactory,
+                                                                                 MessageBasedJobManagerFactory messageBasedJobManagerFactory,
+                                                                                 JobMessageHandlerFactory jobMessageHandlerFactory,
+                                                                                 ConsumerProperties messageJobConsumerProperties) {
+        return new MessageBasedJobManagerConfigurator(beanFactory,
+                                                      bindingService,
                                                       jobMessageInputChannelFactory,
                                                       messageBasedJobManagerFactory,
+                                                      jobMessageHandlerFactory,
                                                       messageJobConsumerProperties);
     }
 

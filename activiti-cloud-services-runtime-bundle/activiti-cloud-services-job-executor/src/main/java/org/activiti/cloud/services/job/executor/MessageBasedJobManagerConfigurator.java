@@ -18,6 +18,7 @@ package org.activiti.cloud.services.job.executor;
 
 import org.activiti.engine.cfg.ProcessEngineConfigurator;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.cloud.stream.binding.BindingService;
 import org.springframework.cloud.stream.config.BindingProperties;
@@ -35,6 +36,8 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     private final JobMessageInputChannelFactory inputChannelFactory;
     private final ConsumerProperties consumerProperties;
     private final MessageBasedJobManagerFactory messageBasedJobManagerFactory;
+    private final JobMessageHandlerFactory jobMessageHandlerFactory;
+    private final ConfigurableListableBeanFactory beanFactory;
     
     private MessageBasedJobManager messageBasedJobManager;
     private MessageHandler jobMessageHandler;
@@ -43,18 +46,26 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     
     private boolean running = false;    
     
-    public MessageBasedJobManagerConfigurator(BindingService bindingService,
+    public MessageBasedJobManagerConfigurator(ConfigurableListableBeanFactory beanFactory,
+                                              BindingService bindingService,
                                               JobMessageInputChannelFactory inputChannelFactory,
                                               MessageBasedJobManagerFactory messageBasedJobManagerFactory,
+                                              JobMessageHandlerFactory jobMessageHandlerFactory,
                                               ConsumerProperties consumerProperties) {
         this.bindingService = bindingService;
         this.inputChannelFactory = inputChannelFactory;
         this.consumerProperties = consumerProperties;
         this.messageBasedJobManagerFactory = messageBasedJobManagerFactory;
+        this.jobMessageHandlerFactory = jobMessageHandlerFactory;
+        this.beanFactory = beanFactory;
     }
     
-    protected MessageHandler createMessageHandler(ProcessEngineConfigurationImpl configuration) {
-        return new JobMessageHandler(configuration);
+    protected MessageHandler createJobMessageHandler(ProcessEngineConfigurationImpl configuration) {
+        MessageHandler messageHandler = jobMessageHandlerFactory.create(configuration);
+        
+        beanFactory.registerSingleton(JOB_MESSAGE_HANDLER, messageHandler);
+
+        return (MessageHandler) beanFactory.initializeBean(messageHandler, JOB_MESSAGE_HANDLER);
     }
     
     /**
@@ -99,7 +110,7 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
 
     @Override
     public void start() {
-        jobMessageHandler = createMessageHandler(configuration);
+        jobMessageHandler = createJobMessageHandler(configuration);
         
         // Let's subscribe and bind consumer channel   
         inputChannel.subscribe(jobMessageHandler);
