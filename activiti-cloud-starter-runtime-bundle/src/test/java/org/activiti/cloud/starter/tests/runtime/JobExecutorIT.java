@@ -136,7 +136,6 @@ public class JobExecutorIT {
                                      .isInstanceOf(JobMessageHandler.class);
     }
     
-    @SuppressWarnings("deprecation")
     @Test
     public void testAsyncJobs() throws InterruptedException {
         int jobCount = 100;
@@ -172,7 +171,6 @@ public class JobExecutorIT {
         verify(jobMessageHandler, times(jobCount)).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
     
-    @SuppressWarnings("deprecation")
     @Test
     public void testCatchingTimerEvent() throws Exception {
         CountDownLatch jobsCompleted = new CountDownLatch(1);
@@ -234,7 +232,6 @@ public class JobExecutorIT {
         verify(jobMessageHandler).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     public void testStartTimeEvent() throws InterruptedException {
         CountDownLatch jobCompleted = new CountDownLatch(1);
@@ -295,7 +292,6 @@ public class JobExecutorIT {
         verify(jobMessageHandler).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
     
-    @SuppressWarnings("deprecation")
     @Test
     public void testBoundaryTimerEvent() throws Exception {
         CountDownLatch jobsCompleted = new CountDownLatch(1);
