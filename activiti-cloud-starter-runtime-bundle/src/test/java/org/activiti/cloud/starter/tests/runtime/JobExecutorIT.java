@@ -141,7 +141,6 @@ public class JobExecutorIT {
     public void testAsyncJobs() throws InterruptedException {
         int jobCount = 100;
         CountDownLatch jobsCompleted = new CountDownLatch(jobCount);
-        //MessageHandler jobMessageHandlerSpy = Mockito.spy(jobMessageHandler);
         
         runtimeService.addEventListener(new CountDownLatchActvitiEventListener(jobsCompleted), 
                                         ActivitiEventType.JOB_EXECUTION_SUCCESS );
