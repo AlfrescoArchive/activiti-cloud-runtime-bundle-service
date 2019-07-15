@@ -106,8 +106,8 @@ public class JobExecutorIT {
         
         @Override
         public void configure(SpringProcessEngineConfiguration processEngineConfiguration) {
-            processEngineConfiguration.setAsyncExecutorDefaultTimerJobAcquireWaitTime(1000);
-            processEngineConfiguration.setAsyncExecutorDefaultAsyncJobAcquireWaitTime(1000);
+            processEngineConfiguration.setAsyncExecutorDefaultTimerJobAcquireWaitTime(500);
+            processEngineConfiguration.setAsyncExecutorDefaultAsyncJobAcquireWaitTime(500);
         }
         
         @Bean
