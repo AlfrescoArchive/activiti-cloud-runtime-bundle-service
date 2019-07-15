@@ -16,6 +16,8 @@
 
 package org.activiti.cloud.starter.tests.services.audit;
 
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
 import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.ALL_REQUIRED_HEADERS;
 import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.RUNTIME_BUNDLE_INFO_HEADERS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +39,6 @@ import org.activiti.cloud.api.process.model.events.CloudBPMNTimerFiredEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerScheduledEvent;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.engine.ProcessEngineConfiguration;
-import org.activiti.engine.ProcessEngines;
 import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.activiti.spring.boot.ProcessEngineConfigurationConfigurer;
 import org.junit.After;
@@ -68,6 +69,7 @@ public class TimerAuditProducerIT {
     @Autowired
     private AuditConsumerStreamHandler streamHandler;
     
+    @Autowired
     private ProcessEngineConfiguration processEngineConfiguration;
     
     @TestConfiguration
@@ -83,7 +85,6 @@ public class TimerAuditProducerIT {
     
     @Before
     public void setUp() {
-        processEngineConfiguration = ProcessEngines.getProcessEngine("default").getProcessEngineConfiguration();
     }
     
     @After
@@ -108,6 +109,16 @@ public class TimerAuditProducerIT {
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
 
+            assertThat(receivedEvents)
+                    .extracting( CloudRuntimeEvent::getEventType,
+                                 CloudRuntimeEvent::getEntityId)
+                    .contains(
+                            tuple(ACTIVITY_STARTED,
+                                  "timer"),
+                            tuple(BPMNTimerEvent.TimerEvents.TIMER_SCHEDULED,
+                                  "timer")
+                    );
+            
             List<CloudBPMNTimerScheduledEvent> timerEvents = receivedEvents
                     .stream()
                     .filter(CloudBPMNTimerScheduledEvent.class::isInstance)
@@ -152,6 +163,18 @@ public class TimerAuditProducerIT {
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
 
+            assertThat(receivedEvents)
+                    .extracting( CloudRuntimeEvent::getEventType,
+                                 CloudRuntimeEvent::getEntityId)
+                    .contains( 
+                            tuple(BPMNTimerEvent.TimerEvents.TIMER_FIRED,
+                                  "timer"),
+                            tuple(BPMNTimerEvent.TimerEvents.TIMER_EXECUTED,
+                                  "timer"),
+                            tuple(ACTIVITY_COMPLETED,
+                                  "timer")
+                    );
+            
             List<CloudBPMNTimerEvent> timerEvents = receivedEvents
                     .stream()
                     .filter(event -> (CloudBPMNTimerFiredEvent.class.isInstance(event) ||
@@ -160,38 +183,37 @@ public class TimerAuditProducerIT {
                     .collect(Collectors.toList());
 
             assertThat(timerEvents)
-            .extracting( CloudRuntimeEvent::getEventType,
-                         CloudRuntimeEvent::getBusinessKey,
-                         CloudRuntimeEvent::getProcessDefinitionId,
-                         CloudRuntimeEvent::getProcessInstanceId,
-                         CloudRuntimeEvent::getProcessDefinitionKey,
-                         CloudRuntimeEvent::getProcessDefinitionVersion,
-                         event -> event.getEntity().getProcessDefinitionId(),
-                         event -> event.getEntity().getProcessInstanceId(),
-                         event -> event.getEntityId()
-            )
-            .containsOnly(
-                    tuple(BPMNTimerEvent.TimerEvents.TIMER_FIRED,
-                          "businessKey",
-                          startProcessEntity.getBody().getProcessDefinitionId(),
-                          startProcessEntity.getBody().getId(),
-                          startProcessEntity.getBody().getProcessDefinitionKey(),
-                          startProcessEntity.getBody().getProcessDefinitionVersion(),
-                          startProcessEntity.getBody().getProcessDefinitionId(),
-                          startProcessEntity.getBody().getId(),
-                          "timer"),
-                    tuple(BPMNTimerEvent.TimerEvents.TIMER_EXECUTED,
-                          "businessKey",
-                          startProcessEntity.getBody().getProcessDefinitionId(),
-                          startProcessEntity.getBody().getId(),
-                          startProcessEntity.getBody().getProcessDefinitionKey(),
-                          startProcessEntity.getBody().getProcessDefinitionVersion(),
-                          startProcessEntity.getBody().getProcessDefinitionId(),
-                          startProcessEntity.getBody().getId(),
-                          "timer")
-            );
-        });
-        
+                    .extracting( CloudRuntimeEvent::getEventType,
+                                 CloudRuntimeEvent::getBusinessKey,
+                                 CloudRuntimeEvent::getProcessDefinitionId,
+                                 CloudRuntimeEvent::getProcessInstanceId,
+                                 CloudRuntimeEvent::getProcessDefinitionKey,
+                                 CloudRuntimeEvent::getProcessDefinitionVersion,
+                                 event -> event.getEntity().getProcessDefinitionId(),
+                                 event -> event.getEntity().getProcessInstanceId(),
+                                 event -> event.getEntityId()
+                    )
+                    .containsOnly(
+                            tuple(BPMNTimerEvent.TimerEvents.TIMER_FIRED,
+                                  "businessKey",
+                                  startProcessEntity.getBody().getProcessDefinitionId(),
+                                  startProcessEntity.getBody().getId(),
+                                  startProcessEntity.getBody().getProcessDefinitionKey(),
+                                  startProcessEntity.getBody().getProcessDefinitionVersion(),
+                                  startProcessEntity.getBody().getProcessDefinitionId(),
+                                  startProcessEntity.getBody().getId(),
+                                  "timer"),
+                            tuple(BPMNTimerEvent.TimerEvents.TIMER_EXECUTED,
+                                  "businessKey",
+                                  startProcessEntity.getBody().getProcessDefinitionId(),
+                                  startProcessEntity.getBody().getId(),
+                                  startProcessEntity.getBody().getProcessDefinitionKey(),
+                                  startProcessEntity.getBody().getProcessDefinitionVersion(),
+                                  startProcessEntity.getBody().getProcessDefinitionId(),
+                                  startProcessEntity.getBody().getId(),
+                                  "timer")
+                    );
+        });        
     }
     
     @Test
