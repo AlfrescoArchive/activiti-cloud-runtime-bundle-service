@@ -26,6 +26,7 @@ import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
 import org.springframework.cloud.stream.binding.BindingService;
 import org.springframework.cloud.stream.binding.SubscribableChannelBindingTargetFactory;
 import org.springframework.cloud.stream.config.BindingServiceProperties;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -52,8 +53,16 @@ public class MessageBasedJobManagerAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public MessageBasedJobManagerFactory messageBasedJobManagerFactory(RuntimeBundleProperties runtimeBundleProperties,
-                                                                       BinderAwareChannelResolver resolver) {
-        return new DefaultMessageBasedJobManagerFactory(runtimeBundleProperties, resolver);
+                                                                       JobMessageProducer jobMessageProducer) {
+        return new DefaultMessageBasedJobManagerFactory(runtimeBundleProperties, jobMessageProducer);
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public JobMessageProducer jobMessageProducer(BinderAwareChannelResolver resolver,
+                                                 ApplicationEventPublisher eventPublisher) {
+        return new DefaultJobMessageProducer(resolver,
+                                             eventPublisher);
     }
 
     @Bean

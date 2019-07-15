@@ -21,29 +21,21 @@ import java.util.Date;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.engine.impl.asyncexecutor.DefaultJobManager;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
-import org.activiti.engine.impl.cfg.TransactionListener;
-import org.activiti.engine.impl.cfg.TransactionState;
-import org.activiti.engine.impl.context.Context;
-import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.entity.JobEntity;
 import org.activiti.engine.runtime.Job;
-import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.support.MessageBuilder;
 
 public class MessageBasedJobManager extends DefaultJobManager {
 
     private final RuntimeBundleProperties runtimeBundleProperties;
-    private final BinderAwareChannelResolver resolver;
+    private final JobMessageProducer jobMessageProducer;
 
     public MessageBasedJobManager(ProcessEngineConfigurationImpl processEngineConfiguration,
                                   RuntimeBundleProperties runtimeBundleProperties,
-                                  BinderAwareChannelResolver resolver) {
+                                  JobMessageProducer jobMessageProducer) {
         super(processEngineConfiguration);
         
         this.runtimeBundleProperties = runtimeBundleProperties;
-        this.resolver = resolver;
+        this.jobMessageProducer = jobMessageProducer;
     }
 
     @Override
@@ -79,26 +71,8 @@ public class MessageBasedJobManager extends DefaultJobManager {
         return this.getClass().getSimpleName();
     }
 
-    public void sendMessage(final Job jobEntity) {
-        Context.getTransactionContext()
-               .addTransactionListener(TransactionState.COMMITTED, new JobMessageProducer(jobEntity));
+    public void sendMessage(final Job job) {
+        jobMessageProducer.sendMessage(getDestination(), job);
     }
     
-    class JobMessageProducer implements TransactionListener {
-        
-        private final Job jobEntity;
-
-        public JobMessageProducer(Job jobEntity) {
-            this.jobEntity = jobEntity;
-        }
-
-        public void execute(CommandContext commandContext) {
-            Message<String> message = MessageBuilder.withPayload(jobEntity.getId())
-                                                    .build();
-            
-            MessageChannel destination = resolver.resolveDestination(getDestination());
-            
-            destination.send(message);
-        }
-    }
 }

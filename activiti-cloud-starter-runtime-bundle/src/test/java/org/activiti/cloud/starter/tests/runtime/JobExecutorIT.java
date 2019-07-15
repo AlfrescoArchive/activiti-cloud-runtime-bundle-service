@@ -27,6 +27,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.activiti.cloud.services.job.executor.JobMessageHandler;
 import org.activiti.cloud.services.job.executor.JobMessageHandlerFactory;
+import org.activiti.cloud.services.job.executor.JobMessageProducer;
+import org.activiti.cloud.services.job.executor.MessageBasedJobManager;
 import org.activiti.engine.ManagementService;
 import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.ProcessEngines;
@@ -36,6 +38,7 @@ import org.activiti.engine.delegate.event.ActivitiEvent;
 import org.activiti.engine.delegate.event.ActivitiEventListener;
 import org.activiti.engine.delegate.event.ActivitiEventType;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.activiti.engine.runtime.Job;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.activiti.spring.boot.ProcessEngineConfigurationConfigurer;
@@ -50,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
@@ -85,6 +89,12 @@ public class JobExecutorIT {
 
     @Autowired
     private ConsumerProperties messageJobConsumerProperties;
+
+    @Autowired
+    private MessageBasedJobManager messageBasedJobManager;
+    
+    @SpyBean
+    private JobMessageProducer jobMessageProducer;
     
     private ProcessEngineConfiguration processEngineConfiguration;
     
@@ -110,6 +120,7 @@ public class JobExecutorIT {
                 }
             };
         }
+        
     }
     
     @Before
@@ -131,7 +142,7 @@ public class JobExecutorIT {
     }
 
     @Test
-    public void testJobMessageHandler() {
+    public void shouldRegisterJobMessageHandlerBean() {
         assertThat(jobMessageHandler).as("should register JobMessageHandler bean")
                                      .isInstanceOf(JobMessageHandler.class);
     }
@@ -167,6 +178,9 @@ public class JobExecutorIT {
 
         assertThat(jobsCompleted.await(1, TimeUnit.MINUTES)).as("should complete all jobs")
                                                             .isTrue();
+        // message is sent
+        verify(jobMessageProducer, times(jobCount)).sendMessage(ArgumentMatchers.eq(messageBasedJobManager.getDestination()), 
+                                               ArgumentMatchers.<Job>any());
         // message handler is invoked
         verify(jobMessageHandler, times(jobCount)).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
@@ -228,6 +242,9 @@ public class JobExecutorIT {
         // job event has been completed
         assertThat(jobsCompleted.await(1, TimeUnit.MINUTES)).as("should complete job")
                                                             .isTrue();
+        // message is sent
+        verify(jobMessageProducer).sendMessage(ArgumentMatchers.eq(messageBasedJobManager.getDestination()), 
+                                               ArgumentMatchers.<Job>any());
         // message handler is invoked
         verify(jobMessageHandler).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
@@ -288,6 +305,9 @@ public class JobExecutorIT {
         // job event has been completed
         assertThat(jobCompleted.await(1, TimeUnit.MINUTES)).as("should complete job")
                                                             .isTrue();
+        // message is sent
+        verify(jobMessageProducer).sendMessage(ArgumentMatchers.eq(messageBasedJobManager.getDestination()), 
+                                               ArgumentMatchers.<Job>any());
         // message handler is invoked
         verify(jobMessageHandler).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
@@ -349,6 +369,9 @@ public class JobExecutorIT {
         // job event has been completed
         assertThat(jobsCompleted.await(1, TimeUnit.MINUTES)).as("should complete job")
                                                             .isTrue();
+        // message is sent
+        verify(jobMessageProducer).sendMessage(ArgumentMatchers.eq(messageBasedJobManager.getDestination()), 
+                                               ArgumentMatchers.<Job>any());
         // message handler is invoked
         verify(jobMessageHandler).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
@@ -376,7 +399,4 @@ public class JobExecutorIT {
             countDownLatch.countDown();
         }
     }
-    
-
-    
 }

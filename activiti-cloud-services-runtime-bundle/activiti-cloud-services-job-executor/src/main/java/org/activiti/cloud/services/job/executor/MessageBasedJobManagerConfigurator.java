@@ -28,6 +28,8 @@ import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.SubscribableChannel;
 
 public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigurator, SmartLifecycle {
+    private static final String MESSAGE_BASED_JOB_MANAGER = "messageBasedJobManager";
+
     public static final String JOB_MESSAGE_HANDLER = "jobMessageHandler";
 
     private String contentType = MediaType.APPLICATION_JSON_VALUE;
@@ -63,9 +65,13 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     protected MessageHandler createJobMessageHandler(ProcessEngineConfigurationImpl configuration) {
         MessageHandler messageHandler = jobMessageHandlerFactory.create(configuration);
         
-        beanFactory.registerSingleton(JOB_MESSAGE_HANDLER, messageHandler);
+        return registerBean(JOB_MESSAGE_HANDLER, messageHandler);
+    }
 
-        return (MessageHandler) beanFactory.initializeBean(messageHandler, JOB_MESSAGE_HANDLER);
+    protected MessageBasedJobManager createMessageBasedJobManager(ProcessEngineConfigurationImpl configuration) {
+        MessageBasedJobManager instance = messageBasedJobManagerFactory.create(configuration);
+        
+        return registerBean(MESSAGE_BASED_JOB_MANAGER, instance);
     }
     
     /**
@@ -74,7 +80,7 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     @Override
     public void beforeInit(ProcessEngineConfigurationImpl configuration) {
         
-        messageBasedJobManager = messageBasedJobManagerFactory.create(configuration);
+        this.messageBasedJobManager = createMessageBasedJobManager(configuration);
         
         // Let's manage async executor lifecycle manually on start/stop
         configuration.setAsyncExecutorActivate(false);
@@ -152,5 +158,11 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     public void setContentType(String contentType) {
         this.contentType = contentType;
     }
+    
+    @SuppressWarnings("unchecked")
+    protected <T> T registerBean(String name, T bean) {
+        beanFactory.registerSingleton(name, bean);
 
+        return (T) beanFactory.initializeBean(bean, name);
+    }
 }
