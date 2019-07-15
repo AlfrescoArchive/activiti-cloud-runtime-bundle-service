@@ -58,7 +58,7 @@ public class JobMessageHandler  implements MessageHandler {
             }
 
         } catch (Exception cause) {
-            logger.error("Exception when handling message {} from job queue: {}", message, cause);
+            logger.error("Exception '{}' when handling job message {}", cause.getMessage(), message);
 
             throw new ActivitiException("Exception when handling message from job queue", cause);
         }

@@ -21,7 +21,9 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -29,11 +31,14 @@ import org.activiti.cloud.services.job.executor.JobMessageHandler;
 import org.activiti.cloud.services.job.executor.JobMessageHandlerFactory;
 import org.activiti.cloud.services.job.executor.JobMessageProducer;
 import org.activiti.cloud.services.job.executor.MessageBasedJobManager;
+import org.activiti.engine.ActivitiException;
 import org.activiti.engine.ManagementService;
 import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.ProcessEngines;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
+import org.activiti.engine.delegate.DelegateExecution;
+import org.activiti.engine.delegate.JavaDelegate;
 import org.activiti.engine.delegate.event.ActivitiEvent;
 import org.activiti.engine.delegate.event.ActivitiEventListener;
 import org.activiti.engine.delegate.event.ActivitiEventType;
@@ -72,6 +77,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class JobExecutorIT {
     private static final Logger logger = LoggerFactory.getLogger(JobExecutorIT.class);
 
+    private static final String FAILED_JOB_RETRY = "failedJobRetry";
+    private static final String ERROR_TIMER_CATCH_EVENT = "errorTimerCatchEvent";
     private static final String TEST_BOUNDARY_TIMER_EVENT = "testBoundaryTimerEvent";
     private static final String START_TIMER_EVENT_EXAMPLE = "startTimerEventExample";
     private static final String INTERMEDIATE_TIMER_EVENT_EXAMPLE = "intermediateTimerEventExample";
@@ -250,13 +257,54 @@ public class JobExecutorIT {
     }
 
     @Test
+    public void testAsyncJobsFailRetry() throws InterruptedException {
+        //given
+        RetryFailingDelegate.shallThrow = true;
+        int retryCount = 5;
+        CountDownLatch jobRetries = new CountDownLatch(retryCount);
+        
+        runtimeService.addEventListener(new CountDownLatchActvitiEventListener(jobRetries), 
+                                        ActivitiEventType.JOB_EXECUTION_FAILURE );
+        
+        String processDefinitionId = repositoryService.createProcessDefinitionQuery()
+                                                      .processDefinitionKey(FAILED_JOB_RETRY)
+                                                      .singleResult()
+                                                      .getId();
+        //when
+        runtimeService.createProcessInstanceBuilder()
+                      .processDefinitionId(processDefinitionId)
+                      .start();
+        // then
+        assertThat(jobRetries.await(1, TimeUnit.MINUTES)).as("should retry failed jobs 5 times every 5 secs")
+                                                         .isTrue();
+        
+        await("the async executions should exists with job exception")
+            .untilAsserted(() -> {
+                assertThat(runtimeService.createExecutionQuery()
+                                         .processDefinitionId(processDefinitionId)
+                                         .activityId("failingJobTask")
+                                         .count()).isEqualTo(1);
+                
+                assertThat(managementService.createDeadLetterJobQuery()
+                           .processDefinitionId(processDefinitionId)
+                           .withException()
+                           .count()).isEqualTo(1); 
+            });
+        
+        // message is sent
+        verify(jobMessageProducer, times(retryCount)).sendMessage(ArgumentMatchers.eq(messageBasedJobManager.getDestination()), 
+                                                                  ArgumentMatchers.<Job>any());
+        // message handler is invoked
+        verify(jobMessageHandler, times(retryCount)).handleMessage(ArgumentMatchers.<Message<?>>any());
+    }
+    
+    @Test
     public void testStartTimeEvent() throws InterruptedException {
         CountDownLatch jobCompleted = new CountDownLatch(1);
         CountDownLatch timerFired = new CountDownLatch(1);
 
         // Set the clock fixed
         Date startTime = new Date();
-
 
         runtimeService.addEventListener(new CountDownLatchActvitiEventListener(timerFired),
                                         ActivitiEventType.TIMER_FIRED);
@@ -270,7 +318,9 @@ public class JobExecutorIT {
                                                       .singleResult()
                                                       .getId();
         // when
-        ProcessInstance pi = runtimeService.createProcessInstanceQuery().processDefinitionKey(START_TIMER_EVENT_EXAMPLE).singleResult();
+        ProcessInstance pi = runtimeService.createProcessInstanceQuery()
+                                           .processDefinitionKey(START_TIMER_EVENT_EXAMPLE)
+                                           .singleResult();
 
         // then
         assertThat(pi).isNull();
@@ -399,4 +449,26 @@ public class JobExecutorIT {
             countDownLatch.countDown();
         }
     }
+    
+    public static class RetryFailingDelegate implements JavaDelegate {
+
+        public static final String EXCEPTION_MESSAGE = "Expected exception.";
+
+        public static boolean shallThrow;
+        public static List<Long> times = new ArrayList<Long>();
+
+        static public void resetTimeList() {
+          times = new ArrayList<Long>();
+        }
+
+        @Override
+        public void execute(DelegateExecution execution) {
+
+          times.add(System.currentTimeMillis());
+
+          if (shallThrow) {
+            throw new ActivitiException(EXCEPTION_MESSAGE);
+          }
+        }
+      }    
 }
