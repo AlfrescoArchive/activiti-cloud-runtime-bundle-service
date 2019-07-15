@@ -45,26 +45,40 @@ public class JobMessageHandler  implements MessageHandler {
 
             logger.info("Received job message with id: " + jobId);
             
-            // Let's try to find existing job by jobId
-            JobEntity job = processEngineConfiguration.getCommandExecutor().execute(new Command<JobEntity>() {
-                @Override
-                public JobEntity execute(CommandContext commandContext) {
-                  return commandContext.getJobEntityManager().findById(jobId);
-                }
-              });
-            
-            // Let's execute job  
-            if(job != null) {
-                ExecuteAsyncRunnable executeAsyncRunnable = new ExecuteAsyncRunnable(job, processEngineConfiguration);
+            JobEntity job = findJobById(jobId);
 
-                executeAsyncRunnable.run();
+            if(job != null) {
+                logger.debug("Found existing job: {}", job);
+
+                executeJob(job);
+
+                logger.debug("Job executed: {}", job);
             } else {
                 logger.info("Job " + jobId + " does not exist. Job message has been dropped.");
             }
 
         } catch (Exception cause) {
+            logger.error("Exception when handling message {} from job queue: {}", message, cause);
+
             throw new ActivitiException("Exception when handling message from job queue", cause);
         }
+    }
+    
+    public JobEntity findJobById(String jobId) {
+        return processEngineConfiguration.getCommandExecutor()
+                                         .execute(new Command<JobEntity>() {
+                                             @Override
+                                             public JobEntity execute(CommandContext commandContext) {
+                                                 return commandContext.getJobEntityManager().findById(jobId);
+                                             }
+                                         });
+    }
+    
+    public void executeJob(JobEntity job) {
+        ExecuteAsyncRunnable executeAsyncRunnable = new ExecuteAsyncRunnable(job, 
+                                                                             processEngineConfiguration);
+
+        executeAsyncRunnable.run();
     }
 
 }
