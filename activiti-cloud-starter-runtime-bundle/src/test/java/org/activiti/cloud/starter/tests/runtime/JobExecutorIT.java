@@ -77,11 +77,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class JobExecutorIT {
     private static final Logger logger = LoggerFactory.getLogger(JobExecutorIT.class);
 
+    private static final String FAILED_TIMER_JOB_RETRY = "failedTimerJobRetry";
     private static final String FAILED_JOB_RETRY = "failedJobRetry";
     private static final String TEST_BOUNDARY_TIMER_EVENT = "testBoundaryTimerEvent";
     private static final String START_TIMER_EVENT_EXAMPLE = "startTimerEventExample";
     private static final String INTERMEDIATE_TIMER_EVENT_EXAMPLE = "intermediateTimerEventExample";
-
     private static final String ASYNC_TASK = "asyncTask";
 
     @Autowired
@@ -285,9 +285,9 @@ public class JobExecutorIT {
                                          .count()).isEqualTo(1);
                 
                 assertThat(managementService.createDeadLetterJobQuery()
-                           .processDefinitionId(processDefinitionId)
-                           .withException()
-                           .count()).isEqualTo(1); 
+                                            .processDefinitionId(processDefinitionId)
+                                            .withException()
+                                            .count()).isEqualTo(1); 
             });
         
         // message is sent
@@ -297,6 +297,47 @@ public class JobExecutorIT {
         verify(jobMessageHandler, times(retryCount)).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
     
+    @Test
+    public void testTimerJobsFailRetry() throws InterruptedException {
+        //given
+        RetryFailingDelegate.shallThrow = true;
+        int retryCount = 3; 
+        CountDownLatch jobRetries = new CountDownLatch(retryCount);
+        
+        runtimeService.addEventListener(new CountDownLatchActvitiEventListener(jobRetries), 
+                                        ActivitiEventType.JOB_EXECUTION_FAILURE );
+        
+        String processDefinitionId = repositoryService.createProcessDefinitionQuery()
+                                                      .processDefinitionKey(FAILED_TIMER_JOB_RETRY)
+                                                      .singleResult()
+                                                      .getId();
+        //when
+        runtimeService.createProcessInstanceBuilder()
+                      .processDefinitionId(processDefinitionId)
+                      .start();
+        // then
+        assertThat(jobRetries.await(1, TimeUnit.MINUTES)).as("should retry failed jobs 2 times every 5 secs")
+                                                         .isTrue();
+        
+        await("the async executions should exists with job exception")
+            .untilAsserted(() -> {
+                assertThat(runtimeService.createExecutionQuery()
+                                         .processDefinitionId(processDefinitionId)
+                                         .activityId("timerCatchEvent")
+                                         .count()).isEqualTo(1);
+                
+                assertThat(managementService.createDeadLetterJobQuery()
+                                            .processDefinitionId(processDefinitionId)
+                                            .withException()
+                                            .count()).isEqualTo(1); 
+            });
+        
+        // timer job message is sent with 2 retries
+        verify(jobMessageProducer, times(retryCount)).sendMessage(ArgumentMatchers.eq(messageBasedJobManager.getDestination()), 
+                                                                  ArgumentMatchers.<Job>any());
+        // message handler is invoked
+        verify(jobMessageHandler, times(retryCount)).handleMessage(ArgumentMatchers.<Message<?>>any());
+    }    
     @Test
     public void testStartTimeEvent() throws InterruptedException {
         CountDownLatch jobCompleted = new CountDownLatch(1);

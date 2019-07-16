@@ -18,7 +18,7 @@
     </bpmn:serviceTask>
     <bpmn:textAnnotation id="TextAnnotation_046vui2">
       <bpmn:text>activiti:async=true
-retryTimeCycle=R2/PT6S</bpmn:text>
+retryTimeCycle=R5/PT5S</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:association id="Association_0bjfoub" sourceRef="failingJobTask" targetRef="TextAnnotation_046vui2" />
   </bpmn:process>
