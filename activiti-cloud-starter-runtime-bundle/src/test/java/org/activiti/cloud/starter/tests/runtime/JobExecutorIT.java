@@ -78,7 +78,6 @@ public class JobExecutorIT {
     private static final Logger logger = LoggerFactory.getLogger(JobExecutorIT.class);
 
     private static final String FAILED_JOB_RETRY = "failedJobRetry";
-    private static final String ERROR_TIMER_CATCH_EVENT = "errorTimerCatchEvent";
     private static final String TEST_BOUNDARY_TIMER_EVENT = "testBoundaryTimerEvent";
     private static final String START_TIMER_EVENT_EXAMPLE = "startTimerEventExample";
     private static final String INTERMEDIATE_TIMER_EVENT_EXAMPLE = "intermediateTimerEventExample";
