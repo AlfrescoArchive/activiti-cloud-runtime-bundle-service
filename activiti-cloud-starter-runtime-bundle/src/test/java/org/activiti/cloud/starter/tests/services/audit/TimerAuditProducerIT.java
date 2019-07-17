@@ -16,14 +16,6 @@
 
 package org.activiti.cloud.starter.tests.services.audit;
 
-import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED;
-import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
-import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.ALL_REQUIRED_HEADERS;
-import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.RUNTIME_BUNDLE_INFO_HEADERS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-import static org.awaitility.Awaitility.await;
-
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,7 +34,6 @@ import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.activiti.spring.boot.ProcessEngineConfigurationConfigurer;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +44,13 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
+import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.ALL_REQUIRED_HEADERS;
+import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.RUNTIME_BUNDLE_INFO_HEADERS;
+import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(AuditProducerIT.AUDIT_PRODUCER_IT)
@@ -80,11 +78,7 @@ public class TimerAuditProducerIT {
             processEngineConfiguration.setAsyncExecutorDefaultTimerJobAcquireWaitTime(100);
             processEngineConfiguration.setAsyncExecutorDefaultAsyncJobAcquireWaitTime(100);
             processEngineConfiguration.setAsyncExecutorActivate(true);
-        };
-    }
-    
-    @Before
-    public void setUp() {
+        }
     }
     
     @After
@@ -97,11 +91,12 @@ public class TimerAuditProducerIT {
 
         //given
         Date startTime = new Date();
-        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
-                                                                                                                    .withProcessDefinitionKey(PROCESS_INTERMEDIATE_TIMER_EVENT)
-                                                                                                                    .withName("processInstanceName")
-                                                                                                                    .withBusinessKey("businessKey")
-                                                                                                                    .build());
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(
+                new StartProcessPayloadBuilder()
+                        .withProcessDefinitionKey(PROCESS_INTERMEDIATE_TIMER_EVENT)
+                        .withName("processInstanceName")
+                        .withBusinessKey("businessKey")
+                        .build());
  
         //when
         await().untilAsserted(() -> {
