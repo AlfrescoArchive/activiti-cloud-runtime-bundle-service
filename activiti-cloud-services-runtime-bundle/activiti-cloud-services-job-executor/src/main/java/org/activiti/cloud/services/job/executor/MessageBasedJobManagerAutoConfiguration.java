@@ -31,12 +31,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConditionalOnProperty(name = "activiti.cloud.rb.job-executor.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "spring.activiti.asyncExecutorActivate", havingValue = "true", matchIfMissing = true)
 public class MessageBasedJobManagerAutoConfiguration {
     
     @Bean
     @ConditionalOnMissingBean
-    @ConfigurationProperties(prefix = "activiti.cloud.rb.job-executor.message-job-consumer")
+    @ConfigurationProperties(prefix = "spring.activiti.cloud.rb.job-executor.message-job-consumer")
     public ConsumerProperties messageJobConsumerProperties() {
         return new ConsumerProperties();
     }
@@ -44,10 +44,9 @@ public class MessageBasedJobManagerAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public JobMessageInputChannelFactory jobMessageInputChannelFactory(SubscribableChannelBindingTargetFactory bindingTargetFactory,
-                                                   BindingServiceProperties bindingServiceProperties,
-                                                   ConfigurableListableBeanFactory beanFactory) {
+                                                                       BindingServiceProperties bindingServiceProperties,
+                                                                       ConfigurableListableBeanFactory beanFactory) {
         return new JobMessageInputChannelFactory(bindingTargetFactory, bindingServiceProperties, beanFactory);
-        
     }    
     
     @Bean

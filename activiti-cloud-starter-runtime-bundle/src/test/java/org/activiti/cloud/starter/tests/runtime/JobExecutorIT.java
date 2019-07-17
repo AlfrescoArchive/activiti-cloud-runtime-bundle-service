@@ -70,8 +70,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application-test.properties")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-        "activiti.cloud.rb.job-executor.enabled=true",
-        "activiti.cloud.rb.job-executor.message-job-consumer.max-attempts=4"
+        "spring.activiti.asyncExecutorActivate=true",
+        "spring.activiti.cloud.rb.job-executor.message-job-consumer.max-attempts=4" // customized
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class JobExecutorIT {
