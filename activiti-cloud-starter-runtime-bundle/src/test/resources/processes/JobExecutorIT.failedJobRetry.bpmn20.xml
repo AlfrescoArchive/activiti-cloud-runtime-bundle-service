@@ -11,7 +11,7 @@
     <bpmn:sequenceFlow id="SequenceFlow_1o3juq3" sourceRef="failingJobTask" targetRef="EndEvent_0m4t3uh" />
     <bpmn:serviceTask id="failingJobTask" name="Execute&#10;Failing&#10;Job" activiti:async="true" activiti:class="org.activiti.cloud.starter.tests.runtime.JobExecutorIT$RetryFailingDelegate">
       <bpmn:extensionElements>
-        <activiti:failedJobRetryTimeCycle>R5/PT5S</activiti:failedJobRetryTimeCycle>
+        <activiti:failedJobRetryTimeCycle>R5/PT1S</activiti:failedJobRetryTimeCycle>
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_0czgq93</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_1o3juq3</bpmn:outgoing>

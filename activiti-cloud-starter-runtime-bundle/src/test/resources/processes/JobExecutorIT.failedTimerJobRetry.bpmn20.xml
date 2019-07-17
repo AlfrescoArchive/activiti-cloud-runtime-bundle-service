@@ -12,7 +12,7 @@
     <bpmn:sequenceFlow id="SequenceFlow_1vmyacv" sourceRef="errorTask" targetRef="EndEvent_1l42hsy" />
     <bpmn:intermediateCatchEvent id="timerCatchEvent" name="PT1S">
       <bpmn:extensionElements>
-        <activiti:failedJobRetryTimeCycle>R2/PT5S</activiti:failedJobRetryTimeCycle>
+        <activiti:failedJobRetryTimeCycle>R2/PT1S</activiti:failedJobRetryTimeCycle>
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_00sbjkk</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_03shha9</bpmn:outgoing>

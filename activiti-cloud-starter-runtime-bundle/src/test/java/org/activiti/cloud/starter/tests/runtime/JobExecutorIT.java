@@ -288,7 +288,7 @@ public class JobExecutorIT {
                       .processDefinitionId(processDefinitionId)
                       .start();
         // then
-        assertThat(jobRetries.await(1, TimeUnit.MINUTES)).as("should retry failed jobs 5 times every 5 secs")
+        assertThat(jobRetries.await(1, TimeUnit.MINUTES)).as("should retry failed jobs 5 times every 1 sec")
                                                          .isTrue();
         
         await("the async executions should exists with job exception")
@@ -330,7 +330,7 @@ public class JobExecutorIT {
                       .processDefinitionId(processDefinitionId)
                       .start();
         // then
-        assertThat(jobRetries.await(1, TimeUnit.MINUTES)).as("should retry failed jobs 2 times every 5 secs")
+        assertThat(jobRetries.await(1, TimeUnit.MINUTES)).as("should retry failed jobs 2 times every 1 sec")
                                                          .isTrue();
         
         await("the async executions should exists with job exception")
