@@ -23,9 +23,12 @@ import org.activiti.engine.impl.asyncexecutor.DefaultJobManager;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.impl.persistence.entity.JobEntity;
 import org.activiti.engine.runtime.Job;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MessageBasedJobManager extends DefaultJobManager {
-
+    private static final Logger logger = LoggerFactory.getLogger(MessageBasedJobManager.class);
+    
     private static final String DEFAULT_INPUT_CHANNEL_NAME = "asyncExecutorJobs";
     
     private final RuntimeBundleProperties runtimeBundleProperties;
@@ -44,11 +47,14 @@ public class MessageBasedJobManager extends DefaultJobManager {
 
     @Override
     protected void triggerExecutorIfNeeded(final JobEntity jobEntity) {
+        logger.debug("triggerExecutorIfNeeded for job: {}", jobEntity);
+
         sendMessage(jobEntity);
     }
 
     @Override
     public void unacquire(final Job job) {
+        logger.debug("unacquire job: {}", job);
 
         if (job instanceof JobEntity) {
             JobEntity jobEntity = (JobEntity) job;
@@ -80,6 +86,8 @@ public class MessageBasedJobManager extends DefaultJobManager {
     }
     
     public void sendMessage(final Job job) {
+        logger.debug("sendMessage for job: {}", job);
+        
         jobMessageProducer.sendMessage(getDestination(), job);
     }
 }
