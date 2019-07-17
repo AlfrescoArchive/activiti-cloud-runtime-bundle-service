@@ -186,7 +186,7 @@ public class JobExecutorIT {
                                                             .isTrue();
         // message is sent
         verify(jobMessageProducer, times(jobCount)).sendMessage(ArgumentMatchers.eq(messageBasedJobManager.getDestination()), 
-                                               ArgumentMatchers.<Job>any());
+                                                                ArgumentMatchers.<Job>any());
         // message handler is invoked
         verify(jobMessageHandler, times(jobCount)).handleMessage(ArgumentMatchers.<Message<?>>any());
     }
