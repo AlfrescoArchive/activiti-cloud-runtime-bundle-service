@@ -26,8 +26,12 @@ import org.activiti.engine.runtime.Job;
 
 public class MessageBasedJobManager extends DefaultJobManager {
 
+    private static final String DEFAULT_INPUT_CHANNEL_NAME = "asyncExecutorJobs";
+    
     private final RuntimeBundleProperties runtimeBundleProperties;
     private final JobMessageProducer jobMessageProducer;
+    
+    private String inputChannelName = DEFAULT_INPUT_CHANNEL_NAME;
 
     public MessageBasedJobManager(ProcessEngineConfigurationImpl processEngineConfiguration,
                                   RuntimeBundleProperties runtimeBundleProperties,
@@ -67,12 +71,15 @@ public class MessageBasedJobManager extends DefaultJobManager {
         return runtimeBundleProperties.getServiceName() + "." + this.getInputChannelName();
     }
    
-    protected String getInputChannelName() {
-        return this.getClass().getSimpleName();
+    public String getInputChannelName() {
+        return inputChannelName;
     }
 
+    public void setInputChannelName(String inputChannelName) {
+        this.inputChannelName = inputChannelName;
+    }
+    
     public void sendMessage(final Job job) {
         jobMessageProducer.sendMessage(getDestination(), job);
     }
-    
 }
