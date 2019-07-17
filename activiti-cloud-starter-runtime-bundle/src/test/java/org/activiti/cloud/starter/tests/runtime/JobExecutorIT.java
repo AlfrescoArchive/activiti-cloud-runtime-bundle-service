@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.job.executor.JobMessageHandler;
 import org.activiti.cloud.services.job.executor.JobMessageHandlerFactory;
 import org.activiti.cloud.services.job.executor.JobMessageProducer;
@@ -99,6 +100,9 @@ public class JobExecutorIT {
     @Autowired
     private MessageBasedJobManager messageBasedJobManager;
     
+    @Autowired
+    private RuntimeBundleProperties runtimeBundleProperties;
+    
     @SpyBean
     private JobMessageProducer jobMessageProducer;
     
@@ -152,6 +156,16 @@ public class JobExecutorIT {
         assertThat(jobMessageHandler).as("should register JobMessageHandler bean")
                                      .isInstanceOf(JobMessageHandler.class);
     }
+    
+    @Test
+    public void shouldRegisterMessageBasedJobManagerBean() {
+        assertThat(messageBasedJobManager).as("should register MessageBasedJobManager bean")
+                                          .isInstanceOf(MessageBasedJobManager.class);
+        
+        assertThat(messageBasedJobManager.getDestination()).as("should configure rb scoped destination")
+                                                           .startsWith(runtimeBundleProperties.getServiceName());
+    }
+    
     
     @Test
     public void testAsyncJobs() throws InterruptedException {
