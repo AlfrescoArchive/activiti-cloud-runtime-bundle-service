@@ -36,7 +36,7 @@ public class JobMessageInputChannelFactory {
         this.beanFactory = beanFactory;
     }
     
-    protected SubscribableChannel createInputChannel(String consumerName, BindingProperties bindingProperties) {
+    public SubscribableChannel createInputChannel(String consumerName, BindingProperties bindingProperties) {
         bindingServiceProperties.getBindings().put(consumerName, bindingProperties);
         SubscribableChannel channel = bindingTargetFactory.createInput(consumerName);
         beanFactory.registerSingleton(consumerName, channel);

@@ -20,15 +20,17 @@ import java.util.Objects;
 
 import org.springframework.context.ApplicationEvent;
 
-public class JobMessageEvent extends ApplicationEvent {
+public class JobMessageFailedEvent extends ApplicationEvent {
     private static final long serialVersionUID = 1L;
     private final String destination;
     private final String jobId;
+    private final Throwable exception;
     
-    public JobMessageEvent(String jobId, String destination, Object source) {
+    public JobMessageFailedEvent(String jobId, String destination, Throwable exception, Object source) {
         super(source);
         this.jobId = jobId;
         this.destination = destination;
+        this.exception = exception;
     }
     
     public String getDestination() {
@@ -39,9 +41,28 @@ public class JobMessageEvent extends ApplicationEvent {
         return jobId;
     }
 
+    public Throwable getException() {
+        return exception;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("JobMessageFailedEvent [destination=");
+        builder.append(destination);
+        builder.append(", jobId=");
+        builder.append(jobId);
+        builder.append(", exception=");
+        builder.append(exception);
+        builder.append(", source=");
+        builder.append(source);
+        builder.append("]");
+        return builder.toString();
+    }
+
     @Override
     public int hashCode() {
-        return Objects.hash(destination, jobId);
+        return Objects.hash(destination, exception, jobId);
     }
 
     @Override
@@ -52,22 +73,9 @@ public class JobMessageEvent extends ApplicationEvent {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        JobMessageEvent other = (JobMessageEvent) obj;
-        return Objects.equals(destination, other.destination) && Objects.equals(jobId, other.jobId);
+        JobMessageFailedEvent other = (JobMessageFailedEvent) obj;
+        return Objects.equals(destination, other.destination) 
+                && Objects.equals(exception, other.exception) 
+                && Objects.equals(jobId, other.jobId);
     }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("JobMessageEvent [destination=");
-        builder.append(destination);
-        builder.append(", jobId=");
-        builder.append(jobId);
-        builder.append(", source=");
-        builder.append(source);
-        builder.append("]");
-        return builder.toString();
-    }
-
-
 }

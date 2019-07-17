@@ -25,8 +25,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 
@@ -43,31 +42,57 @@ public class DefaultJobMessageProducer implements JobMessageProducer {
     }
 
     @Override
-    public void sendMessage(String destination, Job job) {
-        eventPublisher.publishEvent(new JobMessageEvent(job.getId(), destination, job));
+    public void sendMessage(@NonNull String destination, @NonNull Job job) {
+        Assert.isTrue(TransactionSynchronizationManager.isSynchronizationActive(), "requires active transaction synchronization");
+        Assert.hasLength(job.getId(), "job id must not be empty");
+        Assert.hasLength(destination, "destination must not be empty");
+        
+        // Let's try to resolve message channel while inside main Activiti transaction to minimize infrastructure errors 
+        MessageChannel messageChannel = resolver.resolveDestination(destination);
+
+        // Let's send message right after the main transaction has successfully committed. 
+        TransactionSynchronizationManager.registerSynchronization(new JobMessageTransactionSynchronization(destination, 
+                                                                                                           messageChannel, 
+                                                                                                           job));
     }
     
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void on(@NonNull JobMessageEvent event) {
-        logger.debug("On JobMessageEvent: {}", event);
-
-        Assert.isTrue(TransactionSynchronizationManager.isActualTransactionActive(), "requires actual active transaction");
-
-        Assert.notNull(event.getJobId(), "job id must not be null");
-        Assert.notNull(event.getDestination(), "destination must not be null");
-        
-        Message<String> message = buildMessage(event);
-        
-        // Let's send message 
-        MessageChannel messageChannel = resolver.resolveDestination(event.getDestination());
-        
-        messageChannel.send(message);
-    }
-
-    protected Message<String> buildMessage(JobMessageEvent event) {
-        return MessageBuilder.withPayload(event.getJobId())
+    protected Message<String> buildMessage(Job job) {
+        return MessageBuilder.withPayload(job.getId())
                 // TODO set headers?  
                 .build();
-        
+    }
+    
+    class JobMessageTransactionSynchronization implements TransactionSynchronization {
+
+        private final MessageChannel messageChannel;
+        private final Job job;
+        private final String destination;
+
+        public JobMessageTransactionSynchronization(String destination, MessageChannel messageChannel, Job job) {
+            this.destination = destination;
+            this.messageChannel = messageChannel;
+            this.job = job;
+        }
+
+        @Override
+        public void afterCommit() {
+            Message<String> message = buildMessage(job);
+            
+            logger.debug("Sending job message '{}' to destination '{}' via message channel: {}", message, destination, messageChannel);
+            
+            try { 
+                boolean sent = messageChannel.send(message);
+                
+                if(!sent)
+                    throw new RuntimeException("Job message cannot be sent due to non-fatal reason from message channel.");
+
+                eventPublisher.publishEvent(new JobMessageSentEvent(job.getId(), destination, job));
+                
+            } catch(Exception cause) {
+                logger.error("Sending job message {} failed due to error: {}", message, cause.getMessage());
+
+                eventPublisher.publishEvent(new JobMessageFailedEvent(job.getId(), destination, cause, job));
+            }
+        }
     }
 }
