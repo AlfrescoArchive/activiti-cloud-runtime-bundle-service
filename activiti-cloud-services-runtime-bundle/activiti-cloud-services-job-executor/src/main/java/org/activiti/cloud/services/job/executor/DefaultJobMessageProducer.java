@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.integration.MessageDispatchingException;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -84,7 +85,7 @@ public class DefaultJobMessageProducer implements JobMessageProducer {
                 boolean sent = messageChannel.send(message);
                 
                 if(!sent)
-                    throw new RuntimeException("Job message cannot be sent due to non-fatal reason from message channel.");
+                    throw new MessageDispatchingException(message);
 
                 eventPublisher.publishEvent(new JobMessageSentEvent(job.getId(), destination, job));
                 

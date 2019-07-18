@@ -33,7 +33,6 @@ import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.job.executor.JobMessageFailedEvent;
 import org.activiti.cloud.services.job.executor.JobMessageHandler;
 import org.activiti.cloud.services.job.executor.JobMessageHandlerFactory;
-import org.activiti.cloud.services.job.executor.JobMessageInputChannelFactory;
 import org.activiti.cloud.services.job.executor.JobMessageProducer;
 import org.activiti.cloud.services.job.executor.JobMessageSentEvent;
 import org.activiti.cloud.services.job.executor.MessageBasedJobManager;
@@ -128,9 +127,6 @@ public class JobExecutorIT {
     
     @Autowired
     private ConfigurableApplicationContext applicationContext;
-
-    @Autowired
-    private JobMessageInputChannelFactory jobMessageInputChannelFactory;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -534,11 +530,7 @@ public class JobExecutorIT {
 
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
-                Job job = new JobEntityImpl() {{
-                    setId("jobId");
-                }};
-                
-                jobMessageProducer.sendMessage(destination, job);
+                jobMessageProducer.sendMessage(destination, new TestJobEntity("jobId"));
             }
 
         });
@@ -573,11 +565,7 @@ public class JobExecutorIT {
 
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
-                Job job = new JobEntityImpl() {{
-                    setId("jobId");
-                }};
-                
-                jobMessageProducer.sendMessage(destination, job);
+                jobMessageProducer.sendMessage(destination, new TestJobEntity("jobId"));
             }
 
         });
@@ -624,6 +612,15 @@ public class JobExecutorIT {
             logger.info("Received Activiti Event: {}", event);
             
             countDownLatch.countDown();
+        }
+    }
+    
+    static class TestJobEntity extends JobEntityImpl {
+        private static final long serialVersionUID = 1L;
+
+        public TestJobEntity(String jobId) {
+            super();
+            setId(jobId);
         }
     }
     
