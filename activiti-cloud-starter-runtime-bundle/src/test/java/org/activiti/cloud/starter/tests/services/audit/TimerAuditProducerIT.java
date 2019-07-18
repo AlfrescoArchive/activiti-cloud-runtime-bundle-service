@@ -31,11 +31,14 @@ import org.activiti.cloud.api.process.model.events.CloudBPMNTimerFiredEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerScheduledEvent;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.engine.ProcessEngineConfiguration;
+import org.activiti.engine.impl.asyncexecutor.AsyncExecutor;
 import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.activiti.spring.boot.ProcessEngineConfigurationConfigurer;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -69,6 +72,11 @@ public class TimerAuditProducerIT {
     
     @Autowired
     private ProcessEngineConfiguration processEngineConfiguration;
+
+    @Autowired
+    AsyncExecutor asyncExecutor;
+
+    private Logger logger = LoggerFactory.getLogger(TimerAuditProducerIT.class);
     
     @TestConfiguration
     static class JobExecutorITProcessEngineConfigurer implements ProcessEngineConfigurationConfigurer {
@@ -88,6 +96,8 @@ public class TimerAuditProducerIT {
 
     @Test
     public void shouldProduceEventsForIntermediateTimerEvent() {
+
+        logger.info("Async config: " + asyncExecutor.getDefaultTimerJobAcquireWaitTimeInMillis());
 
         //given
         Date startTime = new Date();
