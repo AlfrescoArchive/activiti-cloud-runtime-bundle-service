@@ -17,8 +17,8 @@
 package org.activiti.cloud.starter.tests.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -540,13 +540,19 @@ public class JobExecutorIT {
                                                              .isTrue();
     }
     
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void shouldFailIfNoActiveTransactionSynchronization() {
         // when
-        jobMessageProducer.sendMessage(ArgumentMatchers.anyString(), 
-                                       ArgumentMatchers.any(Job.class));
-        // then
-        fail("Should fail if no active transaction syncronization");
+        Throwable throwable = catchThrowable(
+                () -> jobMessageProducer.sendMessage(ArgumentMatchers.anyString(), 
+                                                     ArgumentMatchers.any(Job.class))
+        );
+
+        //then
+        assertThat(throwable)
+                .as("Should fail if no active transaction syncronization")
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("requires active transaction synchronization");
     }
     
     @Test

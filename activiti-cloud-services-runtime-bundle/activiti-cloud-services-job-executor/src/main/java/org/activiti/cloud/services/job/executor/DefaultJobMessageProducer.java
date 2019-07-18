@@ -44,7 +44,9 @@ public class DefaultJobMessageProducer implements JobMessageProducer {
 
     @Override
     public void sendMessage(@NonNull String destination, @NonNull Job job) {
-        Assert.isTrue(TransactionSynchronizationManager.isSynchronizationActive(), "requires active transaction synchronization");
+        if(!TransactionSynchronizationManager.isSynchronizationActive())
+            throw new IllegalStateException("requires active transaction synchronization");
+        
         Assert.hasLength(job.getId(), "job id must not be empty");
         Assert.hasLength(destination, "destination must not be empty");
         
