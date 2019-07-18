@@ -4,7 +4,7 @@
              xmlns:activiti="http://activiti.org/bpmn"
              targetNamespace="Examples">
 
-    <process id="intermediateTimerEventExample" name="Timer intermediate event example">
+    <process id="testCatchingTimerEvent" name="Timer intermediate event test">
 
         <startEvent id="theStart"/>
         <sequenceFlow id="flow1" sourceRef="theStart" targetRef="timer"/>

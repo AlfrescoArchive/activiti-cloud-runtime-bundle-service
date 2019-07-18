@@ -96,7 +96,7 @@ public class JobExecutorIT {
     private static final String FAILED_JOB_RETRY = "failedJobRetry";
     private static final String TEST_BOUNDARY_TIMER_EVENT = "testBoundaryTimerEvent";
     private static final String START_TIMER_EVENT_EXAMPLE = "startTimerEventExample";
-    private static final String INTERMEDIATE_TIMER_EVENT_EXAMPLE = "intermediateTimerEventExample";
+    private static final String TEST_INTERMEDIATE_TIMER_EVENT = "testCatchingTimerEvent";
     private static final String ASYNC_TASK = "asyncTask";
 
     @Autowired
@@ -248,7 +248,7 @@ public class JobExecutorIT {
                                         ActivitiEventType.JOB_EXECUTION_SUCCESS);
 
         // when
-        ProcessInstance pi = runtimeService.startProcessInstanceByKey(INTERMEDIATE_TIMER_EVENT_EXAMPLE);
+        ProcessInstance pi = runtimeService.startProcessInstanceByKey(TEST_INTERMEDIATE_TIMER_EVENT);
 
         // then
         assertThat(pi).isNotNull();
