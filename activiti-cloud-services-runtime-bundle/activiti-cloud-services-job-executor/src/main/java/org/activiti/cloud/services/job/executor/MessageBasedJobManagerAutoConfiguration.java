@@ -43,6 +43,12 @@ public class MessageBasedJobManagerAutoConfiguration {
     
     @Bean
     @ConditionalOnMissingBean
+    public JobMessageBuilderFactory jobMessageBuilderFactory(RuntimeBundleProperties properties) {
+        return new JobMessageBuilderFactory(properties);
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
     public JobMessageInputChannelFactory jobMessageInputChannelFactory(SubscribableChannelBindingTargetFactory bindingTargetFactory,
                                                                        BindingServiceProperties bindingServiceProperties,
                                                                        ConfigurableListableBeanFactory beanFactory) {
@@ -59,9 +65,11 @@ public class MessageBasedJobManagerAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public JobMessageProducer jobMessageProducer(BinderAwareChannelResolver resolver,
-                                                 ApplicationEventPublisher eventPublisher) {
+                                                 ApplicationEventPublisher eventPublisher,
+                                                 JobMessageBuilderFactory jobMessageBuilderFactory) {
         return new DefaultJobMessageProducer(resolver,
-                                             eventPublisher);
+                                             eventPublisher,
+                                             jobMessageBuilderFactory);
     }
 
     @Bean

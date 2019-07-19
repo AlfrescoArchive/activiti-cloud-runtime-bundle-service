@@ -19,29 +19,25 @@ package org.activiti.cloud.services.job.executor;
 import java.util.Objects;
 
 import org.springframework.context.ApplicationEvent;
+import org.springframework.messaging.Message;
 
 public class JobMessageSentEvent extends ApplicationEvent {
     private static final long serialVersionUID = 1L;
-    private final String destination;
-    private final String jobId;
+    private final Message<?> message;
     
-    public JobMessageSentEvent(String jobId, String destination, Object source) {
+    public JobMessageSentEvent(Message<?> message, Object source) {
         super(source);
-        this.jobId = jobId;
-        this.destination = destination;
+        this.message = message;
     }
+
     
-    public String getDestination() {
-        return destination;
-    }
-    
-    public String getJobId() {
-        return jobId;
+    public Message<?> getMessage() {
+        return message;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(destination, jobId);
+        return Objects.hash(message);
     }
 
     @Override
@@ -53,21 +49,20 @@ public class JobMessageSentEvent extends ApplicationEvent {
         if (getClass() != obj.getClass())
             return false;
         JobMessageSentEvent other = (JobMessageSentEvent) obj;
-        return Objects.equals(destination, other.destination) && Objects.equals(jobId, other.jobId);
+        return Objects.equals(message, other.message);
     }
+
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("JobMessageSentEvent [destination=");
-        builder.append(destination);
-        builder.append(", jobId=");
-        builder.append(jobId);
+        builder.append("JobMessageSentEvent [message=");
+        builder.append(message);
         builder.append(", source=");
         builder.append(source);
         builder.append("]");
         return builder.toString();
     }
-
-
+    
+    
 }

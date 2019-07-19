@@ -30,9 +30,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
+import org.activiti.cloud.services.events.message.RuntimeBundleInfoMessageHeaders;
 import org.activiti.cloud.services.job.executor.JobMessageFailedEvent;
 import org.activiti.cloud.services.job.executor.JobMessageHandler;
 import org.activiti.cloud.services.job.executor.JobMessageHandlerFactory;
+import org.activiti.cloud.services.job.executor.JobMessageHeaders;
 import org.activiti.cloud.services.job.executor.JobMessageProducer;
 import org.activiti.cloud.services.job.executor.JobMessageSentEvent;
 import org.activiti.cloud.services.job.executor.MessageBasedJobManager;
@@ -57,7 +59,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
+import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,6 +128,12 @@ public class JobExecutorIT {
     
     @Autowired
     private MessageHandler jobMessageHandler;
+
+    @Autowired
+    private RuntimeBundleProperties properties;
+
+    @Captor
+    private ArgumentCaptor<Message<String>> messageArgumentCaptor;
     
     @Autowired
     private ConfigurableApplicationContext applicationContext;
@@ -580,6 +590,73 @@ public class JobExecutorIT {
         assertThat(eventPublished.await(1, TimeUnit.SECONDS)).as("should publish JobMessageSentEvent")
                                                              .isTrue();
     }    
+
+    @Test
+    public void shouldBuildJobMessage() throws InterruptedException {
+        // given
+        String destination = "spyAsyncExecutorJobs";
+        String jobId = "jobId";
+        
+        TestJobEntity job = new TestJobEntity(jobId).withDueDate(new Date())
+                                                    .withExecutionId("executionId")
+                                                    .withJobHandlerType("jobHandlerType")
+                                                    .withJobHandlerConfiguration("jobHandlerConfiguration")
+                                                    .withJobType("jobType")
+                                                    .withProcessDefinitionId("processDefinitionId")
+                                                    .withProcessInstanceId("processInstanceId")
+                                                    .withRetries(3)
+                                                    .withTenantId("tenantId")
+                                                    .withExceptionMessage("exceptionMessage")
+                                                    ;
+        doReturn(true).when(spyJobMessageChannel)
+                       .send(ArgumentMatchers.<Message<?>>any());
+        
+        // when
+        new TransactionTemplate(transactionManager).execute(new TransactionCallbackWithoutResult() {
+
+            @Override
+            protected void doInTransactionWithoutResult(TransactionStatus status) {
+                jobMessageProducer.sendMessage(destination, job);
+            }
+
+        });
+        
+        // then
+        verify(spyJobMessageChannel).send(messageArgumentCaptor.capture());
+        
+        Message<String> message = messageArgumentCaptor.getValue();
+                
+        assertThat(message.getPayload()).as("should build job id as payload")
+                                        .isEqualTo(jobId);
+
+        assertThat(message.getHeaders()).as("should build common headers")
+                                        .containsEntry("routingKey", destination)
+                                        .containsEntry("messagePayloadType", String.class.getName())
+                                        ;
+        
+        assertThat(message.getHeaders()).as("should build runtime bundle properties as headers")
+                                        .containsEntry(RuntimeBundleInfoMessageHeaders.APP_NAME, properties.getAppName())
+                                        .containsEntry(RuntimeBundleInfoMessageHeaders.APP_VERSION, properties.getAppVersion())
+                                        .containsEntry(RuntimeBundleInfoMessageHeaders.SERVICE_NAME, properties.getServiceName())
+                                        .containsEntry(RuntimeBundleInfoMessageHeaders.SERVICE_TYPE, properties.getServiceType())
+                                        .containsEntry(RuntimeBundleInfoMessageHeaders.SERVICE_VERSION, properties.getServiceVersion())
+                                        ;
+
+        assertThat(message.getHeaders()).as("should build job attributes as headers")
+                                        .containsEntry(JobMessageHeaders.JOB_ID, job.getId())
+                                        .containsEntry(JobMessageHeaders.JOB_TYPE, job.getJobType())
+                                        .containsEntry(JobMessageHeaders.JOB_HANDLER_TYPE, job.getJobHandlerType())
+                                        .containsEntry(JobMessageHeaders.JOB_EXCEPTION_MESSAGE, job.getExceptionMessage())
+                                        .containsEntry(JobMessageHeaders.JOB_PROCESS_DEFINITION_ID, job.getProcessDefinitionId())
+                                        .containsEntry(JobMessageHeaders.JOB_EXECUTION_ID, job.getExecutionId())
+                                        .containsEntry(JobMessageHeaders.JOB_DUE_DATE, job.getDuedate())
+                                        .containsEntry(JobMessageHeaders.JOB_HANDLER_CONFIGURATION, job.getJobHandlerConfiguration())
+                                        .containsEntry(JobMessageHeaders.JOB_RETRIES, job.getRetries())
+                                        .containsEntry(JobMessageHeaders.JOB_TENANT_ID, job.getTenantId())
+                                        ;
+        
+    }
+    
     
     abstract class AbstractActvitiEventListener implements ActivitiEventListener {
         
@@ -627,6 +704,65 @@ public class JobExecutorIT {
         public TestJobEntity(String jobId) {
             super();
             setId(jobId);
+        }
+        
+        public TestJobEntity withExecutionId(String executionId) {
+            setExecutionId(executionId);
+            
+            return this;
+        }
+
+        public TestJobEntity withDueDate(Date dueDate) {
+            setDuedate(dueDate);
+            
+            return this;
+        }
+
+        public TestJobEntity withJobType(String jobType) {
+            setJobType(jobType);
+            
+            return this;
+        }
+
+        public TestJobEntity withJobHandlerType(String jobHandlerType) {
+            setJobHandlerType(jobHandlerType);
+            
+            return this;
+        }
+
+        public TestJobEntity withJobHandlerConfiguration(String jobHandlerConfiguration) {
+            setJobHandlerConfiguration(jobHandlerConfiguration);
+            return this;
+        }
+
+        public TestJobEntity withProcessDefinitionId(String processDefinitionId) {
+            setProcessDefinitionId(processDefinitionId);
+            
+            return this;
+        }
+
+        public TestJobEntity withProcessInstanceId(String processInstanceId) {
+            setProcessInstanceId(processInstanceId);
+            
+            return this;
+        }
+
+        public TestJobEntity withTenantId(String tenantId) {
+            setTenantId(tenantId);
+            
+            return this;
+        }
+        
+        public TestJobEntity withRetries(int retries) {
+            setRetries(retries);
+            
+            return this;
+        }
+
+        public TestJobEntity withExceptionMessage(String exceptionMessage) {
+            setExceptionMessage(exceptionMessage);
+            
+            return this;
         }
     }
     

@@ -19,50 +19,30 @@ package org.activiti.cloud.services.job.executor;
 import java.util.Objects;
 
 import org.springframework.context.ApplicationEvent;
+import org.springframework.messaging.Message;
 
 public class JobMessageFailedEvent extends ApplicationEvent {
     private static final long serialVersionUID = 1L;
-    private final String destination;
-    private final String jobId;
+    private final Message<?> message;
     private final Throwable exception;
     
-    public JobMessageFailedEvent(String jobId, String destination, Throwable exception, Object source) {
+    public JobMessageFailedEvent(Message<?> message, Throwable exception, Object source) {
         super(source);
-        this.jobId = jobId;
-        this.destination = destination;
+        this.message = message;
         this.exception = exception;
     }
     
-    public String getDestination() {
-        return destination;
-    }
-    
-    public String getJobId() {
-        return jobId;
-    }
-
     public Throwable getException() {
         return exception;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("JobMessageFailedEvent [destination=");
-        builder.append(destination);
-        builder.append(", jobId=");
-        builder.append(jobId);
-        builder.append(", exception=");
-        builder.append(exception);
-        builder.append(", source=");
-        builder.append(source);
-        builder.append("]");
-        return builder.toString();
+    public Message<?> getMessage() {
+        return message;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(destination, exception, jobId);
+        return Objects.hash(exception, message);
     }
 
     @Override
@@ -74,8 +54,20 @@ public class JobMessageFailedEvent extends ApplicationEvent {
         if (getClass() != obj.getClass())
             return false;
         JobMessageFailedEvent other = (JobMessageFailedEvent) obj;
-        return Objects.equals(destination, other.destination) 
-                && Objects.equals(exception, other.exception) 
-                && Objects.equals(jobId, other.jobId);
+        return Objects.equals(exception, other.exception) && Objects.equals(message, other.message);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("JobMessageFailedEvent [message=");
+        builder.append(message);
+        builder.append(", exception=");
+        builder.append(exception);
+        builder.append(", source=");
+        builder.append(source);
+        builder.append("]");
+        return builder.toString();
+    }
+
 }

@@ -25,7 +25,6 @@ import org.springframework.integration.MessageDispatchingException;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
@@ -33,13 +32,18 @@ import org.springframework.util.Assert;
 public class DefaultJobMessageProducer implements JobMessageProducer {
     private static final Logger logger = LoggerFactory.getLogger(DefaultJobMessageProducer.class);
 
+    private static final String ROUTING_KEY = "routingKey";
+
     private final BinderAwareChannelResolver resolver;
     private final ApplicationEventPublisher eventPublisher;
+    private final JobMessageBuilderFactory jobMessageBuilderFactory;
 
     public DefaultJobMessageProducer(BinderAwareChannelResolver resolver,
-                                     ApplicationEventPublisher eventPublisher) {
+                                     ApplicationEventPublisher eventPublisher,
+                                     JobMessageBuilderFactory jobMessageBuilderFactory) {
         this.resolver = resolver;
         this.eventPublisher = eventPublisher;
+        this.jobMessageBuilderFactory = jobMessageBuilderFactory;
     }
 
     @Override
@@ -50,38 +54,32 @@ public class DefaultJobMessageProducer implements JobMessageProducer {
         Assert.hasLength(job.getId(), "job id must not be empty");
         Assert.hasLength(destination, "destination must not be empty");
         
+        Message<String> message = jobMessageBuilderFactory.create(job)
+                                                          .withPayload(job.getId())
+                                                          .setHeader(ROUTING_KEY, destination)
+                                                          .build();
+        
         // Let's try to resolve message channel while inside main Activiti transaction to minimize infrastructure errors 
         MessageChannel messageChannel = resolver.resolveDestination(destination);
 
         // Let's send message right after the main transaction has successfully committed. 
-        TransactionSynchronizationManager.registerSynchronization(new JobMessageTransactionSynchronization(destination, 
-                                                                                                           messageChannel, 
-                                                                                                           job));
-    }
-    
-    protected Message<String> buildMessage(Job job) {
-        return MessageBuilder.withPayload(job.getId())
-                // TODO set headers?  
-                .build();
+        TransactionSynchronizationManager.registerSynchronization(new JobMessageTransactionSynchronization(message, 
+                                                                                                           messageChannel));
     }
     
     class JobMessageTransactionSynchronization implements TransactionSynchronization {
 
         private final MessageChannel messageChannel;
-        private final Job job;
-        private final String destination;
+        private final Message<String> message;
 
-        public JobMessageTransactionSynchronization(String destination, MessageChannel messageChannel, Job job) {
-            this.destination = destination;
+        public JobMessageTransactionSynchronization(Message<String> message, MessageChannel messageChannel) {
             this.messageChannel = messageChannel;
-            this.job = job;
+            this.message = message;
         }
 
         @Override
         public void afterCommit() {
-            Message<String> message = buildMessage(job);
-            
-            logger.debug("Sending job message '{}' to destination '{}' via message channel: {}", message, destination, messageChannel);
+            logger.debug("Sending job message '{}' via message channel: {}", message, messageChannel);
             
             try { 
                 boolean sent = messageChannel.send(message);
@@ -89,12 +87,12 @@ public class DefaultJobMessageProducer implements JobMessageProducer {
                 if(!sent)
                     throw new MessageDispatchingException(message);
 
-                eventPublisher.publishEvent(new JobMessageSentEvent(job.getId(), destination, job));
+                eventPublisher.publishEvent(new JobMessageSentEvent(message, messageChannel));
                 
             } catch(Exception cause) {
                 logger.error("Sending job message {} failed due to error: {}", message, cause.getMessage());
 
-                eventPublisher.publishEvent(new JobMessageFailedEvent(job.getId(), destination, cause, job));
+                eventPublisher.publishEvent(new JobMessageFailedEvent(message, cause, messageChannel));
             }
         }
     }
