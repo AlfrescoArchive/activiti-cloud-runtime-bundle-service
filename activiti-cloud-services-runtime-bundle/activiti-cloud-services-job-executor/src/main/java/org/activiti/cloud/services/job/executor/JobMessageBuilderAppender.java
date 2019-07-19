@@ -45,7 +45,6 @@ public class JobMessageBuilderAppender implements MessageBuilderAppender {
                       .setHeader(JobMessageHeaders.JOB_EXCEPTION_MESSAGE, job.getExceptionMessage())
                       .setHeader(JobMessageHeaders.JOB_HANDLER_TYPE, job.getJobHandlerType())
                       .setHeader(JobMessageHeaders.JOB_HANDLER_CONFIGURATION, job.getJobHandlerConfiguration())
-                      .setHeader(JobMessageHeaders.JOB_TENANT_ID, job.getTenantId())
        ;
     }
 

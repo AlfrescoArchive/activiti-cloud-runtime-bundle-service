@@ -16,13 +16,6 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -85,6 +78,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.*;
 
 @RunWith(SpringRunner.class)
 @TestPropertySource("classpath:application-test.properties")
@@ -652,7 +649,6 @@ public class JobExecutorIT {
                                         .containsEntry(JobMessageHeaders.JOB_DUE_DATE, job.getDuedate())
                                         .containsEntry(JobMessageHeaders.JOB_HANDLER_CONFIGURATION, job.getJobHandlerConfiguration())
                                         .containsEntry(JobMessageHeaders.JOB_RETRIES, job.getRetries())
-                                        .containsEntry(JobMessageHeaders.JOB_TENANT_ID, job.getTenantId())
                                         ;
         
     }
