@@ -112,6 +112,8 @@ public class TimerAuditProducerIT {
         logger.info("Async config: " + asyncExecutor.getDefaultTimerJobAcquireWaitTimeInMillis());
 
         //given
+        streamHandler.getAllReceivedEvents().clear();
+        
         Date startTime = new Date();
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(
                 new StartProcessPayloadBuilder()
@@ -236,6 +238,8 @@ public class TimerAuditProducerIT {
     @Test
     public void shouldGetTimerCanceledEventByProcessDelete() {
         // GIVEN
+        streamHandler.getAllReceivedEvents().clear();
+        
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
                                                                                                            .withProcessDefinitionKey(PROCESS_INTERMEDIATE_TIMER_EVENT)
                                                                                                            .withName("processInstanceName")
@@ -287,8 +291,7 @@ public class TimerAuditProducerIT {
         RetryFailingDelegate.shallThrow = true;
         
         runtimeService.addEventListener(new TestActvitiEventListener());
-        
-        
+     
         streamHandler.getAllReceivedEvents().clear();
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
                                                                                                            .withProcessDefinitionKey(FAILED_TIMER_JOB_RETRY)
