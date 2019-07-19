@@ -55,7 +55,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -156,7 +155,7 @@ public class JobExecutorIT {
 
                 @Override
                 public MessageHandler create(ProcessEngineConfigurationImpl configuration) {
-                    return Mockito.spy(new JobMessageHandler(configuration));
+                    return spy(new JobMessageHandler(configuration));
                 }
             };
         }
@@ -164,7 +163,7 @@ public class JobExecutorIT {
     
     @Before
     public void setUp() {
-        Mockito.reset(jobMessageHandler);
+        reset(jobMessageHandler);
 
         processEngineConfiguration = ProcessEngines.getProcessEngine("default").getProcessEngineConfiguration();
     }
