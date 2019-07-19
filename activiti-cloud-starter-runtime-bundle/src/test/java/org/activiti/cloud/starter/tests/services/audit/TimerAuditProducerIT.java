@@ -366,6 +366,8 @@ public class TimerAuditProducerIT {
                                       3)  
                 );
         });
+        
+        processInstanceRestTemplate.delete(startProcessEntity);
     }
     
     public class TestActvitiEventListener implements ActivitiEventListener {
