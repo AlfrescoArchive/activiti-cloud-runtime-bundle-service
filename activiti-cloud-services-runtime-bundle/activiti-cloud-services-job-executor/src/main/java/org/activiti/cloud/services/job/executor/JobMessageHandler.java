@@ -40,7 +40,10 @@ public class JobMessageHandler  implements MessageHandler {
 
     @Override
     public void handleMessage(Message<?> message) throws MessagingException {
+        logger.debug("Handling job message: {} ", message);
+
         try {
+
             String jobId = new String((byte[]) message.getPayload());
 
             logger.info("Received job message with id: " + jobId);
