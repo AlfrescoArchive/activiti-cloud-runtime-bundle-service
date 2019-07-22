@@ -98,6 +98,7 @@ public class TimerAuditProducerIT {
     @Before
     public void setUp() {
         streamHandler.clear();
+        processEngineConfiguration.getClock().reset();
     }
 
     @After
