@@ -16,14 +16,6 @@
 
 package org.activiti.cloud.starter.tests.services.audit;
 
-import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED;
-import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
-import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.ALL_REQUIRED_HEADERS;
-import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.RUNTIME_BUNDLE_INFO_HEADERS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-import static org.awaitility.Awaitility.await;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -44,12 +36,11 @@ import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.delegate.JavaDelegate;
-import org.activiti.engine.delegate.event.ActivitiEvent;
-import org.activiti.engine.delegate.event.ActivitiEventListener;
 import org.activiti.engine.impl.asyncexecutor.AsyncExecutor;
 import org.activiti.spring.SpringProcessEngineConfiguration;
 import org.activiti.spring.boot.ProcessEngineConfigurationConfigurer;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -62,6 +53,13 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
+import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.ALL_REQUIRED_HEADERS;
+import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.RUNTIME_BUNDLE_INFO_HEADERS;
+import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(AuditProducerIT.AUDIT_PRODUCER_IT)
@@ -84,9 +82,6 @@ public class TimerAuditProducerIT {
 
     @Autowired
     AsyncExecutor asyncExecutor;
-    
-    @Autowired
-    private RuntimeService runtimeService;
 
     private Logger logger = LoggerFactory.getLogger(TimerAuditProducerIT.class);
     
@@ -100,7 +95,12 @@ public class TimerAuditProducerIT {
             processEngineConfiguration.setAsyncExecutorActivate(true);
         }
     }
-    
+
+    @Before
+    public void setUp() {
+        streamHandler.clear();
+    }
+
     @After
     public void tearDown() {
         processEngineConfiguration.getClock().reset();
@@ -112,8 +112,6 @@ public class TimerAuditProducerIT {
         logger.info("Async config: " + asyncExecutor.getDefaultTimerJobAcquireWaitTimeInMillis());
 
         //given
-        streamHandler.getAllReceivedEvents().clear();
-        
         Date startTime = new Date();
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(
                 new StartProcessPayloadBuilder()
@@ -238,8 +236,6 @@ public class TimerAuditProducerIT {
     @Test
     public void shouldGetTimerCanceledEventByProcessDelete() {
         // GIVEN
-        streamHandler.getAllReceivedEvents().clear();
-        
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
                                                                                                            .withProcessDefinitionKey(PROCESS_INTERMEDIATE_TIMER_EVENT)
                                                                                                            .withName("processInstanceName")
@@ -290,9 +286,6 @@ public class TimerAuditProducerIT {
         //given
         RetryFailingDelegate.shallThrow = true;
         
-        runtimeService.addEventListener(new TestActvitiEventListener());
-     
-        streamHandler.getAllReceivedEvents().clear();
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
                                                                                                            .withProcessDefinitionKey(FAILED_TIMER_JOB_RETRY)
                                                                                                            .withName("processInstanceName")
@@ -370,28 +363,15 @@ public class TimerAuditProducerIT {
         processInstanceRestTemplate.delete(startProcessEntity);
     }
     
-    public class TestActvitiEventListener implements ActivitiEventListener {
-        
-        @Override
-        public boolean isFailOnException() {
-            return false;
-        }
-        
-        @Override
-        public void onEvent(ActivitiEvent arg0) {
-            logger.info("Received Activiti Event: {}", arg0);
-        }
-    }
-    
     public static class RetryFailingDelegate implements JavaDelegate {
 
         public static final String EXCEPTION_MESSAGE = "Expected exception.";
 
         public static boolean shallThrow;
-        public static List<Long> times = new ArrayList<Long>();
+        public static List<Long> times = new ArrayList<>();
 
         static public void resetTimeList() {
-          times = new ArrayList<Long>();
+          times = new ArrayList<>();
         }
 
         @Override
