@@ -114,7 +114,7 @@ public class ServiceTaskConsumerHandler {
 
         //this variable is not mapped, but its name matches with a process variable
         //so value will be provided from process variable
-        String unmappedMatchingVariable = "input-unmapped-variable-with-matching-name";
+//        String unmappedMatchingVariable = "input-unmapped-variable-with-matching-name";
 
         Integer currentAge = (Integer) inBoundVariables.get(variableTwo);
         Integer offSet = (Integer) inBoundVariables.get(variableThree);
@@ -128,9 +128,7 @@ public class ServiceTaskConsumerHandler {
                         tuple(variableTwo,
                               20),
                         tuple(variableThree,
-                              5),
-                        tuple(unmappedMatchingVariable,
-                              "inTest"));
+                              5));
 
         integrationContext.addOutBoundVariable("out-variable-name-1",
                                                "outName");
