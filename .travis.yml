@@ -4,6 +4,7 @@ services:
   - docker
 jdk:
   - openjdk11
+# test build duration with cache
 cache:
   directories:
   - $HOME/.m2  
