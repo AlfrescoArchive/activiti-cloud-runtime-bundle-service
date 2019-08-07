@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.activiti.cloud.rb</groupId>
     <artifactId>activiti-cloud-services-runtime-bundle</artifactId>
-    <version>7.1.78</version>
+    <version>7.1.0.M3.RC0</version>
   </parent>
 
 
