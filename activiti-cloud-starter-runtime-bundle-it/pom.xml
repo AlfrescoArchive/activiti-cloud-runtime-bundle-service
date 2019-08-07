@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.activiti.cloud.rb</groupId>
     <artifactId>activiti-cloud-runtime-bundle-dependencies</artifactId>
-    <version>7.1.78</version>
+    <version>7.1.M3.RC0</version>
     <relativePath>../activiti-cloud-runtime-bundle-dependencies</relativePath>
   </parent>
   <artifactId>activiti-cloud-starter-runtime-bundle-it</artifactId>
