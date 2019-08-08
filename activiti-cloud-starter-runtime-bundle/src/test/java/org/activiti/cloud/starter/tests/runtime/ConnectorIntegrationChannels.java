@@ -23,11 +23,10 @@ public interface ConnectorIntegrationChannels {
 
     String INTEGRATION_EVENTS_CONSUMER = "integrationEventsConsumer";
     String REST_CONNECTOR_CONSUMER = "restConnectorConsumer";
+    String VAR_MAPPING_INTEGRATION_EVENTS_CONSUMER = "varMappingIntegrationEventsConsumer";
 
     @Input(INTEGRATION_EVENTS_CONSUMER)
     SubscribableChannel integrationEventsConsumer();
-
-    String VAR_MAPPING_INTEGRATION_EVENTS_CONSUMER = "varMappingIntegrationEventsConsumer";
 
     @Input(VAR_MAPPING_INTEGRATION_EVENTS_CONSUMER)
     SubscribableChannel varMappingIntegrationEventsConsumer();
