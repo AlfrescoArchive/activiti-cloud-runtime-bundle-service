@@ -19,18 +19,9 @@ notifications:
 before_script:
   - echo MAVEN_OPTS=-Xmx1536m > ~/.mavenrc
 
-jobs:
-    include:
-        - stage: Resolve Maven Dependencies
-          name:  mvn dependency:go-offline
-          script:
-            - mvn dependency:go-offline
-        - stage: Maven Verify
-          name: mvn verify
-          # Enable integration tests
-          script:
-            - mvn verify -B -DskipITs=false
-
+# Enable integration tests
+script:
+  - mvn verify -B -DskipITs=false
 
 # Send coverage data
 after_success:
