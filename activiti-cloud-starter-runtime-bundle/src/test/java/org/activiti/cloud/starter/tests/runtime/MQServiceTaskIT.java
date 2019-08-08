@@ -223,7 +223,7 @@ public class MQServiceTaskIT {
                         .withProcessDefinitionKey("connectorConstants")
                         .withBusinessKey("businessKey")
                         .build());
-        
+
         await().untilAsserted(() -> {
             //when
             ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
