@@ -215,6 +215,38 @@ public class MQServiceTaskIT {
                 .containsExactly("My user task");
     }
 
+    @Test
+    public void shouldHandleConstants() {
+        //given
+        ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
+                ProcessPayloadBuilder.start()
+                        .withProcessDefinitionKey("connectorConstants")
+                        .withBusinessKey("businessKey")
+                        .build());
+
+        //assertions are present in the implementation of the connector in ServiceTaskConsumerHandler
+        //this scenario covers that constants values are sent when no mapping is in place
+
+        await().untilAsserted(() -> {
+            //when
+            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
+
+            //then
+            assertThat(responseEntity.getBody()).isNotNull();
+            assertThat(responseEntity.getBody().getContent())
+                    .isNotNull()
+                    .extracting(CloudVariableInstance::getName,
+                                CloudVariableInstance::getValue)
+                    .containsOnly(tuple("name",
+                                        "outName"), //mapped from connector outputs based on extension mappings
+                                  tuple("age",
+                                        25),
+                                  tuple("_constant_value_",
+                                        "myConstantValue"));
+
+        });
+    }
+
     /**
      * Covers https://github.com/Activiti/Activiti/issues/2736
      * @see ServiceTaskConsumerHandler#receiveRestConnector(IntegrationRequest, Map) for headers assertions

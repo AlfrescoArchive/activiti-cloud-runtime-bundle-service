@@ -27,6 +27,7 @@ import org.activiti.api.process.model.IntegrationContext;
 import org.activiti.cloud.api.process.model.IntegrationRequest;
 import org.activiti.cloud.api.process.model.impl.IntegrationResultImpl;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
+import org.activiti.spring.process.model.VariableDefinition;
 import org.assertj.core.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.EnableBinding;
@@ -137,6 +138,34 @@ public class ServiceTaskConsumerHandler {
                                                "outTest");
         integrationContext.addOutBoundVariable("out-unmapped-variable-non-matching-name",
                                                "outTest");
+
+        IntegrationResultImpl integrationResult = new IntegrationResultImpl(integrationRequest, integrationContext);
+        Message<IntegrationResultImpl> message = MessageBuilder.withPayload(integrationResult).build();
+        resolver.resolveDestination("integrationResult_" + runtimeBundleProperties.getServiceFullName()).send(message);
+    }
+
+    @StreamListener(value = ConnectorIntegrationChannels.CONSTANTS_INTEGRATION_EVENTS_CONSUMER)
+    public void receiveConstantsConnector(IntegrationRequest integrationRequest,
+                                          @Headers Map<String, Object> headers){
+        assertIntegrationContextHeaders(integrationRequest, headers);
+        IntegrationContext integrationContext = integrationRequest.getIntegrationContext();
+        Map<String, Object> inBoundVariables = integrationContext.getInBoundVariables();
+
+        Object constantValue = inBoundVariables.get("_constant_value_");
+
+        assertThat(inBoundVariables.entrySet())
+                .extracting(Map.Entry::getKey,
+                            Map.Entry::getValue)
+                .containsOnly(tuple("name",
+                                    "inName"),
+                              tuple("age",
+                                    20),
+                              tuple("_constant_value_",
+                                    "myConstantValue"));
+
+        integrationContext.addOutBoundVariable("name", "outName");
+        integrationContext.addOutBoundVariable("age", 25);
+        integrationContext.addOutBoundVariable("_constant_value_", constantValue);
 
         IntegrationResultImpl integrationResult = new IntegrationResultImpl(integrationRequest, integrationContext);
         Message<IntegrationResultImpl> message = MessageBuilder.withPayload(integrationResult).build();
