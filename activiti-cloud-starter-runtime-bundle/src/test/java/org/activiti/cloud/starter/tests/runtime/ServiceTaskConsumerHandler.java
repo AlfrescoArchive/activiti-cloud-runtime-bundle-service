@@ -111,6 +111,7 @@ public class ServiceTaskConsumerHandler {
         String variableOne = "input-variable-name-1";
         String variableTwo = "input-variable-name-2";
         String variableThree = "input-variable-name-3";
+        String constant = "_constant_value_";
 
         Integer currentAge = (Integer) inBoundVariables.get(variableTwo);
         Integer offSet = (Integer) inBoundVariables.get(variableThree);
@@ -124,7 +125,9 @@ public class ServiceTaskConsumerHandler {
                         tuple(variableTwo,
                               20),
                         tuple(variableThree,
-                              5));
+                              5),
+                        tuple(constant,
+                              "myConstantValue"));
 
         integrationContext.addOutBoundVariable("out-variable-name-1",
                                                "outName");
