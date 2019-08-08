@@ -223,10 +223,7 @@ public class MQServiceTaskIT {
                         .withProcessDefinitionKey("connectorConstants")
                         .withBusinessKey("businessKey")
                         .build());
-
-        //assertions are present in the implementation of the connector in ServiceTaskConsumerHandler
-        //this scenario covers that constants values are sent when no mapping is in place
-
+        
         await().untilAsserted(() -> {
             //when
             ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
