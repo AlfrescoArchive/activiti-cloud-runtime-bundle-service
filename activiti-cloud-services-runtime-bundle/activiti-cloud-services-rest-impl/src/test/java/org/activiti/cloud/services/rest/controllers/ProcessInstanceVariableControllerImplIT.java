@@ -76,7 +76,6 @@ import org.springframework.test.web.servlet.MockMvc;
         RuntimeBundleProperties.class,
         CloudEventsAutoConfiguration.class,
         VariableValidationService.class,
-        ProcessVariablesHelper.class,
         ServicesRestAutoConfiguration.class})
 @ComponentScan(basePackages = {"org.activiti.cloud.services.rest.assemblers", "org.activiti.cloud.alfresco"})
 public class ProcessInstanceVariableControllerImplIT {
