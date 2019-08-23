@@ -40,7 +40,7 @@ public interface ProcessInstanceVariableAdminController {
      */
     @PutMapping
     ResponseEntity<List<String>> updateVariables(@PathVariable String processInstanceId,
-                                              @RequestBody SetProcessVariablesPayload setProcessVariablesPayload);
+                                                 @RequestBody SetProcessVariablesPayload setProcessVariablesPayload);
     
     /**
      * @param processInstanceId          id of process instance

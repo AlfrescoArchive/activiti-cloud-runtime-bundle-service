@@ -264,8 +264,8 @@ public class ProcessInstanceRestTemplate {
         return responseEntity;
     }
 
-    public ResponseEntity<Void> setVariables(String processInstanceId,
-                                             Map<String, Object> variables) {
+    public ResponseEntity<Void> setVariablesDoNotCheckStatus(String processInstanceId,
+                                                             Map<String, Object> variables) {
         SetProcessVariablesPayload setProcessVariablesPayload = ProcessPayloadBuilder.setVariables()
                 .withVariables(variables).build();
 
@@ -277,12 +277,20 @@ public class ProcessInstanceRestTemplate {
                                                                         requestEntity,
                                                                         new ParameterizedTypeReference<Void>() {
                                                                         });
+        return responseEntity;
+    }
+    
+    public ResponseEntity<Void> setVariables(String processInstanceId,
+                                             Map<String, Object> variables) {
+       
+        ResponseEntity<Void> responseEntity = setVariablesDoNotCheckStatus(processInstanceId,
+                                                                           variables);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }
 
-    public ResponseEntity<Void> adminSetVariables(String processInstanceId,
-                                                  Map<String, Object> variables) {
+    public ResponseEntity<Void> adminSetVariablesDoNotCheckStatus(String processInstanceId,
+                                                                  Map<String, Object> variables) {
         SetProcessVariablesPayload setProcessVariablesPayload = ProcessPayloadBuilder.setVariables()
                 .withVariables(variables).build();
 
@@ -295,6 +303,13 @@ public class ProcessInstanceRestTemplate {
                 requestEntity,
                 new ParameterizedTypeReference<Void>() {
                 });
+       return responseEntity;
+    }
+    
+    public ResponseEntity<Void> adminSetVariables(String processInstanceId,
+                                                  Map<String, Object> variables) {
+        ResponseEntity<Void> responseEntity = adminSetVariablesDoNotCheckStatus(processInstanceId,
+                                                                                variables);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         return responseEntity;

@@ -1,5 +1,7 @@
 package org.activiti.cloud.services.rest.api;
 
+import java.util.List;
+
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.springframework.hateoas.MediaTypes;
@@ -19,7 +21,7 @@ public interface ProcessInstanceVariableController {
     Resources<Resource<CloudVariableInstance>> getVariables(@PathVariable String processInstanceId);
 
     @RequestMapping(method = RequestMethod.POST)
-    ResponseEntity<Void> setVariables(@PathVariable String processInstanceId,
-                                      @RequestBody SetProcessVariablesPayload setProcessVariablesPayload);
+    ResponseEntity<List<String>> setVariables(@PathVariable String processInstanceId,
+                                              @RequestBody SetProcessVariablesPayload setProcessVariablesPayload);
 
 }
