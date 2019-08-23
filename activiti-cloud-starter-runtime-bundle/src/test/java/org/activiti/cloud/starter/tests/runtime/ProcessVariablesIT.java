@@ -347,10 +347,133 @@ public class ProcessVariablesIT {
         checkProcessVariables(false);
     }
     
-    public void checkProcessVariables(boolean isAdmin) {
-        Date date = new Date();
+    public void updateSimpleVariables(boolean isAdmin,
+                                      String processInstanceId) {
         Map<String, Object> variables = new HashMap<>();
-   
+        
+        variables.put("variableInt",
+                      2);
+        variables.put("variableStr",
+                      "new value");
+        variables.put("variableBool",
+                      false);
+ 
+        if (isAdmin) {
+            processInstanceRestTemplate.adminSetVariables(processInstanceId,
+                                                          variables);
+        } else {
+            processInstanceRestTemplate.setVariables(processInstanceId,
+                                                     variables); 
+        }
+
+        await().untilAsserted(() -> {
+            //when
+            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceId);
+            //then
+            assertThat(responseEntity.getBody()).isNotNull();
+            assertThat(responseEntity.getBody().getContent())
+                    .isNotNull()
+                    .extracting(CloudVariableInstance::getName,
+                                CloudVariableInstance::getValue)
+                    .contains(tuple("variableInt",
+                                    2), 
+                              tuple("variableStr",
+                                    "new value"),        
+                              tuple("variableBool",
+                                    false));
+        });        
+    }
+    
+    public void updatNotDefinedVariable(boolean isAdmin,
+                                        String processInstanceId) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("dummy",
+                      1);
+        
+        await().untilAsserted(() -> {    
+            ResponseEntity<Void> responseEntity;        
+            if (isAdmin) {
+                responseEntity = processInstanceRestTemplate.adminSetVariablesDoNotCheckStatus(processInstanceId,                                                                                       variables);
+            } else {
+                responseEntity = processInstanceRestTemplate.setVariablesDoNotCheckStatus(processInstanceId,
+                                                                                          variables);
+            }
+            assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        });
+    }
+    
+    public void updatDateVariableWithADate(boolean isAdmin,
+                                           String processInstanceId) {
+        Map<String, Object> variables = new HashMap<>();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Date date = new Date();
+        
+        variables.put("variableDate",
+                      date);
+        
+        if (isAdmin) {
+            processInstanceRestTemplate.adminSetVariables(processInstanceId,
+                                                          variables);
+        } else {
+            processInstanceRestTemplate.setVariables(processInstanceId,
+                                                     variables); 
+        }
+        
+        await().untilAsserted(() -> {
+           //when
+           ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceId);
+           assertThat(responseEntity.getBody()).isNotNull();
+           
+           CloudVariableInstance var = responseEntity.getBody().getContent()
+                                           .stream()
+                                           .filter(v -> v.getName().equals("variableDate"))
+                                           .findAny()
+                                           .get();
+           
+           assertThat(var.getType()).isEqualTo("date");
+           
+           String dStr = format.format(date);
+           assertThat(dStr).isEqualTo(var.getValue());
+        });        
+    }
+    
+    public void updatDateVariableWithAFormattedString(boolean isAdmin,
+                                                      String processInstanceId) {
+        
+        Map<String, Object> variables = new HashMap<>();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        Date date = new Date();
+        String dateStr = format.format(date);
+        variables.put("variableDate",
+                       dateStr);
+         
+         if (isAdmin) {
+             processInstanceRestTemplate.adminSetVariables(processInstanceId,
+                                                           variables);
+         } else {
+             processInstanceRestTemplate.setVariables(processInstanceId,
+                                                      variables); 
+         }
+         
+         await().untilAsserted(() -> {
+            //when
+            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceId);
+            assertThat(responseEntity.getBody()).isNotNull();
+            
+            CloudVariableInstance var = responseEntity.getBody().getContent()
+                                            .stream()
+                                            .filter(v -> v.getName().equals("variableDate"))
+                                            .findAny()
+                                            .get();
+            
+            assertThat(var.getType()).isEqualTo("date");
+            assertThat(dateStr).isEqualTo(var.getValue());
+         });   
+    }
+    
+    public void checkProcessVariables(boolean isAdmin) {
         ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
                 ProcessPayloadBuilder.start()
                         .withProcessDefinitionKey(PROCESS_WITH_EXTENSION_VARIABLES)
@@ -379,116 +502,14 @@ public class ProcessVariablesIT {
         });
 
         //when update simple existing variables 
-        variables.clear(); 
-        variables.put("variableInt",
-                      2);
-        variables.put("variableStr",
-                      "new value");
-        variables.put("variableBool",
-                      false);
+        updateSimpleVariables(isAdmin, processInstanceResponseEntity.getBody().getId());
+        
+        updatNotDefinedVariable(isAdmin, processInstanceResponseEntity.getBody().getId());
+        
+        updatDateVariableWithADate(isAdmin, processInstanceResponseEntity.getBody().getId());
+        
+        updatDateVariableWithAFormattedString(isAdmin, processInstanceResponseEntity.getBody().getId());
  
-        if (isAdmin) {
-            processInstanceRestTemplate.adminSetVariables(processInstanceResponseEntity.getBody().getId(),
-                                                          variables);
-        } else {
-            processInstanceRestTemplate.setVariables(processInstanceResponseEntity.getBody().getId(),
-                                                     variables); 
-        }
-
-        await().untilAsserted(() -> {
-            //when
-            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
-            //then
-            assertThat(responseEntity.getBody()).isNotNull();
-            assertThat(responseEntity.getBody().getContent())
-                    .isNotNull()
-                    .extracting(CloudVariableInstance::getName,
-                                CloudVariableInstance::getValue)
-                    .contains(tuple("variableInt",
-                                    2), 
-                              tuple("variableStr",
-                                    "new value"),        
-                              tuple("variableBool",
-                                    false));
-        });
-        
-        //when try to set process variable not defined in extension file - error
-        variables.clear();
-        variables.put("dummy",
-                      1);
-       await().untilAsserted(() -> {    
-            ResponseEntity<Void> responseEntity;        
-            if (isAdmin) {
-                responseEntity = processInstanceRestTemplate.adminSetVariablesDoNotCheckStatus(processInstanceResponseEntity.getBody().getId(),                                                                                       variables);
-            } else {
-                responseEntity = processInstanceRestTemplate.setVariablesDoNotCheckStatus(processInstanceResponseEntity.getBody().getId(),
-                                                                                          variables);
-            }
-            assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        });
-        
-       SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-       format.setTimeZone(TimeZone.getTimeZone("UTC"));
-       
-       //when update Date as a date
-       variables.clear(); 
-       variables.put("variableDate",
-                     date);
-       
-       if (isAdmin) {
-           processInstanceRestTemplate.adminSetVariables(processInstanceResponseEntity.getBody().getId(),
-                                                         variables);
-       } else {
-           processInstanceRestTemplate.setVariables(processInstanceResponseEntity.getBody().getId(),
-                                                    variables); 
-       }
-       
-       await().untilAsserted(() -> {
-          //when
-          ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
-          assertThat(responseEntity.getBody()).isNotNull();
-          
-          CloudVariableInstance var = responseEntity.getBody().getContent()
-                                          .stream()
-                                          .filter(v -> v.getName().equals("variableDate"))
-                                          .findAny()
-                                          .get();
-          
-          assertThat(var.getType()).isEqualTo("date");
-          
-          String dStr = format.format(date);
-          assertThat(dStr).isEqualTo(var.getValue());
-       });
-       
-        //when update Date as formatted date string
-        variables.clear(); 
-        String dStr = format.format(new Date());
-        variables.put("variableDate",
-                      dStr);
-        
-        if (isAdmin) {
-            processInstanceRestTemplate.adminSetVariables(processInstanceResponseEntity.getBody().getId(),
-                                                          variables);
-        } else {
-            processInstanceRestTemplate.setVariables(processInstanceResponseEntity.getBody().getId(),
-                                                     variables); 
-        }
-        
-        await().untilAsserted(() -> {
-           //when
-           ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
-           assertThat(responseEntity.getBody()).isNotNull();
-           
-           CloudVariableInstance var = responseEntity.getBody().getContent()
-                                           .stream()
-                                           .filter(v -> v.getName().equals("variableDate"))
-                                           .findAny()
-                                           .get();
-           
-           assertThat(var.getType()).isEqualTo("date");
-           assertThat(dStr).isEqualTo(var.getValue());
-        });
-        
         //cleanup
         processInstanceRestTemplate.delete(processInstanceResponseEntity);
     }

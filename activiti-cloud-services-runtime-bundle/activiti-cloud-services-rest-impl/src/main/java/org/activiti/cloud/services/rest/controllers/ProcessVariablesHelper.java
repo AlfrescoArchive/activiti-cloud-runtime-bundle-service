@@ -104,16 +104,15 @@ public class ProcessVariablesHelper  {
                        if (entry.getKey().equals(name)) {
                            String type = entry.getValue().getType();
                            
-                           if(type != null && value != null) {
-                               if (type.equals("date")) {
-                                   try {
-                                       Date d = convertObject2Date(value);
-                                       if (d != null) {
-                                           var.setValue(value = d);
-                                       }   
-                                   } catch (Exception e) {}
-                               }
-                           }  
+                           if ("date".equals(type) &&  value != null) {
+                               try {
+                                   Date d = convertObject2Date(value);
+                                   if (d != null) {
+                                       var.setValue(value = d);
+                                   }   
+                               } catch (Exception e) {}
+                           }
+
                            found = true;
                            activitiExceptions.addAll(variableValidationService.validateWithErrors(value, entry.getValue()));
                            break;

@@ -92,12 +92,6 @@ public class ProcessInstanceVariableControllerImplIT {
     @Autowired
     private ObjectMapper mapper;
     
-    @MockBean
-    private Map<String, ProcessExtensionModel> processExtensionModelMap;
-    
-    @MockBean
-    private ProcessVariablesHelper processVariablesHelper;
-    
     @SpyBean
     private ResourcesAssembler resourcesAssembler;
 

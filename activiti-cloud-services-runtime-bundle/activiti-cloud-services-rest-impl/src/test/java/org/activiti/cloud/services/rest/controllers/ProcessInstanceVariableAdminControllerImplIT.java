@@ -73,8 +73,8 @@ import org.springframework.test.web.servlet.ResultActions;
         ProcessModelAutoConfiguration.class,
         RuntimeBundleProperties.class,
         CloudEventsAutoConfiguration.class,
-        ServicesRestAutoConfiguration.class,
-        ProcessExtensionsAutoConfiguration.class})
+        ProcessExtensionsAutoConfiguration.class,
+        ServicesRestAutoConfiguration.class})
 @ComponentScan(basePackages = {"org.activiti.cloud.services.rest.assemblers", "org.activiti.cloud.alfresco"})
 public class ProcessInstanceVariableAdminControllerImplIT {
 
