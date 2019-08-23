@@ -40,12 +40,15 @@ import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.runtime.ProcessRuntime;
 import org.activiti.api.runtime.conf.impl.CommonModelAutoConfiguration;
 import org.activiti.api.runtime.conf.impl.ProcessModelAutoConfiguration;
+import org.activiti.api.runtime.model.impl.ProcessInstanceImpl;
 import org.activiti.api.runtime.model.impl.VariableInstanceImpl;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfiguration;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.events.listeners.CloudProcessDeployedProducer;
 import org.activiti.cloud.services.rest.conf.ServicesRestAutoConfiguration;
+import org.activiti.spring.process.model.ProcessExtensionModel;
+import org.activiti.spring.process.variable.VariableValidationService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -72,6 +75,8 @@ import org.springframework.test.web.servlet.MockMvc;
         ProcessModelAutoConfiguration.class,
         RuntimeBundleProperties.class,
         CloudEventsAutoConfiguration.class,
+        VariableValidationService.class,
+        ProcessVariablesHelper.class,
         ServicesRestAutoConfiguration.class})
 @ComponentScan(basePackages = {"org.activiti.cloud.services.rest.assemblers", "org.activiti.cloud.alfresco"})
 public class ProcessInstanceVariableControllerImplIT {
@@ -87,7 +92,13 @@ public class ProcessInstanceVariableControllerImplIT {
 
     @Autowired
     private ObjectMapper mapper;
-
+    
+    @MockBean
+    private Map<String, ProcessExtensionModel> processExtensionModelMap;
+    
+    @MockBean
+    private ProcessVariablesHelper processVariablesHelper;
+    
     @SpyBean
     private ResourcesAssembler resourcesAssembler;
 
@@ -140,6 +151,12 @@ public class ProcessInstanceVariableControllerImplIT {
                       "varObj1");
         variables.put("var2",
                       "varObj2");
+        ProcessInstanceImpl processInstance = new ProcessInstanceImpl();
+        processInstance.setId("1");
+        processInstance.setProcessDefinitionKey("1");
+   
+        given(processRuntime.processInstance(any()))
+        .willReturn(processInstance);
 
         this.mockMvc.perform(post("/v1/process-instances/{processInstanceId}/variables",
                                   1).contentType(MediaType.APPLICATION_JSON).content(

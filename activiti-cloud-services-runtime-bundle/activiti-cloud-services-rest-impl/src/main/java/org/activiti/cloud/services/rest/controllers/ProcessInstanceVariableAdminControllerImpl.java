@@ -39,8 +39,7 @@ public class ProcessInstanceVariableAdminControllerImpl implements ProcessInstan
 
     @Autowired
     public ProcessInstanceVariableAdminControllerImpl(ProcessAdminRuntime processAdminRuntime,
-                                                      ProcessVariablesHelper processVariablesHelper
-    ) {
+                                                      ProcessVariablesHelper processVariablesHelper) {
         this.processAdminRuntime = processAdminRuntime;
         this.processVariablesHelper = processVariablesHelper;
     }
