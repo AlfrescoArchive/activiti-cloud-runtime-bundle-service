@@ -16,13 +16,11 @@
 package org.activiti.cloud.services.rest.controllers;
 
 import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TimeZone;
 
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
 import org.activiti.engine.ActivitiException;
@@ -35,29 +33,14 @@ public class ProcessVariablesHelper  {
    
     private final Map<String, ProcessExtensionModel> processExtensionModelMap;
     private final VariableValidationService variableValidationService;
-    private String dateTimeFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-    private TimeZone timeZone = TimeZone.getTimeZone("UTC");
+    private final DateFormatterProvider dateFormatterProvider;
  
-    public ProcessVariablesHelper(Map<String, ProcessExtensionModel> processExtensionModelMap,
+    public ProcessVariablesHelper(DateFormatterProvider dateFormatterProvider,
+                                  Map<String, ProcessExtensionModel> processExtensionModelMap,
                                   VariableValidationService variableValidationService) {
+        this.dateFormatterProvider = dateFormatterProvider;
         this.processExtensionModelMap = processExtensionModelMap;
         this.variableValidationService = variableValidationService;
-    }
-    
-    public String getDateTimeFormat() {
-        return dateTimeFormat;
-    }
-    
-    public void setDateTimeFormat(String dateTimeFormat) {
-        this.dateTimeFormat = dateTimeFormat;
-    }
-    
-    public TimeZone getTimeZone() {
-        return timeZone;
-    }
-   
-    public void setTimeZone(TimeZone timeZone) {
-        this.timeZone = timeZone;
     }
     
     private Optional<Map<String, VariableDefinition>> getVariableDefinitionMap(String processDefinitionKey) {
@@ -68,26 +51,12 @@ public class ProcessVariablesHelper  {
                 .map(Extension::getProperties);
     }
     
-    private Date convertObject2Date(Object value) throws Exception{
-        Date d = null;
-        if (value instanceof Date) {
-            return (Date)value;
-        }
-        if (value instanceof String) {
-            SimpleDateFormat format = new SimpleDateFormat(dateTimeFormat);
-            format.setTimeZone(timeZone);
-            d = format.parse(String.valueOf(value)); 
-        }
-        if (value instanceof Long) {
-            d = new Date((long)value);                       
-        }
-        return d;
-    }
-    
     public List<ActivitiException> checkPayloadVariables(SetProcessVariablesPayload setProcessVariablesPayload,
                                                          String processDefinitionKey) {
            
            final String errorMessage = "Variable with name {0} does not exists.";
+           final String errorDateTimeParse = "Error parsing date/time variable with a name {0}: {1}";
+           
            final Optional<Map<String, VariableDefinition>> variableDefinitionMap = getVariableDefinitionMap(processDefinitionKey);
            List<ActivitiException> activitiExceptions = new ArrayList<>();
            
@@ -103,18 +72,21 @@ public class ProcessVariablesHelper  {
                        
                        if (entry.getKey().equals(name)) {
                            String type = entry.getValue().getType();
+                           found = true;
                            
                            if ("date".equals(type) &&  value != null) {
                                try {
-                                   Date d = convertObject2Date(value);
+                                   Date d = dateFormatterProvider.convert2Date(value);
                                    if (d != null) {
                                        var.setValue(value = d);
                                    }   
-                               } catch (Exception e) {}
+                               } catch (Exception e) {
+                                   activitiExceptions.add(new ActivitiException(MessageFormat.format(errorDateTimeParse, name, e.getMessage())));
+                               }
+                           } else {
+                               activitiExceptions.addAll(variableValidationService.validateWithErrors(value, entry.getValue()));
                            }
-
-                           found = true;
-                           activitiExceptions.addAll(variableValidationService.validateWithErrors(value, entry.getValue()));
+                           
                            break;
                        }  
                    }

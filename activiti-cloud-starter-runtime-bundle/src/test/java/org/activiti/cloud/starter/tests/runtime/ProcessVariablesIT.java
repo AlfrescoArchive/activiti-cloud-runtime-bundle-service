@@ -40,6 +40,7 @@ import org.activiti.api.runtime.model.impl.ActivitiErrorMessageImpl;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.activiti.cloud.api.process.model.CloudProcessDefinition;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
+import org.activiti.cloud.services.rest.controllers.DateFormatterProvider;
 import org.activiti.cloud.services.test.identity.keycloak.interceptor.KeycloakTokenProducer;
 import org.activiti.cloud.starter.tests.helper.ProcessDefinitionRestTemplate;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
@@ -70,7 +71,10 @@ public class ProcessVariablesIT {
     
     @Autowired
     private ProcessDefinitionRestTemplate processDefinitionRestTemplate;
-
+    
+    @Autowired
+    private DateFormatterProvider dateFormatterProvider;
+    
     private Map<String, String> processDefinitionIds = new HashMap<>();
 
     private static final String PROCESS_WITH_VARIABLES2 = "ProcessWithVariables2";
@@ -442,7 +446,47 @@ public class ProcessVariablesIT {
                                                       String processInstanceId) {
         
         Map<String, Object> variables = new HashMap<>();
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        
+        Date dt = new Date();
+        SimpleDateFormat expFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        expFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String expDStr = expFormat.format(dt);
+        
+        String dStr = dateFormatterProvider.formatLocalDateTimeStringWithPattern(dateFormatterProvider.convertDateToLocalDate(dt), 
+                                                                                 "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
+        variables.put("variableDate",
+                       dStr);
+         
+         if (isAdmin) {
+             processInstanceRestTemplate.adminSetVariables(processInstanceId,
+                                                           variables);
+         } else {
+             processInstanceRestTemplate.setVariables(processInstanceId,
+                                                      variables); 
+         }
+         
+         await().untilAsserted(() -> {
+            //when
+            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceId);
+            assertThat(responseEntity.getBody()).isNotNull();
+            
+            CloudVariableInstance var = responseEntity.getBody().getContent()
+                                            .stream()
+                                            .filter(v -> v.getName().equals("variableDate"))
+                                            .findAny()
+                                            .get();
+            
+            assertThat(var.getType()).isEqualTo("date");
+            assertThat(expDStr).isEqualTo(var.getValue());
+         });   
+    }
+    
+    public void updatDateVariableWithAFormattedStringAsDate(boolean isAdmin,
+                                                            String processInstanceId) {
+        
+        Map<String, Object> variables = new HashMap<>();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         Date date = new Date();
         String dateStr = format.format(date);

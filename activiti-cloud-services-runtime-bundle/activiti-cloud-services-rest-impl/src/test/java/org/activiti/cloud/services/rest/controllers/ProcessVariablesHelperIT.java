@@ -68,6 +68,9 @@ public class ProcessVariablesHelperIT {
     
     @Autowired
     private VariableValidationService variableValidationService;
+    
+    @Autowired
+    private DateFormatterProvider dateFormatterProvider;
 
     @MockBean
     private Map<String, ProcessExtensionModel> processExtensionModelMap;
@@ -89,11 +92,16 @@ public class ProcessVariablesHelperIT {
         VariableDefinition variableDefinitionSubscribe = new VariableDefinition();
         variableDefinitionSubscribe.setName("subscribe");
         variableDefinitionSubscribe.setType("boolean");
+        
+        VariableDefinition variableDefinitionDate = new VariableDefinition();
+        variableDefinitionDate.setName("mydate");
+        variableDefinitionDate.setType("date");
 
         Map<String, VariableDefinition> properties = new HashMap<>();
         properties.put("name", variableDefinitionName);
         properties.put("age", variableDefinitionAge);
         properties.put("subscribe", variableDefinitionSubscribe);
+        properties.put("mydate", variableDefinitionDate);
 
         Extension extension = new Extension();
         extension.setProperties(properties);
@@ -101,8 +109,9 @@ public class ProcessVariablesHelperIT {
         processExtensionModel = new ProcessExtensionModel();
         processExtensionModel.setId("1");
         processExtensionModel.setExtensions(extension);
-        
-        processVariablesHelper = new ProcessVariablesHelper(processExtensionModelMap,
+
+        processVariablesHelper = new ProcessVariablesHelper(dateFormatterProvider,
+                                                            processExtensionModelMap,
                                                             variableValidationService);
 
         given(processExtensionModelMap.get(any()))
@@ -162,6 +171,8 @@ public class ProcessVariablesHelperIT {
         variables.put("age", "24");
         variables.put("subs", true);
         variables.put("subscribe", true);
+        variables.put("mydate", "2019-08-26T10:20:30.000Z");
+        
         String expectedTypeErrorMessage = "class java.lang.String is not assignable from class java.lang.Integer";
         String expectedNameErrorMessage1 = "Variable with name gender does not exists.";
         String expectedNameErrorMessage2 = "Variable with name subs does not exists.";
@@ -178,5 +189,20 @@ public class ProcessVariablesHelperIT {
         .containsOnly(expectedTypeErrorMessage,
                       expectedNameErrorMessage1,
                       expectedNameErrorMessage2);
+    }
+    
+    @Test
+    public void shouldReturnErrorWhenSetVariablesWithWrongDateFormat() throws Exception {
+        //GIVEN
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("mydate", "2019-08-26TT10:20:30.000Z");
+
+        //WHEN
+        List<ActivitiException> activitiExceptions = processVariablesHelper.checkPayloadVariables(ProcessPayloadBuilder.setVariables()
+                                                                           .withVariables(variables)
+                                                                           .build(),
+                                                                            "10");  
+        
+        assertThat(activitiExceptions.size()).isEqualTo(1);
     }
 }

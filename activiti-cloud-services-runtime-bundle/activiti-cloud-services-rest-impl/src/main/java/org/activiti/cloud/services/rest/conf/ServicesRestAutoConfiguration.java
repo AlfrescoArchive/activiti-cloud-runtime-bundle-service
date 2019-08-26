@@ -29,6 +29,7 @@ import org.activiti.cloud.services.rest.assemblers.ToCloudProcessDefinitionConve
 import org.activiti.cloud.services.rest.assemblers.ToCloudProcessInstanceConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudTaskConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudVariableInstanceConverter;
+import org.activiti.cloud.services.rest.controllers.DateFormatterProvider;
 import org.activiti.cloud.services.rest.controllers.ProcessVariablesHelper;
 import org.activiti.cloud.services.rest.controllers.ResourcesAssembler;
 import org.activiti.cloud.services.rest.controllers.RuntimeBundleRelProvider;
@@ -92,9 +93,17 @@ public class ServicesRestAutoConfiguration implements WebMvcConfigurer {
     
     @Bean
     @ConditionalOnMissingBean
-    public ProcessVariablesHelper processVariablesHelper(Map<String, ProcessExtensionModel> processExtensionModelMap,
+    public DateFormatterProvider dateFormatterProvider() {
+        return new DateFormatterProvider();
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public ProcessVariablesHelper processVariablesHelper(DateFormatterProvider dateFormatterProvider,
+                                                         Map<String, ProcessExtensionModel> processExtensionModelMap,
                                                          VariableValidationService variableValidationService) {
-        return new ProcessVariablesHelper(processExtensionModelMap,
+        return new ProcessVariablesHelper(dateFormatterProvider,
+                                          processExtensionModelMap,
                                           variableValidationService);
     }
 
