@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
 import org.activiti.api.process.model.payloads.StartProcessPayload;
@@ -111,11 +112,17 @@ public class ProcessVariablesHelper  {
     
 
     
-    public List<ActivitiException> checkStartProcessPayloadVariables(StartProcessPayload startProcessPayload,
-                                                                     String processDefinitionKey) {
+    public void checkStartProcessPayloadVariables(StartProcessPayload startProcessPayload,
+                                                  String processDefinitionKey) {
         
-            return checkPayloadVariables(startProcessPayload.getVariables(),
-                                         processDefinitionKey,
-                                         false);
+        List<ActivitiException> activitiExceptions = checkPayloadVariables(startProcessPayload.getVariables(),
+                                                                           processDefinitionKey,
+                                                                           false);
+            
+        if (!activitiExceptions.isEmpty()) {
+            throw new IllegalStateException(activitiExceptions.stream()
+                                            .map(ex -> ex.getMessage())
+                                            .collect(Collectors.joining(",")));                
+        }
     }
 }

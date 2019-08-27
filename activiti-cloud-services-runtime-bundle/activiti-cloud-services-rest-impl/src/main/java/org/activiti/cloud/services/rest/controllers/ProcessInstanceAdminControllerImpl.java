@@ -15,7 +15,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import java.util.List;
 import java.util.Map;
 
 import org.activiti.api.process.model.ProcessDefinition;
@@ -32,7 +31,6 @@ import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.rest.api.ProcessInstanceAdminController;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssembler;
-import org.activiti.engine.ActivitiException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
@@ -88,10 +86,11 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
                 }
             }
             
-            List<ActivitiException> activitiExceptions = processVariablesHelper
-                                                        .checkStartProcessPayloadVariables(startProcessPayload,
-                                                                                           processDefinitionKey);
-
+            if (processDefinitionKey == null) {
+                throw new IllegalStateException("At least Process Definition Id or Key needs to be provided to start a process");
+            }
+            processVariablesHelper.checkStartProcessPayloadVariables(startProcessPayload,
+                                                                     processDefinitionKey);
         }    
         return resourceAssembler.toResource(processAdminRuntime.start(startProcessPayload));
     }

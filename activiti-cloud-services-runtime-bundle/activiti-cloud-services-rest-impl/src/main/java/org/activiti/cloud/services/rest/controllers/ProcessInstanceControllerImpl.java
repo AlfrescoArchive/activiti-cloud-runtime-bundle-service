@@ -18,6 +18,11 @@ package org.activiti.cloud.services.rest.controllers;
 import static java.util.Collections.emptyList;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
+import static java.util.Collections.emptyList;
+
+import java.nio.charset.StandardCharsets;
 
 import org.activiti.api.process.model.ProcessDefinition;
 import org.activiti.api.process.model.ProcessInstance;
@@ -36,7 +41,6 @@ import org.activiti.cloud.services.core.ProcessDiagramGeneratorWrapper;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.rest.api.ProcessInstanceController;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssembler;
-import org.activiti.engine.ActivitiException;
 import org.activiti.engine.RepositoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -47,12 +51,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-
-import static java.util.Collections.emptyList;
 
 @RestController
 public class ProcessInstanceControllerImpl implements ProcessInstanceController {
