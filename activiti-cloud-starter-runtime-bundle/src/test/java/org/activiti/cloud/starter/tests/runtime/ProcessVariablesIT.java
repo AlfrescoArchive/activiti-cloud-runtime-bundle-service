@@ -557,4 +557,103 @@ public class ProcessVariablesIT {
         //cleanup
         processInstanceRestTemplate.delete(processInstanceResponseEntity);
     }
+    
+    @Test
+    public void shouldStartProcessWihDateVariables() throws Exception{
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hruser");
+        checkStartProcessWihDateVariables(false);
+    }
+    
+    @Test
+    public void shouldStartProcessWihDateVariablesFroDMIN() throws Exception{
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hradmin");
+        checkStartProcessWihDateVariables(true);
+    }
+   
+    public void checkStartProcessWihDateVariables(boolean isAdmin) throws Exception{
+        Map<String, Object> variables = new HashMap<>();      
+        Date dt = new Date();
+          
+        variables.put("variableInt",
+                      2);
+        variables.put("variableStr",
+                      "new value");
+        variables.put("variableBool",
+                      false);
+        variables.put("variableDateTime",
+                      getDateTimeFormattedString(dt));
+        variables.put("variableDate",
+                      getDateFormattedString(dt));
+        
+        ResponseEntity<CloudProcessInstance> processInstanceResponseEntity;
+        if (isAdmin) {
+            processInstanceResponseEntity = processInstanceRestTemplate.adminStartProcess(ProcessPayloadBuilder.start()
+                                                                                     .withProcessDefinitionKey(PROCESS_WITH_EXTENSION_VARIABLES)
+                                                                                     .withBusinessKey("businessKey")
+                                                                                     .withVariables(variables)
+                                                                                     .build());
+        } else {
+            processInstanceResponseEntity = processInstanceRestTemplate.startProcess(ProcessPayloadBuilder.start()
+                                                                                     .withProcessDefinitionKey(PROCESS_WITH_EXTENSION_VARIABLES)
+                                                                                     .withBusinessKey("businessKey")
+                                                                                     .withVariables(variables)
+                                                                                     .build());
+        }
+                                        
+        await().untilAsserted(() -> {
+            //when
+            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
+            //then
+            assertThat(responseEntity.getBody()).isNotNull();
+            assertThat(responseEntity.getBody().getContent())
+                    .isNotNull()
+                    .extracting(CloudVariableInstance::getName,
+                                CloudVariableInstance::getType,
+                                CloudVariableInstance::getValue)
+                    .contains(tuple("variableInt",
+                                    "integer",
+                                    2), 
+                              tuple("variableStr",
+                                    "string",
+                                    "new value"),        
+                              tuple("variableBool",
+                                    "boolean",
+                                    false),
+                              tuple("variableDateTime",
+                                    "date",
+                                    getExpectedDateTimeFormattedString(dt)),
+                              tuple("variableDate",
+                                    "date",
+                                    getExpectedDateFormattedString(dt)));
+        });
+
+        processInstanceRestTemplate.delete(processInstanceResponseEntity); 
+    }
+    
+    public String getDateFormattedString(Date dt) throws Exception {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        
+        return format.format(dt);
+    }
+    
+    public String getDateTimeFormattedString(Date dt) throws Exception {
+        return dateFormatterProvider
+               .formatLocalDateTimeStringWithPattern(dateFormatterProvider.convertDateToLocalDate(dt), 
+                                                     "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    }  
+    
+    public String getExpectedDateFormattedString(Date dt) throws Exception {
+        SimpleDateFormat expDTFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        expDTFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+         
+        return expDTFormat.format(dateFormatterProvider
+                                  .convert2Date(getDateFormattedString(dt)));
+    }
+    
+    public String getExpectedDateTimeFormattedString(Date dt) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return format.format(dt);
+    }
 }

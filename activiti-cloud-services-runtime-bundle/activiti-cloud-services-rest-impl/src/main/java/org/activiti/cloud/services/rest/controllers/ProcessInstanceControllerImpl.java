@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 
 import java.nio.charset.StandardCharsets;
 
+import org.activiti.api.process.model.ProcessDefinition;
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
@@ -35,6 +36,7 @@ import org.activiti.cloud.services.core.ProcessDiagramGeneratorWrapper;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.rest.api.ProcessInstanceController;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssembler;
+import org.activiti.engine.ActivitiException;
 import org.activiti.engine.RepositoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +47,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.Collections.emptyList;
 
 @RestController
 public class ProcessInstanceControllerImpl implements ProcessInstanceController {
@@ -61,19 +69,23 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     private final SpringPageConverter pageConverter;
 
+    private final ProcessVariablesHelper processVariablesHelper;
+
     @Autowired
     public ProcessInstanceControllerImpl(RepositoryService repositoryService,
                                          ProcessDiagramGeneratorWrapper processDiagramGenerator,
                                          ProcessInstanceResourceAssembler resourceAssembler,
                                          AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler,
                                          ProcessRuntime processRuntime,
-                                         SpringPageConverter pageConverter) {
+                                         SpringPageConverter pageConverter,
+                                         ProcessVariablesHelper processVariablesHelper) {
         this.repositoryService = repositoryService;
         this.processDiagramGenerator = processDiagramGenerator;
         this.resourceAssembler = resourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
         this.processRuntime = processRuntime;
         this.pageConverter = pageConverter;
+        this.processVariablesHelper = processVariablesHelper;
     }
 
     @Override
@@ -86,6 +98,24 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     @Override
     public Resource<CloudProcessInstance> startProcess(@RequestBody StartProcessPayload startProcessPayload) {
+
+        Map<String, Object> variables = startProcessPayload.getVariables();
+        if (variables != null && !variables.isEmpty()) {
+            String processDefinitionKey = startProcessPayload.getProcessDefinitionKey();
+
+            if (processDefinitionKey == null && startProcessPayload.getProcessDefinitionId() != null) {
+                ProcessDefinition processDefinition = processRuntime.processDefinition(startProcessPayload.getProcessDefinitionId());
+                if (processDefinition != null) {
+                    processDefinitionKey = processDefinition.getKey();
+                }
+            }
+
+            List<ActivitiException> activitiExceptions = processVariablesHelper
+                                                        .checkStartProcessPayloadVariables(startProcessPayload,
+                                                                                           processDefinitionKey);
+
+        }
+
         return resourceAssembler.toResource(processRuntime.start(startProcessPayload));
     }
 
@@ -154,14 +184,14 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     @Override
     public Resource<CloudProcessInstance> start(@RequestBody StartMessagePayload startMessagePayload) {
         ProcessInstance processInstance = processRuntime.start(startMessagePayload);
-        
+
         return resourceAssembler.toResource(processInstance);
     }
 
     @Override
     public ResponseEntity<Void> receive(@RequestBody ReceiveMessagePayload receiveMessagePayload) {
         processRuntime.receive(receiveMessagePayload);
-        
+
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

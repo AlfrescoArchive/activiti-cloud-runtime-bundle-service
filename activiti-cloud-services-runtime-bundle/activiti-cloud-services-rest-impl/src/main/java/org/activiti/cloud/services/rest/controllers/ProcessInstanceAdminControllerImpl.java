@@ -15,6 +15,10 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.api.process.model.ProcessDefinition;
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
@@ -28,6 +32,7 @@ import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.rest.api.ProcessInstanceAdminController;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssembler;
+import org.activiti.engine.ActivitiException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
@@ -47,15 +52,19 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
     private final ProcessAdminRuntime processAdminRuntime;
 
     private final SpringPageConverter pageConverter;
+    
+    private final ProcessVariablesHelper processVariablesHelper;
 
     public ProcessInstanceAdminControllerImpl(ProcessInstanceResourceAssembler resourceAssembler,
                                               AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler,
                                               ProcessAdminRuntime processAdminRuntime,
-                                              SpringPageConverter pageConverter) {
+                                              SpringPageConverter pageConverter,
+                                              ProcessVariablesHelper processVariablesHelper) {
         this.resourceAssembler = resourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
         this.processAdminRuntime = processAdminRuntime;
         this.pageConverter = pageConverter;
+        this.processVariablesHelper = processVariablesHelper;
     }
 
     @Override
@@ -68,6 +77,22 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
 
     @Override
     public Resource<CloudProcessInstance> startProcess(@RequestBody StartProcessPayload startProcessPayload) {
+        Map<String, Object> variables = startProcessPayload.getVariables(); 
+        if (variables != null && !variables.isEmpty()) {
+            String processDefinitionKey = startProcessPayload.getProcessDefinitionKey();
+            
+            if (processDefinitionKey == null && startProcessPayload.getProcessDefinitionId() != null) {
+                ProcessDefinition processDefinition = processAdminRuntime.processDefinition(startProcessPayload.getProcessDefinitionId());
+                if (processDefinition != null) {
+                    processDefinitionKey = processDefinition.getKey();
+                }
+            }
+            
+            List<ActivitiException> activitiExceptions = processVariablesHelper
+                                                        .checkStartProcessPayloadVariables(startProcessPayload,
+                                                                                           processDefinitionKey);
+
+        }    
         return resourceAssembler.toResource(processAdminRuntime.start(startProcessPayload));
     }
     

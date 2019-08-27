@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
+import org.activiti.api.process.model.payloads.StartProcessPayload;
 import org.activiti.engine.ActivitiException;
 import org.activiti.spring.process.model.Extension;
 import org.activiti.spring.process.model.ProcessExtensionModel;
@@ -51,51 +52,70 @@ public class ProcessVariablesHelper  {
                 .map(Extension::getProperties);
     }
     
+    public List<ActivitiException> checkPayloadVariables(Map<String, Object> variablePayloadMap,
+                                                         String processDefinitionKey,
+                                                         boolean validate) {
+        
+        final String errorMessage = "Variable with name {0} does not exists.";
+        final String errorDateTimeParse = "Error parsing date/time variable with a name {0}: {1}";
+        
+        final Optional<Map<String, VariableDefinition>> variableDefinitionMap = getVariableDefinitionMap(processDefinitionKey);
+        List<ActivitiException> activitiExceptions = new ArrayList<>();
+        
+        if (variableDefinitionMap.isPresent()) {
+                    
+            for (Map.Entry<String, Object> var : variablePayloadMap.entrySet()) {
+                String name = var.getKey();
+                Object value = var.getValue();
+                boolean found = false;
+                for (Map.Entry<String, VariableDefinition> entry : variableDefinitionMap.get().entrySet()) {
+                    
+                    if (entry.getKey().equals(name)) {
+                        String type = entry.getValue().getType();
+                        found = true;
+                        
+                        if ("date".equals(type) &&  value != null) {
+                            try {
+                                Date d = dateFormatterProvider.convert2Date(value);
+                                if (d != null) {
+                                    var.setValue(value = d);
+                                }   
+                            } catch (Exception e) {
+                                activitiExceptions.add(new ActivitiException(MessageFormat.format(errorDateTimeParse, name, e.getMessage())));
+                            }
+                        } else {
+                            if (validate) {
+                                activitiExceptions.addAll(variableValidationService.validateWithErrors(value, entry.getValue()));
+                            }                            
+                        }
+                        
+                        break;
+                    }  
+                }
+                
+                if (!found) {
+                    activitiExceptions.add(new ActivitiException(MessageFormat.format(errorMessage, name)));
+                }
+            }
+        }        
+        return activitiExceptions;       
+    }
+    
     public List<ActivitiException> checkPayloadVariables(SetProcessVariablesPayload setProcessVariablesPayload,
                                                          String processDefinitionKey) {
-           
-           final String errorMessage = "Variable with name {0} does not exists.";
-           final String errorDateTimeParse = "Error parsing date/time variable with a name {0}: {1}";
-           
-           final Optional<Map<String, VariableDefinition>> variableDefinitionMap = getVariableDefinitionMap(processDefinitionKey);
-           List<ActivitiException> activitiExceptions = new ArrayList<>();
-           
-           if (variableDefinitionMap.isPresent()) {
-               
-               Map<String, Object> variablePayloadMap = setProcessVariablesPayload.getVariables();
-              
-               for (Map.Entry<String, Object> var : variablePayloadMap.entrySet()) {
-                   String name = var.getKey();
-                   Object value = var.getValue();
-                   boolean found = false;
-                   for (Map.Entry<String, VariableDefinition> entry : variableDefinitionMap.get().entrySet()) {
-                       
-                       if (entry.getKey().equals(name)) {
-                           String type = entry.getValue().getType();
-                           found = true;
-                           
-                           if ("date".equals(type) &&  value != null) {
-                               try {
-                                   Date d = dateFormatterProvider.convert2Date(value);
-                                   if (d != null) {
-                                       var.setValue(value = d);
-                                   }   
-                               } catch (Exception e) {
-                                   activitiExceptions.add(new ActivitiException(MessageFormat.format(errorDateTimeParse, name, e.getMessage())));
-                               }
-                           } else {
-                               activitiExceptions.addAll(variableValidationService.validateWithErrors(value, entry.getValue()));
-                           }
-                           
-                           break;
-                       }  
-                   }
-                   
-                   if (!found) {
-                       activitiExceptions.add(new ActivitiException(MessageFormat.format(errorMessage, name)));
-                   }
-               }
-           }        
-           return activitiExceptions;
+        
+        return checkPayloadVariables(setProcessVariablesPayload.getVariables(),
+                                     processDefinitionKey,
+                                     true);      
+    }
+    
+
+    
+    public List<ActivitiException> checkStartProcessPayloadVariables(StartProcessPayload startProcessPayload,
+                                                                     String processDefinitionKey) {
+        
+            return checkPayloadVariables(startProcessPayload.getVariables(),
+                                         processDefinitionKey,
+                                         false);
     }
 }
