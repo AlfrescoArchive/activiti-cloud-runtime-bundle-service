@@ -338,14 +338,14 @@ public class ProcessVariablesIT {
     }
     
     @Test
-    public void shouldProperHandleProcessVariablesForAdmin() {
+    public void shouldProperHandleProcessVariablesForAdmin() throws Exception {
         //given
         keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hradmin");
         checkProcessVariables(true);
     }
     
     @Test
-    public void shouldProperHandleProcessVariables() {
+    public void shouldProperHandleProcessVariables()  throws Exception {
         //given
         keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hruser");
         checkProcessVariables(false);
@@ -443,20 +443,14 @@ public class ProcessVariablesIT {
     }
     
     public void updatDateVariableWithAFormattedString(boolean isAdmin,
-                                                      String processInstanceId) {
+                                                      String processInstanceId) throws Exception {
         
         Map<String, Object> variables = new HashMap<>();
         
         Date dt = new Date();
-        SimpleDateFormat expFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        expFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-        String expDStr = expFormat.format(dt);
-        
-        String dStr = dateFormatterProvider.formatLocalDateTimeStringWithPattern(dateFormatterProvider.convertDateToLocalDate(dt), 
-                                                                                 "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-
+   
         variables.put("variableDate",
-                       dStr);
+                      getDateTimeFormattedString(dt));
          
          if (isAdmin) {
              processInstanceRestTemplate.adminSetVariables(processInstanceId,
@@ -478,7 +472,7 @@ public class ProcessVariablesIT {
                                             .get();
             
             assertThat(var.getType()).isEqualTo("date");
-            assertThat(expDStr).isEqualTo(var.getValue());
+            assertThat(getExpectedDateTimeFormattedString(dt)).isEqualTo(var.getValue());
          });   
     }
     
@@ -517,7 +511,7 @@ public class ProcessVariablesIT {
          });   
     }
     
-    public void checkProcessVariables(boolean isAdmin) {
+    public void checkProcessVariables(boolean isAdmin) throws Exception {
         ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
                 ProcessPayloadBuilder.start()
                         .withProcessDefinitionKey(PROCESS_WITH_EXTENSION_VARIABLES)
@@ -565,7 +559,7 @@ public class ProcessVariablesIT {
     }
     
     @Test
-    public void shouldStartProcessWihDateVariablesFroDMIN() throws Exception{
+    public void shouldStartProcessWihDateVariablesFromAdmin() throws Exception{
         keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hradmin");
         checkStartProcessWihDateVariables(true);
     }
@@ -628,6 +622,48 @@ public class ProcessVariablesIT {
         });
 
         processInstanceRestTemplate.delete(processInstanceResponseEntity); 
+    }
+    
+    @Test
+    public void shouldGetBADREQUESTOnStartProcessWihWrongDateVariables() throws Exception{
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hruser");
+        checkBADREQUESTStartProcessWihWrongDateVariables(false);
+    }
+    
+    @Test
+    public void shouldGetBADREQUESTOnStartProcessWihWrongDateVariablesForAdmin() throws Exception{
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("hradmin");
+        checkBADREQUESTStartProcessWihWrongDateVariables(true);
+    }
+    
+    public void checkBADREQUESTStartProcessWihWrongDateVariables(boolean isAdmin) throws Exception{
+        Map<String, Object> variables = new HashMap<>();      
+    
+        variables.put("variableBool",
+                      false);
+        variables.put("variableDate",
+                      "WrongDateString");
+        variables.put("variableDateTime",
+                      "WrongDateString");
+        
+        ResponseEntity<ActivitiErrorMessageImpl> responseEntity;
+        if (isAdmin) {
+            responseEntity = processInstanceRestTemplate.adminStartProcessWithErrorResponse(ProcessPayloadBuilder.start()
+                                                                                            .withProcessDefinitionKey(PROCESS_WITH_EXTENSION_VARIABLES)
+                                                                                            .withBusinessKey("businessKey")
+                                                                                            .withVariables(variables)
+                                                                                            .build());
+        } else {
+            responseEntity = processInstanceRestTemplate.startProcessWithErrorResponse(ProcessPayloadBuilder.start()
+                                                                                       .withProcessDefinitionKey(PROCESS_WITH_EXTENSION_VARIABLES)
+                                                                                       .withBusinessKey("businessKey")
+                                                                                       .withVariables(variables)
+                                                                                       .build());
+        }
+                                        
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST); 
+        assertThat(responseEntity.getBody().getMessage()).contains("variableDate"); 
+        assertThat(responseEntity.getBody().getMessage()).contains("variableDateTime"); 
     }
     
     public String getDateFormattedString(Date dt) throws Exception {
