@@ -112,10 +112,6 @@ public class ProcessInstanceRestTemplate {
         return startProcess(PROCESS_INSTANCES_ADMIN_RELATIVE_URL,startProcess);
     }
     
-    public ResponseEntity<CloudProcessInstance> adminStartProcessWithoutCheck(StartProcessPayload startProcess) {
-        return startProcessWithoutCheck(PROCESS_INSTANCES_ADMIN_RELATIVE_URL,startProcess);
-    }  
- 
     private ResponseEntity<CloudProcessInstance> startProcessWithoutCheck(String baseURL, StartProcessPayload startProcess) {
         return  testRestTemplate.exchange(baseURL,
                                           HttpMethod.POST,

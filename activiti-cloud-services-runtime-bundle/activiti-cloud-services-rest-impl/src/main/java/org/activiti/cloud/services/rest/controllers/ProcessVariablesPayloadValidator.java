@@ -64,25 +64,25 @@ public class ProcessVariablesPayloadValidator  {
         
         if (variableDefinitionMap.isPresent()) {
                     
-            for (Map.Entry<String, Object> var : variablePayloadMap.entrySet()) {
-                String name = var.getKey();
-                Object value = var.getValue();
+            for (Map.Entry<String, Object> payloadVar : variablePayloadMap.entrySet()) {
+                String name = payloadVar.getKey();
+                Object value = payloadVar.getValue();
                 boolean found = false;
-                for (Map.Entry<String, VariableDefinition> entry : variableDefinitionMap.get().entrySet()) {
+                for (Map.Entry<String, VariableDefinition> variableDefinitionEntry : variableDefinitionMap.get().entrySet()) {
                     
-                    if (entry.getKey().equals(name)) {
-                        String type = entry.getValue().getType();
+                    if (variableDefinitionEntry.getKey().equals(name)) {
+                        String type = variableDefinitionEntry.getValue().getType();
                         found = true;
                         
                         if ("date".equals(type) &&  value != null) {
                             try {
-                                var.setValue(dateFormatterProvider.convert2Date(value));
+                                payloadVar.setValue(dateFormatterProvider.convert2Date(value));
                             } catch (Exception e) {
                                 activitiExceptions.add(new ActivitiException(MessageFormat.format(errorDateTimeParse, name, e.getMessage())));
                             }
                         } else {
                             if (validate) {
-                                activitiExceptions.addAll(variableValidationService.validateWithErrors(value, entry.getValue()));
+                                activitiExceptions.addAll(variableValidationService.validateWithErrors(value, variableDefinitionEntry.getValue()));
                             }                            
                         }
                         

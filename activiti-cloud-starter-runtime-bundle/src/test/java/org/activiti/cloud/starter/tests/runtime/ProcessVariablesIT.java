@@ -353,8 +353,20 @@ public class ProcessVariablesIT {
         checkProcessVariables(false);
     }
     
-    public void updateSimpleVariables(boolean isAdmin,
-                                      String processInstanceId) {
+    private void setVariables(String processInstanceId,
+                             boolean isAdmin,
+                             Map<String, Object> variables) {
+        if (isAdmin) {
+            processInstanceRestTemplate.adminSetVariables(processInstanceId,
+                                                          variables);
+        } else {
+            processInstanceRestTemplate.setVariables(processInstanceId,
+                                                     variables); 
+        }
+    }
+    
+    private void updateSimpleVariables(boolean isAdmin,
+                                       String processInstanceId) {
         Map<String, Object> variables = new HashMap<>();
         
         variables.put("variableInt",
@@ -364,14 +376,10 @@ public class ProcessVariablesIT {
         variables.put("variableBool",
                       false);
  
-        if (isAdmin) {
-            processInstanceRestTemplate.adminSetVariables(processInstanceId,
-                                                          variables);
-        } else {
-            processInstanceRestTemplate.setVariables(processInstanceId,
-                                                     variables); 
-        }
-
+        setVariables(processInstanceId,
+                     isAdmin,
+                     variables);
+        
         await().untilAsserted(() -> {
             //when
             ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceId);
@@ -390,8 +398,8 @@ public class ProcessVariablesIT {
         });        
     }
     
-    public void updatNotDefinedVariable(boolean isAdmin,
-                                        String processInstanceId) {
+    private void updatNotDefinedVariable(boolean isAdmin,
+                                         String processInstanceId) {
         Map<String, Object> variables = new HashMap<>();
         variables.put("dummy",
                       1);
@@ -408,8 +416,8 @@ public class ProcessVariablesIT {
         });
     }
     
-    public void updatDateVariableWithADate(boolean isAdmin,
-                                           String processInstanceId) {
+    private void updatDateVariableWithADate(boolean isAdmin,
+                                            String processInstanceId) {
         Map<String, Object> variables = new HashMap<>();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -418,13 +426,9 @@ public class ProcessVariablesIT {
         variables.put("variableDate",
                       date);
         
-        if (isAdmin) {
-            processInstanceRestTemplate.adminSetVariables(processInstanceId,
-                                                          variables);
-        } else {
-            processInstanceRestTemplate.setVariables(processInstanceId,
-                                                     variables); 
-        }
+        setVariables(processInstanceId,
+                     isAdmin,
+                     variables);
         
         await().untilAsserted(() -> {
            //when
@@ -444,8 +448,8 @@ public class ProcessVariablesIT {
         });        
     }
     
-    public void updatDateVariableWithAFormattedString(boolean isAdmin,
-                                                      String processInstanceId) throws Exception {
+    private void updatDateVariableWithAFormattedString(boolean isAdmin,
+                                                       String processInstanceId) throws Exception {
         
         Map<String, Object> variables = new HashMap<>();
         
@@ -454,13 +458,9 @@ public class ProcessVariablesIT {
         variables.put("variableDate",
                       getDateTimeFormattedString(dt));
          
-         if (isAdmin) {
-             processInstanceRestTemplate.adminSetVariables(processInstanceId,
-                                                           variables);
-         } else {
-             processInstanceRestTemplate.setVariables(processInstanceId,
-                                                      variables); 
-         }
+        setVariables(processInstanceId,
+                     isAdmin,
+                     variables);
          
          await().untilAsserted(() -> {
             //when
@@ -478,42 +478,7 @@ public class ProcessVariablesIT {
          });   
     }
     
-    public void updatDateVariableWithAFormattedStringAsDate(boolean isAdmin,
-                                                            String processInstanceId) {
-        
-        Map<String, Object> variables = new HashMap<>();
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        Date date = new Date();
-        String dateStr = format.format(date);
-        variables.put("variableDate",
-                       dateStr);
-         
-         if (isAdmin) {
-             processInstanceRestTemplate.adminSetVariables(processInstanceId,
-                                                           variables);
-         } else {
-             processInstanceRestTemplate.setVariables(processInstanceId,
-                                                      variables); 
-         }
-         
-         await().untilAsserted(() -> {
-            //when
-            ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceId);
-            assertThat(responseEntity.getBody()).isNotNull();
-            
-            CloudVariableInstance var = responseEntity.getBody().getContent()
-                                            .stream()
-                                            .filter(v -> v.getName().equals("variableDate"))
-                                            .findAny()
-                                            .get();
-            
-            assertThat(var.getType()).isEqualTo("date");
-            assertThat(dateStr).isEqualTo(var.getValue());
-         });   
-    }
-    
-    public void checkProcessVariables(boolean isAdmin) throws Exception {
+    private void checkProcessVariables(boolean isAdmin) throws Exception {
         ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
                 ProcessPayloadBuilder.start()
                         .withProcessDefinitionKey(PROCESS_WITH_EXTENSION_VARIABLES)
@@ -566,7 +531,7 @@ public class ProcessVariablesIT {
         checkStartProcessWihDateVariables(true);
     }
    
-    public void checkStartProcessWihDateVariables(boolean isAdmin) throws Exception{
+    private void checkStartProcessWihDateVariables(boolean isAdmin) throws Exception{
         Map<String, Object> variables = new HashMap<>();      
         Date dt = new Date();
           
@@ -638,7 +603,7 @@ public class ProcessVariablesIT {
         checkBADREQUESTStartProcessWihWrongDateVariables(true);
     }
     
-    public void checkBADREQUESTStartProcessWihWrongDateVariables(boolean isAdmin) throws Exception{
+    private void checkBADREQUESTStartProcessWihWrongDateVariables(boolean isAdmin) throws Exception{
         Map<String, Object> variables = new HashMap<>();      
     
         variables.put("variableBool",
@@ -668,7 +633,7 @@ public class ProcessVariablesIT {
         assertThat(responseEntity.getBody().getMessage()).contains("variableDateTime"); 
     }
     
-    public String getDateFormattedString(Date date) throws Exception {
+    private String getDateFormattedString(Date date) throws Exception {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         
@@ -681,7 +646,7 @@ public class ProcessVariablesIT {
                .toLocalDateTime();
     }
     
-    public String formatLocalDateTimeStringWithPattern(LocalDateTime date, String datePattern) {
+    private String formatLocalDateTimeStringWithPattern(LocalDateTime date, String datePattern) {
         return new DateTimeFormatterBuilder()
                   .appendPattern(datePattern)
                   .toFormatter()
