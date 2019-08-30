@@ -72,25 +72,31 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
                                                   pageConverter.toSpringPage(pageable, processInstancePage),
                                                   resourceAssembler);
     }
-
+    
+    private String getProcessDefinitionKey(StartProcessPayload startProcessPayload) {
+        String processDefinitionKey = startProcessPayload.getProcessDefinitionKey();
+        
+        if (processDefinitionKey == null && startProcessPayload.getProcessDefinitionId() != null) {
+            ProcessDefinition processDefinition = processAdminRuntime.processDefinition(startProcessPayload.getProcessDefinitionId());
+            if (processDefinition != null) {
+                processDefinitionKey = processDefinition.getKey();
+            }
+        }
+        
+        if (processDefinitionKey == null) {
+            throw new IllegalStateException("At least Process Definition Id or Key needs to be provided to start a process");
+        }
+        
+        return processDefinitionKey;   
+    }
+   
     @Override
     public Resource<CloudProcessInstance> startProcess(@RequestBody StartProcessPayload startProcessPayload) {
         Map<String, Object> variables = startProcessPayload.getVariables(); 
         if (variables != null && !variables.isEmpty()) {
-            String processDefinitionKey = startProcessPayload.getProcessDefinitionKey();
             
-            if (processDefinitionKey == null && startProcessPayload.getProcessDefinitionId() != null) {
-                ProcessDefinition processDefinition = processAdminRuntime.processDefinition(startProcessPayload.getProcessDefinitionId());
-                if (processDefinition != null) {
-                    processDefinitionKey = processDefinition.getKey();
-                }
-            }
-            
-            if (processDefinitionKey == null) {
-                throw new IllegalStateException("At least Process Definition Id or Key needs to be provided to start a process");
-            }
             processVariablesHelper.checkStartProcessPayloadVariables(startProcessPayload,
-                                                                     processDefinitionKey);
+                                                                     getProcessDefinitionKey(startProcessPayload));
         }    
         return resourceAssembler.toResource(processAdminRuntime.start(startProcessPayload));
     }
@@ -118,7 +124,7 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
     
     @Override
     public Resource<CloudProcessInstance> updateProcess(@PathVariable String processInstanceId,
-                                                 @RequestBody UpdateProcessPayload payload) {
+                                                        @RequestBody UpdateProcessPayload payload) {
         if (payload!=null) {
             payload.setProcessInstanceId(processInstanceId);
             

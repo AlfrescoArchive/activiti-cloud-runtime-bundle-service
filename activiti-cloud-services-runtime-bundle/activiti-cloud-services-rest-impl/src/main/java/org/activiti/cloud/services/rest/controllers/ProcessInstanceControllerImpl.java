@@ -94,26 +94,33 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
                                                   resourceAssembler);
     }
 
+    private String getProcessDefinitionKey(StartProcessPayload startProcessPayload) {
+        String processDefinitionKey = startProcessPayload.getProcessDefinitionKey();
+
+        if (processDefinitionKey == null && startProcessPayload.getProcessDefinitionId() != null) {
+            ProcessDefinition processDefinition = processRuntime.processDefinition(startProcessPayload.getProcessDefinitionId());
+            if (processDefinition != null) {
+                processDefinitionKey = processDefinition.getKey();
+            }
+        }
+
+        if (processDefinitionKey == null) {
+            throw new IllegalStateException("At least Process Definition Id or Key needs to be provided to start a process");
+        }
+
+        return processDefinitionKey;
+    }
+
     @Override
     public Resource<CloudProcessInstance> startProcess(@RequestBody StartProcessPayload startProcessPayload) {
 
         Map<String, Object> variables = startProcessPayload.getVariables();
         if (variables != null && !variables.isEmpty()) {
-            String processDefinitionKey = startProcessPayload.getProcessDefinitionKey();
 
-            if (processDefinitionKey == null && startProcessPayload.getProcessDefinitionId() != null) {
-                ProcessDefinition processDefinition = processRuntime.processDefinition(startProcessPayload.getProcessDefinitionId());
-                if (processDefinition != null) {
-                    processDefinitionKey = processDefinition.getKey();
-                }
-            }
-
-            List<ActivitiException> activitiExceptions = processVariablesHelper
-                                                        .checkStartProcessPayloadVariables(startProcessPayload,
-                                                                                           processDefinitionKey);
-
-        }
-
+            processVariablesHelper.checkStartProcessPayloadVariables(startProcessPayload,
+                                                                     getProcessDefinitionKey(startProcessPayload));
+        }    
+        
         return resourceAssembler.toResource(processRuntime.start(startProcessPayload));
     }
 
@@ -159,7 +166,7 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
  
     @Override
     public Resource<CloudProcessInstance> updateProcess(@PathVariable String processInstanceId,
-                                                 @RequestBody UpdateProcessPayload payload) {
+                                                        @RequestBody UpdateProcessPayload payload) {
         if (payload!=null) {
             payload.setProcessInstanceId(processInstanceId);
             
@@ -170,7 +177,7 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     
     @Override
     public PagedResources<Resource<CloudProcessInstance>> subprocesses(@PathVariable String processInstanceId,
-                                                                Pageable pageable) {
+                                                                       Pageable pageable) {
         Page<ProcessInstance> processInstancePage = processRuntime.processInstances(pageConverter.toAPIPageable(pageable),
                                                                                     ProcessPayloadBuilder.subprocesses(processInstanceId));
                 
