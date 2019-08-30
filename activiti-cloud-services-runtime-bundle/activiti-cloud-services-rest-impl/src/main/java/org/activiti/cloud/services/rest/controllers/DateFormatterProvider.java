@@ -15,6 +15,7 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
+import java.text.MessageFormat;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,7 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 public class DateFormatterProvider  {
    
-    @Value("${date-format-pattern:yyyy-MM-dd[['T'][ ]HH:mm:ss[.SSS'Z']]}")
+    @Value("${spring.activiti.date-format-pattern.date-format-pattern:yyyy-MM-dd[['T'][ ]HH:mm:ss[.SSS'Z']]}")
     private String dateFormatPattern;
     
     private ZoneId zoneId = ZoneOffset.UTC;
@@ -47,56 +48,37 @@ public class DateFormatterProvider  {
     public void setDateFormatPattern(String dateFormatPattern) {
         this.dateFormatPattern = dateFormatPattern;
     }
+ 
+    public Date convert2Date(String value) throws DateTimeException { 
+        DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
+                                                      .appendPattern(getDateFormatPattern())
+                                                      .toFormatter()
+                                                      .withZone(getZoneId());
+        
+        try {
+            LocalDateTime localDateTime = dateTimeFormatter.parse(value,
+                                                                  LocalDateTime::from);
+            return Date.from(localDateTime.atZone(getZoneId()).toInstant());                
+        } catch (DateTimeException e) {
+            LocalDate localDate = dateTimeFormatter.parse(String.valueOf(value),
+                                                          LocalDate::from);
+            return Date.from(localDate.atStartOfDay().atZone(getZoneId()).toInstant());
+        }
+    }    
     
-    public LocalDateTime convertDateToLocalDate(Date dt) {
-        return dt.toInstant()
-               .atZone(getZoneId())
-               .toLocalDateTime();
-    }
-    
-    public String formatLocalDateTimeString(LocalDateTime dt) {
-        return createDateTimeFormatter().format(dt);
-    }
-    
-    public String formatLocalDateTimeStringWithPattern(LocalDateTime dt, String datePattern) {
-        return new DateTimeFormatterBuilder()
-                  .appendPattern(datePattern)
-                  .toFormatter()
-                  .withZone(getZoneId())
-                  .format(dt);
-    }
-    
-    public DateTimeFormatter createDateTimeFormatter() {
-        return new DateTimeFormatterBuilder()
-                   .appendPattern(getDateFormatPattern())
-                   .toFormatter()
-                   .withZone(getZoneId());   
-    }
-    
-    public Date convert2Date(Object value) throws Exception {
-        Date d = null;
+    public Date convert2Date(Object value) throws DateTimeException {
+        if (value instanceof String) {
+            return convert2Date(String.valueOf(value));
+        }
+
         if (value instanceof Date) {
             return (Date)value;
         }
         
         if (value instanceof Long) {
-            d = new Date((long)value);                       
+            return new Date((long)value);                       
         }
-        
-        if (value instanceof String) {
-            DateTimeFormatter dateTimeFormatter = createDateTimeFormatter();
-            
-            try {
-                LocalDateTime localDateTime = dateTimeFormatter.parse(String.valueOf(value),
-                                                                      LocalDateTime::from);
-                return Date.from(localDateTime.atZone(getZoneId()).toInstant());                
-            } catch (DateTimeException e) {
-                LocalDate localDate = dateTimeFormatter.parse(String.valueOf(value),
-                                                              LocalDate::from);
-                return Date.from(localDate.atStartOfDay().atZone(getZoneId()).toInstant());
-            }
-        }
-        
-        return d;
+ 
+        throw new DateTimeException(MessageFormat.format("Error parsing date/time variable: {0}",value));
     }    
 }

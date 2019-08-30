@@ -17,8 +17,11 @@
 package org.activiti.cloud.services.rest.controllers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.Date;
 
 import org.activiti.api.runtime.conf.impl.CommonModelAutoConfiguration;
@@ -83,15 +86,14 @@ public class DateFormatterProviderIT {
     @Test
     public void shouldReturnCorrectDateTimeForString() throws Exception {
         //WHEN
-        LocalDateTime dt = LocalDateTime.now();
-        String dateStr = dateFormatterProvider.formatLocalDateTimeString(dt);
+        LocalDateTime date = LocalDateTime.now();
+        String dateString = formatLocalDateTimeString(date);
         
         //THEN
-        Date newDate = dateFormatterProvider.convert2Date(dateStr);
-        String newDateStr = dateFormatterProvider
-                            .formatLocalDateTimeString(dateFormatterProvider.convertDateToLocalDate(newDate));
+        Date newDate = dateFormatterProvider.convert2Date(dateString);
+        String newDateString = formatLocalDateTimeString(convertDateToLocalDate(newDate));
         
-        assertThat(newDateStr).isEqualTo(dateStr);
+        assertThat(newDateString).isEqualTo(dateString);
     }
     
     @Test
@@ -100,12 +102,55 @@ public class DateFormatterProviderIT {
         LocalDateTime dt = LocalDateTime.now();
         
         //THEN
-        String localStr = dateFormatterProvider.formatLocalDateTimeStringWithPattern(dt, "yyyy-MM-dd");
-        Date newDate = dateFormatterProvider.convert2Date(localStr);
-        LocalDateTime newLocalDate = dateFormatterProvider.convertDateToLocalDate(newDate);
-        String newLocalStr = dateFormatterProvider.formatLocalDateTimeStringWithPattern(newLocalDate, "yyyy-MM-dd");
+        String dateString = formatLocalDateTimeStringWithPattern(dt, "yyyy-MM-dd");
+        Date newDate = dateFormatterProvider.convert2Date(dateString);
+        String newDateString = formatLocalDateTimeStringWithPattern(convertDateToLocalDate(newDate), "yyyy-MM-dd");
 
-        assertThat(newLocalStr).isEqualTo(localStr);
+        assertThat(newDateString).isEqualTo(dateString);
+    }
+    
+    @Test
+    public void shoulThrowExceptionForWrongFormatString() throws Exception {
+        //WHEN
+        String dateString = "2020-10-Wrong";
+        
+        //THEN
+        Throwable throwable = catchThrowable(() -> dateFormatterProvider.convert2Date(dateString));
+
+        //THEN
+        assertThat(throwable)
+                .isInstanceOf(DateTimeException.class);
+    }
+    
+    @Test
+    public void shoulThrowExceptionForWrongObject() throws Exception {
+      //WHEN
+        Throwable throwable = catchThrowable(() -> dateFormatterProvider.convert2Date(10.567));
+
+        //THEN
+        assertThat(throwable)
+                .isInstanceOf(DateTimeException.class);
     }
  
+    private LocalDateTime convertDateToLocalDate(Date date) {
+        return date.toInstant()
+               .atZone(dateFormatterProvider.getZoneId())
+               .toLocalDateTime();
+    }
+    
+    private String formatLocalDateTimeString(LocalDateTime date) {
+        return new DateTimeFormatterBuilder()
+                   .appendPattern(dateFormatterProvider.getDateFormatPattern())
+                   .toFormatter()
+                   .withZone(dateFormatterProvider.getZoneId())
+                   .format(date);
+    }
+    
+    public String formatLocalDateTimeStringWithPattern(LocalDateTime date, String datePattern) {
+        return new DateTimeFormatterBuilder()
+                  .appendPattern(datePattern)
+                  .toFormatter()
+                  .withZone(dateFormatterProvider.getZoneId())
+                  .format(date);
+    }   
 }

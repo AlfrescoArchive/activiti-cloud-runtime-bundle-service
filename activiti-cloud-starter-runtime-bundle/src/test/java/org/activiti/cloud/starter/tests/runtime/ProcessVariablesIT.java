@@ -22,6 +22,8 @@ import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -666,30 +668,43 @@ public class ProcessVariablesIT {
         assertThat(responseEntity.getBody().getMessage()).contains("variableDateTime"); 
     }
     
-    public String getDateFormattedString(Date dt) throws Exception {
+    public String getDateFormattedString(Date date) throws Exception {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         
-        return format.format(dt);
+        return format.format(date);
     }
     
-    public String getDateTimeFormattedString(Date dt) throws Exception {
-        return dateFormatterProvider
-               .formatLocalDateTimeStringWithPattern(dateFormatterProvider.convertDateToLocalDate(dt), 
-                                                     "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+    private LocalDateTime convertDateToLocalDate(Date date) {
+        return date.toInstant()
+               .atZone(dateFormatterProvider.getZoneId())
+               .toLocalDateTime();
+    }
+    
+    public String formatLocalDateTimeStringWithPattern(LocalDateTime date, String datePattern) {
+        return new DateTimeFormatterBuilder()
+                  .appendPattern(datePattern)
+                  .toFormatter()
+                  .withZone(dateFormatterProvider.getZoneId())
+                  .format(date);
+    }
+    
+    private String getDateTimeFormattedString(Date date) throws Exception {
+        return formatLocalDateTimeStringWithPattern(convertDateToLocalDate(date), 
+                                                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     }  
     
-    public String getExpectedDateFormattedString(Date dt) throws Exception {
+    private String getExpectedDateFormattedString(Date date) throws Exception {
         SimpleDateFormat expDTFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         expDTFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
          
         return expDTFormat.format(dateFormatterProvider
-                                  .convert2Date(getDateFormattedString(dt)));
+                                  .convert2Date(getDateFormattedString(date)));
     }
     
-    public String getExpectedDateTimeFormattedString(Date dt) {
+    private String getExpectedDateTimeFormattedString(Date date) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return format.format(dt);
+        return format.format(date);
     }
 }
