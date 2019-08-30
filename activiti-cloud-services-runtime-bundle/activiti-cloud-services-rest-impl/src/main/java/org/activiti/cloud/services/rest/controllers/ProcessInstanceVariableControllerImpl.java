@@ -15,9 +15,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
@@ -25,7 +22,6 @@ import org.activiti.api.process.runtime.ProcessRuntime;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.activiti.cloud.services.rest.api.ProcessInstanceVariableController;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceVariableResourceAssembler;
-import org.activiti.engine.ActivitiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
@@ -41,17 +37,17 @@ public class ProcessInstanceVariableControllerImpl implements ProcessInstanceVar
     private final ProcessInstanceVariableResourceAssembler variableResourceAssembler;
     private final ProcessRuntime processRuntime;
     private final ResourcesAssembler resourcesAssembler;
-    private final ProcessVariablesHelper processVariablesHelper;
+    private final ProcessVariablesPayloadValidator processVariablesValidator;
 
     @Autowired
     public ProcessInstanceVariableControllerImpl(ProcessInstanceVariableResourceAssembler variableResourceAssembler,
                                                  ProcessRuntime processRuntime,
                                                  ResourcesAssembler resourcesAssembler,
-                                                 ProcessVariablesHelper processVariablesHelper) {
+                                                 ProcessVariablesPayloadValidator processVariablesValidator) {
         this.variableResourceAssembler = variableResourceAssembler;
         this.processRuntime = processRuntime;
         this.resourcesAssembler = resourcesAssembler;
-        this.processVariablesHelper = processVariablesHelper;
+        this.processVariablesValidator = processVariablesValidator;
     }
 
     @Override
@@ -63,22 +59,14 @@ public class ProcessInstanceVariableControllerImpl implements ProcessInstanceVar
     }
 
     @Override
-    public ResponseEntity<List<String>> setVariables(@PathVariable String processInstanceId,
-                                                     @RequestBody SetProcessVariablesPayload setProcessVariablesPayload) {
+    public ResponseEntity<Void> setVariables(@PathVariable String processInstanceId,
+                                             @RequestBody SetProcessVariablesPayload setProcessVariablesPayload) {
         
         ProcessInstance processInstance = processRuntime.processInstance(processInstanceId);
         setProcessVariablesPayload.setProcessInstanceId(processInstanceId);
         
-        List<ActivitiException> activitiExceptions = processVariablesHelper
-                                                     .checkPayloadVariables(setProcessVariablesPayload,
-                                                     processInstance.getProcessDefinitionKey());
-
-        if (!activitiExceptions.isEmpty()) {
-            return new ResponseEntity<>(activitiExceptions.stream()
-                                        .map(Throwable::getMessage)
-                                        .collect(Collectors.toList()), 
-                                        HttpStatus.BAD_REQUEST);
-        }         
+        processVariablesValidator.checkPayloadVariables(setProcessVariablesPayload,
+                                                        processInstance.getProcessDefinitionKey());
 
         processRuntime.setVariables(setProcessVariablesPayload);
         return new ResponseEntity<>(HttpStatus.OK);

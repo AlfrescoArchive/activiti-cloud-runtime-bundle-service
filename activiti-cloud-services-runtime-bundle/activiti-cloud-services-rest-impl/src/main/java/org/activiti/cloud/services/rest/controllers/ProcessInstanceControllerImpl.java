@@ -66,8 +66,8 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
     private final ProcessRuntime processRuntime;
 
     private final SpringPageConverter pageConverter;
-
-    private final ProcessVariablesHelper processVariablesHelper;
+    
+    private final ProcessVariablesPayloadValidator processVariablesValidator;
 
     @Autowired
     public ProcessInstanceControllerImpl(RepositoryService repositoryService,
@@ -76,14 +76,14 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
                                          AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler,
                                          ProcessRuntime processRuntime,
                                          SpringPageConverter pageConverter,
-                                         ProcessVariablesHelper processVariablesHelper) {
+                                         ProcessVariablesPayloadValidator processVariablesValidator) {
         this.repositoryService = repositoryService;
         this.processDiagramGenerator = processDiagramGenerator;
         this.resourceAssembler = resourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
         this.processRuntime = processRuntime;
         this.pageConverter = pageConverter;
-        this.processVariablesHelper = processVariablesHelper;
+        this.processVariablesValidator = processVariablesValidator;
     }
 
     @Override
@@ -113,12 +113,12 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     @Override
     public Resource<CloudProcessInstance> startProcess(@RequestBody StartProcessPayload startProcessPayload) {
-
-        Map<String, Object> variables = startProcessPayload.getVariables();
-        if (variables != null && !variables.isEmpty()) {
-
-            processVariablesHelper.checkStartProcessPayloadVariables(startProcessPayload,
-                                                                     getProcessDefinitionKey(startProcessPayload));
+        
+        Map<String, Object> variables = startProcessPayload.getVariables(); 
+        if (variables != null && !variables.isEmpty()) {   
+            
+            processVariablesValidator.checkStartProcessPayloadVariables(startProcessPayload,
+                                                                        getProcessDefinitionKey(startProcessPayload));
         }    
         
         return resourceAssembler.toResource(processRuntime.start(startProcessPayload));

@@ -16,15 +16,11 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.payloads.RemoveProcessVariablesPayload;
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
 import org.activiti.cloud.services.rest.api.ProcessInstanceVariableAdminController;
-import org.activiti.engine.ActivitiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,33 +31,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ProcessInstanceVariableAdminControllerImpl implements ProcessInstanceVariableAdminController {
     private final ProcessAdminRuntime processAdminRuntime;
-    private final ProcessVariablesHelper processVariablesHelper;
+    private final ProcessVariablesPayloadValidator processVariablesValidator;
 
     @Autowired
     public ProcessInstanceVariableAdminControllerImpl(ProcessAdminRuntime processAdminRuntime,
-                                                      ProcessVariablesHelper processVariablesHelper) {
+                                                      ProcessVariablesPayloadValidator processVariablesValidator) {
         this.processAdminRuntime = processAdminRuntime;
-        this.processVariablesHelper = processVariablesHelper;
+        this.processVariablesValidator = processVariablesValidator;
     }
 
     @Override
-    public ResponseEntity<List<String>> updateVariables(@PathVariable String processInstanceId,
-                                                        @RequestBody SetProcessVariablesPayload setProcessVariablesPayload) {
+    public ResponseEntity<Void> updateVariables(@PathVariable String processInstanceId,
+                                                @RequestBody SetProcessVariablesPayload setProcessVariablesPayload) {
         
         ProcessInstance processInstance = processAdminRuntime.processInstance(processInstanceId);
         setProcessVariablesPayload.setProcessInstanceId(processInstanceId);
         
-        List<ActivitiException> activitiExceptions = processVariablesHelper
-                                                    .checkPayloadVariables(setProcessVariablesPayload,
-                                                                           processInstance.getProcessDefinitionKey());
+        processVariablesValidator.checkPayloadVariables(setProcessVariablesPayload,
+                                                        processInstance.getProcessDefinitionKey());
         
-        if (!activitiExceptions.isEmpty()) {
-            return new ResponseEntity<>(activitiExceptions.stream()
-                                        .map(Throwable::getMessage)
-                                        .collect(Collectors.toList()), 
-                                        HttpStatus.BAD_REQUEST);
-        }         
-
         processAdminRuntime.setVariables(setProcessVariablesPayload);
         return new ResponseEntity<>(HttpStatus.OK);
     }

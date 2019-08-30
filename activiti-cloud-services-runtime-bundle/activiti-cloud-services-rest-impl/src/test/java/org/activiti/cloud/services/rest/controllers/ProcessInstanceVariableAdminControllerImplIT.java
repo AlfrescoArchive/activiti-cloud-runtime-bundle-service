@@ -19,16 +19,15 @@ package org.activiti.cloud.services.rest.controllers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,6 +62,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(ProcessInstanceVariableAdminControllerImpl.class)
@@ -88,7 +88,7 @@ public class ProcessInstanceVariableAdminControllerImplIT {
     private Map<String, ProcessExtensionModel> processExtensionModelMap;
     
     @MockBean
-    private ProcessVariablesHelper processVariablesHelper;
+    private ProcessVariablesPayloadValidator processVariablesValidator;
 
     @Autowired
     private ObjectMapper mapper;
@@ -111,7 +111,12 @@ public class ProcessInstanceVariableAdminControllerImplIT {
         processInstance = new ProcessInstanceImpl();
         processInstance.setId("1");
         processInstance.setProcessDefinitionKey("1");
-
+   
+        this.mockMvc = MockMvcBuilders
+                .standaloneSetup(new ProcessInstanceVariableAdminControllerImpl(processAdminRuntime, processVariablesValidator))
+                .setControllerAdvice(new RuntimeBundleExceptionHandler())
+                .build();
+        
         given(processAdminRuntime.processInstance(any()))
               .willReturn(processInstance);
     }
@@ -152,12 +157,9 @@ public class ProcessInstanceVariableAdminControllerImplIT {
 
         String expectedResponseBody = "Variable with name subs does not exists.";
        
-        List<ActivitiException> activitiExceptions = new ArrayList<>();
-        activitiExceptions.add(new ActivitiException(expectedResponseBody));
+        doThrow(new IllegalStateException(expectedResponseBody))
+        .when(processVariablesValidator).checkPayloadVariables(any(),any());     
         
-        given(processVariablesHelper.checkPayloadVariables(any(),any()))
-        .willReturn(activitiExceptions);
-     
         //WHEN
         ResultActions resultActions = mockMvc.perform(put("/admin/v1/process-instances/1/variables",
                 1).contentType(MediaType.APPLICATION_JSON)

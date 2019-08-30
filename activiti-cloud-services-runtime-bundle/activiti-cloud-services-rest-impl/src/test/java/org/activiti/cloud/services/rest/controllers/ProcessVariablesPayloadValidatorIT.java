@@ -17,11 +17,11 @@
 package org.activiti.cloud.services.rest.controllers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
@@ -31,7 +31,6 @@ import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfiguration;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.rest.conf.ServicesRestAutoConfiguration;
-import org.activiti.engine.ActivitiException;
 import org.activiti.spring.process.conf.ProcessExtensionsAutoConfiguration;
 import org.activiti.spring.process.model.Extension;
 import org.activiti.spring.process.model.ProcessExtensionModel;
@@ -51,7 +50,7 @@ import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@WebMvcTest(ProcessVariablesHelper.class)
+@WebMvcTest(ProcessVariablesPayloadValidator.class)
 @EnableSpringDataWebSupport
 @AutoConfigureMockMvc(secure = false)
 @AutoConfigureRestDocs(outputDir = "target/snippets")
@@ -62,7 +61,7 @@ import org.springframework.test.context.junit4.SpringRunner;
         ProcessExtensionsAutoConfiguration.class,
         ServicesRestAutoConfiguration.class})
 @ComponentScan(basePackages = {"org.activiti.cloud.services.rest.assemblers", "org.activiti.cloud.alfresco"})
-public class ProcessVariablesHelperIT {
+public class ProcessVariablesPayloadValidatorIT {
     @MockBean
     private ProcessEngineChannels processEngineChannels;
     
@@ -75,7 +74,7 @@ public class ProcessVariablesHelperIT {
     @MockBean
     private Map<String, ProcessExtensionModel> processExtensionModelMap;
     
-    private ProcessVariablesHelper processVariablesHelper;
+    private ProcessVariablesPayloadValidator processVariablesValidator;
 
     @Before
     public void setUp() {
@@ -110,14 +109,14 @@ public class ProcessVariablesHelperIT {
         processExtensionModel.setId("1");
         processExtensionModel.setExtensions(extension);
 
-        processVariablesHelper = new ProcessVariablesHelper(dateFormatterProvider,
+        processVariablesValidator = new ProcessVariablesPayloadValidator(dateFormatterProvider,
                                                             processExtensionModelMap,
                                                             variableValidationService);
 
         given(processExtensionModelMap.get(any()))
-                .willReturn(processExtensionModel);
+                   .willReturn(processExtensionModel);
     }
- 
+
     @Test
     public void shouldReturnErrorListWhenSetVariablesWithWrongNames() throws Exception {
         //GIVEN
@@ -127,17 +126,18 @@ public class ProcessVariablesHelperIT {
         variables.put("subs", false);
         
         //WHEN
-        List<ActivitiException> activitiExceptions = processVariablesHelper.checkPayloadVariables(ProcessPayloadBuilder.setVariables()
-                                                                           .withVariables(variables)
-                                                                           .build(),
-                                                                            "10");
-        
-        String expectedMsg = "Variable with name subs does not exists.";
-        
-        assertThat(activitiExceptions)
-        .isNotEmpty()
-        .extracting(ex -> ex.getMessage())
-        .containsOnly(expectedMsg);
+        //THEN
+        Throwable throwable = catchThrowable(() -> processVariablesValidator.checkPayloadVariables(
+                                                                            ProcessPayloadBuilder
+                                                                                .setVariables()
+                                                                                .withVariables(variables)
+                                                                                .build(),
+                                                                            "10"));
+
+        //THEN
+        assertThat(throwable)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessage("Variable with name subs does not exists.");
     }
 
     @Test
@@ -147,21 +147,23 @@ public class ProcessVariablesHelperIT {
         variables.put("name", "Alice");
         variables.put("age", "24");
         variables.put("subscribe", "false");
-        String expectedTypeErrorMessage1 = "class java.lang.String is not assignable from class java.lang.Boolean";
-        String expectedTypeErrorMessage2 = "class java.lang.String is not assignable from class java.lang.Integer";
 
         //WHEN
-        List<ActivitiException> activitiExceptions = processVariablesHelper.checkPayloadVariables(ProcessPayloadBuilder.setVariables()
-                                                                           .withVariables(variables)
-                                                                           .build(),
-                                                                            "10");  
-        assertThat(activitiExceptions)
-        .isNotEmpty()
-        .extracting(ex -> ex.getMessage())
-        .containsOnly(expectedTypeErrorMessage1,
-                      expectedTypeErrorMessage2);
+        Throwable throwable = catchThrowable(() -> processVariablesValidator.checkPayloadVariables(
+                                                                            ProcessPayloadBuilder
+                                                                                .setVariables()
+                                                                                .withVariables(variables)
+                                                                                .build(),
+                                                                            "10"));
+
+        //THEN
+        assertThat(throwable).isInstanceOf(IllegalStateException.class);
+        
+        assertThat(throwable.getMessage())
+            .contains("Boolean",
+                      "Integer");
     }
- 
+
     @Test
     public void shouldReturnErrorListWhenSetVariablesWithWrongNameAndType() throws Exception {
         //GIVEN
@@ -178,31 +180,40 @@ public class ProcessVariablesHelperIT {
         String expectedNameErrorMessage2 = "Variable with name subs does not exists.";
 
         //WHEN
-        List<ActivitiException> activitiExceptions = processVariablesHelper.checkPayloadVariables(ProcessPayloadBuilder.setVariables()
-                                                                           .withVariables(variables)
-                                                                           .build(),
-                                                                            "10");  
+        //WHEN
+        Throwable throwable = catchThrowable(() -> processVariablesValidator.checkPayloadVariables(
+                                                                            ProcessPayloadBuilder
+                                                                                .setVariables()
+                                                                                .withVariables(variables)
+                                                                                .build(),
+                                                                            "10"));
+
+        //THEN
+        assertThat(throwable).isInstanceOf(IllegalStateException.class); 
         
-        assertThat(activitiExceptions)
-        .isNotEmpty()
-        .extracting(ex -> ex.getMessage())
-        .containsOnly(expectedTypeErrorMessage,
+        assertThat(throwable.getMessage())
+            .contains(expectedTypeErrorMessage,
                       expectedNameErrorMessage1,
                       expectedNameErrorMessage2);
+        
     }
-    
+  
     @Test
     public void shouldReturnErrorWhenSetVariablesWithWrongDateFormat() throws Exception {
         //GIVEN
         Map<String, Object> variables = new HashMap<>();
         variables.put("mydate", "2019-08-26TT10:20:30.000Z");
 
-        //WHEN
-        List<ActivitiException> activitiExceptions = processVariablesHelper.checkPayloadVariables(ProcessPayloadBuilder.setVariables()
-                                                                           .withVariables(variables)
-                                                                           .build(),
-                                                                            "10");  
+        //THEN
+        Throwable throwable = catchThrowable(() -> processVariablesValidator.checkPayloadVariables(
+                                                                            ProcessPayloadBuilder
+                                                                                .setVariables()
+                                                                                .withVariables(variables)
+                                                                                .build(),
+                                                                            "10"));
+
+        //THEN
+        assertThat(throwable).isInstanceOf(IllegalStateException.class);
         
-        assertThat(activitiExceptions.size()).isEqualTo(1);
     }
 }

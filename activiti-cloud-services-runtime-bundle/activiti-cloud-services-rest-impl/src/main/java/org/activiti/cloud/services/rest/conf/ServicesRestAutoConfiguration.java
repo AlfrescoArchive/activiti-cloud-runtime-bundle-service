@@ -30,7 +30,7 @@ import org.activiti.cloud.services.rest.assemblers.ToCloudProcessInstanceConvert
 import org.activiti.cloud.services.rest.assemblers.ToCloudTaskConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudVariableInstanceConverter;
 import org.activiti.cloud.services.rest.controllers.DateFormatterProvider;
-import org.activiti.cloud.services.rest.controllers.ProcessVariablesHelper;
+import org.activiti.cloud.services.rest.controllers.ProcessVariablesPayloadValidator;
 import org.activiti.cloud.services.rest.controllers.ResourcesAssembler;
 import org.activiti.cloud.services.rest.controllers.RuntimeBundleRelProvider;
 import org.activiti.spring.process.model.ProcessExtensionModel;
@@ -99,12 +99,12 @@ public class ServicesRestAutoConfiguration implements WebMvcConfigurer {
     
     @Bean
     @ConditionalOnMissingBean
-    public ProcessVariablesHelper processVariablesHelper(DateFormatterProvider dateFormatterProvider,
-                                                         Map<String, ProcessExtensionModel> processExtensionModelMap,
-                                                         VariableValidationService variableValidationService) {
-        return new ProcessVariablesHelper(dateFormatterProvider,
-                                          processExtensionModelMap,
-                                          variableValidationService);
+    public ProcessVariablesPayloadValidator processVariablesPayloadValidator(DateFormatterProvider dateFormatterProvider,
+                                                                             Map<String, ProcessExtensionModel> processExtensionModelMap,
+                                                                             VariableValidationService variableValidationService) {
+        return new ProcessVariablesPayloadValidator(dateFormatterProvider,
+                                                    processExtensionModelMap,
+                                                    variableValidationService);
     }
 
     @Override

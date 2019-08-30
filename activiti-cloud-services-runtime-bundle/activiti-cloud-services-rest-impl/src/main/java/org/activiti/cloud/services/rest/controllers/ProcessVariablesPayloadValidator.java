@@ -17,7 +17,6 @@ package org.activiti.cloud.services.rest.controllers;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,15 +30,15 @@ import org.activiti.spring.process.model.ProcessExtensionModel;
 import org.activiti.spring.process.model.VariableDefinition;
 import org.activiti.spring.process.variable.VariableValidationService;
 
-public class ProcessVariablesHelper  {
+public class ProcessVariablesPayloadValidator  {
    
     private final Map<String, ProcessExtensionModel> processExtensionModelMap;
     private final VariableValidationService variableValidationService;
     private final DateFormatterProvider dateFormatterProvider;
  
-    public ProcessVariablesHelper(DateFormatterProvider dateFormatterProvider,
-                                  Map<String, ProcessExtensionModel> processExtensionModelMap,
-                                  VariableValidationService variableValidationService) {
+    public ProcessVariablesPayloadValidator(DateFormatterProvider dateFormatterProvider,
+                                            Map<String, ProcessExtensionModel> processExtensionModelMap,
+                                            VariableValidationService variableValidationService) {
         this.dateFormatterProvider = dateFormatterProvider;
         this.processExtensionModelMap = processExtensionModelMap;
         this.variableValidationService = variableValidationService;
@@ -53,9 +52,9 @@ public class ProcessVariablesHelper  {
                 .map(Extension::getProperties);
     }
     
-    public List<ActivitiException> checkPayloadVariables(Map<String, Object> variablePayloadMap,
-                                                         String processDefinitionKey,
-                                                         boolean validate) {
+    private void checkPayloadVariables(Map<String, Object> variablePayloadMap,
+                                       String processDefinitionKey,
+                                       boolean validate) {
         
         final String errorMessage = "Variable with name {0} does not exists.";
         final String errorDateTimeParse = "Error parsing date/time variable with a name {0}: {1}";
@@ -77,10 +76,7 @@ public class ProcessVariablesHelper  {
                         
                         if ("date".equals(type) &&  value != null) {
                             try {
-                                Date d = dateFormatterProvider.convert2Date(value);
-                                if (d != null) {
-                                    var.setValue(value = d);
-                                }   
+                                var.setValue(dateFormatterProvider.convert2Date(value));
                             } catch (Exception e) {
                                 activitiExceptions.add(new ActivitiException(MessageFormat.format(errorDateTimeParse, name, e.getMessage())));
                             }
@@ -98,16 +94,21 @@ public class ProcessVariablesHelper  {
                     activitiExceptions.add(new ActivitiException(MessageFormat.format(errorMessage, name)));
                 }
             }
-        }        
-        return activitiExceptions;       
+        }      
+        
+        if (!activitiExceptions.isEmpty()) {
+            throw new IllegalStateException(activitiExceptions.stream()
+                                            .map(ex -> ex.getMessage())
+                                            .collect(Collectors.joining(",")));                
+        }     
     }
     
-    public List<ActivitiException> checkPayloadVariables(SetProcessVariablesPayload setProcessVariablesPayload,
-                                                         String processDefinitionKey) {
+    public void checkPayloadVariables(SetProcessVariablesPayload setProcessVariablesPayload,
+                                      String processDefinitionKey) {
         
-        return checkPayloadVariables(setProcessVariablesPayload.getVariables(),
-                                     processDefinitionKey,
-                                     true);      
+        checkPayloadVariables(setProcessVariablesPayload.getVariables(),
+                              processDefinitionKey,
+                              true);          
     }
     
 
@@ -115,14 +116,8 @@ public class ProcessVariablesHelper  {
     public void checkStartProcessPayloadVariables(StartProcessPayload startProcessPayload,
                                                   String processDefinitionKey) {
         
-        List<ActivitiException> activitiExceptions = checkPayloadVariables(startProcessPayload.getVariables(),
-                                                                           processDefinitionKey,
-                                                                           false);
-            
-        if (!activitiExceptions.isEmpty()) {
-            throw new IllegalStateException(activitiExceptions.stream()
-                                            .map(ex -> ex.getMessage())
-                                            .collect(Collectors.joining(",")));                
-        }
+       checkPayloadVariables(startProcessPayload.getVariables(),
+                             processDefinitionKey,
+                             false);
     }
 }

@@ -51,18 +51,18 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
 
     private final SpringPageConverter pageConverter;
     
-    private final ProcessVariablesHelper processVariablesHelper;
+    private final ProcessVariablesPayloadValidator processVariablesValidator;
 
     public ProcessInstanceAdminControllerImpl(ProcessInstanceResourceAssembler resourceAssembler,
                                               AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler,
                                               ProcessAdminRuntime processAdminRuntime,
                                               SpringPageConverter pageConverter,
-                                              ProcessVariablesHelper processVariablesHelper) {
+                                              ProcessVariablesPayloadValidator processVariablesValidator) {
         this.resourceAssembler = resourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
         this.processAdminRuntime = processAdminRuntime;
         this.pageConverter = pageConverter;
-        this.processVariablesHelper = processVariablesHelper;
+        this.processVariablesValidator = processVariablesValidator;
     }
 
     @Override
@@ -95,8 +95,8 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
         Map<String, Object> variables = startProcessPayload.getVariables(); 
         if (variables != null && !variables.isEmpty()) {
             
-            processVariablesHelper.checkStartProcessPayloadVariables(startProcessPayload,
-                                                                     getProcessDefinitionKey(startProcessPayload));
+            processVariablesValidator.checkStartProcessPayloadVariables(startProcessPayload,
+                                                                        getProcessDefinitionKey(startProcessPayload));
         }    
         return resourceAssembler.toResource(processAdminRuntime.start(startProcessPayload));
     }
