@@ -32,6 +32,7 @@ import org.activiti.cloud.services.rest.assemblers.ToCloudVariableInstanceConver
 import org.activiti.cloud.services.rest.controllers.ProcessVariablesPayloadValidator;
 import org.activiti.cloud.services.rest.controllers.ResourcesAssembler;
 import org.activiti.cloud.services.rest.controllers.RuntimeBundleRelProvider;
+import org.activiti.cloud.services.rest.controllers.TaskVariablesPayloadValidator;
 import org.activiti.spring.process.model.ProcessExtensionModel;
 import org.activiti.spring.process.variable.DateFormatterProvider;
 import org.activiti.spring.process.variable.VariableValidationService;
@@ -99,6 +100,12 @@ public class ServicesRestAutoConfiguration implements WebMvcConfigurer {
         return new ProcessVariablesPayloadValidator(dateFormatterProvider,
                                                     processExtensionModelMap,
                                                     variableValidationService);
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public TaskVariablesPayloadValidator taskVariablesPayloadValidator(DateFormatterProvider dateFormatterProvider) {
+        return new TaskVariablesPayloadValidator(dateFormatterProvider);
     }
 
     @Override
