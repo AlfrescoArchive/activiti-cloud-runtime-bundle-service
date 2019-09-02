@@ -49,16 +49,20 @@ public class TaskAdminControllerImpl implements TaskAdminController {
     private final AlfrescoPagedResourcesAssembler<Task> pagedResourcesAssembler;
 
     private final SpringPageConverter pageConverter;
+    
+    private final TaskVariablesPayloadValidator taskVariablesPayloadValidator;
 
     @Autowired
     public TaskAdminControllerImpl(TaskAdminRuntime taskAdminRuntime,
                                    TaskResourceAssembler taskResourceAssembler,
                                    AlfrescoPagedResourcesAssembler<Task> pagedResourcesAssembler,
-                                   SpringPageConverter pageConverter) {
+                                   SpringPageConverter pageConverter,
+                                   TaskVariablesPayloadValidator taskVariablesPayloadValidator) {
         this.taskAdminRuntime = taskAdminRuntime;
         this.taskResourceAssembler = taskResourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
         this.pageConverter = pageConverter;
+        this.taskVariablesPayloadValidator = taskVariablesPayloadValidator;
     }
 
     @Override
@@ -87,6 +91,8 @@ public class TaskAdminControllerImpl implements TaskAdminController {
         } else {
             completeTaskPayload.setTaskId(taskId);
         }
+        
+        taskVariablesPayloadValidator.checkPayloadVariables(completeTaskPayload.getVariables());  
         Task task = taskAdminRuntime.complete(completeTaskPayload);
         return taskResourceAssembler.toResource(task);
     }

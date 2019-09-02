@@ -50,16 +50,20 @@ public class TaskControllerImpl implements TaskController {
     private final SpringPageConverter pageConverter;
 
     private final TaskRuntime taskRuntime;
+    
+    private final TaskVariablesPayloadValidator taskVariablesPayloadValidator;
 
     @Autowired
     public TaskControllerImpl(TaskResourceAssembler taskResourceAssembler,
                               AlfrescoPagedResourcesAssembler<Task> pagedResourcesAssembler,
                               SpringPageConverter pageConverter,
-                              TaskRuntime taskRuntime) {
+                              TaskRuntime taskRuntime,
+                              TaskVariablesPayloadValidator taskVariablesPayloadValidator) {
         this.taskResourceAssembler = taskResourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
         this.pageConverter = pageConverter;
         this.taskRuntime = taskRuntime;
+        this.taskVariablesPayloadValidator = taskVariablesPayloadValidator;
     }
 
     @Override
@@ -106,6 +110,8 @@ public class TaskControllerImpl implements TaskController {
         } else {
             completeTaskPayload.setTaskId(taskId);
         }
+        
+        taskVariablesPayloadValidator.checkPayloadVariables(completeTaskPayload.getVariables());
         Task task = taskRuntime.complete(completeTaskPayload);
         return taskResourceAssembler.toResource(task);
     }
@@ -202,6 +208,8 @@ public class TaskControllerImpl implements TaskController {
                          @RequestBody SaveTaskPayload saveTaskPayload) {
         if (saveTaskPayload != null) {
             saveTaskPayload.setTaskId(taskId);
+            
+            taskVariablesPayloadValidator.checkPayloadVariables(saveTaskPayload.getVariables());
         }
         
         taskRuntime.save(saveTaskPayload);

@@ -29,16 +29,17 @@ public class TaskVariablesPayloadValidator  {
     }
     
     public void checkPayloadVariables(Map<String, Object> variablePayloadMap) {
-        
-        for (Map.Entry<String, Object> payloadVar : variablePayloadMap.entrySet()) {
-            Object value = payloadVar.getValue();
-                       
-            if (value instanceof String) {
-                try {
-                    payloadVar.setValue(dateFormatterProvider.convert2Date(value));
-                } catch (Exception e) {}
-            }
-        }
+       if (variablePayloadMap != null) {
+           for (Map.Entry<String, Object> payloadVar : variablePayloadMap.entrySet()) {
+                Object value = payloadVar.getValue();
+                           
+                if (value instanceof String) {
+                    try {
+                        payloadVar.setValue(dateFormatterProvider.convert2Date(value));
+                    } catch (Exception e) {}
+                }
+           }
+       }
     }
     
     public void checkPayloadVariable(CreateTaskVariablePayload createTaskVariablePayload) {
