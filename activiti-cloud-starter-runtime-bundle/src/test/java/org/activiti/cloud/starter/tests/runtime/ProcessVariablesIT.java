@@ -22,8 +22,6 @@ import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -42,10 +40,10 @@ import org.activiti.api.runtime.model.impl.ActivitiErrorMessageImpl;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.activiti.cloud.api.process.model.CloudProcessDefinition;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
-import org.activiti.cloud.services.rest.controllers.DateFormatterProvider;
 import org.activiti.cloud.services.test.identity.keycloak.interceptor.KeycloakTokenProducer;
 import org.activiti.cloud.starter.tests.helper.ProcessDefinitionRestTemplate;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
+import org.activiti.cloud.starter.tests.util.VariablesUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -75,8 +73,8 @@ public class ProcessVariablesIT {
     private ProcessDefinitionRestTemplate processDefinitionRestTemplate;
     
     @Autowired
-    private DateFormatterProvider dateFormatterProvider;
-    
+    private  VariablesUtil variablesUtil;
+     
     private Map<String, String> processDefinitionIds = new HashMap<>();
 
     private static final String PROCESS_WITH_VARIABLES2 = "ProcessWithVariables2";
@@ -453,10 +451,10 @@ public class ProcessVariablesIT {
         
         Map<String, Object> variables = new HashMap<>();
         
-        Date dt = new Date();
+        Date date = new Date();
    
         variables.put("variableDate",
-                      getDateTimeFormattedString(dt));
+                      variablesUtil.getDateTimeFormattedString(date));
          
         setVariables(processInstanceId,
                      isAdmin,
@@ -467,14 +465,14 @@ public class ProcessVariablesIT {
             ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceId);
             assertThat(responseEntity.getBody()).isNotNull();
             
-            CloudVariableInstance var = responseEntity.getBody().getContent()
+            CloudVariableInstance variable = responseEntity.getBody().getContent()
                                             .stream()
-                                            .filter(v -> v.getName().equals("variableDate"))
+                                            .filter(var -> var.getName().equals("variableDate"))
                                             .findAny()
                                             .get();
             
-            assertThat(var.getType()).isEqualTo("date");
-            assertThat(getExpectedDateTimeFormattedString(dt)).isEqualTo(var.getValue());
+            assertThat(variable.getType()).isEqualTo("date");
+            assertThat(variablesUtil.getExpectedDateTimeFormattedString(date)).isEqualTo(variable.getValue());
          });   
     }
     
@@ -533,7 +531,7 @@ public class ProcessVariablesIT {
    
     private void checkStartProcessWihDateVariables(boolean isAdmin) throws Exception{
         Map<String, Object> variables = new HashMap<>();      
-        Date dt = new Date();
+        Date date = new Date();
           
         variables.put("variableInt",
                       2);
@@ -542,9 +540,9 @@ public class ProcessVariablesIT {
         variables.put("variableBool",
                       false);
         variables.put("variableDateTime",
-                      getDateTimeFormattedString(dt));
+                      variablesUtil.getDateTimeFormattedString(date));
         variables.put("variableDate",
-                      getDateFormattedString(dt));
+                      variablesUtil.getDateFormattedString(date));
         
         ResponseEntity<CloudProcessInstance> processInstanceResponseEntity;
         if (isAdmin) {
@@ -582,10 +580,10 @@ public class ProcessVariablesIT {
                                     false),
                               tuple("variableDateTime",
                                     "date",
-                                    getExpectedDateTimeFormattedString(dt)),
+                                    variablesUtil.getExpectedDateTimeFormattedString(date)),
                               tuple("variableDate",
                                     "date",
-                                    getExpectedDateFormattedString(dt)));
+                                    variablesUtil.getExpectedDateFormattedString(date)));
         });
 
         processInstanceRestTemplate.delete(processInstanceResponseEntity); 
@@ -633,43 +631,4 @@ public class ProcessVariablesIT {
         assertThat(responseEntity.getBody().getMessage()).contains("variableDateTime"); 
     }
     
-    private String getDateFormattedString(Date date) throws Exception {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        
-        return format.format(date);
-    }
-    
-    private LocalDateTime convertDateToLocalDate(Date date) {
-        return date.toInstant()
-               .atZone(dateFormatterProvider.getZoneId())
-               .toLocalDateTime();
-    }
-    
-    private String formatLocalDateTimeStringWithPattern(LocalDateTime date, String datePattern) {
-        return new DateTimeFormatterBuilder()
-                  .appendPattern(datePattern)
-                  .toFormatter()
-                  .withZone(dateFormatterProvider.getZoneId())
-                  .format(date);
-    }
-    
-    private String getDateTimeFormattedString(Date date) throws Exception {
-        return formatLocalDateTimeStringWithPattern(convertDateToLocalDate(date), 
-                                                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-    }  
-    
-    private String getExpectedDateFormattedString(Date date) throws Exception {
-        SimpleDateFormat expDTFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        expDTFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-         
-        return expDTFormat.format(dateFormatterProvider
-                                  .convert2Date(getDateFormattedString(date)));
-    }
-    
-    private String getExpectedDateTimeFormattedString(Date date) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return format.format(date);
-    }
 }
