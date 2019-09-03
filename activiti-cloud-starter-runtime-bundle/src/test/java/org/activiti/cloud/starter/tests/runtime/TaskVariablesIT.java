@@ -16,15 +16,13 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatterBuilder;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.TimeZone;
 
 import org.activiti.api.model.shared.model.VariableInstance;
 import org.activiti.api.process.model.ProcessDefinition;
@@ -32,11 +30,11 @@ import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.activiti.cloud.api.process.model.CloudProcessDefinition;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.api.task.model.CloudTask;
-import org.activiti.cloud.services.rest.controllers.DateFormatterProvider;
 import org.activiti.cloud.services.test.identity.keycloak.interceptor.KeycloakTokenProducer;
 import org.activiti.cloud.starter.tests.definition.ProcessDefinitionIT;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
+import org.activiti.cloud.starter.tests.util.VariablesUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,8 +50,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -74,7 +70,7 @@ public class TaskVariablesIT {
     private KeycloakTokenProducer keycloakSecurityContextClientRequestInterceptor;
     
     @Autowired
-    private DateFormatterProvider dateFormatterProvider;
+    private  VariablesUtil variablesUtil;
 
     private Map<String, String> processDefinitionIds = new HashMap<>();
 
@@ -218,21 +214,21 @@ public class TaskVariablesIT {
       
         taskRestTemplate.claim(taskId);
         
-        taskRestTemplate.createVariable(taskId, "variableDateTime", getDateTimeFormattedString(date));
-        taskRestTemplate.createVariable(taskId, "variableDate", getDateFormattedString(date));
+        taskRestTemplate.createVariable(taskId, "variableDateTime", variablesUtil.getDateTimeFormattedString(date));
+        taskRestTemplate.createVariable(taskId, "variableDate", variablesUtil.getDateFormattedString(date));
 
         //when
         ResponseEntity<Resources<CloudVariableInstance>> variablesResponse = taskRestTemplate.getVariables(taskId);
 
         //then
         assertThat(variablesResponse).isNotNull();
-        assertThat(variablesContainEntry("variableDateTime",getExpectedDateTimeFormattedString(date),variablesResponse.getBody().getContent())).isTrue();
-        assertThat(variablesContainEntry("variableDate",getExpectedDateFormattedString(date),variablesResponse.getBody().getContent())).isTrue();
+        assertThat(variablesContainEntry("variableDateTime",variablesUtil.getExpectedDateTimeFormattedString(date),variablesResponse.getBody().getContent())).isTrue();
+        assertThat(variablesContainEntry("variableDate",variablesUtil.getExpectedDateFormattedString(date),variablesResponse.getBody().getContent())).isTrue();
 
         // when
         date = new Date(date.getTime() + 3600000);
-        taskRestTemplate.updateVariable(taskId, "variableDateTime", getDateTimeFormattedString(date));
-        taskRestTemplate.updateVariable(taskId, "variableDate", getDateFormattedString(date));
+        taskRestTemplate.updateVariable(taskId, "variableDateTime", variablesUtil.getDateTimeFormattedString(date));
+        taskRestTemplate.updateVariable(taskId, "variableDate", variablesUtil.getDateFormattedString(date));
 
         // when
         variablesResponse = taskRestTemplate.getVariables(taskId);
@@ -240,46 +236,41 @@ public class TaskVariablesIT {
         processInstanceRestTemplate.delete(startResponse); 
     }
     
-    private LocalDateTime convertDateToLocalDate(Date date) {
-        return date.toInstant()
-               .atZone(dateFormatterProvider.getZoneId())
-               .toLocalDateTime();
-    }
-    
-    private String formatLocalDateTimeStringWithPattern(LocalDateTime date, String datePattern) {
-        return new DateTimeFormatterBuilder()
-                  .appendPattern(datePattern)
-                  .toFormatter()
-                  .withZone(dateFormatterProvider.getZoneId())
-                  .format(date);
-    }
-    
-    private String getDateTimeFormattedString(Date date) throws Exception {
-        return formatLocalDateTimeStringWithPattern(convertDateToLocalDate(date), 
-                                                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-    }  
-    
-    private String getDateFormattedString(Date date) throws Exception {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        
-        return format.format(date);
-    }
-    
-    private String getExpectedDateFormattedString(Date date) throws Exception {
-        SimpleDateFormat expDTFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        expDTFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-         
-        return expDTFormat.format(dateFormatterProvider
-                                  .convert2Date(getDateFormattedString(date)));
-    }
-    
-    private String getExpectedDateTimeFormattedString(Date date) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return format.format(date);
-    }
+    @Test
+    public void admin_Should_Create_Update_DateTimeTaskVariables() throws Exception{
+        //given
+        Date date = new Date();
+  
+        ResponseEntity<CloudProcessInstance> startResponse = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS),
+                                                                                                      null);
+        ResponseEntity<PagedResources<CloudTask>> tasks = processInstanceRestTemplate.getTasks(startResponse);
 
+        String taskId = tasks.getBody().getContent().iterator().next().getId();
+        
+        keycloakSecurityContextClientRequestInterceptor.setKeycloakTestUser("testadmin");
+        
+        taskRestTemplate.adminCreateVariable(taskId, "variableDateTime", variablesUtil.getDateTimeFormattedString(date));
+        taskRestTemplate.adminCreateVariable(taskId, "variableDate", variablesUtil.getDateFormattedString(date));
+
+        //when
+        ResponseEntity<Resources<CloudVariableInstance>> variablesResponse = taskRestTemplate.adminGetVariables(taskId);
+
+        //then
+        assertThat(variablesResponse).isNotNull();
+        assertThat(variablesContainEntry("variableDateTime",variablesUtil.getExpectedDateTimeFormattedString(date),variablesResponse.getBody().getContent())).isTrue();
+        assertThat(variablesContainEntry("variableDate",variablesUtil.getExpectedDateFormattedString(date),variablesResponse.getBody().getContent())).isTrue();
+
+        // when
+        date = new Date(date.getTime() + 3600000);
+        taskRestTemplate.adminUpdateVariable(taskId, "variableDateTime", variablesUtil.getDateTimeFormattedString(date));
+        taskRestTemplate.adminUpdateVariable(taskId, "variableDate", variablesUtil.getDateFormattedString(date));
+
+        // when
+        variablesResponse = taskRestTemplate.adminGetVariables(taskId);
+        
+        processInstanceRestTemplate.delete(startResponse); 
+    }
+    
     private boolean variablesContainEntry(String key, Object value, Collection<CloudVariableInstance> variableCollection){
         Iterator<CloudVariableInstance> iterator = variableCollection.iterator();
         while(iterator.hasNext()){
