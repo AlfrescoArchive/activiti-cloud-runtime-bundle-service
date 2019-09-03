@@ -22,6 +22,7 @@ import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.h2.tools.Server;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
@@ -36,27 +37,47 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHandler;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.RabbitMQContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 public class MultipleRbJobExecutorIT {
     private static final Logger logger = LoggerFactory.getLogger(MultipleRbJobExecutorIT.class);
 
     private static final String ASYNC_TASK = "asyncTask";
-    
+
     private static ConfigurableApplicationContext h2Ctx;
     private static ConfigurableApplicationContext rbCtx1;
     private static ConfigurableApplicationContext rbCtx2;
-    
+
+    @ClassRule
+    public static GenericContainer keycloakContainer = new GenericContainer("activiti/activiti-keycloak")
+            .withExposedPorts(8180)
+            .waitingFor(Wait.defaultWaitStrategy());
+
+    @ClassRule
+    public static RabbitMQContainer rabbitMQContainer = new RabbitMQContainer("rabbitmq:management");
+
+
+    @BeforeClass
+    public static void setupEvn() {
+        System.setProperty("keycloak.auth-server-url", "http://" + keycloakContainer.getContainerIpAddress() + ":" + keycloakContainer.getFirstMappedPort() + "/auth");
+        System.setProperty("spring.rabbitmq.host", rabbitMQContainer.getContainerIpAddress());
+        System.setProperty("spring.rabbitmq.port", String.valueOf(rabbitMQContainer.getAmqpPort()));
+
+    }
+
     @Configuration
     @Profile("h2")
     static class H2Application {
-        
+
         @Bean(initMethod = "start", destroyMethod = "stop")
         public Server inMemoryH2DatabaseaServer() throws SQLException {
             return Server.createTcpServer(
-              "-tcp", "-tcpAllowOthers", "-tcpPort", "9090");
-        }        
+                    "-tcp", "-tcpAllowOthers", "-tcpPort", "9090");
+        }
     }
-    
+
     @SpringBootApplication
     @ActivitiRuntimeBundle
     static class RbApplication {
@@ -69,20 +90,20 @@ public class MultipleRbJobExecutorIT {
                     return Mockito.spy(new JobMessageHandler(configuration));
                 }
             };
-        }        
+        }
     }
 
     @BeforeClass
     public static void setUp() {
         h2Ctx = new SpringApplicationBuilder(H2Application.class).web(WebApplicationType.NONE)
-                                                                 .profiles("h2")
-                                                                 .run();
+                .profiles("h2")
+                .run();
 
         rbCtx1 = new SpringApplicationBuilder(RbApplication.class).properties("server.port=8081")
-                                                                  .run();
+                .run();
 
         rbCtx2 = new SpringApplicationBuilder(RbApplication.class).properties("server.port=8082")
-                                                                  .run();
+                .run();
     }
 
     @AfterClass
@@ -94,53 +115,53 @@ public class MultipleRbJobExecutorIT {
 
     @Test
     public void contextLoads() throws Exception {
-        assertThat(h2Ctx).isNotNull();        
-        assertThat(rbCtx1).isNotNull();        
-        assertThat(rbCtx2).isNotNull();        
+        assertThat(h2Ctx).isNotNull();
+        assertThat(rbCtx1).isNotNull();
+        assertThat(rbCtx2).isNotNull();
     }
-    
+
     @Test
     public void shouldDistributeAsyncJobsBetweenMultipleRbReplicas() throws InterruptedException {
         //given
         int jobCount = 100;
         CountDownLatch jobsCompleted = new CountDownLatch(jobCount);
-        
+
         RuntimeService runtimeService = rbCtx1.getBean(RuntimeService.class);
         RepositoryService repositoryService = rbCtx1.getBean(RepositoryService.class);
         ManagementService managementService = rbCtx1.getBean(ManagementService.class);
-        
+
         JobMessageHandler jobMessageHandler1 = rbCtx1.getBean(JobMessageHandler.class);
         JobMessageHandler jobMessageHandler2 = rbCtx2.getBean(JobMessageHandler.class);
-        
-        rbCtx1.getBean(RuntimeService.class).addEventListener(new CountDownLatchActvitiEventListener(jobsCompleted), 
-                                                              ActivitiEventType.JOB_EXECUTION_SUCCESS );
 
-        rbCtx2.getBean(RuntimeService.class).addEventListener(new CountDownLatchActvitiEventListener(jobsCompleted), 
-                                                              ActivitiEventType.JOB_EXECUTION_SUCCESS );
-        
+        rbCtx1.getBean(RuntimeService.class).addEventListener(new CountDownLatchActvitiEventListener(jobsCompleted),
+                ActivitiEventType.JOB_EXECUTION_SUCCESS);
+
+        rbCtx2.getBean(RuntimeService.class).addEventListener(new CountDownLatchActvitiEventListener(jobsCompleted),
+                ActivitiEventType.JOB_EXECUTION_SUCCESS);
+
         String processDefinitionId = repositoryService.createProcessDefinitionQuery()
-                                                      .processDefinitionKey(ASYNC_TASK)
-                                                      .singleResult()
-                                                      .getId();
+                .processDefinitionKey(ASYNC_TASK)
+                .singleResult()
+                .getId();
         //when
-        for(int i=0; i<jobCount; i++)
+        for (int i = 0; i < jobCount; i++)
             runtimeService.createProcessInstanceBuilder()
-                          .processDefinitionId(processDefinitionId)
-                          .start();
+                    .processDefinitionId(processDefinitionId)
+                    .start();
 
         //then
         assertThat(jobsCompleted.await(1, TimeUnit.MINUTES)).as("should distribute and complete all jobs between rb replicas")
-                                                            .isTrue();
-        
+                .isTrue();
+
         await("the async executions should complete and no more jobs should exist")
-            .untilAsserted(() -> {
-                   assertThat(runtimeService.createExecutionQuery()
-                                            .processDefinitionKey(ASYNC_TASK).count()).isEqualTo(0);
-                    
-                   assertThat(managementService.createJobQuery()
-                                               .processDefinitionId(processDefinitionId)
-                                               .count()).isEqualTo(0);
-                                                                                   });
+                .untilAsserted(() -> {
+                    assertThat(runtimeService.createExecutionQuery()
+                            .processDefinitionKey(ASYNC_TASK).count()).isEqualTo(0);
+
+                    assertThat(managementService.createJobQuery()
+                            .processDefinitionId(processDefinitionId)
+                            .count()).isEqualTo(0);
+                });
         // rb1 message handler is invoked
         verify(jobMessageHandler1, atLeastOnce()).handleMessage(ArgumentMatchers.<Message<?>>any());
 
@@ -149,7 +170,7 @@ public class MultipleRbJobExecutorIT {
     }
 
     abstract class AbstractActvitiEventListener implements ActivitiEventListener {
-        
+
         @Override
         public boolean isFailOnException() {
             return false;
@@ -157,19 +178,19 @@ public class MultipleRbJobExecutorIT {
     }
 
     class CountDownLatchActvitiEventListener extends AbstractActvitiEventListener {
-        
+
         private final CountDownLatch countDownLatch;
-           
+
         public CountDownLatchActvitiEventListener(CountDownLatch countDownLatch) {
             this.countDownLatch = countDownLatch;
         }
-        
+
         @Override
         public void onEvent(ActivitiEvent arg0) {
             logger.info("Received Activiti Event: {}", arg0);
-            
+
             countDownLatch.countDown();
         }
     }
-        
+
 }
