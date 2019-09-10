@@ -47,6 +47,8 @@ import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfigura
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.events.listeners.CloudProcessDeployedProducer;
 import org.activiti.cloud.services.rest.conf.ServicesRestAutoConfiguration;
+import org.activiti.engine.RepositoryService;
+import org.activiti.spring.process.variable.DateFormatterProvider;
 import org.activiti.spring.process.variable.VariableValidationService;
 import org.junit.Before;
 import org.junit.Test;
@@ -87,6 +89,12 @@ public class ProcessInstanceVariableControllerImplIT {
 
     @MockBean
     private ProcessRuntime processRuntime;
+    
+    @MockBean
+    private RepositoryService repositoryService;
+    
+    @MockBean
+    private DateFormatterProvider dateFormatterProvider;
 
     @Autowired
     private ObjectMapper mapper;

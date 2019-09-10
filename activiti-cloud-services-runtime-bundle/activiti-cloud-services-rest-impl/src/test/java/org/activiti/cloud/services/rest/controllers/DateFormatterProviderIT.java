@@ -24,45 +24,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.Date;
 
-import org.activiti.api.runtime.conf.impl.CommonModelAutoConfiguration;
-import org.activiti.api.runtime.conf.impl.ProcessModelAutoConfiguration;
-import org.activiti.cloud.services.events.ProcessEngineChannels;
-import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfiguration;
-import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.cloud.services.rest.conf.ServicesRestAutoConfiguration;
-import org.activiti.spring.process.conf.ProcessExtensionsAutoConfiguration;
+import org.activiti.spring.process.variable.DateFormatterProvider;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.web.config.EnableSpringDataWebSupport;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
-@WebMvcTest(DateFormatterProvider.class)
-@EnableSpringDataWebSupport
-@AutoConfigureMockMvc(secure = false)
-@AutoConfigureRestDocs(outputDir = "target/snippets")
-@Import({CommonModelAutoConfiguration.class,
-         ProcessModelAutoConfiguration.class,
-         RuntimeBundleProperties.class,
-         CloudEventsAutoConfiguration.class,
-         ProcessExtensionsAutoConfiguration.class,
-         ServicesRestAutoConfiguration.class})
-@ComponentScan(basePackages = {"org.activiti.cloud.services.rest.assemblers", "org.activiti.cloud.alfresco"})
+
 public class DateFormatterProviderIT {
- 
-    @MockBean
-    private ProcessEngineChannels processEngineChannels;
-    
-    @Autowired
-    private DateFormatterProvider dateFormatterProvider;
+    private String dateFormatPattern = "yyyy-MM-dd[['T'][ ]HH:mm:ss[.SSS'Z']]";
+
+    private DateFormatterProvider dateFormatterProvider = new DateFormatterProvider(dateFormatPattern);
     
     @Before
     public void setUp() {
@@ -71,7 +41,7 @@ public class DateFormatterProviderIT {
     
     @Test
     public void shouldReturnCorrectFormatPattern() throws Exception {
-        assertThat(dateFormatterProvider.getDateFormatPattern()).isEqualTo("yyyy-MM-dd[['T'][ ]HH:mm:ss[.SSS'Z']]");
+        assertThat(dateFormatterProvider.getDateFormatPattern()).isEqualTo(dateFormatPattern);
     }
  
     @Test
@@ -80,7 +50,7 @@ public class DateFormatterProviderIT {
         Date dateTime = new Date();
         
         //THEN
-        assertThat(dateFormatterProvider.convert2Date(dateTime)).isEqualTo(dateTime);
+        assertThat(dateFormatterProvider.toDate(dateTime)).isEqualTo(dateTime);
     }
     
     @Test
@@ -90,7 +60,7 @@ public class DateFormatterProviderIT {
         String dateString = formatLocalDateTimeString(date);
         
         //THEN
-        Date newDate = dateFormatterProvider.convert2Date(dateString);
+        Date newDate = dateFormatterProvider.toDate(dateString);
         String newDateString = formatLocalDateTimeString(convertDateToLocalDate(newDate));
         
         assertThat(newDateString).isEqualTo(dateString);
@@ -103,7 +73,7 @@ public class DateFormatterProviderIT {
         
         //THEN
         String dateString = formatLocalDateTimeStringWithPattern(dt, "yyyy-MM-dd");
-        Date newDate = dateFormatterProvider.convert2Date(dateString);
+        Date newDate = dateFormatterProvider.toDate(dateString);
         String newDateString = formatLocalDateTimeStringWithPattern(convertDateToLocalDate(newDate), "yyyy-MM-dd");
 
         assertThat(newDateString).isEqualTo(dateString);
@@ -115,7 +85,7 @@ public class DateFormatterProviderIT {
         String dateString = "2020-10-Wrong";
         
         //THEN
-        Throwable throwable = catchThrowable(() -> dateFormatterProvider.convert2Date(dateString));
+        Throwable throwable = catchThrowable(() -> dateFormatterProvider.toDate(dateString));
 
         //THEN
         assertThat(throwable)
@@ -125,7 +95,7 @@ public class DateFormatterProviderIT {
     @Test
     public void shoulThrowExceptionForWrongObject() throws Exception {
       //WHEN
-        Throwable throwable = catchThrowable(() -> dateFormatterProvider.convert2Date(10.567));
+        Throwable throwable = catchThrowable(() -> dateFormatterProvider.toDate(10.567));
 
         //THEN
         assertThat(throwable)

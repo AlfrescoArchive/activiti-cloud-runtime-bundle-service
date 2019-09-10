@@ -29,7 +29,7 @@
         "name": "variableDateTime",
         "type": "date",
         "required": true,
-        "value": "2019-08-20T000000.000Z"
+        "value": "2019-08-20T00:00:00.000Z"
       },
       "variableDate": {
         "id": "variableDate-id",

@@ -22,7 +22,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.activiti.cloud.services.rest.controllers.DateFormatterProvider;
+import org.activiti.spring.process.variable.DateFormatterProvider;
 import org.springframework.boot.test.context.TestComponent;
 
 @TestComponent
@@ -66,7 +66,7 @@ public class VariablesUtil {
         expDTFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
          
         return expDTFormat.format(dateFormatterProvider
-                                  .convert2Date(getDateFormattedString(date)));
+                                  .parse(getDateFormattedString(date)));
     }
     
     public String getExpectedDateTimeFormattedString(Date date) {

@@ -31,10 +31,12 @@ import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfiguration;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.rest.conf.ServicesRestAutoConfiguration;
+import org.activiti.engine.RepositoryService;
 import org.activiti.spring.process.conf.ProcessExtensionsAutoConfiguration;
 import org.activiti.spring.process.model.Extension;
 import org.activiti.spring.process.model.ProcessExtensionModel;
 import org.activiti.spring.process.model.VariableDefinition;
+import org.activiti.spring.process.variable.DateFormatterProvider;
 import org.activiti.spring.process.variable.VariableValidationService;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,6 +70,9 @@ public class ProcessVariablesPayloadValidatorIT {
     @Autowired
     private VariableValidationService variableValidationService;
     
+    @MockBean
+    private RepositoryService repositoryService;
+  
     @Autowired
     private DateFormatterProvider dateFormatterProvider;
 

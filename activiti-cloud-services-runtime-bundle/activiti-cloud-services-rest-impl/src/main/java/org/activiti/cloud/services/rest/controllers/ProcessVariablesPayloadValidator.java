@@ -28,6 +28,7 @@ import org.activiti.engine.ActivitiException;
 import org.activiti.spring.process.model.Extension;
 import org.activiti.spring.process.model.ProcessExtensionModel;
 import org.activiti.spring.process.model.VariableDefinition;
+import org.activiti.spring.process.variable.DateFormatterProvider;
 import org.activiti.spring.process.variable.VariableValidationService;
 
 public class ProcessVariablesPayloadValidator  {
@@ -76,7 +77,7 @@ public class ProcessVariablesPayloadValidator  {
                         
                         if ("date".equals(type) &&  value != null) {
                             try {
-                                payloadVar.setValue(dateFormatterProvider.convert2Date(value));
+                                payloadVar.setValue(dateFormatterProvider.toDate(value));
                             } catch (Exception e) {
                                 activitiExceptions.add(new ActivitiException(MessageFormat.format(errorDateTimeParse, name, e.getMessage())));
                             }
