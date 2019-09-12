@@ -3,8 +3,8 @@ pipeline {
       label "jenkins-maven"
     }
     environment {
-      DOCKER_REGISTRY   = 'gcr.io'
-      ORG               = 'activiti-cloud-blueprint'
+      DOCKER_REGISTRY   = 'docker.io'
+      ORG               = 'activiti'
       APP_NAME          = 'example-runtime-bundle'
       CHARTMUSEUM_CREDS = credentials('jenkins-x-chartmuseum')
     }
