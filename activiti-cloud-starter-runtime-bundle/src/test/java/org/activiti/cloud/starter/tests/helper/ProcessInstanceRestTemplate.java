@@ -16,14 +16,18 @@
 
 package org.activiti.cloud.starter.tests.helper;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
+import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
 import org.activiti.api.process.model.payloads.RemoveProcessVariablesPayload;
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
+import org.activiti.api.process.model.payloads.StartMessagePayload;
 import org.activiti.api.process.model.payloads.StartProcessPayload;
 import org.activiti.api.process.model.payloads.UpdateProcessPayload;
 import org.activiti.api.runtime.model.impl.ActivitiErrorMessageImpl;
@@ -44,8 +48,6 @@ import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.ResponseExtractor;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @TestComponent
 public class ProcessInstanceRestTemplate {
@@ -433,7 +435,23 @@ public class ProcessInstanceRestTemplate {
         return getPagedProcessInstances(PROCESS_INSTANCES_ADMIN_RELATIVE_URL,pages);
     }
     
-    private ResponseEntity<PagedResources<ProcessInstance>> getPagedProcessInstances(String baseURL,String pageFilters) {
+    public ResponseEntity<CloudProcessInstance> message(StartMessagePayload payload) {
+        return testRestTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/message",
+                                         HttpMethod.POST,
+                                         new HttpEntity<>(payload),
+                                         new ParameterizedTypeReference<CloudProcessInstance>() {
+                                         });
+    }
+
+    public ResponseEntity<Void> message(ReceiveMessagePayload payload) {
+        return testRestTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/message",
+                                         HttpMethod.PUT,
+                                         new HttpEntity<>(payload),
+                                         new ParameterizedTypeReference<Void>() {
+                                         });
+    } 
+    
+    public ResponseEntity<PagedResources<ProcessInstance>> getPagedProcessInstances(String baseURL,String pageFilters) {
         String pages = pageFilters != null ? pageFilters : "page=0&size=2";
         ResponseEntity<PagedResources<ProcessInstance>> responseEntity = testRestTemplate.exchange(
                                                                                         baseURL + "?" + pages,
