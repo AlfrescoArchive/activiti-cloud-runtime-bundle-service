@@ -128,6 +128,7 @@
             <configuration>
               <forkCount>0</forkCount>
               <useSystemClassLoader>false</useSystemClassLoader>
+              <classesDirectory>${project.build.outputDirectory}</classesDirectory>
             </configuration>
             <executions>
               <execution>
