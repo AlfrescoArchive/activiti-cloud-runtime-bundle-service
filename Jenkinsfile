@@ -1,10 +1,18 @@
 pipeline {
     agent {
-      label "jenkins-maven-java11"
+      kubernetes {
+        // Change the name of jenkins-maven label to be able to use yaml configuration snippet
+        label "maven-dind"
+        // Inherit from Jx Maven pod template
+        inheritFrom "jenkins-maven-java11"
+        // Add pod configuration to Jenkins builder pod template
+        yamlFile "maven-dind.yaml"
+      }
     }
     environment {
-      ORG               = 'activiti'
-      APP_NAME          = 'activiti-cloud-runtime-bundle-service'
+      DOCKER_REGISTRY   = 'gcr.io'
+      ORG               = 'activiti-cloud-blueprint'
+      APP_NAME          = 'example-runtime-bundle'
       CHARTMUSEUM_CREDS = credentials('jenkins-x-chartmuseum')
     }
     stages {
@@ -13,7 +21,7 @@ pipeline {
           branch 'PR-*'
         }
         environment {
-          PREVIEW_VERSION = "0.0.0-SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER"
+          PREVIEW_VERSION = "7.1.0-SNAPSHOT-$BRANCH_NAME-$BUILD_NUMBER"
           PREVIEW_NAMESPACE = "$APP_NAME-$BRANCH_NAME".toLowerCase()
           HELM_RELEASE = "$PREVIEW_NAMESPACE".toLowerCase()
         }
@@ -22,6 +30,10 @@ pipeline {
             sh "mvn versions:set -DnewVersion=$PREVIEW_VERSION"
             //add DskipTests since not clear how to fix test fast  
             sh "mvn install"
+
+            //sh 'mvn deploy -DskipTests'
+
+            sh 'export VERSION=`cat VERSION` && skaffold build -f skaffold.yaml'
           }
 
         }
@@ -40,21 +52,26 @@ pipeline {
             // so we can retrieve the version in later steps
             sh "echo \$(jx-release-version) > VERSION"
             sh "mvn versions:set -DnewVersion=\$(cat VERSION)"
-            sh "mvn clean verify"
+            sh "mvn clean verify -DskipITs=false"
 
             retry(5){
-              sh "git add --all"
-              sh "git commit -m \"Release \$(cat VERSION)\" --allow-empty"
-              sh "git tag -fa v\$(cat VERSION) -m \"Release version \$(cat VERSION)\""
-              sh "git push origin v\$(cat VERSION)"
+	          dir ("./charts/runtime-bundle") {
+	            retry(5){  
+	              sh "make tag"
+	            }
+	          }              
             }
-          }
-          container('maven') {
+            
             sh 'mvn clean deploy -DskipTests'
 
-            sh 'export VERSION=`cat VERSION`'
-
-            sh "jx step git credentials"
+            sh 'export VERSION=`cat VERSION` && skaffold build -f skaffold.yaml'
+            
+            dir ("./charts/runtime-bundle") {
+	          retry(5){  
+	            sh 'make release'
+	          }
+	        }              
+     
             retry(2){
               sh "updatebot push-version --kind maven org.activiti.cloud.rb:activiti-cloud-runtime-bundle-dependencies \$(cat VERSION)"
               sh "rm -rf .updatebot-repos/"
