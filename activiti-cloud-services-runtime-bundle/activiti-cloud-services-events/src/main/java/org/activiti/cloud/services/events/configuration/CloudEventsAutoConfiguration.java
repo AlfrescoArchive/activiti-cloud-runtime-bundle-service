@@ -258,6 +258,7 @@ public class CloudEventsAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public CloudProcessUpdatedProducer cloudProcessUpdatedProducer(ToCloudProcessRuntimeEventConverter eventConverter,
                                                                    ProcessEngineEventsAggregator eventsAggregator) {
         return new CloudProcessUpdatedProducer(eventConverter,
@@ -382,6 +383,7 @@ public class CloudEventsAutoConfiguration {
                                                   eventsAggregator);
     }
 
+    @ConditionalOnMissingBean
     @Bean
     public CloudProcessDeployedProducer cloudProcessDeployedProducer(RuntimeBundleInfoAppender runtimeBundleInfoAppender,
                                                                      ProcessEngineChannels processEngineChannels,
@@ -392,6 +394,7 @@ public class CloudEventsAutoConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public RuntimeBundleMessageBuilderFactory runtimeBundleMessageBuilderFactory(RuntimeBundleProperties properties) {
         return new RuntimeBundleMessageBuilderFactory(properties);
     }
