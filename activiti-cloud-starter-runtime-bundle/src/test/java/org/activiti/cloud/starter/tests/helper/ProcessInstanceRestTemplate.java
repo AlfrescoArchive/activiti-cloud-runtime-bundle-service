@@ -24,10 +24,8 @@ import java.util.Map;
 
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
-import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
 import org.activiti.api.process.model.payloads.RemoveProcessVariablesPayload;
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
-import org.activiti.api.process.model.payloads.StartMessagePayload;
 import org.activiti.api.process.model.payloads.StartProcessPayload;
 import org.activiti.api.process.model.payloads.UpdateProcessPayload;
 import org.activiti.api.runtime.model.impl.ActivitiErrorMessageImpl;
@@ -434,22 +432,6 @@ public class ProcessInstanceRestTemplate {
     public ResponseEntity<PagedResources<ProcessInstance>> adminGetPagedProcessInstances(String pages) {
         return getPagedProcessInstances(PROCESS_INSTANCES_ADMIN_RELATIVE_URL,pages);
     }
-    
-    public ResponseEntity<CloudProcessInstance> message(StartMessagePayload payload) {
-        return testRestTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/message",
-                                         HttpMethod.POST,
-                                         new HttpEntity<>(payload),
-                                         new ParameterizedTypeReference<CloudProcessInstance>() {
-                                         });
-    }
-
-    public ResponseEntity<Void> message(ReceiveMessagePayload payload) {
-        return testRestTemplate.exchange(PROCESS_INSTANCES_RELATIVE_URL + "/message",
-                                         HttpMethod.PUT,
-                                         new HttpEntity<>(payload),
-                                         new ParameterizedTypeReference<Void>() {
-                                         });
-    } 
     
     public ResponseEntity<PagedResources<ProcessInstance>> getPagedProcessInstances(String baseURL,String pageFilters) {
         String pages = pageFilters != null ? pageFilters : "page=0&size=2";

@@ -22,7 +22,7 @@ import org.activiti.api.process.model.builders.MessagePayloadBuilder;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
 import org.activiti.api.process.model.payloads.StartMessagePayload;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
-import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
+import org.activiti.cloud.starter.tests.helper.MessageRestTemplate;
 import org.activiti.engine.RuntimeService;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.junit.Test;
@@ -45,7 +45,7 @@ public class MessageIT {
     private RuntimeService runtimeService;
 
     @Autowired
-    private ProcessInstanceRestTemplate processInstanceRestTemplate;
+    private MessageRestTemplate messageRestTemplate;
 
     @Test
     public void shouldDeliverMessagesViaRestApi() {
@@ -55,7 +55,7 @@ public class MessageIT {
                                                                 .withVariable("correlationKey", "correlationId")
                                                                 .build();
         //when
-        ResponseEntity<CloudProcessInstance> startResponse = processInstanceRestTemplate.message(startMessage);
+        ResponseEntity<CloudProcessInstance> startResponse = messageRestTemplate.message(startMessage);
 
         //then
         assertThat(startResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -75,7 +75,7 @@ public class MessageIT {
                                                                      .build();
 
         //when
-        ResponseEntity<Void> boundaryResponse = processInstanceRestTemplate.message(boundaryMessage);
+        ResponseEntity<Void> boundaryResponse = messageRestTemplate.message(boundaryMessage);
 
         //then
         assertThat(boundaryResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -92,7 +92,7 @@ public class MessageIT {
                                                                   .build();
 
         // when
-        ResponseEntity<Void> catchResponse = processInstanceRestTemplate.message(catchMessage);
+        ResponseEntity<Void> catchResponse = messageRestTemplate.message(catchMessage);
 
         // then
         assertThat(catchResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -102,14 +102,14 @@ public class MessageIT {
     }
 
     @Test
-    public void shouldReceive404NonFoundIfWrongMessageName() {
+    public void shouldReceive404NotFoundIfWrongMessageName() {
         //given
         StartMessagePayload startMessage = MessagePayloadBuilder.start("notFound")
                                                                 .withBusinessKey("businessId")
                                                                 .withVariable("correlationKey", "correlationId")
                                                                 .build();
         //when
-        ResponseEntity<CloudProcessInstance> startResponse = processInstanceRestTemplate.message(startMessage);
+        ResponseEntity<CloudProcessInstance> startResponse = messageRestTemplate.message(startMessage);
 
         //then
         assertThat(startResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
