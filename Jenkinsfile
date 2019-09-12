@@ -26,7 +26,7 @@ pipeline {
 
             //sh 'mvn deploy -DskipTests'
 
-            sh 'export VERSION=`cat VERSION` && skaffold build -f skaffold.yaml'
+            sh "export VERSION=$PREVIEW_VERSION && skaffold build -f skaffold.yaml"
           }
 
         }
