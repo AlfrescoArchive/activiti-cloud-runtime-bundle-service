@@ -80,9 +80,6 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
-         <configuration>
-          <classifier>exec</classifier>
-        </configuration>
         <executions>
           <execution>
             <goals>
@@ -120,6 +117,7 @@
             <configuration>
               <forkCount>0</forkCount>
               <useSystemClassLoader>false</useSystemClassLoader>
+              <classesDirectory>${project.build.outputDirectory}</classesDirectory>
             </configuration>
             <executions>
               <execution>
