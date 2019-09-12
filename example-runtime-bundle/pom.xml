@@ -12,17 +12,8 @@
     
   <properties>
       <maven.deploy.skip>true</maven.deploy.skip>
-      <java.version>8</java.version>
+      <!-- TODO we need this because of unresolved version property in parent build pom -->
       <spring-boot.version>2.1.6.RELEASE</spring-boot.version>
-      <maven.compiler.source>${java.version}</maven.compiler.source>
-      <maven.compiler.target>${java.version}</maven.compiler.target>
-      <activiti-cloud-dependencies.version>7.1.129</activiti-cloud-dependencies.version>
-      <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
-      <maven-failsafe-plugin.version>3.0.0-M3</maven-failsafe-plugin.version>
-      <maven-surefire-plugin.version>3.0.0-M3</maven-surefire-plugin.version>
-      <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>   
-      <javax.xml.bind.version>2.3.0</javax.xml.bind.version>
-      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -103,12 +94,10 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
-        <version>${maven-deploy-plugin.version}</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>${maven-surefire-plugin.version}</version>
       </plugin>
     </plugins>
   </build>
