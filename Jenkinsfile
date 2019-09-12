@@ -56,7 +56,7 @@ pipeline {
           branch 'develop'
         }
         environment {
-          VERSION = $RELEASE_VERSION
+          VERSION = "$RELEASE_VERSION"
         }
         steps {
           container('maven') {
