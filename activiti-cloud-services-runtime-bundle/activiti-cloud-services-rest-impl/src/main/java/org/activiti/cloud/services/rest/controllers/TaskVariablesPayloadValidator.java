@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.activiti.api.task.model.payloads.CreateTaskVariablePayload;
 import org.activiti.api.task.model.payloads.UpdateTaskVariablePayload;
+import org.activiti.spring.process.variable.DateFormatterProvider;
 
 public class TaskVariablesPayloadValidator  {
    
@@ -35,7 +36,7 @@ public class TaskVariablesPayloadValidator  {
                            
                 if (value instanceof String) {
                     try {
-                        payloadVar.setValue(dateFormatterProvider.convert2Date(value));
+                        payloadVar.setValue(dateFormatterProvider.parse((String)value));
                     } catch (Exception e) {}
                 }
            }
@@ -47,7 +48,7 @@ public class TaskVariablesPayloadValidator  {
         
         if (value instanceof String) {
             try {
-                createTaskVariablePayload.setValue(dateFormatterProvider.convert2Date(value));
+                createTaskVariablePayload.setValue(dateFormatterProvider.parse((String)value));
             } catch (Exception e) {}
         }
     }
@@ -57,7 +58,7 @@ public class TaskVariablesPayloadValidator  {
         
         if (value instanceof String) {
             try {
-                updateTaskVariablePayload.setValue(dateFormatterProvider.convert2Date(value));
+                updateTaskVariablePayload.setValue(dateFormatterProvider.parse((String)value));
             } catch (Exception e) {}
         }
     }
