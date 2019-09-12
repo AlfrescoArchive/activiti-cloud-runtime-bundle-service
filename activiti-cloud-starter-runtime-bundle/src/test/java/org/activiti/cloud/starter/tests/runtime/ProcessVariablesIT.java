@@ -16,10 +16,6 @@
 
 package org.activiti.cloud.starter.tests.runtime;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.tuple;
-import static org.awaitility.Awaitility.await;
-
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -56,6 +52,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.awaitility.Awaitility.await;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -396,8 +396,8 @@ public class ProcessVariablesIT {
         });        
     }
     
-    private void updatNotDefinedVariable(boolean isAdmin,
-                                         String processInstanceId) {
+    private void updateNotDefinedVariable(boolean isAdmin,
+                                          String processInstanceId) {
         Map<String, Object> variables = new HashMap<>();
         variables.put("dummy",
                       1);
@@ -414,8 +414,8 @@ public class ProcessVariablesIT {
         });
     }
     
-    private void updatDateVariableWithADate(boolean isAdmin,
-                                            String processInstanceId) {
+    private void updateDateVariableWithADate(boolean isAdmin,
+                                             String processInstanceId) {
         Map<String, Object> variables = new HashMap<>();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -446,8 +446,8 @@ public class ProcessVariablesIT {
         });        
     }
     
-    private void updatDateVariableWithAFormattedString(boolean isAdmin,
-                                                       String processInstanceId) throws Exception {
+    private void updateDateVariableWithAFormattedString(boolean isAdmin,
+                                                        String processInstanceId) throws Exception {
         
         Map<String, Object> variables = new HashMap<>();
         
@@ -507,11 +507,11 @@ public class ProcessVariablesIT {
         //when update simple existing variables 
         updateSimpleVariables(isAdmin, processInstanceResponseEntity.getBody().getId());
         
-        updatNotDefinedVariable(isAdmin, processInstanceResponseEntity.getBody().getId());
+        updateNotDefinedVariable(isAdmin, processInstanceResponseEntity.getBody().getId());
         
-        updatDateVariableWithADate(isAdmin, processInstanceResponseEntity.getBody().getId());
+        updateDateVariableWithADate(isAdmin, processInstanceResponseEntity.getBody().getId());
         
-        updatDateVariableWithAFormattedString(isAdmin, processInstanceResponseEntity.getBody().getId());
+        updateDateVariableWithAFormattedString(isAdmin, processInstanceResponseEntity.getBody().getId());
  
         //cleanup
         processInstanceRestTemplate.delete(processInstanceResponseEntity);
