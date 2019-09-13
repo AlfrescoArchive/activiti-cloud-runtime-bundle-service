@@ -8,7 +8,6 @@ spec:
   containers:
   # Override Docker config in Maven to use DinD
   - name: maven
-    image: gcr.io/jenkinsxio/builder-maven-java11:0.1.325  
     env:
     - name: DOCKER_REGISTRY
       valueFrom:
@@ -25,8 +24,9 @@ spec:
     image: docker:18.06.1-dind
     imagePullPolicy: IfNotPresent
     args:
+    - --registry-mirror=http://jenkins-x-docker-registry:5000
     - --registry-mirror=https://mirror.gcr.io
-    - --insecure-registry=10.7.251.133:5000
+    - --insecure-registry=http://jenkins-x-docker-registry:5000
     workingDir: /home/jenkins
     securityContext:
       privileged: true
