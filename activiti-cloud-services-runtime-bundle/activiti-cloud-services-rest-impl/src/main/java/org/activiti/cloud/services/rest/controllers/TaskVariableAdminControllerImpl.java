@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TaskVariableAdminControllerImpl implements TaskVariableAdminController {
     
     private final TaskVariableInstanceResourceAssembler variableResourceAssembler;
-    private final TaskVariablesPayloadValidator taskVariablesPayloadValidator;
+    private final TaskVariablesPayloadDateHandler taskVariablesPayloadDateHandler;
     private final ResourcesAssembler resourcesAssembler;
     private final TaskAdminRuntime taskRuntime;
 
@@ -43,12 +43,12 @@ public class TaskVariableAdminControllerImpl implements TaskVariableAdminControl
     public TaskVariableAdminControllerImpl(TaskVariableInstanceResourceAssembler variableResourceAssembler,
                                            ResourcesAssembler resourcesAssembler,
                                            TaskAdminRuntime taskRuntime,
-                                           TaskVariablesPayloadValidator taskVariablesPayloadValidator) {
+                                           TaskVariablesPayloadDateHandler taskVariablesPayloadDateHandler) {
 
         this.variableResourceAssembler = variableResourceAssembler;
         this.resourcesAssembler = resourcesAssembler;
         this.taskRuntime = taskRuntime;
-        this.taskVariablesPayloadValidator = taskVariablesPayloadValidator;
+        this.taskVariablesPayloadDateHandler = taskVariablesPayloadDateHandler;
     }
 
     @Override
@@ -64,8 +64,7 @@ public class TaskVariableAdminControllerImpl implements TaskVariableAdminControl
                                                @RequestBody CreateTaskVariablePayload createTaskVariablePayload) {
 
         createTaskVariablePayload.setTaskId(taskId);
-        taskVariablesPayloadValidator.checkPayloadVariable(createTaskVariablePayload);
-        taskRuntime.createVariable(createTaskVariablePayload);
+        taskRuntime.createVariable(taskVariablesPayloadDateHandler.handleDate(createTaskVariablePayload));
         
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -77,8 +76,7 @@ public class TaskVariableAdminControllerImpl implements TaskVariableAdminControl
 
         updateTaskVariablePayload.setTaskId(taskId);
         updateTaskVariablePayload.setName(variableName);
-        taskVariablesPayloadValidator.checkPayloadVariable(updateTaskVariablePayload);
-        taskRuntime.updateVariable(updateTaskVariablePayload);
+        taskRuntime.updateVariable(taskVariablesPayloadDateHandler.handleDate(updateTaskVariablePayload));
    
         return new ResponseEntity<>(HttpStatus.OK);
     }

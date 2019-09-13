@@ -51,19 +51,19 @@ public class TaskControllerImpl implements TaskController {
 
     private final TaskRuntime taskRuntime;
     
-    private final TaskVariablesPayloadValidator taskVariablesPayloadValidator;
+    private final TaskVariablesPayloadDateHandler taskVariablesPayloadDateHandler;
 
     @Autowired
     public TaskControllerImpl(TaskResourceAssembler taskResourceAssembler,
                               AlfrescoPagedResourcesAssembler<Task> pagedResourcesAssembler,
                               SpringPageConverter pageConverter,
                               TaskRuntime taskRuntime,
-                              TaskVariablesPayloadValidator taskVariablesPayloadValidator) {
+                              TaskVariablesPayloadDateHandler taskVariablesPayloadDateHandler) {
         this.taskResourceAssembler = taskResourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
         this.pageConverter = pageConverter;
         this.taskRuntime = taskRuntime;
-        this.taskVariablesPayloadValidator = taskVariablesPayloadValidator;
+        this.taskVariablesPayloadDateHandler = taskVariablesPayloadDateHandler;
     }
 
     @Override
@@ -111,7 +111,7 @@ public class TaskControllerImpl implements TaskController {
             completeTaskPayload.setTaskId(taskId);
         }
         
-        taskVariablesPayloadValidator.checkPayloadVariables(completeTaskPayload.getVariables());
+        completeTaskPayload.setVariables(taskVariablesPayloadDateHandler.handleDates(completeTaskPayload.getVariables()));
         Task task = taskRuntime.complete(completeTaskPayload);
         return taskResourceAssembler.toResource(task);
     }
@@ -209,7 +209,7 @@ public class TaskControllerImpl implements TaskController {
         if (saveTaskPayload != null) {
             saveTaskPayload.setTaskId(taskId);
             
-            taskVariablesPayloadValidator.checkPayloadVariables(saveTaskPayload.getVariables());
+            saveTaskPayload.setVariables(taskVariablesPayloadDateHandler.handleDates(saveTaskPayload.getVariables()));
         }
         
         taskRuntime.save(saveTaskPayload);

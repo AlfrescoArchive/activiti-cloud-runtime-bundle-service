@@ -32,7 +32,7 @@ import org.activiti.cloud.services.rest.assemblers.ToCloudVariableInstanceConver
 import org.activiti.cloud.services.rest.controllers.ProcessVariablesPayloadValidator;
 import org.activiti.cloud.services.rest.controllers.ResourcesAssembler;
 import org.activiti.cloud.services.rest.controllers.RuntimeBundleRelProvider;
-import org.activiti.cloud.services.rest.controllers.TaskVariablesPayloadValidator;
+import org.activiti.cloud.services.rest.controllers.TaskVariablesPayloadDateHandler;
 import org.activiti.spring.process.model.ProcessExtensionModel;
 import org.activiti.spring.process.variable.DateFormatterProvider;
 import org.activiti.spring.process.variable.VariableValidationService;
@@ -78,7 +78,7 @@ public class ServicesRestAutoConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public ToCloudVariableInstanceConverter cloudVariableInstanceConverter(RuntimeBundleInfoAppender runtimeBundleInfoAppender){
+    public ToCloudVariableInstanceConverter cloudVariableInstanceConverter(RuntimeBundleInfoAppender runtimeBundleInfoAppender) {
         return new ToCloudVariableInstanceConverter(runtimeBundleInfoAppender);
     }
 
@@ -104,8 +104,8 @@ public class ServicesRestAutoConfiguration implements WebMvcConfigurer {
     
     @Bean
     @ConditionalOnMissingBean
-    public TaskVariablesPayloadValidator taskVariablesPayloadValidator(DateFormatterProvider dateFormatterProvider) {
-        return new TaskVariablesPayloadValidator(dateFormatterProvider);
+    public TaskVariablesPayloadDateHandler taskVariablesPayloadValidator(DateFormatterProvider dateFormatterProvider) {
+        return new TaskVariablesPayloadDateHandler(dateFormatterProvider);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class ServicesRestAutoConfiguration implements WebMvcConfigurer {
         // need to call configure here to ensure that the customisations are registered
         for (HttpMessageConverter<?> converter : converters) {
             //should exclude TypeConstrainedMappingJackson2HttpMessageConverter from configuration
-            if(converter instanceof MappingJackson2HttpMessageConverter && !(converter instanceof TypeConstrainedMappingJackson2HttpMessageConverter)) {
+            if (converter instanceof MappingJackson2HttpMessageConverter && !(converter instanceof TypeConstrainedMappingJackson2HttpMessageConverter)) {
                 objectMapperBuilder.configure(((MappingJackson2HttpMessageConverter) converter).getObjectMapper());
             }
         }
