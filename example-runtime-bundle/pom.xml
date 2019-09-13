@@ -14,7 +14,9 @@
       <maven.deploy.skip>true</maven.deploy.skip>
       <!-- TODO we need this because of unresolved version property in parent build pom -->
       <spring-boot.version>2.1.6.RELEASE</spring-boot.version>
+      <skipDocker>true</skipDocker>
   </properties>
+  
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -133,6 +135,7 @@
             <groupId>io.fabric8</groupId>
             <artifactId>docker-maven-plugin</artifactId>
             <configuration>
+              <skip>${skipDocker}</skip>
               <images>
                 <image>
                   <name>activiti/activiti-keycloak</name>
@@ -166,7 +169,6 @@
                   </run>
                 </image>
               </images>
-              <skip>${skipTests}</skip>
             </configuration>
             <executions>
               <execution>
