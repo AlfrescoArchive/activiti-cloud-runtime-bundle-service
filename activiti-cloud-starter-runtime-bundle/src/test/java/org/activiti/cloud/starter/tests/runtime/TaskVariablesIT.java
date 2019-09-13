@@ -202,7 +202,7 @@ public class TaskVariablesIT {
     }
     
     @Test
-    public void should_Create_Update_DateTimeTaskVariables() throws Exception{
+    public void should_Change_Date_When_CreateUpdateTaskVariables() throws Exception{
         //given
         Date date = new Date();
   
@@ -237,7 +237,7 @@ public class TaskVariablesIT {
     }
     
     @Test
-    public void admin_Should_Create_Update_DateTimeTaskVariables() throws Exception{
+    public void admin_Should_Change_Date_When_CreateUpdateTaskVariables() throws Exception{
         //given
         Date date = new Date();
   
