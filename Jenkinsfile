@@ -1,9 +1,15 @@
 pipeline {
     agent {
-      label "jenkins-maven"
+        kubernetes {
+            // Change the name of jenkins-maven label to be able to use yaml configuration snippet
+            label "maven-dind"
+            // Inherit from Jx Maven pod template
+            inheritFrom "jenkins-maven-java11"
+            // Add pod configuration to Jenkins builder pod template
+            yamlFile "maven-dind.yaml"
+       }
     }
     environment {
-      DOCKER_REGISTRY     = 'docker.io'
       ORG                 = 'activiti'
       APP_NAME            = 'example-runtime-bundle'
       CHARTMUSEUM_CREDS   = credentials('jenkins-x-chartmuseum')
