@@ -36,7 +36,7 @@
         "name": "process-variable-datetime",
         "type": "date",
         "required": true,
-        "value": "2019-09-01"
+        "value": "2019-09-01T10:20:30.000Z"
       }
     },
     "mappings": {
