@@ -64,7 +64,7 @@ public class ErrorAuditProducerIT {
     }
 
     @Test
-    public void should_produce_bpmnErrorEvents_when_process_executed() {
+    public void should_produceBpmnErrorEvents_when_processIsExecuted() {
         
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcess(new StartProcessPayloadBuilder()
                                                                                                             .withProcessDefinitionKey(ERROR_START_EVENT_SUBPROCESS)
