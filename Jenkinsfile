@@ -7,8 +7,6 @@ pipeline {
       ORG                 = 'activiti'
       APP_NAME            = 'example-runtime-bundle'
       CHARTMUSEUM_CREDS   = credentials('jenkins-x-chartmuseum')
-      RELEASE_VERSION     = jx_release_version()
-      PROJECT_VERSION     = maven_project_version()
     }
     stages {
       stage('CI Build and push snapshot') {
@@ -16,9 +14,10 @@ pipeline {
           branch 'PR-*'
         }
         environment {
+	      SNAPSHOT_VERSION   = maven_project_version()
           PREVIEW_NAMESPACE = "$APP_NAME-$BRANCH_NAME".toLowerCase()
           HELM_RELEASE      = "$PREVIEW_NAMESPACE".toLowerCase()
-          VERSION           = "$PROJECT_VERSION-$BRANCH_NAME-$BUILD_NUMBER"
+          VERSION           = "$SNAPSHOT_VERSION-$BRANCH_NAME-$BUILD_NUMBER"
         }
         steps {
           container('maven') {
@@ -45,8 +44,6 @@ pipeline {
 	          }
 	        }
             
-			input "Pause"            
-            
             // TODO: create preview environment, i.e. sh "make preview"
           }
         }
@@ -56,7 +53,7 @@ pipeline {
           branch 'develop'
         }
         environment {
-          VERSION = "$RELEASE_VERSION"
+          VERSION = jx_release_version()
         }
         steps {
           container('maven') {
