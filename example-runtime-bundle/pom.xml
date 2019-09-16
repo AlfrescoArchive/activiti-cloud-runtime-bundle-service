@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.activiti.cloud.rb</groupId>
-    <artifactId>activiti-cloud-dependencies-parent</artifactId>
+    <artifactId>activiti-cloud-runtime-bundle-service-parent</artifactId>
     <version>7.1.0-SNAPSHOT</version>
   </parent>
   <groupId>org.activiti.cloud.examples</groupId>
@@ -12,6 +12,8 @@
     
   <properties>
       <maven.deploy.skip>true</maven.deploy.skip>
+      <!-- TODO we need this because of unresolved version property in parent build pom -->
+      <spring-boot.version>2.1.6.RELEASE</spring-boot.version>
       <skipDocker>true</skipDocker>
   </properties>
   
