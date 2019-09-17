@@ -16,6 +16,8 @@
 
 package org.activiti.cloud.starter.tests.services.audit;
 
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
 import static org.activiti.api.process.model.events.BPMNErrorReceivedEvent.ErrorEvents.ERROR_RECEIVED;
 import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.ALL_REQUIRED_HEADERS;
 import static org.activiti.cloud.starter.tests.services.audit.AuditProducerIT.RUNTIME_BUNDLE_INFO_HEADERS;
@@ -25,6 +27,7 @@ import static org.awaitility.Awaitility.await;
 
 import java.util.List;
 
+import org.activiti.api.process.model.BPMNActivity;
 import org.activiti.api.process.model.BPMNError;
 import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
@@ -82,6 +85,26 @@ public class ErrorAuditProducerIT {
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
 
             assertThat(receivedEvents)
+            .filteredOn(event -> (event.getEventType().equals(ACTIVITY_STARTED) ||
+                                  event.getEventType().equals(ACTIVITY_COMPLETED)))
+            .extracting(CloudRuntimeEvent::getEventType,
+                        event -> ((BPMNActivity) event.getEntity()).getActivityType(),
+                        event -> ((BPMNActivity) event.getEntity()).getElementId(),
+                        event -> ((BPMNActivity) event.getEntity()).getProcessInstanceId())
+            .contains(tuple(ACTIVITY_STARTED,
+                            "endEvent",
+                            "subEnd",
+                            processInstance.getId()),
+                      tuple(ACTIVITY_STARTED,
+                            "startEvent",
+                            "subStart1",
+                            processInstance.getId()),
+                      tuple(ACTIVITY_COMPLETED,
+                            "startEvent",
+                            "subStart1",
+                            processInstance.getId()));
+            
+            assertThat(receivedEvents)
                     .filteredOn(CloudBPMNErrorReceivedEvent.class::isInstance)
                     .extracting(CloudRuntimeEvent::getEventType,
                                 CloudRuntimeEvent::getProcessDefinitionId,
@@ -113,8 +136,7 @@ public class ErrorAuditProducerIT {
                                   null
                             )                            
                     );
-
-        });
+       });
         
     }
     
