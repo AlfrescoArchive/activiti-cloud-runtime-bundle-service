@@ -120,7 +120,7 @@ public class SignalAuditProducerIT {
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getLatestReceivedEvents();
 
-            String processWithSignalStartId = Optional.ofNullable(runtimeService.createProcessInstanceQuery()
+            String startedBySignalProcessInstanceId = Optional.ofNullable(runtimeService.createProcessInstanceQuery()
                                                                                 .processDefinitionKey("processWithSignalStart1")
                                                                                 .singleResult()
                                                                                 .getId())
@@ -148,11 +148,11 @@ public class SignalAuditProducerIT {
                     .contains(
                             tuple(SIGNAL_RECEIVED,
                                   processWithSignalStart.getId(),
-                                  processWithSignalStartId, 
+                                  startedBySignalProcessInstanceId,
                                   processWithSignalStart.getKey(), 
                                   processWithSignalStart.getVersion(), 
                                   processWithSignalStart.getId(),
-                                  processWithSignalStartId, 
+                                  startedBySignalProcessInstanceId,
                                   "theStart",
                                   "Test",
                                   Collections.singletonMap("signalVar", "timeToGo")
@@ -180,6 +180,7 @@ public class SignalAuditProducerIT {
                                   Collections.singletonMap("signalVar", "timeToGo")
                             )
                     );
+            runtimeService.deleteProcessInstance(startedBySignalProcessInstanceId, "clean up");
 
         });
 
@@ -200,7 +201,7 @@ public class SignalAuditProducerIT {
         await("Broadcast Signals").untilAsserted(() -> {
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
 
-            String processWithSignalStart1 = receivedEvents.stream()
+            String startedBySignalProcessInstanceId = receivedEvents.stream()
                                                           .filter(it -> PROCESS_CREATED.equals(it.getEventType())
                                                                         && "processWithSignalStart1".equals(it.getProcessDefinitionKey()))
                                                           .map(CloudRuntimeEvent::getProcessInstanceId)
@@ -225,13 +226,14 @@ public class SignalAuditProducerIT {
                               tuple(ACTIVITY_STARTED, "broadcastSignalEventProcess", "businessKey", "endevent1"),
                               tuple(ACTIVITY_COMPLETED, "broadcastSignalEventProcess", "businessKey", "endevent1"),
                               tuple(PROCESS_COMPLETED, "broadcastSignalEventProcess", "businessKey", processInstanceId),
-                              tuple(PROCESS_CREATED, "processWithSignalStart1", null, processWithSignalStart1),
+                              tuple(PROCESS_CREATED, "processWithSignalStart1", null, startedBySignalProcessInstanceId),
                               tuple(SIGNAL_RECEIVED, "processWithSignalStart1", null, "theStart"),
-                              tuple(PROCESS_STARTED, "processWithSignalStart1", null, processWithSignalStart1),
+                              tuple(PROCESS_STARTED, "processWithSignalStart1", null, startedBySignalProcessInstanceId),
                               tuple(ACTIVITY_COMPLETED, "processWithSignalStart1", null, "theStart"),
                               tuple(SEQUENCE_FLOW_TAKEN, "processWithSignalStart1", null, "flow1"),
                               tuple(ACTIVITY_STARTED, "processWithSignalStart1", null, "theTask")
                     );
+            runtimeService.deleteProcessInstance(startedBySignalProcessInstanceId, "clean up");
         });
 
 
