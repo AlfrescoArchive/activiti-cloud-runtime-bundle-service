@@ -113,14 +113,6 @@ public class ProcessInstanceControllerImpl implements ProcessInstanceController 
 
     @Override
     public Resource<CloudProcessInstance> startProcess(@RequestBody StartProcessPayload startProcessPayload) {
-        
-        Map<String, Object> variables = startProcessPayload.getVariables(); 
-        if (variables != null && !variables.isEmpty()) {   
-            
-            processVariablesValidator.checkStartProcessPayloadVariables(startProcessPayload,
-                                                                        getProcessDefinitionKey(startProcessPayload));
-        }    
-        
         return resourceAssembler.toResource(processRuntime.start(startProcessPayload));
     }
 
