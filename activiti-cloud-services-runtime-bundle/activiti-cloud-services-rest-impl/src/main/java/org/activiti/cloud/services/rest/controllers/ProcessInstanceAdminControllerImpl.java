@@ -92,12 +92,6 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
    
     @Override
     public Resource<CloudProcessInstance> startProcess(@RequestBody StartProcessPayload startProcessPayload) {
-        Map<String, Object> variables = startProcessPayload.getVariables(); 
-        if (variables != null && !variables.isEmpty()) {
-            
-            processVariablesValidator.checkStartProcessPayloadVariables(startProcessPayload,
-                                                                        getProcessDefinitionKey(startProcessPayload));
-        }    
         return resourceAssembler.toResource(processAdminRuntime.start(startProcessPayload));
     }
     
