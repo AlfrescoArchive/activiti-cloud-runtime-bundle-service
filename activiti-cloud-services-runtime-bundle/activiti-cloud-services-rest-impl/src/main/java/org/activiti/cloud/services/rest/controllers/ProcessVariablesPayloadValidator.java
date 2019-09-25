@@ -55,7 +55,7 @@ public class ProcessVariablesPayloadValidator  {
     
     private void checkPayloadVariables(Map<String, Object> variablePayloadMap,
                                        String processDefinitionKey,
-                                       boolean validate) {
+                                       boolean validateVariable) {
         
         final String errorMessage = "Variable with name {0} does not exists.";
         final String errorDateTimeParse = "Error parsing date/time variable with a name {0}: {1}";
@@ -82,16 +82,14 @@ public class ProcessVariablesPayloadValidator  {
                                 activitiExceptions.add(new ActivitiException(MessageFormat.format(errorDateTimeParse, name, e.getMessage())));
                             }
                         } else {
-                            if (validate) {
-                                activitiExceptions.addAll(variableValidationService.validateWithErrors(value, variableDefinitionEntry.getValue()));
-                            }                            
+                            activitiExceptions.addAll(variableValidationService.validateWithErrors(value, variableDefinitionEntry.getValue()));                          
                         }
                         
                         break;
                     }  
                 }
                 
-                if (!found) {
+                if (validateVariable && !found) {
                     activitiExceptions.add(new ActivitiException(MessageFormat.format(errorMessage, name)));
                 }
             }
@@ -105,11 +103,12 @@ public class ProcessVariablesPayloadValidator  {
     }
     
     public void checkPayloadVariables(SetProcessVariablesPayload setProcessVariablesPayload,
-                                      String processDefinitionKey) {
+                                      String processDefinitionKey,
+                                      boolean validateVariable) {
         
         checkPayloadVariables(setProcessVariablesPayload.getVariables(),
                               processDefinitionKey,
-                              true);          
+                              validateVariable);          
     }
     
 

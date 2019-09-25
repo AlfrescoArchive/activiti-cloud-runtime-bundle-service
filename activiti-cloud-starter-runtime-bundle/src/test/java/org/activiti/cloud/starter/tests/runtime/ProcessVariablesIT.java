@@ -477,6 +477,7 @@ public class ProcessVariablesIT {
     }
     
     private void checkProcessVariables(boolean isAdmin) throws Exception {
+ 
         ResponseEntity<CloudProcessInstance> processInstanceResponseEntity = processInstanceRestTemplate.startProcess(
                 ProcessPayloadBuilder.start()
                         .withProcessDefinitionKey(PROCESS_WITH_EXTENSION_VARIABLES)
@@ -507,7 +508,10 @@ public class ProcessVariablesIT {
         //when update simple existing variables 
         updateSimpleVariables(isAdmin, processInstanceResponseEntity.getBody().getId());
         
-        updateNotDefinedVariable(isAdmin, processInstanceResponseEntity.getBody().getId());
+        //Not allowed for admin because of update of variables
+        if (isAdmin) {
+            updateNotDefinedVariable(isAdmin, processInstanceResponseEntity.getBody().getId());
+        }   
         
         updateDateVariableWithADate(isAdmin, processInstanceResponseEntity.getBody().getId());
         

@@ -123,7 +123,7 @@ public class ProcessVariablesPayloadValidatorIT {
     }
 
     @Test
-    public void shouldReturnErrorListWhenSetVariablesWithWrongNames() throws Exception {
+    public void shouldReturnErrorListWhenUpdateVariablesWithWrongNames() throws Exception {
         //GIVEN
         Map<String, Object> variables = new HashMap<>();
         variables.put("name", "Alice");
@@ -137,7 +137,8 @@ public class ProcessVariablesPayloadValidatorIT {
                                                                                 .setVariables()
                                                                                 .withVariables(variables)
                                                                                 .build(),
-                                                                            "10"));
+                                                                            "10",
+                                                                            true));
 
         //THEN
         assertThat(throwable)
@@ -159,7 +160,8 @@ public class ProcessVariablesPayloadValidatorIT {
                                                                                 .setVariables()
                                                                                 .withVariables(variables)
                                                                                 .build(),
-                                                                            "10"));
+                                                                            "10",
+                                                                            false));
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class);
@@ -191,7 +193,8 @@ public class ProcessVariablesPayloadValidatorIT {
                                                                                 .setVariables()
                                                                                 .withVariables(variables)
                                                                                 .build(),
-                                                                            "10"));
+                                                                            "10",
+                                                                            true));
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class); 
@@ -215,7 +218,8 @@ public class ProcessVariablesPayloadValidatorIT {
                                                                                 .setVariables()
                                                                                 .withVariables(variables)
                                                                                 .build(),
-                                                                            "10"));
+                                                                            "10",
+                                                                            false));
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class);
