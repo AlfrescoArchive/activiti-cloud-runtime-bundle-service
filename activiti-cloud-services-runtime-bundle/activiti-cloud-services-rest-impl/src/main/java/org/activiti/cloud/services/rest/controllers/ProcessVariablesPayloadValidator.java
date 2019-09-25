@@ -89,9 +89,22 @@ public class ProcessVariablesPayloadValidator  {
                     }  
                 }
                 
-                if (validateVariable && !found) {
-                    activitiExceptions.add(new ActivitiException(MessageFormat.format(errorMessage, name)));
+                if (!found) {
+                    if (validateVariable) {
+                        activitiExceptions.add(new ActivitiException(MessageFormat.format(errorMessage, name)));
+                    } else {
+                        //Try to parse a new string variable as date
+                        if (value != null && (value instanceof String)) {
+                            try {
+                                payloadVar.setValue(dateFormatterProvider.toDate(value));
+                            } catch (Exception e) {
+                                //Do nothing here, keep value as a string
+                            }
+                        } 
+                    }                   
                 }
+                
+            
             }
         }      
         
