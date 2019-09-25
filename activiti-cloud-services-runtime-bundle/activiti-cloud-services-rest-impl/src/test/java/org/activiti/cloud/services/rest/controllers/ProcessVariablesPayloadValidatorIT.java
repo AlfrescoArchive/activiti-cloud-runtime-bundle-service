@@ -123,30 +123,6 @@ public class ProcessVariablesPayloadValidatorIT {
     }
 
     @Test
-    public void shouldReturnErrorListWhenUpdateVariablesWithWrongNames() throws Exception {
-        //GIVEN
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("name", "Alice");
-        variables.put("age", 24);
-        variables.put("subs", false);
-        
-        //WHEN
-        //THEN
-        Throwable throwable = catchThrowable(() -> processVariablesValidator.checkPayloadVariables(
-                                                                            ProcessPayloadBuilder
-                                                                                .setVariables()
-                                                                                .withVariables(variables)
-                                                                                .build(),
-                                                                            "10",
-                                                                            true));
-
-        //THEN
-        assertThat(throwable)
-            .isInstanceOf(IllegalStateException.class)
-            .hasMessage("Variable with name subs does not exists.");
-    }
-
-    @Test
     public void shouldReturnErrorListWhenSetVariablesWithWrongType() throws Exception {
         //GIVEN
         Map<String, Object> variables = new HashMap<>();
@@ -160,8 +136,7 @@ public class ProcessVariablesPayloadValidatorIT {
                                                                                 .setVariables()
                                                                                 .withVariables(variables)
                                                                                 .build(),
-                                                                            "10",
-                                                                            false));
+                                                                            "10"));
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class);
@@ -172,7 +147,7 @@ public class ProcessVariablesPayloadValidatorIT {
     }
 
     @Test
-    public void shouldReturnErrorListWhenSetVariablesWithWrongNameAndType() throws Exception {
+    public void shouldReturnErrorListWhenSetVariablesWithNameWrongType() throws Exception {
         //GIVEN
         Map<String, Object> variables = new HashMap<>();
         variables.put("name", "Alice");
@@ -183,8 +158,6 @@ public class ProcessVariablesPayloadValidatorIT {
         variables.put("mydate", "2019-08-26T10:20:30.000Z");
         
         String expectedTypeErrorMessage = "class java.lang.String is not assignable from class java.lang.Integer";
-        String expectedNameErrorMessage1 = "Variable with name gender does not exists.";
-        String expectedNameErrorMessage2 = "Variable with name subs does not exists.";
 
         //WHEN
         //WHEN
@@ -193,16 +166,13 @@ public class ProcessVariablesPayloadValidatorIT {
                                                                                 .setVariables()
                                                                                 .withVariables(variables)
                                                                                 .build(),
-                                                                            "10",
-                                                                            true));
+                                                                            "10"));
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class); 
         
         assertThat(throwable.getMessage())
-            .contains(expectedTypeErrorMessage,
-                      expectedNameErrorMessage1,
-                      expectedNameErrorMessage2);
+            .contains(expectedTypeErrorMessage);
         
     }
   
@@ -218,8 +188,7 @@ public class ProcessVariablesPayloadValidatorIT {
                                                                                 .setVariables()
                                                                                 .withVariables(variables)
                                                                                 .build(),
-                                                                            "10",
-                                                                            false));
+                                                                            "10"));
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class);

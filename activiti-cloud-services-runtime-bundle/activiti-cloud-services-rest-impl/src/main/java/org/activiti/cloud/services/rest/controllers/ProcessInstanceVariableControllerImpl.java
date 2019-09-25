@@ -66,8 +66,7 @@ public class ProcessInstanceVariableControllerImpl implements ProcessInstanceVar
         setProcessVariablesPayload.setProcessInstanceId(processInstanceId);
         
         processVariablesValidator.checkPayloadVariables(setProcessVariablesPayload,
-                                                        processInstance.getProcessDefinitionKey(),
-                                                        false);
+                                                        processInstance.getProcessDefinitionKey());
 
         processRuntime.setVariables(setProcessVariablesPayload);
         return new ResponseEntity<>(HttpStatus.OK);

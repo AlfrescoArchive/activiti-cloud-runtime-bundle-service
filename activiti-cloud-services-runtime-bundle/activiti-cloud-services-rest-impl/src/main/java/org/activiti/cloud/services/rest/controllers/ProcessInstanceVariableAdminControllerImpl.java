@@ -48,8 +48,7 @@ public class ProcessInstanceVariableAdminControllerImpl implements ProcessInstan
         setProcessVariablesPayload.setProcessInstanceId(processInstanceId);
         
         processVariablesValidator.checkPayloadVariables(setProcessVariablesPayload,
-                                                        processInstance.getProcessDefinitionKey(),
-                                                        true);
+                                                        processInstance.getProcessDefinitionKey());
         
         processAdminRuntime.setVariables(setProcessVariablesPayload);
         return new ResponseEntity<>(HttpStatus.OK);

@@ -396,24 +396,6 @@ public class ProcessVariablesIT {
         });        
     }
     
-    private void updateNotDefinedVariable(boolean isAdmin,
-                                          String processInstanceId) {
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("dummy",
-                      1);
-        
-        await().untilAsserted(() -> {    
-            ResponseEntity<Void> responseEntity;        
-            if (isAdmin) {
-                responseEntity = processInstanceRestTemplate.adminSetVariablesDoNotCheckStatus(processInstanceId,                                                                                       variables);
-            } else {
-                responseEntity = processInstanceRestTemplate.setVariablesDoNotCheckStatus(processInstanceId,
-                                                                                          variables);
-            }
-            assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        });
-    }
-    
     private void updateDateVariableWithADate(boolean isAdmin,
                                              String processInstanceId) {
         Map<String, Object> variables = new HashMap<>();
@@ -507,11 +489,6 @@ public class ProcessVariablesIT {
 
         //when update simple existing variables 
         updateSimpleVariables(isAdmin, processInstanceResponseEntity.getBody().getId());
-        
-        //Not allowed for admin because of update of variables
-        if (isAdmin) {
-            updateNotDefinedVariable(isAdmin, processInstanceResponseEntity.getBody().getId());
-        }   
         
         updateDateVariableWithADate(isAdmin, processInstanceResponseEntity.getBody().getId());
         

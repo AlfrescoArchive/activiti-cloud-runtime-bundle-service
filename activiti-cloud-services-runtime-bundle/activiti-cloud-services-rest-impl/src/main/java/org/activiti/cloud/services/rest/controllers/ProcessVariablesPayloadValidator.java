@@ -54,10 +54,8 @@ public class ProcessVariablesPayloadValidator  {
     }
     
     private void checkPayloadVariables(Map<String, Object> variablePayloadMap,
-                                       String processDefinitionKey,
-                                       boolean validateVariable) {
+                                       String processDefinitionKey) {
         
-        final String errorMessage = "Variable with name {0} does not exists.";
         final String errorDateTimeParse = "Error parsing date/time variable with a name {0}: {1}";
         
         final Optional<Map<String, VariableDefinition>> variableDefinitionMap = getVariableDefinitionMap(processDefinitionKey);
@@ -89,19 +87,15 @@ public class ProcessVariablesPayloadValidator  {
                     }  
                 }
                 
-                if (!found) {
-                    if (validateVariable) {
-                        activitiExceptions.add(new ActivitiException(MessageFormat.format(errorMessage, name)));
-                    } else {
-                        //Try to parse a new string variable as date
-                        if (value != null && (value instanceof String)) {
-                            try {
-                                payloadVar.setValue(dateFormatterProvider.toDate(value));
-                            } catch (Exception e) {
-                                //Do nothing here, keep value as a string
-                            }
-                        } 
-                    }                   
+                if (!found) {                   
+                    //Try to parse a new string variable as date
+                    if (value != null && (value instanceof String)) {
+                        try {
+                            payloadVar.setValue(dateFormatterProvider.toDate(value));
+                        } catch (Exception e) {
+                            //Do nothing here, keep value as a string
+                        }
+                    }                 
                 }
                 
             
@@ -116,12 +110,10 @@ public class ProcessVariablesPayloadValidator  {
     }
     
     public void checkPayloadVariables(SetProcessVariablesPayload setProcessVariablesPayload,
-                                      String processDefinitionKey,
-                                      boolean validateVariable) {
+                                      String processDefinitionKey) {
         
         checkPayloadVariables(setProcessVariablesPayload.getVariables(),
-                              processDefinitionKey,
-                              validateVariable);          
+                              processDefinitionKey);          
     }
     
 
@@ -130,7 +122,6 @@ public class ProcessVariablesPayloadValidator  {
                                                   String processDefinitionKey) {
         
        checkPayloadVariables(startProcessPayload.getVariables(),
-                             processDefinitionKey,
-                             false);
+                             processDefinitionKey);
     }
 }
