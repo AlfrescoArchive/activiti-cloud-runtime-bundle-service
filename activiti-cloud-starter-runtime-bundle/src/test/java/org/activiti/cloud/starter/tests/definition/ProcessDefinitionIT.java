@@ -18,10 +18,6 @@ package org.activiti.cloud.starter.tests.definition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Iterator;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.api.process.model.ProcessDefinition;
 import org.activiti.bpmn.converter.BpmnXMLConverter;
@@ -49,6 +45,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.Iterator;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
