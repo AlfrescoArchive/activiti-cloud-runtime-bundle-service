@@ -34,10 +34,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.api.model.shared.model.VariableInstance;
 import org.activiti.api.process.model.BPMNActivity;
 import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
@@ -69,13 +73,18 @@ import org.springframework.test.context.junit4.SpringRunner;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public class ExclusiveGatewayAuditProducerIT {
 
-    private static final String EXCLUSIVE_GATEWAY_PROCESS = "basicExclusiveGateway";
+    private static final String EXCLUSIVE_GATEWAY_PROCESS_INT = "basicExclusiveGateway";
+    private static final String EXCLUSIVE_GATEWAY_PROCESS_STRING = "basicExclusiveGatewayString";
+    private static final String EXCLUSIVE_GATEWAY_PROCESS_JSON = "basicExclusiveGatewayJson";
 
     @Autowired
     private ProcessInstanceRestTemplate processInstanceRestTemplate;
     
     @Autowired
     private TaskRestTemplate taskRestTemplate;
+    
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private AuditConsumerStreamHandler streamHandler;
@@ -89,12 +98,12 @@ public class ExclusiveGatewayAuditProducerIT {
     }
 
     @Test
-    public void testProcessExecutionWithExclusiveGateway() {
+    public void should_executeExclusiveGateway_when_expressionWithIntVariable() {
         //when
         streamHandler.getAllReceivedEvents().clear();
         ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(
                 new StartProcessPayloadBuilder()
-                        .withProcessDefinitionKey(EXCLUSIVE_GATEWAY_PROCESS)
+                        .withProcessDefinitionKey(EXCLUSIVE_GATEWAY_PROCESS_INT)
                         .withVariable("input",0)
                         .build());
         String processInstanceId = processInstance.getBody().getId();
@@ -360,4 +369,212 @@ public class ExclusiveGatewayAuditProducerIT {
 
     }
 
+    @Test
+    public void should_executeExclusiveGateway_when_expressionWithStringVariable() {
+        //when
+        streamHandler.getAllReceivedEvents().clear();
+        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(
+                new StartProcessPayloadBuilder()
+                        .withProcessDefinitionKey(EXCLUSIVE_GATEWAY_PROCESS_STRING)
+                        .withVariable("input","string 0")
+                        .build());
+        String processInstanceId = processInstance.getBody().getId();
+
+        //then
+        Collection<CloudVariableInstance> variableCollection = processInstanceRestTemplate
+                .getVariables(processInstance)
+                .getBody()
+                .getContent();
+
+        assertThat(variableCollection)
+            .isNotEmpty()
+            .extracting(CloudVariableInstance::getName,
+                        CloudVariableInstance::getValue)
+            .contains(tuple("input","string 0"));
+        
+        //then
+        CloudTask task = processInstanceRestTemplate.getTasks(processInstance).getBody().iterator().next();
+        String taskId = task.getId();
+        
+        //when
+        ResponseEntity<CloudTask> claimTask = taskRestTemplate.claim(task);
+        CompleteTaskPayload completeTaskPayload = TaskPayloadBuilder
+                                        .complete()
+                                        .withTaskId(task.getId())
+                                        .withVariables(Collections.singletonMap("input","string 2"))
+                                        .build();
+        ResponseEntity<CloudTask> completeTask = taskRestTemplate.complete(task,completeTaskPayload);
+        
+        //then
+        assertThat(completeTask).isNotNull();
+        assertThat(completeTask.getBody().getStatus()).isEqualTo(TaskStatus.COMPLETED);
+        
+        variableCollection = processInstanceRestTemplate
+                            .getVariables(processInstance)
+                            .getBody()
+                            .getContent();
+
+        assertThat(variableCollection)
+            .isNotEmpty()
+            .extracting(CloudVariableInstance::getName,
+                        CloudVariableInstance::getValue)
+            .contains(tuple("input","string 2"));
+        
+        task = processInstanceRestTemplate.getTasks(processInstance).getBody().iterator().next();
+        String newTaskId = task.getId();
+        
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+         
+            assertThat(receivedEvents)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getProcessInstanceId,
+                                CloudRuntimeEvent::getEntityId)
+                    .contains(tuple(TASK_COMPLETED,
+                                    processInstanceId,
+                                    taskId),
+                              tuple(SEQUENCE_FLOW_TAKEN,
+                                    processInstanceId,
+                                    "flow2"),
+                              tuple(ACTIVITY_STARTED,
+                                    processInstanceId,
+                                    "exclusiveGateway"),
+                              tuple(ACTIVITY_COMPLETED,
+                                    processInstanceId,
+                                    "exclusiveGateway"),
+                              tuple(SEQUENCE_FLOW_TAKEN,
+                                    processInstanceId,
+                                    "flow5"),
+                              tuple(ACTIVITY_STARTED,
+                                    processInstanceId,
+                                    "task3"),
+                              tuple(TASK_CREATED,
+                                    processInstanceId,
+                                    newTaskId));     
+        });
+        
+        streamHandler.getAllReceivedEvents().clear();
+        
+        //when
+        claimTask = taskRestTemplate.claim(task);
+        
+        completeTaskPayload = TaskPayloadBuilder
+                .complete()
+                .withTaskId(task.getId())
+                .build();
+        completeTask = taskRestTemplate.complete(task,completeTaskPayload);
+
+        //then
+        assertThat(completeTask).isNotNull();
+        assertThat(completeTask.getBody().getStatus()).isEqualTo(TaskStatus.COMPLETED);
+
+    }
+    
+    @Test
+    public void should_properExecuteExclusiveGateway_when_expressionWithJsonVariable() throws IOException {
+
+        streamHandler.getAllReceivedEvents().clear();
+              
+        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(
+                new StartProcessPayloadBuilder()
+                        .withProcessDefinitionKey(EXCLUSIVE_GATEWAY_PROCESS_JSON)
+                        .withVariable("varEntity", createJsonNode("stringId", "string 0", 0))
+                        .build());
+        String processInstanceId = processInstance.getBody().getId();
+
+        checkProcessVarEntity(processInstanceId, "stringId", "string 0", 0);
+        
+        CloudTask task = processInstanceRestTemplate.getTasks(processInstance).getBody().iterator().next();
+        String taskId = task.getId();
+        
+        ResponseEntity<CloudTask> claimTask = taskRestTemplate.claim(task);
+        CompleteTaskPayload completeTaskPayload = TaskPayloadBuilder
+                                        .complete()
+                                        .withTaskId(task.getId())
+                                        .withVariable("varEntity",createJsonNode("stringId", "string 2", 2))
+                                        .build();
+        ResponseEntity<CloudTask> completeTask = taskRestTemplate.complete(task,completeTaskPayload);    
+        assertThat(completeTask).isNotNull();
+        assertThat(completeTask.getBody().getStatus()).isEqualTo(TaskStatus.COMPLETED);
+        
+        checkProcessVarEntity(processInstanceId, "stringId", "string 2", 2);
+        
+        task = processInstanceRestTemplate.getTasks(processInstance).getBody().iterator().next();
+        String newTaskId = task.getId();
+        
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+         
+            assertThat(receivedEvents)
+                    .extracting(CloudRuntimeEvent::getEventType,
+                                CloudRuntimeEvent::getProcessInstanceId,
+                                CloudRuntimeEvent::getEntityId)
+                    .contains(tuple(TASK_COMPLETED,
+                                    processInstanceId,
+                                    taskId),
+                              tuple(SEQUENCE_FLOW_TAKEN,
+                                    processInstanceId,
+                                    "flow2"),
+                              tuple(ACTIVITY_STARTED,
+                                    processInstanceId,
+                                    "exclusiveGateway"),
+                              tuple(ACTIVITY_COMPLETED,
+                                    processInstanceId,
+                                    "exclusiveGateway"),
+                              tuple(SEQUENCE_FLOW_TAKEN,
+                                    processInstanceId,
+                                    "flow5"),
+                              tuple(ACTIVITY_STARTED,
+                                    processInstanceId,
+                                    "task3"),
+                              tuple(TASK_CREATED,
+                                    processInstanceId,
+                                    newTaskId));     
+        });
+        
+        streamHandler.getAllReceivedEvents().clear();
+        
+        //when
+        claimTask = taskRestTemplate.claim(task);
+        
+        completeTaskPayload = TaskPayloadBuilder
+                .complete()
+                .withTaskId(task.getId())
+                .build();
+        completeTask = taskRestTemplate.complete(task,completeTaskPayload);
+
+        //then
+        assertThat(completeTask).isNotNull();
+        assertThat(completeTask.getBody().getStatus()).isEqualTo(TaskStatus.COMPLETED);
+    }
+    
+    private JsonNode createJsonNode(String idValue, String sValue, Integer iValue) throws IOException {
+        return objectMapper.readTree("{\"id\":\""+idValue+"\",\"sValue\":\""+sValue+"\",\"iValue\":"+iValue+"}");
+    }
+    
+    private void checkVarEntity(Map<String, Object> varEntity, String idValue, String sValue, Integer iValue) { 
+        assertThat(varEntity)
+        .isNotEmpty();
+
+        assertThat(varEntity.get("id")).isEqualTo(idValue);
+        assertThat(varEntity.get("sValue")).isEqualTo(sValue);
+        assertThat(varEntity.get("iValue")).isEqualTo(iValue);
+    }
+    
+    private void checkProcessVarEntity(String processInstanceId, String idValue, String sValue, Integer iValue) { 
+        Collection<CloudVariableInstance> variableCollection = processInstanceRestTemplate
+                .getVariables(processInstanceId)
+                .getBody()
+                .getContent();
+
+        assertThat(variableCollection)
+            .hasSize(1)
+            .extracting(CloudVariableInstance::getName,
+                        CloudVariableInstance::getType)
+            .contains(tuple("varEntity","json"));
+
+        checkVarEntity(variableCollection.iterator().next().getValue(), idValue, sValue, iValue);      
+    }
 }
