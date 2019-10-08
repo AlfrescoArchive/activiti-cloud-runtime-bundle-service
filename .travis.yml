@@ -18,6 +18,7 @@ notifications:
 
 before_script:
   - echo MAVEN_OPTS=-Xmx1536m > ~/.mavenrc
+  - docker pull activiti/activiti-keycloak
 
 # Enable integration tests
 script:
@@ -33,4 +34,4 @@ after_failure:
 
 env:
   global:
-  - DOCKER_HOST=tcp://127.0.0.1:2375
+  - DOCKER_HOST=tcp://localhost:2375
