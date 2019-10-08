@@ -16,9 +16,6 @@
 
 package org.activiti.cloud.services.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
-
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.cloud.services.core.utils.TestProcessEngine;
 import org.activiti.cloud.services.core.utils.TestProcessEngineConfiguration;
@@ -36,13 +33,15 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
 /**
  * Integration tests for ProcessDiagramGeneratorWrapper
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, classes = TestProcessEngineConfiguration.class)
 @TestPropertySource("classpath:test-process-diagram.properties")
-//@ContextConfiguration(classes=TestProcessEngineConfiguration.class)\
 public class ProcessDiagramGeneratorWrapperIT {
 
     private static final String DEFAULT_DIAGRAM_FONT_NAME = "Arial";

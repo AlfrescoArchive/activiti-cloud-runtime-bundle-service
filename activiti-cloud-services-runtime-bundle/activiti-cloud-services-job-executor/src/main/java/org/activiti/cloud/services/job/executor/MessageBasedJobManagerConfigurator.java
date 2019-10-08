@@ -25,6 +25,7 @@ import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.cloud.stream.binding.BindingService;
 import org.springframework.cloud.stream.config.BindingProperties;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.http.MediaType;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.SubscribableChannel;
 
@@ -34,7 +35,7 @@ public class MessageBasedJobManagerConfigurator implements ProcessEngineConfigur
     private static final String MESSAGE_BASED_JOB_MANAGER = "messageBasedJobManager";
     public static final String JOB_MESSAGE_HANDLER = "jobMessageHandler";
 
-    private String contentType = "application/json";
+    private String contentType = MediaType.APPLICATION_JSON_VALUE;
 
     private final BindingService bindingService;
     private final JobMessageInputChannelFactory inputChannelFactory;

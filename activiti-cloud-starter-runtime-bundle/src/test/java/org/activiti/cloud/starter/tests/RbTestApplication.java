@@ -22,12 +22,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @ActivitiRuntimeBundle
-//@ComponentScan({"org.activiti.cloud.starters.test",
-//                "org.activiti.cloud.services.test.identity.keycloak.interceptor"})
-public class Application {
+public class RbTestApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+        SpringApplication.run(RbTestApplication.class, args);
     }
 
 }
