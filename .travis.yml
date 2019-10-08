@@ -16,9 +16,11 @@ notifications:
     on_failure: always  # options: [always|never|change] default: always
     on_start: never     # options: [always|never|change] default: always
 
+before_install:
+  - docker pull activiti/activiti-keycloak
+
 before_script:
   - echo MAVEN_OPTS=-Xmx1536m > ~/.mavenrc
-  - docker pull activiti/activiti-keycloak
 
 # Enable integration tests
 script:
@@ -32,6 +34,6 @@ after_failure:
   - cat **/target/surefire-reports/*.xml | grep -B 1 -A 30 "<error"
   - cat **/target/failsafe-reports/*.xml | grep -B 1 -A 30 "<error"
 
-env:
-  global:
-  - DOCKER_HOST=tcp://localhost:2375
+# env:
+#   global:
+#   - DOCKER_HOST=tcp://localhost:2375
