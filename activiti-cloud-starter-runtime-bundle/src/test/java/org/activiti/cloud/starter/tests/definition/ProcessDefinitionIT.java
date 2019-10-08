@@ -18,7 +18,7 @@ package org.activiti.cloud.starter.tests.definition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.activiti.api.process.model.ProcessDefinition;
 import org.activiti.bpmn.converter.BpmnXMLConverter;
 import org.activiti.bpmn.model.BpmnModel;
@@ -208,14 +208,15 @@ public class ProcessDefinitionIT {
         ProcessDefinition aProcessDefinition = getProcessDefinition(PROCESS_WITH_VARIABLES_2);
 
         //when
-        String responseData = executeRequest(PROCESS_DEFINITIONS_URL + aProcessDefinition.getId() + "/model",
+        JsonNode responseData = executeRequest(PROCESS_DEFINITIONS_URL + aProcessDefinition.getId() + "/model",
                                              HttpMethod.GET,
-                                             "application/json");
+                                             "application/json",
+                                             JsonNode.class);
 
         //then
         assertThat(responseData).isNotNull();
 
-        BpmnModel targetModel = new BpmnJsonConverter().convertToBpmnModel(new ObjectMapper().readTree(responseData));
+        BpmnModel targetModel = new BpmnJsonConverter().convertToBpmnModel(responseData);
         final InputStream byteArrayInputStream = new ByteArrayInputStream(TestResourceUtil.getProcessXml(aProcessDefinition.getId()
                                                                                                                  .split(":")[0]).getBytes());
         BpmnModel sourceModel = new BpmnXMLConverter().convertToBpmnModel(() -> byteArrayInputStream,
@@ -258,17 +259,27 @@ public class ProcessDefinitionIT {
         }
     }
 
+    private <T> T executeRequest(String url,
+                                  HttpMethod method,
+                                  String contentType, 
+                                  Class<T> javaType) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Accept", contentType);
+        ResponseEntity<T> response = restTemplate.exchange(url,
+                                                           method,
+                                                           new HttpEntity<>(headers),
+                                                           javaType);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return response.getBody();
+    }
+    
     private String executeRequest(String url,
                                   HttpMethod method,
                                   String contentType) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Accept", contentType);
-        ResponseEntity<String> response = restTemplate.exchange(url,
-                                                                method,
-                                                                new HttpEntity<>(headers),
-                                                                String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return response.getBody();
+        return executeRequest(url,
+                              method,
+                              contentType,
+                              String.class);
     }
 
     @Test
