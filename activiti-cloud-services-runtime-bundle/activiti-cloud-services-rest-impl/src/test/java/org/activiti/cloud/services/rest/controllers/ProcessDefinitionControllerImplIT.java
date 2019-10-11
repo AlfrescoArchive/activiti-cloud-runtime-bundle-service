@@ -90,7 +90,6 @@ import org.springframework.test.web.servlet.MvcResult;
 @Import({RuntimeBundleProperties.class,
         CloudEventsAutoConfiguration.class,
         ActivitiCoreCommonUtilAutoConfiguration.class,
-        ActivitiCoreCommonUtilAutoConfiguration.class,
         ProcessExtensionsAutoConfiguration.class,
         ServicesRestWebMvcAutoConfiguration.class,
         ServicesCoreAutoConfiguration.class,
