@@ -16,14 +16,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.runtime.conf.impl.CommonModelAutoConfiguration;
 import org.activiti.api.runtime.conf.impl.ProcessModelAutoConfiguration;
@@ -35,6 +27,7 @@ import org.activiti.cloud.services.rest.conf.ServicesRestWebMvcAutoConfiguration
 import org.activiti.common.util.DateFormatterProvider;
 import org.activiti.common.util.conf.ActivitiCoreCommonUtilAutoConfiguration;
 import org.activiti.engine.RepositoryService;
+import org.activiti.spring.process.ProcessExtensionService;
 import org.activiti.spring.process.conf.ProcessExtensionsAutoConfiguration;
 import org.activiti.spring.process.model.Extension;
 import org.activiti.spring.process.model.ProcessExtensionModel;
@@ -52,6 +45,14 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+
 @RunWith(SpringRunner.class)
 @WebMvcTest(ProcessVariablesPayloadValidator.class)
 @EnableSpringDataWebSupport
@@ -68,25 +69,28 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class ProcessVariablesPayloadValidatorIT {
     @MockBean
     private ProcessEngineChannels processEngineChannels;
-    
+
     @Autowired
     private VariableValidationService variableValidationService;
-    
+
     @MockBean
     private RepositoryService repositoryService;
-  
+
     @Autowired
     private DateFormatterProvider dateFormatterProvider;
 
+//    @MockBean
+//    private Map<String, ProcessExtensionModel> processExtensionModelMap;
+
     @MockBean
-    private Map<String, ProcessExtensionModel> processExtensionModelMap;
-    
+    private ProcessExtensionService processExtensionService;
+
     private ProcessVariablesPayloadValidator processVariablesValidator;
 
     @Before
     public void setUp() {
         ProcessExtensionModel processExtensionModel;
-        
+
         VariableDefinition variableDefinitionName = new VariableDefinition();
         variableDefinitionName.setName("name");
         variableDefinitionName.setType("string");
@@ -98,7 +102,7 @@ public class ProcessVariablesPayloadValidatorIT {
         VariableDefinition variableDefinitionSubscribe = new VariableDefinition();
         variableDefinitionSubscribe.setName("subscribe");
         variableDefinitionSubscribe.setType("boolean");
-        
+
         VariableDefinition variableDefinitionDate = new VariableDefinition();
         variableDefinitionDate.setName("mydate");
         variableDefinitionDate.setType("date");
@@ -117,10 +121,10 @@ public class ProcessVariablesPayloadValidatorIT {
         processExtensionModel.setExtensions(extension);
 
         processVariablesValidator = new ProcessVariablesPayloadValidator(dateFormatterProvider,
-                                                            processExtensionModelMap,
+                                                            processExtensionService,
                                                             variableValidationService);
 
-        given(processExtensionModelMap.get(any()))
+        given(processExtensionService.getExtensionsForId(any()))
                    .willReturn(processExtensionModel);
     }
 
@@ -142,7 +146,7 @@ public class ProcessVariablesPayloadValidatorIT {
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class);
-        
+
         assertThat(throwable.getMessage())
             .contains("Boolean",
                       "Integer");
@@ -158,7 +162,7 @@ public class ProcessVariablesPayloadValidatorIT {
         variables.put("subs", true);
         variables.put("subscribe", true);
         variables.put("mydate", "2019-08-26T10:20:30.000Z");
-        
+
         String expectedTypeErrorMessage = "class java.lang.String is not assignable from class java.lang.Integer";
 
         //WHEN
@@ -171,13 +175,13 @@ public class ProcessVariablesPayloadValidatorIT {
                                                                             "10"));
 
         //THEN
-        assertThat(throwable).isInstanceOf(IllegalStateException.class); 
-        
+        assertThat(throwable).isInstanceOf(IllegalStateException.class);
+
         assertThat(throwable.getMessage())
             .contains(expectedTypeErrorMessage);
-        
+
     }
-  
+
     @Test
     public void shouldReturnErrorWhenSetVariablesWithWrongDateFormat() throws Exception {
         //GIVEN
@@ -194,6 +198,6 @@ public class ProcessVariablesPayloadValidatorIT {
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class);
-        
+
     }
 }

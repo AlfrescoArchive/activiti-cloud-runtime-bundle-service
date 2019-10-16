@@ -16,36 +16,18 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
 import org.activiti.api.runtime.conf.impl.CommonModelAutoConfiguration;
 import org.activiti.api.runtime.conf.impl.ProcessModelAutoConfiguration;
 import org.activiti.api.runtime.model.impl.ProcessInstanceImpl;
-import org.activiti.api.task.runtime.TaskAdminRuntime;
 import org.activiti.cloud.alfresco.config.AlfrescoWebAutoConfiguration;
-import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.activiti.cloud.services.events.configuration.CloudEventsAutoConfiguration;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.cloud.services.events.listeners.CloudProcessDeployedProducer;
 import org.activiti.cloud.services.rest.conf.ServicesRestWebMvcAutoConfiguration;
 import org.activiti.common.util.conf.ActivitiCoreCommonUtilAutoConfiguration;
-import org.activiti.engine.RepositoryService;
 import org.activiti.spring.process.conf.ProcessExtensionsAutoConfiguration;
-import org.activiti.spring.process.model.ProcessExtensionModel;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,12 +40,24 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
-import org.springframework.messaging.MessageChannel;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(ProcessInstanceVariableAdminControllerImpl.class)
@@ -87,31 +81,10 @@ public class ProcessInstanceVariableAdminControllerImplIT {
     private ProcessAdminRuntime processAdminRuntime;
 
     @MockBean
-    private Map<String, ProcessExtensionModel> processExtensionModelMap;
-    
-    @MockBean
-    private TaskAdminRuntime taskAdminRuntime;
-
-    @MockBean
-    private MessageChannel commandResults;
-    
-    @MockBean
     private ProcessVariablesPayloadValidator processVariablesValidator;
 
     @Autowired
     private ObjectMapper mapper;
-
-    @MockBean
-    private ResourcesAssembler resourcesAssembler;
-
-    @MockBean
-    private RepositoryService repositoryService;
-    
-    @MockBean
-    private ProcessEngineChannels processEngineChannels;
-
-    @MockBean
-    private CloudProcessDeployedProducer processDeployedProducer;
 
     @Before
     public void setUp() {
@@ -119,14 +92,14 @@ public class ProcessInstanceVariableAdminControllerImplIT {
         processInstance = new ProcessInstanceImpl();
         processInstance.setId("1");
         processInstance.setProcessDefinitionKey("1");
-   
+
         this.mockMvc = MockMvcBuilders
                 .standaloneSetup(new ProcessInstanceVariableAdminControllerImpl(processAdminRuntime, processVariablesValidator))
                 .setControllerAdvice(new RuntimeBundleExceptionHandler())
                 .build();
-        
+
         given(processAdminRuntime.processInstance(any()))
-              .willReturn(processInstance);
+                .willReturn(processInstance);
     }
 
     @Test
@@ -154,7 +127,7 @@ public class ProcessInstanceVariableAdminControllerImplIT {
         assertThat(expectedResponseBody).isEqualTo(actualResponseBody);
         verify(processAdminRuntime).setVariables(any());
     }
-    
+
     @Test
     public void deleteVariables() throws Exception {
         this.mockMvc.perform(delete("/admin/v1/process-instances/{processInstanceId}/variables",
