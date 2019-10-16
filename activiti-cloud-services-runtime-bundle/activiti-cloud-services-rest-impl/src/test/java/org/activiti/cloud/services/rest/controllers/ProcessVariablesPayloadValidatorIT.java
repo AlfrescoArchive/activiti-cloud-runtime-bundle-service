@@ -67,20 +67,12 @@ import static org.mockito.BDDMockito.given;
         ServicesRestWebMvcAutoConfiguration.class,
         AlfrescoWebAutoConfiguration.class})
 public class ProcessVariablesPayloadValidatorIT {
-    @MockBean
-    private ProcessEngineChannels processEngineChannels;
 
     @Autowired
     private VariableValidationService variableValidationService;
 
-    @MockBean
-    private RepositoryService repositoryService;
-
     @Autowired
     private DateFormatterProvider dateFormatterProvider;
-
-//    @MockBean
-//    private Map<String, ProcessExtensionModel> processExtensionModelMap;
 
     @MockBean
     private ProcessExtensionService processExtensionService;
@@ -121,11 +113,11 @@ public class ProcessVariablesPayloadValidatorIT {
         processExtensionModel.setExtensions(extension);
 
         processVariablesValidator = new ProcessVariablesPayloadValidator(dateFormatterProvider,
-                                                            processExtensionService,
-                                                            variableValidationService);
+                processExtensionService,
+                variableValidationService);
 
         given(processExtensionService.getExtensionsForId(any()))
-                   .willReturn(processExtensionModel);
+                .willReturn(processExtensionModel);
     }
 
     @Test
@@ -138,18 +130,18 @@ public class ProcessVariablesPayloadValidatorIT {
 
         //WHEN
         Throwable throwable = catchThrowable(() -> processVariablesValidator.checkPayloadVariables(
-                                                                            ProcessPayloadBuilder
-                                                                                .setVariables()
-                                                                                .withVariables(variables)
-                                                                                .build(),
-                                                                            "10"));
+                ProcessPayloadBuilder
+                        .setVariables()
+                        .withVariables(variables)
+                        .build(),
+                "10"));
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class);
 
         assertThat(throwable.getMessage())
-            .contains("Boolean",
-                      "Integer");
+                .contains("Boolean",
+                        "Integer");
     }
 
     @Test
@@ -168,17 +160,17 @@ public class ProcessVariablesPayloadValidatorIT {
         //WHEN
         //WHEN
         Throwable throwable = catchThrowable(() -> processVariablesValidator.checkPayloadVariables(
-                                                                            ProcessPayloadBuilder
-                                                                                .setVariables()
-                                                                                .withVariables(variables)
-                                                                                .build(),
-                                                                            "10"));
+                ProcessPayloadBuilder
+                        .setVariables()
+                        .withVariables(variables)
+                        .build(),
+                "10"));
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class);
 
         assertThat(throwable.getMessage())
-            .contains(expectedTypeErrorMessage);
+                .contains(expectedTypeErrorMessage);
 
     }
 
@@ -190,11 +182,11 @@ public class ProcessVariablesPayloadValidatorIT {
 
         //THEN
         Throwable throwable = catchThrowable(() -> processVariablesValidator.checkPayloadVariables(
-                                                                            ProcessPayloadBuilder
-                                                                                .setVariables()
-                                                                                .withVariables(variables)
-                                                                                .build(),
-                                                                            "10"));
+                ProcessPayloadBuilder
+                        .setVariables()
+                        .withVariables(variables)
+                        .build(),
+                "10"));
 
         //THEN
         assertThat(throwable).isInstanceOf(IllegalStateException.class);
