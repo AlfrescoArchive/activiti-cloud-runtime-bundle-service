@@ -36,7 +36,7 @@ public class ProcessVariablesPayloadValidator {
 
     private final VariableValidationService variableValidationService;
     private final DateFormatterProvider dateFormatterProvider;
-    private ProcessExtensionService processExtensionService;
+    private final ProcessExtensionService processExtensionService;
 
     public ProcessVariablesPayloadValidator(DateFormatterProvider dateFormatterProvider,
                                             ProcessExtensionService processExtensionService,
@@ -46,8 +46,8 @@ public class ProcessVariablesPayloadValidator {
         this.variableValidationService = variableValidationService;
     }
 
-    private Optional<Map<String, VariableDefinition>> getVariableDefinitionMap(String processDefinitionKey) {
-        ProcessExtensionModel processExtensionModel = processExtensionService.getExtensionsForId(processDefinitionKey);
+    private Optional<Map<String, VariableDefinition>> getVariableDefinitionMap(String processDefinitionId) {
+        ProcessExtensionModel processExtensionModel = processExtensionService.getExtensionsForId(processDefinitionId);
 
         return Optional.ofNullable(processExtensionModel)
                 .map(ProcessExtensionModel::getExtensions)
@@ -55,11 +55,11 @@ public class ProcessVariablesPayloadValidator {
     }
 
     private void checkPayloadVariables(Map<String, Object> variablePayloadMap,
-                                       String processDefinitionKey) {
+                                       String processDefinitionId) {
 
         final String errorDateTimeParse = "Error parsing date/time variable with a name {0}: {1}";
 
-        final Optional<Map<String, VariableDefinition>> variableDefinitionMap = getVariableDefinitionMap(processDefinitionKey);
+        final Optional<Map<String, VariableDefinition>> variableDefinitionMap = getVariableDefinitionMap(processDefinitionId);
         List<ActivitiException> activitiExceptions = new ArrayList<>();
 
         if (variableDefinitionMap.isPresent()) {
