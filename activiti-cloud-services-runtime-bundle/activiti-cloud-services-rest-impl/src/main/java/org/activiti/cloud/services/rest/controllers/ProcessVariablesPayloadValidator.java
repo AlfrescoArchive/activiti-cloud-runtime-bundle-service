@@ -111,17 +111,17 @@ public class ProcessVariablesPayloadValidator {
     }
 
     public void checkPayloadVariables(SetProcessVariablesPayload setProcessVariablesPayload,
-                                      String processDefinitionKey) {
+                                      String processDefinitionId) {
 
         checkPayloadVariables(setProcessVariablesPayload.getVariables(),
-                processDefinitionKey);
+                processDefinitionId);
     }
 
 
     public void checkStartProcessPayloadVariables(StartProcessPayload startProcessPayload,
-                                                  String processDefinitionKey) {
+                                                  String processDefinitionId) {
 
         checkPayloadVariables(startProcessPayload.getVariables(),
-                processDefinitionKey);
+                processDefinitionId);
     }
 }
