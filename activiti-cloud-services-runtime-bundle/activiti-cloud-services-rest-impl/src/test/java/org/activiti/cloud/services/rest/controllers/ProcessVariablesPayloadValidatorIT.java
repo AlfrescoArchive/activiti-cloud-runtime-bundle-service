@@ -68,8 +68,14 @@ import static org.mockito.BDDMockito.given;
         AlfrescoWebAutoConfiguration.class})
 public class ProcessVariablesPayloadValidatorIT {
 
+    @MockBean
+    private ProcessEngineChannels processEngineChannels;
+
     @Autowired
     private VariableValidationService variableValidationService;
+
+    @MockBean
+    private RepositoryService repositoryService;
 
     @Autowired
     private DateFormatterProvider dateFormatterProvider;
