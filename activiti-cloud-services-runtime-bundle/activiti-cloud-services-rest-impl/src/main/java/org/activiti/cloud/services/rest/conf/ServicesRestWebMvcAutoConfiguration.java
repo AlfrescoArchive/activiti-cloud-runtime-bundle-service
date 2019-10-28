@@ -32,6 +32,8 @@ import org.activiti.cloud.services.rest.assemblers.ToCloudTaskConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudVariableInstanceConverter;
 import org.activiti.cloud.services.rest.controllers.ResourcesAssembler;
 import org.activiti.cloud.services.rest.controllers.RuntimeBundleRelProvider;
+import org.activiti.cloud.services.rest.controllers.TaskVariablesPayloadDateHandler;
+import org.activiti.common.util.DateFormatterProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
@@ -97,7 +99,13 @@ public class ServicesRestWebMvcAutoConfiguration implements WebMvcConfigurer {
     public TaskVariableInstanceResourceAssembler taskVariableInstanceResourceAssembler(ToCloudVariableInstanceConverter converter) {
         return new TaskVariableInstanceResourceAssembler(converter);
     }
-    
+
+    @Bean
+    @ConditionalOnMissingBean
+    public TaskVariablesPayloadDateHandler taskVariablesPayloadValidator(DateFormatterProvider dateFormatterProvider) {
+        return new TaskVariablesPayloadDateHandler(dateFormatterProvider);
+    }
+
     @Override
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         // for some, not yet identified, reason the ObjectMapper used by MappingJackson2HttpMessageConverter
