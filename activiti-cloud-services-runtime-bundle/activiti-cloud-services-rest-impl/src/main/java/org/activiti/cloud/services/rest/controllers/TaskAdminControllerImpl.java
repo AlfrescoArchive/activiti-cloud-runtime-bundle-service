@@ -15,8 +15,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import java.util.List;
-
 import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.api.task.model.Task;
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
@@ -30,11 +28,15 @@ import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
 import org.activiti.cloud.api.task.model.CloudTask;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.rest.api.TaskAdminController;
+import org.activiti.cloud.services.rest.assemblers.GroupCandidatesResourceAssembler;
+import org.activiti.cloud.services.rest.assemblers.ResourcesAssembler;
 import org.activiti.cloud.services.rest.assemblers.TaskResourceAssembler;
+import org.activiti.cloud.services.rest.assemblers.UserCandidatesResourceAssembler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,16 +50,28 @@ public class TaskAdminControllerImpl implements TaskAdminController {
 
     private final AlfrescoPagedResourcesAssembler<Task> pagedResourcesAssembler;
 
+    private final UserCandidatesResourceAssembler userCandidatesResourceAssembler;
+
+    private final GroupCandidatesResourceAssembler groupCandidatesResourceAssembler;
+
+    private final ResourcesAssembler resourcesAssembler;
+
     private final SpringPageConverter pageConverter;
 
     @Autowired
     public TaskAdminControllerImpl(TaskAdminRuntime taskAdminRuntime,
                                    TaskResourceAssembler taskResourceAssembler,
                                    AlfrescoPagedResourcesAssembler<Task> pagedResourcesAssembler,
-                                   SpringPageConverter pageConverter) {
+                                   SpringPageConverter pageConverter,
+                                   UserCandidatesResourceAssembler userCandidatesResourceAssembler,
+                                   GroupCandidatesResourceAssembler groupCandidatesResourceAssembler,
+                                   ResourcesAssembler resourcesAssembler) {
         this.taskAdminRuntime = taskAdminRuntime;
         this.taskResourceAssembler = taskResourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
+        this.userCandidatesResourceAssembler = userCandidatesResourceAssembler;
+        this.groupCandidatesResourceAssembler = groupCandidatesResourceAssembler;
+        this.resourcesAssembler = resourcesAssembler;
         this.pageConverter = pageConverter;
     }
 
@@ -87,7 +101,7 @@ public class TaskAdminControllerImpl implements TaskAdminController {
         } else {
             completeTaskPayload.setTaskId(taskId);
         }
-        
+
         Task task = taskAdminRuntime.complete(completeTaskPayload);
         return taskResourceAssembler.toResource(task);
     }
@@ -137,10 +151,12 @@ public class TaskAdminControllerImpl implements TaskAdminController {
         taskAdminRuntime.deleteCandidateUsers(candidateUsersPayload);
         
     }
-    
+
     @Override
-    public List<String> getUserCandidates(@PathVariable String taskId) {   
-        return taskAdminRuntime.userCandidates(taskId);
+    public Resources<Resource<String>> getUserCandidates(@PathVariable String taskId) {
+        userCandidatesResourceAssembler.setTaskId(taskId);
+        return resourcesAssembler.toResources(taskAdminRuntime.userCandidates(taskId),
+                                              userCandidatesResourceAssembler);
     }
     
     @Override
@@ -162,8 +178,10 @@ public class TaskAdminControllerImpl implements TaskAdminController {
     }
     
     @Override
-    public List<String> getGroupCandidates(@PathVariable String taskId) {   
-        return taskAdminRuntime.groupCandidates(taskId);
+    public Resources<Resource<String>> getGroupCandidates(@PathVariable String taskId) {
+        groupCandidatesResourceAssembler.setTaskId(taskId);
+        return resourcesAssembler.toResources(taskAdminRuntime.groupCandidates(taskId),
+                                              groupCandidatesResourceAssembler);
     }
 
 }

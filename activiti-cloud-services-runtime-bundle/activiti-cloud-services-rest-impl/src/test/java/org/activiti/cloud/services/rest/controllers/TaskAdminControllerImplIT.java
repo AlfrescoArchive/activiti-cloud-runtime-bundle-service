@@ -16,8 +16,10 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
+import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.resourcesResponseFields;
 import static org.activiti.alfresco.rest.docs.HALDocumentation.pagedTasksFields;
 import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildDefaultAssignedTask;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -69,6 +72,7 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(controllers = TaskAdminControllerImpl.class, secure = true)
@@ -182,5 +186,50 @@ public class TaskAdminControllerImplIT {
                 .andDo(print())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/complete",
                                 pathParameters(parameterWithName("taskId").description("The task id"))));
+    }
+
+    @Test
+    public void getUserCandidatesShouldUseAlfrescoGuidelineWhenMediaTypeIsApplicationJson() throws Exception {
+
+        List<String> stringList = Arrays.asList("hruser",
+                                                "testuser");
+        when(taskAdminRuntime.userCandidates("1")).thenReturn(stringList);
+
+        MvcResult result = this.mockMvc.perform(get("/admin/v1/tasks/{taskId}/candidate-users",
+                                                    1).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
+                                resourcesResponseFields()))
+                .andReturn();
+
+        assertThatJson(result.getResponse().getContentAsString())
+                .node("list.entries[0].entry")
+                .isEqualTo("hruser");
+        assertThatJson(result.getResponse().getContentAsString())
+                .node("list.entries[1].entry")
+                .isEqualTo("testuser");
+    }
+
+
+    @Test
+    public void getGroupCandidatesShouldUseAlfrescoGuidelineWhenMediaTypeIsApplicationJson() throws Exception {
+
+        List<String> stringList = Arrays.asList("hrgroup",
+                                                "testgroup");
+        when(taskAdminRuntime.groupCandidates("1")).thenReturn(stringList);
+
+        MvcResult result = this.mockMvc.perform(get("/admin/v1/tasks/{taskId}/candidate-groups",
+                                                    1).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
+                                resourcesResponseFields()))
+                .andReturn();
+
+        assertThatJson(result.getResponse().getContentAsString())
+                .node("list.entries[0].entry")
+                .isEqualTo("hrgroup");
+        assertThatJson(result.getResponse().getContentAsString())
+                .node("list.entries[1].entry")
+                .isEqualTo("testgroup");
     }
 }

@@ -69,6 +69,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -473,12 +475,15 @@ public class AuditProducerIT {
             assertThat(((TaskCandidateUser) receivedEvents.get(0).getEntity()).getUserId()).isEqualTo("testuser");
         });
 
-        ResponseEntity<List<String>> userCandidates = taskRestTemplate.getUserCandidates(task.getId());
+        ResponseEntity<Resources<Resource<String>>>  userCandidates = taskRestTemplate.getUserCandidates(task.getId());
         assertThat(userCandidates).isNotNull();
         assertThat(userCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(userCandidates.getBody().size()).isEqualTo(2);
-        assertThat(userCandidates.getBody().get(0)).isEqualTo("hruser");
-        assertThat(userCandidates.getBody().get(1)).isEqualTo("testuser");
+        assertThat(userCandidates.getBody().getContent().size()).isEqualTo(2);
+        assertThat(userCandidates.getBody().getContent()
+                           .stream()
+                           .map(Resource::getContent)
+        ).containsExactly("hruser",
+                          "testuser");
 
         //when
         taskRestTemplate.deleteUserCandidates(TaskPayloadBuilder.deleteCandidateUsers().withTaskId(task.getId()).withCandidateUser("testuser").build());
@@ -506,8 +511,11 @@ public class AuditProducerIT {
         userCandidates = taskRestTemplate.getUserCandidates(task.getId());
         assertThat(userCandidates).isNotNull();
         assertThat(userCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(userCandidates.getBody().size()).isEqualTo(1);
-        assertThat(userCandidates.getBody().get(0)).isEqualTo("hruser");
+        assertThat(userCandidates.getBody().getContent().size()).isEqualTo(1);
+        assertThat(userCandidates.getBody().getContent()
+                           .stream()
+                           .map(Resource::getContent)
+        ).containsExactly("hruser");
 
         //Delete task
         taskRestTemplate.delete(task);
@@ -522,10 +530,10 @@ public class AuditProducerIT {
         CloudTask task = taskRestTemplate.createTask(TaskPayloadBuilder.create().withName("task2").withDescription(
                 "test task description").withAssignee("hruser").build());
 
-        ResponseEntity<List<String>> groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
+        ResponseEntity<Resources<Resource<String>>> groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
         assertThat(groupCandidates).isNotNull();
         assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(groupCandidates.getBody().size()).isEqualTo(0);
+        assertThat(groupCandidates.getBody().getContent().size()).isEqualTo(0);
 
         //when
         taskRestTemplate.addGroupCandidates(TaskPayloadBuilder.addCandidateGroups().withTaskId(task.getId()).withCandidateGroup("hr").build());
@@ -553,8 +561,11 @@ public class AuditProducerIT {
         groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
         assertThat(groupCandidates).isNotNull();
         assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(groupCandidates.getBody().size()).isEqualTo(1);
-        assertThat(groupCandidates.getBody().get(0)).isEqualTo("hr");
+        assertThat(groupCandidates.getBody().getContent().size()).isEqualTo(1);
+        assertThat(groupCandidates.getBody().getContent()
+                           .stream()
+                           .map(Resource::getContent)
+        ).containsExactly("hr");
 
         //when
         taskRestTemplate.deleteGroupCandidates(TaskPayloadBuilder.deleteCandidateGroups().withTaskId(task.getId()).withCandidateGroup("hr").build());
@@ -582,7 +593,7 @@ public class AuditProducerIT {
         groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
         assertThat(groupCandidates).isNotNull();
         assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(groupCandidates.getBody().size()).isEqualTo(0);
+        assertThat(groupCandidates.getBody().getContent().size()).isEqualTo(0);
 
         //Delete task
         taskRestTemplate.delete(task);

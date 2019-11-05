@@ -16,33 +16,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
-import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
-import static org.activiti.alfresco.rest.docs.HALDocumentation.pagedTasksFields;
-import static org.activiti.api.task.model.Task.TaskStatus.CREATED;
-import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildDefaultAssignedTask;
-import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildStandAloneTask;
-import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildSubTask;
-import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildTask;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.when;
-import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.halLinks;
-import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
-import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
-import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
-import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
-import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -88,6 +61,36 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
+import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.resourcesResponseFields;
+import static org.activiti.alfresco.rest.docs.HALDocumentation.pagedTasksFields;
+import static org.activiti.api.task.model.Task.TaskStatus.CREATED;
+import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildDefaultAssignedTask;
+import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildStandAloneTask;
+import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildSubTask;
+import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildTask;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.halLinks;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
+import static org.springframework.restdocs.payload.PayloadDocumentation.responseFields;
+import static org.springframework.restdocs.payload.PayloadDocumentation.subsectionWithPath;
+import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
+import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @WebMvcTest(controllers = TaskControllerImpl.class, secure = false)
@@ -371,4 +374,50 @@ public class TaskControllerImplIT {
                 .andExpect(status().isOk())
                 .andDo(print());
     }
+
+    @Test
+    public void getUserCandidatesShouldUseAlfrescoGuidelineWhenMediaTypeIsApplicationJson() throws Exception {
+
+        List<String> stringList = Arrays.asList("hruser",
+                                                "testuser");
+        when(taskRuntime.userCandidates("1")).thenReturn(stringList);
+
+        MvcResult result = this.mockMvc.perform(get("/v1/tasks/{taskId}/candidate-users",
+                                                    1).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
+                                resourcesResponseFields()))
+                .andReturn();
+
+        assertThatJson(result.getResponse().getContentAsString())
+                .node("list.entries[0].entry")
+                .isEqualTo("hruser");
+        assertThatJson(result.getResponse().getContentAsString())
+                .node("list.entries[1].entry")
+                .isEqualTo("testuser");
+    }
+
+
+    @Test
+    public void getGroupCandidatesShouldUseAlfrescoGuidelineWhenMediaTypeIsApplicationJson() throws Exception {
+
+        List<String> stringList = Arrays.asList("hrgroup",
+                                                "testgroup");
+        when(taskRuntime.groupCandidates("1")).thenReturn(stringList);
+
+        MvcResult result = this.mockMvc.perform(get("/v1/tasks/{taskId}/candidate-groups",
+                                                    1).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
+                                resourcesResponseFields()))
+                .andReturn();
+
+        assertThatJson(result.getResponse().getContentAsString())
+                .node("list.entries[0].entry")
+                .isEqualTo("hrgroup");
+        assertThatJson(result.getResponse().getContentAsString())
+                .node("list.entries[1].entry")
+                .isEqualTo("testgroup");
+    }
+
 }

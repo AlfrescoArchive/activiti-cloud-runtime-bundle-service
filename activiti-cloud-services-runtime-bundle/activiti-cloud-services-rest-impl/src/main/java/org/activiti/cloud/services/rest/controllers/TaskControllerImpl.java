@@ -15,8 +15,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import java.util.List;
-
 import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.api.task.model.Task;
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
@@ -31,11 +29,15 @@ import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
 import org.activiti.cloud.api.task.model.CloudTask;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.rest.api.TaskController;
+import org.activiti.cloud.services.rest.assemblers.GroupCandidatesResourceAssembler;
+import org.activiti.cloud.services.rest.assemblers.ResourcesAssembler;
 import org.activiti.cloud.services.rest.assemblers.TaskResourceAssembler;
+import org.activiti.cloud.services.rest.assemblers.UserCandidatesResourceAssembler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -50,16 +52,28 @@ public class TaskControllerImpl implements TaskController {
     private final SpringPageConverter pageConverter;
 
     private final TaskRuntime taskRuntime;
-    
+
+    private final UserCandidatesResourceAssembler userCandidatesResourceAssembler;
+
+    private final GroupCandidatesResourceAssembler groupCandidatesResourceAssembler;
+
+    private final ResourcesAssembler resourcesAssembler;
+
     @Autowired
     public TaskControllerImpl(TaskResourceAssembler taskResourceAssembler,
                               AlfrescoPagedResourcesAssembler<Task> pagedResourcesAssembler,
                               SpringPageConverter pageConverter,
-                              TaskRuntime taskRuntime) {
+                              TaskRuntime taskRuntime,
+                              UserCandidatesResourceAssembler userCandidatesResourceAssembler,
+                              GroupCandidatesResourceAssembler groupCandidatesResourceAssembler,
+                              ResourcesAssembler resourcesAssembler) {
         this.taskResourceAssembler = taskResourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
         this.pageConverter = pageConverter;
         this.taskRuntime = taskRuntime;
+        this.userCandidatesResourceAssembler = userCandidatesResourceAssembler;
+        this.groupCandidatesResourceAssembler = groupCandidatesResourceAssembler;
+        this.resourcesAssembler = resourcesAssembler;
     }
 
     @Override
@@ -106,7 +120,7 @@ public class TaskControllerImpl implements TaskController {
         } else {
             completeTaskPayload.setTaskId(taskId);
         }
-        
+
         Task task = taskRuntime.complete(completeTaskPayload);
         return taskResourceAssembler.toResource(task);
     }
@@ -171,8 +185,10 @@ public class TaskControllerImpl implements TaskController {
     }
 
     @Override
-    public List<String> getUserCandidates(@PathVariable String taskId) {
-        return taskRuntime.userCandidates(taskId);
+    public Resources<Resource<String>> getUserCandidates(@PathVariable String taskId) {
+        userCandidatesResourceAssembler.setTaskId(taskId);
+        return resourcesAssembler.toResources(taskRuntime.userCandidates(taskId),
+                                              userCandidatesResourceAssembler);
     }
 
     @Override
@@ -194,8 +210,10 @@ public class TaskControllerImpl implements TaskController {
     }
 
     @Override
-    public List<String> getGroupCandidates(@PathVariable String taskId) {
-        return taskRuntime.groupCandidates(taskId);
+    public Resources<Resource<String>> getGroupCandidates(@PathVariable String taskId) {
+        groupCandidatesResourceAssembler.setTaskId(taskId);
+        return resourcesAssembler.toResources(taskRuntime.groupCandidates(taskId),
+                                              groupCandidatesResourceAssembler);
     }
 
     @Override

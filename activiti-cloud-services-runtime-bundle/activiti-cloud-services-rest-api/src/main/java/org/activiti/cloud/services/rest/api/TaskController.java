@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.Resources;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -64,7 +65,7 @@ public interface TaskController {
                               @RequestBody CandidateUsersPayload candidateUsersPayload);
     
     @RequestMapping(value = "/{taskId}/candidate-users", method = RequestMethod.GET)
-    List<String> getUserCandidates(@PathVariable("taskId") String taskId);
+    Resources<Resource<String>> getUserCandidates(@PathVariable("taskId") String taskId);
     
     
     @RequestMapping(value = "/{taskId}/candidate-groups", method = RequestMethod.POST)
@@ -77,5 +78,5 @@ public interface TaskController {
     
        
     @RequestMapping(value = "/{taskId}/candidate-groups", method = RequestMethod.GET)
-    List<String> getGroupCandidates(@PathVariable("taskId") String taskId);
+    Resources<Resource<String>> getGroupCandidates(@PathVariable("taskId") String taskId);
 }

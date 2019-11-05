@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.services.rest.controllers;
+package org.activiti.cloud.services.rest.assemblers;
 
 import java.util.List;
 import java.util.stream.Collectors;

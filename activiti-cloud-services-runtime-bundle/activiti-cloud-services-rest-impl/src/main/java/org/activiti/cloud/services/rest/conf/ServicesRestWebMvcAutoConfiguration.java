@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.activiti.cloud.services.events.converter.RuntimeBundleInfoAppender;
 import org.activiti.cloud.services.rest.assemblers.ConnectorDefinitionResourceAssembler;
+import org.activiti.cloud.services.rest.assemblers.GroupCandidatesResourceAssembler;
 import org.activiti.cloud.services.rest.assemblers.ProcessDefinitionMetaResourceAssembler;
 import org.activiti.cloud.services.rest.assemblers.ProcessDefinitionResourceAssembler;
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssembler;
@@ -30,7 +31,8 @@ import org.activiti.cloud.services.rest.assemblers.ToCloudProcessDefinitionConve
 import org.activiti.cloud.services.rest.assemblers.ToCloudProcessInstanceConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudTaskConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudVariableInstanceConverter;
-import org.activiti.cloud.services.rest.controllers.ResourcesAssembler;
+import org.activiti.cloud.services.rest.assemblers.UserCandidatesResourceAssembler;
+import org.activiti.cloud.services.rest.assemblers.ResourcesAssembler;
 import org.activiti.cloud.services.rest.controllers.RuntimeBundleRelProvider;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -84,6 +86,16 @@ public class ServicesRestWebMvcAutoConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
+    public UserCandidatesResourceAssembler userCandidatesResourceAssembler(){
+        return new UserCandidatesResourceAssembler();
+    }
+
+    @Bean
+    public GroupCandidatesResourceAssembler groupCandidatesResourceAssembler(){
+        return new GroupCandidatesResourceAssembler();
+    }
+
+    @Bean
     public ToCloudVariableInstanceConverter cloudVariableInstanceConverter(RuntimeBundleInfoAppender runtimeBundleInfoAppender) {
         return new ToCloudVariableInstanceConverter(runtimeBundleInfoAppender);
     }
@@ -97,7 +109,7 @@ public class ServicesRestWebMvcAutoConfiguration implements WebMvcConfigurer {
     public TaskVariableInstanceResourceAssembler taskVariableInstanceResourceAssembler(ToCloudVariableInstanceConverter converter) {
         return new TaskVariableInstanceResourceAssembler(converter);
     }
-    
+
     @Override
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         // for some, not yet identified, reason the ObjectMapper used by MappingJackson2HttpMessageConverter

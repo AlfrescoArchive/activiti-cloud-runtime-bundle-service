@@ -18,6 +18,7 @@ package org.activiti.cloud.starter.tests.helper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.activiti.api.task.model.Task;
@@ -37,10 +38,13 @@ import org.springframework.boot.test.context.TestComponent;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 @TestComponent
@@ -53,7 +57,7 @@ public class TaskRestTemplate {
     };
     private static final ParameterizedTypeReference<PagedResources<CloudTask>> PAGED_TASKS_RESPONSE_TYPE = new ParameterizedTypeReference<PagedResources<CloudTask>>() {
     };
-    private static final ParameterizedTypeReference<List<String>> CANDIDATES_RESPONSE_TYPE = new ParameterizedTypeReference<List<String>> () {
+    private static final ParameterizedTypeReference<Resources<Resource<String>>> CANDIDATES_RESPONSE_TYPE = new ParameterizedTypeReference<Resources<Resource<String>>> () {
     };
     private static final ParameterizedTypeReference<Void> VOID_RESPONSE_TYPE = new ParameterizedTypeReference<Void>() {
     };
@@ -152,8 +156,8 @@ public class TaskRestTemplate {
                                          TASK_RESPONSE_TYPE);
     }
     
-    public ResponseEntity<List<String>> getUserCandidates(String taskId) {
-        ResponseEntity<List<String>> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + taskId+"/candidate-users",
+    public ResponseEntity<Resources<Resource<String>>> getUserCandidates(String taskId) {
+        ResponseEntity<Resources<Resource<String>>> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + taskId+"/candidate-users",
                                                                              HttpMethod.GET,
                                                                              null,
                                                                                 CANDIDATES_RESPONSE_TYPE);
@@ -179,8 +183,8 @@ public class TaskRestTemplate {
         return responseEntity;
     }
 
-    public ResponseEntity<List<String>> getGroupCandidates(String taskId) {
-        ResponseEntity<List<String>> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + taskId+"/candidate-groups",
+    public ResponseEntity<Resources<Resource<String>>> getGroupCandidates(String taskId) {
+        ResponseEntity<Resources<Resource<String>>> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + taskId+"/candidate-groups",
                                                                              HttpMethod.GET,
                                                                              null,
                                                                                 CANDIDATES_RESPONSE_TYPE);

@@ -44,6 +44,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +57,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -465,12 +467,14 @@ public class TasksIT {
         Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
         
         //then check that we have one candidate
-        ResponseEntity<List<String>> userCandidates = taskRestTemplate.getUserCandidates(task.getId());
+        ResponseEntity<Resources<Resource<String>>> userCandidates = taskRestTemplate.getUserCandidates(task.getId());
         assertThat(userCandidates).isNotNull();
         assertThat(userCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(userCandidates.getBody().size()).isEqualTo(1);
-        assertThat(userCandidates.getBody().get(0)).isEqualTo("hruser");
-          
+        assertThat(userCandidates.getBody().getContent().size()).isEqualTo(1);
+        assertThat(userCandidates.getBody().getContent()
+                           .stream()
+                           .map(Resource::getContent)
+        ).containsExactly("hruser");
         taskRestTemplate.claim(task);
         
         //when
@@ -486,13 +490,16 @@ public class TasksIT {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         
         userCandidates = taskRestTemplate.getUserCandidates(task.getId());
-      //then
+        //then
         assertThat(responseEntity).isNotNull();
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(userCandidates.getBody().size()).isEqualTo(2);
-        assertThat(userCandidates.getBody().get(0)).isEqualTo("hruser");
-        assertThat(userCandidates.getBody().get(1)).isEqualTo("testuser");
-        
+        assertThat(userCandidates.getBody().getContent().size()).isEqualTo(2);
+        assertThat(userCandidates.getBody().getContent()
+                           .stream()
+                           .map(Resource::getContent)
+        ).containsExactly("hruser",
+                          "testuser");
+
         //when
         taskRestTemplate.release(task);
         
@@ -514,11 +521,14 @@ public class TasksIT {
         Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
         
         //then check that we have one candidate
-        ResponseEntity<List<String>> userCandidates = taskRestTemplate.getUserCandidates(task.getId());
+        ResponseEntity<Resources<Resource<String>>> userCandidates = taskRestTemplate.getUserCandidates(task.getId());
         assertThat(userCandidates).isNotNull();
         assertThat(userCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(userCandidates.getBody().size()).isEqualTo(1);
-        assertThat(userCandidates.getBody().get(0)).isEqualTo("hruser");
+        assertThat(userCandidates.getBody().getContent().size()).isEqualTo(1);
+        assertThat(userCandidates.getBody().getContent()
+                           .stream()
+                           .map(Resource::getContent)
+        ).containsExactly("hruser");
           
         taskRestTemplate.claim(task);
         
@@ -539,9 +549,12 @@ public class TasksIT {
         //then
         assertThat(responseEntity).isNotNull();
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(userCandidates.getBody().size()).isEqualTo(2);
-        assertThat(userCandidates.getBody().get(0)).isEqualTo("hruser");
-        assertThat(userCandidates.getBody().get(1)).isEqualTo("testuser");
+        assertThat(userCandidates.getBody().getContent().size()).isEqualTo(2);
+        assertThat(userCandidates.getBody().getContent()
+                           .stream()
+                           .map(Resource::getContent)
+        ).containsExactly("hruser",
+                          "testuser");
         
         
         candidateusers = TaskPayloadBuilder
@@ -556,61 +569,15 @@ public class TasksIT {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         
         userCandidates = taskRestTemplate.getUserCandidates(task.getId());
-      //then
-        assertThat(responseEntity).isNotNull();
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(userCandidates.getBody().size()).isEqualTo(1);
-        assertThat(userCandidates.getBody().get(0)).isEqualTo("hruser");
-        
-    }
-    
-    @Test
-    public void shouldDeleteAddGroupCandidate() {
-        //given
-        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
-        Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
-        
-        //then check that we have no group candidate
-        ResponseEntity<List<String>> groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
-        assertThat(groupCandidates).isNotNull();
-        assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(groupCandidates.getBody().size()).isEqualTo(1);
-        assertThat(groupCandidates.getBody().get(0)).isEqualTo("hr");
-  
-          
-        taskRestTemplate.claim(task);
-        
-        //when
-        CandidateGroupsPayload candidategroups = TaskPayloadBuilder
-                .deleteCandidateGroups()
-                .withTaskId(task.getId())
-                .withCandidateGroup("hr")
-                .build();
-        ResponseEntity<Void> responseEntity = taskRestTemplate.deleteGroupCandidates(candidategroups);
-
         //then
-        groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
         assertThat(responseEntity).isNotNull();
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(groupCandidates.getBody().size()).isEqualTo(0);
+        assertThat(userCandidates.getBody().getContent().size()).isEqualTo(1);
+        assertThat(userCandidates.getBody().getContent()
+                           .stream()
+                           .map(Resource::getContent)
+        ).containsExactly("hruser");
         
-        //when
-        candidategroups = TaskPayloadBuilder
-                .addCandidateGroups()
-                .withTaskId(task.getId())
-                .withCandidateGroup("hr")
-                .build();
-        
-        responseEntity = taskRestTemplate.addGroupCandidates(candidategroups);
-        
-        //then
-        groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
-        assertThat(responseEntity).isNotNull();
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        
-        assertThat(groupCandidates.getBody().size()).isEqualTo(1);
-        assertThat(groupCandidates.getBody().get(0)).isEqualTo("hr");
-
     }
  
     @Test
