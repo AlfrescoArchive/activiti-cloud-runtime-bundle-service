@@ -20,11 +20,11 @@ import org.activiti.cloud.services.events.message.MessageBuilderAppender;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
-public class BpmnMessageEventPayloadBuilderAppender implements MessageBuilderAppender {
+public class MessageEventPayloadMessageBuilderAppender implements MessageBuilderAppender {
 
     private final MessageEventPayload messageEventPayload;
 
-    public BpmnMessageEventPayloadBuilderAppender(MessageEventPayload messageEventPayload) {
+    public MessageEventPayloadMessageBuilderAppender(MessageEventPayload messageEventPayload) {
         Assert.notNull(messageEventPayload, "messageEventPayload must not be null");
 
         this.messageEventPayload = messageEventPayload;
@@ -34,9 +34,9 @@ public class BpmnMessageEventPayloadBuilderAppender implements MessageBuilderApp
     public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
         Assert.notNull(request, "request must not be null");
         
-        return request.setHeader(BpmnMessageEventHeaders.BPMN_MESSAGE_BUSINESS_KEY, messageEventPayload.getBusinessKey())
-                      .setHeader(BpmnMessageEventHeaders.BPMN_MESSAGE_CORRELATION_KEY, messageEventPayload.getCorrelationKey())
-                      .setHeader(BpmnMessageEventHeaders.BPMN_MESSAGE_NAME, messageEventPayload.getName())
+        return request.setHeader(MessageEventPayloadMessageHeaders.MESSAGE_EVENT_BUSINESS_KEY, messageEventPayload.getBusinessKey())
+                      .setHeader(MessageEventPayloadMessageHeaders.MESSAGE_EVENT_CORRELATION_KEY, messageEventPayload.getCorrelationKey())
+                      .setHeader(MessageEventPayloadMessageHeaders.MESSAGE_EVENT_NAME, messageEventPayload.getName())
        ;
     }
 

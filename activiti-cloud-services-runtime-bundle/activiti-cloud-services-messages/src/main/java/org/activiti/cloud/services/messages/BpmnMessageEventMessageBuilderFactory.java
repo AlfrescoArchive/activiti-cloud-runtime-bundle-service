@@ -16,21 +16,21 @@
 
 package org.activiti.cloud.services.messages;
 
-import org.activiti.api.process.model.payloads.MessageEventPayload;
+import org.activiti.api.process.model.BPMNMessage;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.events.message.MessageBuilderAppenderChain;
 import org.activiti.cloud.services.events.message.RuntimeBundleInfoMessageBuilderAppender;
 
-public class MessageEventPayloadMessageBuilderFactory {
+public class BpmnMessageEventMessageBuilderFactory {
 
     private final RuntimeBundleProperties properties;
 
-    public MessageEventPayloadMessageBuilderFactory(RuntimeBundleProperties properties) {
+    public BpmnMessageEventMessageBuilderFactory(RuntimeBundleProperties properties) {
         this.properties = properties;
     }
 
-    public MessageBuilderAppenderChain create(MessageEventPayload throwMessage) {
+    public MessageBuilderAppenderChain create(BPMNMessage bpmnMessage) {
         return new MessageBuilderAppenderChain().chain(new RuntimeBundleInfoMessageBuilderAppender(properties))
-                                                .chain(new BpmnMessageEventPayloadBuilderAppender(throwMessage));
+                                                .chain(new MessageEventPayloadMessageBuilderAppender(bpmnMessage.getMessagePayload()));
     }
 }

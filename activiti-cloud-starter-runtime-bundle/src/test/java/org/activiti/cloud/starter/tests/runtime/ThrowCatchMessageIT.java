@@ -108,12 +108,6 @@ public class ThrowCatchMessageIT {
                            .build())
                  .forEach(processInstanceRestTemplate::startProcess);
                
-        // then
-        assertThat(runtimeService.createProcessInstanceQuery()
-                                 .processDefinitionKey(INTERMEDIATE_THROW_MESSAGE_PROCESS)
-                                 .list()).isEmpty();
-
-        // when
         IntStream.rangeClosed(1, 100)
                  .mapToObj(i -> ProcessPayloadBuilder.start()
                            .withProcessDefinitionKey(INTERMEDIATE_CATCH_MESSAGE_PROCESS)
@@ -123,6 +117,41 @@ public class ThrowCatchMessageIT {
         
         // then
         Awaitility.await().untilAsserted(() -> {
+            assertThat(runtimeService.createProcessInstanceQuery()
+                                     .processDefinitionKey(INTERMEDIATE_THROW_MESSAGE_PROCESS)
+                                     .list()).isEmpty();
+
+            assertThat(runtimeService.createProcessInstanceQuery()
+                                     .processDefinitionKey(INTERMEDIATE_CATCH_MESSAGE_PROCESS)
+                                     .list()).isEmpty();
+        });
+    }
+
+    @Test
+    public void shouldCatchThrowBpmnMessages() {
+
+        // when
+        IntStream.rangeClosed(1, 100)
+                 .mapToObj(i -> ProcessPayloadBuilder.start()
+                           .withProcessDefinitionKey(INTERMEDIATE_CATCH_MESSAGE_PROCESS)
+                           .withBusinessKey(BUSINESS_KEY+i)
+                           .build())
+                 .forEach(processInstanceRestTemplate::startProcess);
+
+        IntStream.rangeClosed(1, 100)
+                 .mapToObj(i -> ProcessPayloadBuilder.start()
+                           .withProcessDefinitionKey(INTERMEDIATE_THROW_MESSAGE_PROCESS)
+                           .withBusinessKey(BUSINESS_KEY+i)
+                           .build())
+                 .forEach(processInstanceRestTemplate::startProcess);
+               
+        // then
+        Awaitility.await().untilAsserted(() -> {
+
+            assertThat(runtimeService.createProcessInstanceQuery()
+                                     .processDefinitionKey(INTERMEDIATE_THROW_MESSAGE_PROCESS)
+                                     .list()).isEmpty();
+            
             assertThat(runtimeService.createProcessInstanceQuery()
                                      .processDefinitionKey(INTERMEDIATE_CATCH_MESSAGE_PROCESS)
                                      .list()).isEmpty();

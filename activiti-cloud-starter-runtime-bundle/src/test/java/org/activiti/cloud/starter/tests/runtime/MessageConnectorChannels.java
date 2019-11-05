@@ -7,21 +7,28 @@ import org.springframework.messaging.SubscribableChannel;
 
 public interface MessageConnectorChannels {
 
-    public static final String DELIVER_MESSAGES = "deliverMessages";
-    public static final String RECEIVED_MESSAGES = "receivedMessages";
-    public static final String WAITING_MESSAGES = "waitingMessages";
-    public static final String SENT_MESSAGES = "sentMessages";
+    public static final String RECEIVE_MESSAGE_PAYLOAD_PRODUCER_CHANNEL = "receiveMessagePayloadProducerChannel";
+    public static final String BPMN_MESSAGE_RECEIVED_EVENT_CONSUMER_CHANNEL = "bpmnMessageReceivedEventConsumerChannel";
+    public static final String BPMN_MESSAGE_WAITING_EVENT_CONSUMER_CHANNEL = "bpmnMessageWaitingEventConsumerChannel";
+    public static final String BPMN_MESSAGE_SENT_EVENT_CONSUMER_CHANNEL = "bpmnMessageSentEventConsumerChannel";
 
-    @Input(SENT_MESSAGES)
-    SubscribableChannel sent();
+    interface Producer {
 
-    @Input(WAITING_MESSAGES)
-    SubscribableChannel waiting();
 
-    @Input(RECEIVED_MESSAGES)
-    SubscribableChannel received();
+        @Output(RECEIVE_MESSAGE_PAYLOAD_PRODUCER_CHANNEL)
+        MessageChannel receiveMessagePayloadProducerChannel();
+    }
     
-    @Output(DELIVER_MESSAGES)
-    MessageChannel deliver();
+    interface Consumer {
 
+        @Input(BPMN_MESSAGE_SENT_EVENT_CONSUMER_CHANNEL)
+        SubscribableChannel bpmnMessageSentEventConsumerChannel();
+
+        @Input(BPMN_MESSAGE_WAITING_EVENT_CONSUMER_CHANNEL)
+        SubscribableChannel bpmnMessageWaitingEventConsumerChannel();
+
+        @Input(BPMN_MESSAGE_RECEIVED_EVENT_CONSUMER_CHANNEL)
+        SubscribableChannel bpmnMessageReceivedEventConsumerChannel();
+    }
+    
 }

@@ -22,11 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.SmartLifecycle;
 
-public class BpmnMessagesProcessEngineConfigurator  implements ProcessEngineConfigurator, SmartLifecycle {
+public class MessageEventsProcessEngineConfigurator  implements ProcessEngineConfigurator, SmartLifecycle {
 
-    private static final Logger logger = LoggerFactory.getLogger(BpmnMessagesProcessEngineConfigurator.class);
+    private static final Logger logger = LoggerFactory.getLogger(MessageEventsProcessEngineConfigurator.class);
     
-    public BpmnMessagesProcessEngineConfigurator() {
+    public MessageEventsProcessEngineConfigurator() {
     }
     
     private boolean running = false;

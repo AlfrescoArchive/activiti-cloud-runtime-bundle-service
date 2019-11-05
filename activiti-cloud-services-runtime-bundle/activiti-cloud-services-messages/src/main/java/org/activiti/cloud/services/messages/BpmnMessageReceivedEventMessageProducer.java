@@ -16,9 +16,9 @@
 
 package org.activiti.cloud.services.messages;
 
-import org.activiti.api.process.model.events.BPMNMessageWaitingEvent;
+import org.activiti.api.process.model.events.BPMNMessageReceivedEvent;
 import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
-import org.activiti.cloud.api.process.model.events.CloudBPMNMessageWaitingEvent;
+import org.activiti.cloud.api.process.model.events.CloudBPMNMessageReceivedEvent;
 import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,36 +27,37 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-public class BpmnMessageWaitingEventMessageProducer implements BPMNElementEventListener<BPMNMessageWaitingEvent> {
+public class BpmnMessageReceivedEventMessageProducer implements BPMNElementEventListener<BPMNMessageReceivedEvent> {
 
-    private static final Logger logger = LoggerFactory.getLogger(BpmnMessageWaitingEventMessageProducer.class);
+    private static final Logger logger = LoggerFactory.getLogger(BpmnMessageReceivedEventMessageProducer.class);
 
     private final BpmnMessageEventMessageBuilderFactory messageBuilderFactory;
     private final MessageChannel messageChannel;
     private final ToCloudProcessRuntimeEventConverter runtimeEventConverter;
 
-    public BpmnMessageWaitingEventMessageProducer(@NonNull MessageChannel messageChannel,
-                                                  @NonNull BpmnMessageEventMessageBuilderFactory messageBuilderFactory,
-                                                  @NonNull ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
+    public BpmnMessageReceivedEventMessageProducer(@NonNull MessageChannel messageChannel,
+                                                   @NonNull BpmnMessageEventMessageBuilderFactory messageBuilderFactory,
+                                                   @NonNull ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
         this.messageChannel = messageChannel;
         this.messageBuilderFactory = messageBuilderFactory;
         this.runtimeEventConverter = runtimeEventConverter;
     }
 
     @Override
-    public void onEvent(BPMNMessageWaitingEvent event) {
+    public void onEvent(@NonNull BPMNMessageReceivedEvent event) {
+        logger.debug("onEvent: {}", event);
+        
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             throw new IllegalStateException("requires active transaction synchronization");
         }
 
-        logger.debug("onEvent: {}", event);
-        
-        Message<CloudBPMNMessageWaitingEvent> message = messageBuilderFactory.create(event.getEntity())
-                                                                             .withPayload(runtimeEventConverter.from(event))
-                                                                             .build();
+        Message<CloudBPMNMessageReceivedEvent> message = messageBuilderFactory.create(event.getEntity())
+                                                                              .withPayload(runtimeEventConverter.from(event))
+                                                                              .build();
 
         TransactionSynchronizationManager.registerSynchronization(new MessageSenderTransactionSynchronization(message,
                                                                                                               messageChannel));
     }
+
 
 }

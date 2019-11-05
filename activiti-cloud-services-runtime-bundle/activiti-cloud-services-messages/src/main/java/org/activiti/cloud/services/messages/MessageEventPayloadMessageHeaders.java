@@ -15,11 +15,11 @@
  */
 package org.activiti.cloud.services.messages;
 
-public final class BpmnMessageEventHeaders {
+public final class MessageEventPayloadMessageHeaders {
     
-    public static final String BPMN_MESSAGE_CORRELATION_KEY = "bpmnMessageCorrelationKey";
-    public static final String BPMN_MESSAGE_BUSINESS_KEY = "bpmnMessageBusinessKey";
-    public static final String BPMN_MESSAGE_NAME = "bpmnMessageName";
-    public static final String BPMN_MESSAGE_ID = "bpmnMessageId";
+    public static final String MESSAGE_EVENT_CORRELATION_KEY = "messageEventCorrelationKey";
+    public static final String MESSAGE_EVENT_BUSINESS_KEY = "messageEventBusinessKey";
+    public static final String MESSAGE_EVENT_NAME = "messageEventName";
+    public static final String MESSAGE_EVENT_MESSAGE_ID = "messageEventMessageId";
 
 }

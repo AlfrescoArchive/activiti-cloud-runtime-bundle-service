@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-    org.activiti.cloud.services.messages.config.BpmnMessagesAutoConfiguration
+    org.activiti.cloud.services.messages.config.MessageEventsAutoConfiguration

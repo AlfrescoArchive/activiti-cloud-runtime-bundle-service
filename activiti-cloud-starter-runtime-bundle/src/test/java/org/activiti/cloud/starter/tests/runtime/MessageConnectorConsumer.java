@@ -1,68 +1,119 @@
 package org.activiti.cloud.starter.tests.runtime;
 
+import org.activiti.api.process.model.builders.MessagePayloadBuilder;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
+import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
+import org.activiti.cloud.api.process.model.events.CloudBPMNMessageEvent;
+import org.activiti.cloud.api.process.model.events.CloudBPMNMessageReceivedEvent;
+import org.activiti.cloud.api.process.model.events.CloudBPMNMessageSentEvent;
+import org.activiti.cloud.api.process.model.events.CloudBPMNMessageWaitingEvent;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestComponent;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.StreamListener;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
-@TestComponent
-@EnableBinding(MessageConnectorChannels.class)
+@TestConfiguration
+@EnableBinding({
+    MessageConnectorChannels.Consumer.class,
+    MessageConnectorChannels.Producer.class
+})
+@PropertySource("classpath:config/message-connector-channels.properties")
 public class MessageConnectorConsumer {
 
-    private static Map<SubscriptionKey, MessageEventPayload> messages = new ConcurrentHashMap<>();
+    private static Map<SubscriptionKey, Message<CloudBPMNMessageSentEvent>> messages = new HashMap<>();
     private static Set<SubscriptionKey> subscriptions = new HashSet<>();
 
     @Autowired
-    private MessageConnectorChannels messageConnectorChannels;
+    private MessageConnectorChannels.Producer producer;
     
-    @StreamListener(MessageConnectorChannels.SENT_MESSAGES)
-    public void handleSentMessageEventPayload(MessageEventPayload message) {
-        SubscriptionKey key = key(message);
-        messages.put(key, message);
+    @StreamListener(MessageConnectorChannels.BPMN_MESSAGE_SENT_EVENT_CONSUMER_CHANNEL)
+    public void handleCloudBPMNMessageSentEvent(Message<CloudBPMNMessageSentEvent> message) {
+        SubscriptionKey key = key(message.getPayload());
+        
+        boolean hasSubscription = false;
+        
+        synchronized (key.intern()) {
+            messages.put(key, message);
 
-        if (subscriptions.contains(key)) {
-            deliver(message);
+            if (subscriptions.contains(key)) {
+                hasSubscription = true;
+            }
+        }
+
+        if (hasSubscription) {
+            Message<ReceiveMessagePayload> receiveMessage = receiveMessage(message);
+            
+            deliver(receiveMessage);
         }
     }
 
-    @StreamListener(MessageConnectorChannels.RECEIVED_MESSAGES)
-    public void handleReceivedMessageEventPayload(MessageEventPayload message) {
-        SubscriptionKey key = key(message);
+    @StreamListener(MessageConnectorChannels.BPMN_MESSAGE_RECEIVED_EVENT_CONSUMER_CHANNEL)
+    public void handleCloudBPMNMessageReceivedEvent(Message<CloudBPMNMessageReceivedEvent> message) {
+        SubscriptionKey key = key(message.getPayload());
 
-        messages.remove(key);
-        subscriptions.remove(key);
-    }
-
-    @StreamListener(MessageConnectorChannels.WAITING_MESSAGES)
-    public void handleWaitingMessageEventPayload(MessageEventPayload subscription) {
-        SubscriptionKey key = key(subscription);
-        subscriptions.add(key);
-        
-        MessageEventPayload message = messages.get(key);
-        
-        if (message != null) {
-            deliver(message);
+        synchronized (key.intern()) {
+            messages.remove(key);
+            subscriptions.remove(key);
         }
     }
-    
-    private void deliver(MessageEventPayload payload) {
-        messageConnectorChannels.deliver()
-                                .send(MessageBuilder.withPayload(payload)
-                                                    .build());
+
+    @StreamListener(MessageConnectorChannels.BPMN_MESSAGE_WAITING_EVENT_CONSUMER_CHANNEL)
+    public void handleCloudBPMNMessageWaitingEvent(Message<CloudBPMNMessageWaitingEvent> message) {
+        SubscriptionKey key = key(message.getPayload());
+        Message<CloudBPMNMessageSentEvent> existingMessage = null;
+
+        synchronized (key.intern()) {
+            subscriptions.add(key);
+            
+            existingMessage = messages.get(key);
+        }
+
+        if (existingMessage != null) {
+            Message<ReceiveMessagePayload> receiveMessage = receiveMessage(existingMessage);
+            
+            deliver(receiveMessage);
+        }
+        
     }
     
-    private SubscriptionKey key(MessageEventPayload message) {
-        return new SubscriptionKey(message.getName(),
-                                   Optional.ofNullable(message.getCorrelationKey()));
+    private Message<ReceiveMessagePayload> receiveMessage(Message<CloudBPMNMessageSentEvent> message) {
+        
+        MessageEventPayload eventPayload = message.getPayload()
+                                                  .getEntity()
+                                                  .getMessagePayload();
+
+        ReceiveMessagePayload receivePayload = MessagePayloadBuilder.receive(eventPayload.getName())
+                                                                    .withCorrelationKey(eventPayload.getCorrelationKey())
+                                                                    .withVariables(eventPayload.getVariables())
+                                                                    .build();
+
+        return MessageBuilder.withPayload(receivePayload)
+                             .copyHeaders(message.getHeaders())
+                             .build();
+    }    
+    
+    private void deliver(Message<ReceiveMessagePayload> message) {
+        
+        producer.receiveMessagePayloadProducerChannel()
+                .send(message);
+    }
+    
+    private SubscriptionKey key(CloudBPMNMessageEvent event) {
+        MessageEventPayload messagePayload = event.getEntity()
+                                                  .getMessagePayload();
+        
+        return new SubscriptionKey(messagePayload.getName(),
+                                   Optional.ofNullable(messagePayload.getCorrelationKey()));
     }
     
     static class SubscriptionKey {
@@ -73,6 +124,10 @@ public class MessageConnectorConsumer {
                                Optional<String> correlationKey) {
             this.messageName = messageName;
             this.correlationKey = correlationKey;
+        }
+        
+        public String intern() {
+            return new String(this.messageName + this.correlationKey.orElse("")).intern();
         }
         
         public String getMessageName() {

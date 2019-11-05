@@ -17,8 +17,9 @@
 package org.activiti.cloud.services.messages;
 
 import org.activiti.api.process.model.events.BPMNMessageSentEvent;
-import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
+import org.activiti.cloud.api.process.model.events.CloudBPMNMessageSentEvent;
+import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -29,36 +30,32 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class BpmnMessageSentEventMessageProducer implements BPMNElementEventListener<BPMNMessageSentEvent>  {
     private static final Logger logger = LoggerFactory.getLogger(BpmnMessageSentEventMessageProducer.class);
 
-    private static final String ROUTING_KEY = "routingKey";
-
-    private final MessageEventPayloadMessageBuilderFactory messageBuilderFactory;
+    private final BpmnMessageEventMessageBuilderFactory messageBuilderFactory;
     private final MessageChannel messageChannel;
-    
+    private final ToCloudProcessRuntimeEventConverter runtimeEventConverter;
+
     public BpmnMessageSentEventMessageProducer(@NonNull MessageChannel messageChannel,
-                                    @NonNull MessageEventPayloadMessageBuilderFactory messageBuilderFactory) {
+                                               @NonNull BpmnMessageEventMessageBuilderFactory messageBuilderFactory,
+                                               @NonNull ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
         this.messageChannel = messageChannel;
         this.messageBuilderFactory = messageBuilderFactory;
+        this.runtimeEventConverter = runtimeEventConverter;
     }
-
+    
     @Override
-    public void onEvent(BPMNMessageSentEvent event) {
+    public void onEvent(@NonNull BPMNMessageSentEvent event) {
         logger.debug("onEvent: {}", event);
         
         if(!TransactionSynchronizationManager.isSynchronizationActive()) {
             throw new IllegalStateException("requires active transaction synchronization");
         }
 
-        MessageEventPayload messageEventPayload = event.getEntity()
-                                                       .getMessagePayload();
-        
-        Message<MessageEventPayload> message = messageBuilderFactory.create(messageEventPayload)
-                                                                    .withPayload(messageEventPayload)
-                                                                    //.setHeader(ROUTING_KEY, destination)
-                                                                    .build();
+        Message<CloudBPMNMessageSentEvent> message = messageBuilderFactory.create(event.getEntity())
+                                                                          .withPayload(runtimeEventConverter.from(event))
+                                                                          .build();
 
-        // Let's send message right after the main transaction has successfully committed. 
-        TransactionSynchronizationManager.registerSynchronization(new BpmnMessageTransactionSynchronization(message,
-                                                                                                            messageChannel));
+        TransactionSynchronizationManager.registerSynchronization(new MessageSenderTransactionSynchronization(message,
+                                                                                                              messageChannel));
     }    
     
 }
