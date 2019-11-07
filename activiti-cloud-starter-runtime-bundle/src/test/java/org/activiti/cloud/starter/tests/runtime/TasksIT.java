@@ -579,6 +579,61 @@ public class TasksIT {
         ).containsExactly("hruser");
         
     }
+
+    @Test
+    public void shouldDeleteAddGroupCandidate() {
+        //given
+        ResponseEntity<CloudProcessInstance> processInstanceEntity = processInstanceRestTemplate.startProcess(processDefinitionIds.get(SIMPLE_PROCESS));
+        Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
+
+        //then check that we have no group candidate
+        ResponseEntity<Resources<Resource<String>>> groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
+        assertThat(groupCandidates).isNotNull();
+        assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(groupCandidates.getBody().getContent().size()).isEqualTo(1);
+        assertThat(groupCandidates.getBody().getContent()
+                           .stream()
+                           .map(Resource::getContent)
+        ).containsExactly("hr");
+
+
+        taskRestTemplate.claim(task);
+
+        //when
+        CandidateGroupsPayload candidategroups = TaskPayloadBuilder
+                .deleteCandidateGroups()
+                .withTaskId(task.getId())
+                .withCandidateGroup("hr")
+                .build();
+        ResponseEntity<Void> responseEntity = taskRestTemplate.deleteGroupCandidates(candidategroups);
+
+        //then
+        groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(groupCandidates.getBody().getContent().size()).isEqualTo(0);
+
+        //when
+        candidategroups = TaskPayloadBuilder
+                .addCandidateGroups()
+                .withTaskId(task.getId())
+                .withCandidateGroup("hr")
+                .build();
+
+        responseEntity = taskRestTemplate.addGroupCandidates(candidategroups);
+
+        //then
+        groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
+        assertThat(responseEntity).isNotNull();
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        assertThat(groupCandidates.getBody().getContent().size()).isEqualTo(1);
+        assertThat(groupCandidates.getBody().getContent()
+                           .stream()
+                           .map(Resource::getContent)
+        ).containsExactly("hr");
+
+    }
  
     @Test
     public void shouldSaveATask() throws Exception {
