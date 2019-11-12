@@ -67,10 +67,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -85,6 +82,10 @@ public class AuditProducerIT {
     private static final String SIMPLE_SUB_PROCESS1 = "simpleSubProcess1";
     private static final String SIMPLE_SUB_PROCESS2 = "simpleSubProcess2";
     private static final String CALL_TWO_SUB_PROCESSES = "callTwoSubProcesses";
+
+    private static final String SUB_PROCESS_ENTITY_ID = "miSubProcess";
+    private static final String TASK_ENTITY_ID = "miTasks";
+
 
     public static final String ROUTING_KEY_HEADER = "routingKey";
     public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
@@ -647,6 +648,239 @@ public class AuditProducerIT {
         runtimeService.deleteProcessInstance(subProcessId2, "Clean up");
 
         runtimeService.deleteProcessInstance(processInstanceId, "Clean up");
+
+    }
+
+
+    @Test
+    public void shouldEmitCompleteEventsMultiInstanceParallelManualTaskExecution() {
+
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcessByKey("miParallelManualTasksCompletionCondition", null, null);
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> startProcessEntity.getBody().getId().equals(event.getProcessInstanceId()))
+                    .collect(Collectors.toList());
+
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> TASK_ENTITY_ID.equals(event.getEntityId()))
+                    .collect(Collectors.toList());
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_STARTED)
+                    .size().isGreaterThan(5);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_COMPLETED)
+                    .size().isGreaterThan(5);
+
+            /* enable me once https://github.com/Activiti/Activiti/pull/2968 merged
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_CANCELLED)
+                    .size().isGreaterThanOrEqualTo(0);
+            */
+        });
+
+    }
+
+    @Test
+    public void shouldEmitCompleteEventsMultiInstanceParallelUserTaskExecution() {
+
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcessByKey("miParallelUserTasksCompletionCondition", null, null);
+        Collection<CloudTask> tasks = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
+        assertThat(tasks.size()).isEqualTo(5);
+
+        taskRestTemplate.complete((Task) tasks.toArray()[0]);
+        taskRestTemplate.complete((Task) tasks.toArray()[1]);
+
+        //complete condition expression passed
+        taskRestTemplate.complete((Task) tasks.toArray()[2]);
+
+        Collection<CloudTask> pendingTask = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
+        assertThat(pendingTask.size()).isEqualTo(0);
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> startProcessEntity.getBody().getId().equals(event.getProcessInstanceId()))
+                    .filter(event -> TASK_ENTITY_ID.equals(event.getEntityId()))
+                    .collect(Collectors.toList());
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_STARTED)
+                    .size().isEqualTo(6);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_COMPLETED)
+                    .size().isEqualTo(4);
+
+            /* enable me once https://github.com/Activiti/Activiti/pull/2968 merged
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_CANCELLED)
+                    .size().isEqualTo(2);
+             */
+        });
+
+    }
+
+    @Test
+    public void shouldProduceEventsDuringMultiInstanceSubProcessExecution() {
+
+        //when
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcessByKey("miParallelSubprocessCompletionCondition", null, null);
+
+        Collection<CloudTask> tasks = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
+        assertThat(tasks.size()).isEqualTo(5);
+
+        taskRestTemplate.complete((Task) tasks.toArray()[0]);
+        taskRestTemplate.complete((Task) tasks.toArray()[1]);
+
+        //complete condition expression passed
+        taskRestTemplate.complete((Task) tasks.toArray()[2]);
+
+        Collection<CloudTask> pendingTask = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
+        assertThat(pendingTask.size()).isEqualTo(0);
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> startProcessEntity.getBody().getId().equals(event.getProcessInstanceId()))
+                    .filter(event -> SUB_PROCESS_ENTITY_ID.equals(event.getEntityId()))
+                    .collect(Collectors.toList());
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_STARTED)
+                    .size().isEqualTo(6);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_COMPLETED)
+                    .size().isEqualTo(3);
+
+            /* enable me once https://github.com/Activiti/Activiti/pull/2968 merged
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_CANCELLED)
+                    .size().isEqualTo(2);
+            */
+        });
+
+    }
+
+    @Test
+    public void shouldEmitCompleteEventsMultiInstanceSquenceUserTaskExecution() {
+
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcessByKey("miSequenceUserTasksCompletionCondition", null, null);
+
+        Collection<CloudTask> tasks = null;
+
+        for (int i= 0; i < 3; i++) {
+            tasks = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
+            assertThat(tasks.size()).isEqualTo(1);
+            taskRestTemplate.complete((Task) tasks.toArray()[0]);
+        }
+
+        //complete condition expression passed
+        Collection<CloudTask> pendingTask = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
+        assertThat(pendingTask.size()).isEqualTo(0);
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> startProcessEntity.getBody().getId().equals(event.getProcessInstanceId()))
+                    .filter(event -> TASK_ENTITY_ID.equals(event.getEntityId()))
+                    .collect(Collectors.toList());
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_STARTED)
+                    .size().isEqualTo(4);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_COMPLETED)
+                    .size().isEqualTo(4);
+        });
+
+    }
+
+    @Test
+    public void shouldEmitCompleteEventsMultiInstanceSquenceManualTaskExecution() {
+
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcessByKey("miSequenceManualTasksCompletionCondition", null, null);
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> startProcessEntity.getBody().getId().equals(event.getProcessInstanceId()))
+                    .collect(Collectors.toList());
+
+            receivedEvents
+                    .forEach(event -> System.out.println(event));
+
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> TASK_ENTITY_ID.equals(event.getEntityId()))
+                    .collect(Collectors.toList());
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_STARTED)
+                    .size().isEqualTo(6);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_COMPLETED)
+                    .size().isEqualTo(6);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_CANCELLED)
+                    .size().isEqualTo(0);
+        });
+
+    }
+
+    @Test
+    public void shouldProduceEventsDuringMultiInstanceSequenceSubProcessExecution() {
+
+        //when
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcessByKey("miSequenceSubprocessCompletionCondition", null, null);
+
+        Collection<CloudTask> tasks = null;
+
+        for (int i= 0; i < 3; i++) {
+            tasks = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
+            assertThat(tasks.size()).isEqualTo(1);
+            taskRestTemplate.complete((Task) tasks.toArray()[0]);
+        }
+
+        //complete condition expression passed
+        Collection<CloudTask> pendingTask = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
+        assertThat(pendingTask.size()).isEqualTo(0);
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> startProcessEntity.getBody().getId().equals(event.getProcessInstanceId()))
+                    .filter(event -> SUB_PROCESS_ENTITY_ID.equals(event.getEntityId()))
+                    .collect(Collectors.toList());
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_STARTED)
+                    .size().isEqualTo(4);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_COMPLETED)
+                    .size().isEqualTo(3);
+        });
 
     }
 
