@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Import;
 @TestConfiguration
 @Import({HelperConfiguration.class,
         ServiceTaskConsumerHandler.class,
-        MessageConnectorConsumer.class,
         VariablesUtil.class})
 public class RuntimeITConfiguration {
 
