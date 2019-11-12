@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.activiti.api.process.model.MessageEventSubscription;
+import org.activiti.api.process.model.StartMessageSubscription;
 import org.activiti.api.process.model.builders.MessagePayloadBuilder;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
@@ -93,9 +93,9 @@ public class MessageConnectorConsumer {
     public void handleCloudStartMessageDeployedEvent(Message<CloudStartMessageDeployedEvent> message) {
         logger.info("handleCloudMessageDeployedEvent({})", message);
         
-        MessageEventSubscription messageEventSubscription = message.getPayload()
-                                                                   .getEntity()
-                                                                   .getMessageEventSubscription();
+        StartMessageSubscription messageEventSubscription = message.getPayload()
+                                                                        .getEntity()
+                                                                        .getMessageSubscription();
         
         SubscriptionKey key = new SubscriptionKey(messageEventSubscription.getEventName(),
                                                   Optional.empty());

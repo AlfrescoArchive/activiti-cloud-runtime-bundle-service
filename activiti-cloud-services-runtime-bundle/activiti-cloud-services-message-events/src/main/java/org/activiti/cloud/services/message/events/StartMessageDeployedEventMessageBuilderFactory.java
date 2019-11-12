@@ -31,7 +31,6 @@ public class StartMessageDeployedEventMessageBuilderFactory {
 
     public MessageBuilderAppenderChain create(StartMessageDeployedEvent messageDeployedEvent) {
         return new MessageBuilderAppenderChain().chain(new RuntimeBundleInfoMessageBuilderAppender(properties))
-                                                .chain(new MessageEventSubscriptionMessageBuilderAppender(messageDeployedEvent.getEntity()
-                                                                                                                              .getMessageEventSubscription()));
+                                                .chain(new StartMessageDeploymentDefinitionMessageBuilderAppender(messageDeployedEvent.getEntity()));
     }
 }

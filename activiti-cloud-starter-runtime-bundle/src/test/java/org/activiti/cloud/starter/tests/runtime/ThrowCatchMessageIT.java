@@ -25,8 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import org.activiti.api.process.model.MessageEventSubscription;
 import org.activiti.api.process.model.StartMessageDeploymentDefinition;
+import org.activiti.api.process.model.StartMessageSubscription;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.events.StartMessageDeployedEvent;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
@@ -148,8 +148,8 @@ public class ThrowCatchMessageIT {
         
         // then
         assertThat(events).extracting(StartMessageDeployedEvent::getEntity)
-                          .extracting(StartMessageDeploymentDefinition::getMessageEventSubscription)
-                          .extracting(MessageEventSubscription::getEventName)
+                          .extracting(StartMessageDeploymentDefinition::getMessageSubscription)
+                          .extracting(StartMessageSubscription::getEventName)
                           .contains("EventSubprocessThrowEndMessage",
                                     "EventSubprocessStartProcess3",
                                     "ThrowEndMessage",
@@ -282,7 +282,7 @@ public class ThrowCatchMessageIT {
     @Test
     public void shouldCompleteComplexBpmnMessageEventMultipleProcessesWithIntermediateCatchEvent() {
         // given
-        int processInstances = 10;
+        int processInstances = 1;
         
         //when
         IntStream.rangeClosed(1, processInstances)

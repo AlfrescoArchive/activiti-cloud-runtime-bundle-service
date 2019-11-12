@@ -18,25 +18,29 @@ package org.activiti.cloud.services.message.events;
 import static org.activiti.cloud.services.message.events.MessageEventSubscriptionMessageHeaders.MESSAGE_EVENT_SUBSCRIPTION_CONFIGURATION;
 import static org.activiti.cloud.services.message.events.MessageEventSubscriptionMessageHeaders.MESSAGE_EVENT_SUBSCRIPTION_EVENT_NAME;
 
-import org.activiti.api.process.model.MessageEventSubscription;
+import org.activiti.api.process.model.StartMessageDeploymentDefinition;
+import org.activiti.api.process.model.StartMessageSubscription;
 import org.activiti.cloud.services.events.message.MessageBuilderAppender;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
-public class MessageEventSubscriptionMessageBuilderAppender implements MessageBuilderAppender {
+public class StartMessageDeploymentDefinitionMessageBuilderAppender implements MessageBuilderAppender {
 
-    private final MessageEventSubscription messageEventSubscription;
+    private final StartMessageDeploymentDefinition startMessageDeploymentDefinition;
 
-    public MessageEventSubscriptionMessageBuilderAppender(MessageEventSubscription messageEventSubscription) {
-        Assert.notNull(messageEventSubscription, "messageEventSubscription must not be null");
+    public StartMessageDeploymentDefinitionMessageBuilderAppender(StartMessageDeploymentDefinition startMessageDeploymentDefinition) {
+        Assert.notNull(startMessageDeploymentDefinition, "startMessageDeploymentDefinition must not be null");
 
-        this.messageEventSubscription = messageEventSubscription;
+        this.startMessageDeploymentDefinition = startMessageDeploymentDefinition;
     }
 
     @Override
     public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
         Assert.notNull(request, "request must not be null");
         
+        StartMessageSubscription messageEventSubscription = startMessageDeploymentDefinition.getMessageSubscription();
+        
+        // TODO Add more headers
         return request.setHeader(MESSAGE_EVENT_SUBSCRIPTION_EVENT_NAME, messageEventSubscription.getEventName())
                       .setHeader(MESSAGE_EVENT_SUBSCRIPTION_CONFIGURATION, messageEventSubscription.getConfiguration())
        ;
