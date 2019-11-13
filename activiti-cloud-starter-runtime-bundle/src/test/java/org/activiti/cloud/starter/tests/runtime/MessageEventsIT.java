@@ -17,6 +17,7 @@
 package org.activiti.cloud.starter.tests.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,6 +38,7 @@ import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.api.process.model.events.CloudBPMNMessageReceivedEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNMessageSentEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNMessageWaitingEvent;
+import org.activiti.cloud.api.process.model.events.CloudStartMessageDeployedEvent;
 import org.activiti.cloud.services.message.connector.MessageConnectorConsumer;
 import org.activiti.cloud.services.message.events.ReceiveMessagePayloadMessageStreamListener;
 import org.activiti.cloud.services.message.events.StartMessagePayloadMessageStreamListener;
@@ -45,6 +47,7 @@ import org.activiti.engine.RuntimeService;
 import org.awaitility.Awaitility;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -65,8 +68,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @TestPropertySource("classpath:application-test.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ContextConfiguration(classes = RuntimeITConfiguration.class)
-@Import(ThrowCatchMessageIT.TestStartMessageDeployedEventListener.class)
-public class ThrowCatchMessageIT {
+@Import(MessageEventsIT.TestStartMessageDeployedEventListener.class)
+public class MessageEventsIT {
 
     private static final String BOUNDARY_SUBPROCESS_THROW_CATCH_MESSAGE_IT_PROCESS3 = "BoundarySubprocessThrowCatchMessageIT_Process3";
 
@@ -144,20 +147,32 @@ public class ThrowCatchMessageIT {
     @Test
     public void shouldHandleStartMessageDeployedEvents() {
         // given
-        List<StartMessageDeployedEvent> events = startMessageDeployedEventListener.getEvents();
+        String expectedStartEventNames[] = {
+            "EventSubprocessThrowEndMessage",
+            "EventSubprocessStartProcess3",
+            "auditStartMessage",
+            "BoundaryThrowEndMessage",
+            "BoundaryThrowIntermediateMessage",
+            "ThrowEndMessage",
+            "ThrowIntermediateMessage",
+            "BoundarySubprocessThrowEndMessage",
+            "SartBoundarySubprocessThrowIntermediateMessage",
+            "EventSubprocessNonInterruptingThrowEndMessage",
+            "EventSubprocessStartProcessNonInterrupting3",
+            "startMessage"
+        };
+        
+        // when
+        ArgumentCaptor<Message<CloudStartMessageDeployedEvent>> argumentCaptor = ArgumentCaptor.forClass(Message.class);
         
         // then
-        assertThat(events).extracting(StartMessageDeployedEvent::getEntity)
-                          .extracting(StartMessageDeploymentDefinition::getMessageSubscription)
-                          .extracting(StartMessageSubscription::getEventName)
-                          .contains("EventSubprocessThrowEndMessage",
-                                    "EventSubprocessStartProcess3",
-                                    "ThrowEndMessage",
-                                    "ThrowIntermediateMessage",
-                                    "EventSubprocessNonInterruptingThrowEndMessage",
-                                    "EventSubprocessStartProcessNonInterrupting3",
-                                    "BoundaryThrowEndMessage",
-                                    "BoundaryThrowIntermediateMessage");
+        verify(messageConnectorConsumer, atLeast(expectedStartEventNames.length)).handleCloudStartMessageDeployedEvent(argumentCaptor.capture());
+        
+        assertThat(argumentCaptor.getAllValues()).extracting(Message::getPayload)
+                                                 .extracting(CloudStartMessageDeployedEvent::getEntity)
+                                                 .extracting(StartMessageDeploymentDefinition::getMessageSubscription)
+                                                 .extracting(StartMessageSubscription::getEventName)
+                                                 .contains(expectedStartEventNames);
     }
     
     @Test
