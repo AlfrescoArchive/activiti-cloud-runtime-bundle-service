@@ -22,25 +22,24 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.stream.IntStream;
 
 import org.activiti.api.process.model.StartMessageDeploymentDefinition;
 import org.activiti.api.process.model.StartMessageSubscription;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
+import org.activiti.api.process.model.events.BPMNMessageReceivedEvent;
+import org.activiti.api.process.model.events.BPMNMessageSentEvent;
+import org.activiti.api.process.model.events.BPMNMessageWaitingEvent;
 import org.activiti.api.process.model.events.StartMessageDeployedEvent;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
 import org.activiti.api.process.model.payloads.StartMessagePayload;
 import org.activiti.api.process.model.payloads.StartProcessPayload;
-import org.activiti.api.runtime.event.impl.StartMessageDeployedEvents;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
-import org.activiti.cloud.api.process.model.events.CloudBPMNMessageReceivedEvent;
-import org.activiti.cloud.api.process.model.events.CloudBPMNMessageSentEvent;
-import org.activiti.cloud.api.process.model.events.CloudBPMNMessageWaitingEvent;
-import org.activiti.cloud.api.process.model.events.CloudStartMessageDeployedEvent;
-import org.activiti.cloud.services.message.connector.MessageConnectorConsumer;
+import org.activiti.cloud.services.message.events.BpmnMessageReceivedEventMessageProducer;
+import org.activiti.cloud.services.message.events.BpmnMessageSentEventMessageProducer;
+import org.activiti.cloud.services.message.events.BpmnMessageWaitingEventMessageProducer;
 import org.activiti.cloud.services.message.events.ReceiveMessagePayloadMessageStreamListener;
+import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageProducer;
 import org.activiti.cloud.services.message.events.StartMessagePayloadMessageStreamListener;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.engine.RuntimeService;
@@ -51,10 +50,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestComponent;
+import org.springframework.boot.test.mock.mockito.MockReset;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.event.EventListener;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.Message;
@@ -68,7 +65,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 @TestPropertySource("classpath:application-test.properties")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ContextConfiguration(classes = RuntimeITConfiguration.class)
-@Import(MessageEventsIT.TestStartMessageDeployedEventListener.class)
 public class MessageEventsIT {
 
     private static final String BOUNDARY_SUBPROCESS_THROW_CATCH_MESSAGE_IT_PROCESS3 = "BoundarySubprocessThrowCatchMessageIT_Process3";
@@ -114,38 +110,29 @@ public class MessageEventsIT {
     @Autowired
     private RuntimeService runtimeService;
 
-    @SpyBean 
-    private MessageConnectorConsumer messageConnectorConsumer; 
+    @SpyBean
+    private BpmnMessageReceivedEventMessageProducer bpmnMessageReceivedEventMessageProducer;
 
+    @SpyBean
+    private BpmnMessageSentEventMessageProducer bpmnMessageSentEventMessageProducer;
+    
+    @SpyBean
+    private BpmnMessageWaitingEventMessageProducer bpmnMessageWaitingEventMessageProducer;
+    
     @SpyBean
     private StartMessagePayloadMessageStreamListener startMessagePayloadMessageStreamListener; 
 
     @SpyBean
     private ReceiveMessagePayloadMessageStreamListener receiveMessagePayloadMessageStreamListener;
     
+    @SpyBean(reset = MockReset.NONE)
+    private StartMessageDeployedEventMessageProducer startMessageDeployedEventMessageProducer;
+    
     @Autowired
     private ProcessInstanceRestTemplate processInstanceRestTemplate;
     
-    @Autowired
-    private TestStartMessageDeployedEventListener startMessageDeployedEventListener;
-
-    @TestComponent
-    static class TestStartMessageDeployedEventListener {
-        
-        private List<StartMessageDeployedEvent> events;
-        
-        @EventListener
-        public void handle(StartMessageDeployedEvents event) {
-            this.events = new ArrayList<StartMessageDeployedEvent>(event.getStartMessageDeployedEvents());
-        }
-        
-        public List<StartMessageDeployedEvent> getEvents() {
-            return events;
-        }
-    }
-    
     @Test
-    public void shouldHandleStartMessageDeployedEvents() {
+    public void shouldProduceStartMessageDeployedEvents() {
         // given
         String expectedStartEventNames[] = {
             "EventSubprocessThrowEndMessage",
@@ -163,13 +150,12 @@ public class MessageEventsIT {
         };
         
         // when
-        ArgumentCaptor<Message<CloudStartMessageDeployedEvent>> argumentCaptor = ArgumentCaptor.forClass(Message.class);
+        ArgumentCaptor<StartMessageDeployedEvent> argumentCaptor = ArgumentCaptor.forClass(StartMessageDeployedEvent.class);
         
         // then
-        verify(messageConnectorConsumer, atLeast(expectedStartEventNames.length)).handleCloudStartMessageDeployedEvent(argumentCaptor.capture());
+        verify(startMessageDeployedEventMessageProducer, atLeast(expectedStartEventNames.length)).onEvent(argumentCaptor.capture());
         
-        assertThat(argumentCaptor.getAllValues()).extracting(Message::getPayload)
-                                                 .extracting(CloudStartMessageDeployedEvent::getEntity)
+        assertThat(argumentCaptor.getAllValues()).extracting(StartMessageDeployedEvent::getEntity)
                                                  .extracting(StartMessageDeploymentDefinition::getMessageSubscription)
                                                  .extracting(StartMessageSubscription::getEventName)
                                                  .contains(expectedStartEventNames);
@@ -212,9 +198,9 @@ public class MessageEventsIT {
                                      .list()).isEmpty();
         });
         
-        verify(messageConnectorConsumer, times(1)).handleCloudBPMNMessageSentEvent(ArgumentMatchers.<Message<CloudBPMNMessageSentEvent>>any());
-        verify(messageConnectorConsumer, times(1)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
-        verify(messageConnectorConsumer, times(1)).handleCloudBPMNMessageReceivedEvent(ArgumentMatchers.<Message<CloudBPMNMessageReceivedEvent>>any());
+        verify(bpmnMessageSentEventMessageProducer, times(1)).onEvent(ArgumentMatchers.<BPMNMessageSentEvent>any());
+        verify(bpmnMessageWaitingEventMessageProducer, times(1)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+        verify(bpmnMessageReceivedEventMessageProducer, times(1)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
 
         verify(receiveMessagePayloadMessageStreamListener, times(1)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, never()).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
@@ -249,9 +235,9 @@ public class MessageEventsIT {
                                      .list()).isEmpty();
         });
         
-        verify(messageConnectorConsumer, times(3)).handleCloudBPMNMessageSentEvent(ArgumentMatchers.<Message<CloudBPMNMessageSentEvent>>any());
-        verify(messageConnectorConsumer, times(1)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
-        verify(messageConnectorConsumer, times(3)).handleCloudBPMNMessageReceivedEvent(ArgumentMatchers.<Message<CloudBPMNMessageReceivedEvent>>any());
+        verify(bpmnMessageSentEventMessageProducer, times(3)).onEvent(ArgumentMatchers.<BPMNMessageSentEvent>any());
+        verify(bpmnMessageWaitingEventMessageProducer, times(1)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+        verify(bpmnMessageReceivedEventMessageProducer, times(3)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
         
         verify(receiveMessagePayloadMessageStreamListener, times(1)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, times(2)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
@@ -285,10 +271,10 @@ public class MessageEventsIT {
                                      .list()).isEmpty();
         });
         
-        verify(messageConnectorConsumer, times(3)).handleCloudBPMNMessageSentEvent(ArgumentMatchers.<Message<CloudBPMNMessageSentEvent>>any());
-        verify(messageConnectorConsumer, times(1)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
-        verify(messageConnectorConsumer, times(3)).handleCloudBPMNMessageReceivedEvent(ArgumentMatchers.<Message<CloudBPMNMessageReceivedEvent>>any());
-
+        verify(bpmnMessageSentEventMessageProducer, times(3)).onEvent(ArgumentMatchers.<BPMNMessageSentEvent>any());
+        verify(bpmnMessageWaitingEventMessageProducer, times(1)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+        verify(bpmnMessageReceivedEventMessageProducer, times(3)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
+        
         verify(receiveMessagePayloadMessageStreamListener, times(1)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, times(2)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
     }
@@ -297,7 +283,7 @@ public class MessageEventsIT {
     @Test
     public void shouldCompleteComplexBpmnMessageEventMultipleProcessesWithIntermediateCatchEvent() {
         // given
-        int processInstances = 1;
+        int processInstances = 10;
         
         //when
         IntStream.rangeClosed(1, processInstances)
@@ -322,10 +308,10 @@ public class MessageEventsIT {
                                      .list()).isEmpty();
         });
 
-        verify(messageConnectorConsumer, times(3 * processInstances)).handleCloudBPMNMessageSentEvent(ArgumentMatchers.<Message<CloudBPMNMessageSentEvent>>any());
-        verify(messageConnectorConsumer, times(processInstances)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
-        verify(messageConnectorConsumer, times(3 * processInstances)).handleCloudBPMNMessageReceivedEvent(ArgumentMatchers.<Message<CloudBPMNMessageReceivedEvent>>any());
-
+        verify(bpmnMessageSentEventMessageProducer, times(3 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageSentEvent>any());
+        verify(bpmnMessageWaitingEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+        verify(bpmnMessageReceivedEventMessageProducer, times(3 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
+        
         verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
     }
@@ -358,10 +344,10 @@ public class MessageEventsIT {
                                      .list()).isEmpty();
         });
         
-        verify(messageConnectorConsumer, times(3 * processInstances)).handleCloudBPMNMessageSentEvent(ArgumentMatchers.<Message<CloudBPMNMessageSentEvent>>any());
-        verify(messageConnectorConsumer, times(processInstances)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
-        verify(messageConnectorConsumer, times(3 * processInstances)).handleCloudBPMNMessageReceivedEvent(ArgumentMatchers.<Message<CloudBPMNMessageReceivedEvent>>any());
-
+        verify(bpmnMessageSentEventMessageProducer, times(3 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageSentEvent>any());
+        verify(bpmnMessageWaitingEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+        verify(bpmnMessageReceivedEventMessageProducer, times(3 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
+        
         verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
     }
@@ -394,10 +380,10 @@ public class MessageEventsIT {
                                      .list()).isEmpty();
         });
         
-        verify(messageConnectorConsumer, times(3 * processInstances)).handleCloudBPMNMessageSentEvent(ArgumentMatchers.<Message<CloudBPMNMessageSentEvent>>any());
-        verify(messageConnectorConsumer, times(processInstances)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
-        verify(messageConnectorConsumer, times(3 * processInstances)).handleCloudBPMNMessageReceivedEvent(ArgumentMatchers.<Message<CloudBPMNMessageReceivedEvent>>any());
-
+        verify(bpmnMessageSentEventMessageProducer, times(3 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageSentEvent>any());
+        verify(bpmnMessageWaitingEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+        verify(bpmnMessageReceivedEventMessageProducer, times(3 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
+        
         verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
     }
@@ -430,10 +416,10 @@ public class MessageEventsIT {
                                      .list()).isEmpty();
         });
         
-        verify(messageConnectorConsumer, times(4 * processInstances)).handleCloudBPMNMessageSentEvent(ArgumentMatchers.<Message<CloudBPMNMessageSentEvent>>any());
-        verify(messageConnectorConsumer, times(2 * processInstances)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
-        verify(messageConnectorConsumer, times(4 * processInstances)).handleCloudBPMNMessageReceivedEvent(ArgumentMatchers.<Message<CloudBPMNMessageReceivedEvent>>any());
-
+        verify(bpmnMessageSentEventMessageProducer, times(4 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageSentEvent>any());
+        verify(bpmnMessageWaitingEventMessageProducer, times(2 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+        verify(bpmnMessageReceivedEventMessageProducer, times(4 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
+        
         verify(receiveMessagePayloadMessageStreamListener, times(2 * processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
     }
@@ -467,9 +453,9 @@ public class MessageEventsIT {
                                      .list()).isEmpty();
         });
         
-        verify(messageConnectorConsumer, times(4 * processInstances)).handleCloudBPMNMessageSentEvent(ArgumentMatchers.<Message<CloudBPMNMessageSentEvent>>any());
-        verify(messageConnectorConsumer, times(2 * processInstances)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
-        verify(messageConnectorConsumer, times(4 * processInstances)).handleCloudBPMNMessageReceivedEvent(ArgumentMatchers.<Message<CloudBPMNMessageReceivedEvent>>any());
+        verify(bpmnMessageSentEventMessageProducer, times(4 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageSentEvent>any());
+        verify(bpmnMessageWaitingEventMessageProducer, times(2 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+        verify(bpmnMessageReceivedEventMessageProducer, times(4 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
 
         verify(receiveMessagePayloadMessageStreamListener, times(2 * processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
@@ -506,10 +492,10 @@ public class MessageEventsIT {
                                      .list()).isEmpty();
         });
         
-        verify(messageConnectorConsumer, times(processInstances)).handleCloudBPMNMessageSentEvent(ArgumentMatchers.<Message<CloudBPMNMessageSentEvent>>any());
-        verify(messageConnectorConsumer, times(processInstances)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
-        verify(messageConnectorConsumer, times(processInstances)).handleCloudBPMNMessageReceivedEvent(ArgumentMatchers.<Message<CloudBPMNMessageReceivedEvent>>any());
-
+        verify(bpmnMessageSentEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageSentEvent>any());
+        verify(bpmnMessageWaitingEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+        verify(bpmnMessageReceivedEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
+        
         verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, never()).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
     }
@@ -546,9 +532,9 @@ public class MessageEventsIT {
                                      .list()).isEmpty();
         });
 
-        verify(messageConnectorConsumer, times(processInstances)).handleCloudBPMNMessageSentEvent(ArgumentMatchers.<Message<CloudBPMNMessageSentEvent>>any());
-        verify(messageConnectorConsumer, times(processInstances)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
-        verify(messageConnectorConsumer, times(processInstances)).handleCloudBPMNMessageReceivedEvent(ArgumentMatchers.<Message<CloudBPMNMessageReceivedEvent>>any());
+        verify(bpmnMessageSentEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageSentEvent>any());
+        verify(bpmnMessageWaitingEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+        verify(bpmnMessageReceivedEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
 
         verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, never()).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());

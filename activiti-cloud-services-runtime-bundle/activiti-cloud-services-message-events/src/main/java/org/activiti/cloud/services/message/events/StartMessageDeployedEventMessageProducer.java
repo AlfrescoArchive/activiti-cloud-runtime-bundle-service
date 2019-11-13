@@ -20,8 +20,8 @@ public class StartMessageDeployedEventMessageProducer implements ProcessRuntimeE
     private final ToCloudProcessRuntimeEventConverter runtimeEventConverter;
 
     public StartMessageDeployedEventMessageProducer(@NonNull MessageChannel messageChannel,
-                                               @NonNull StartMessageDeployedEventMessageBuilderFactory messageBuilderFactory,
-                                               @NonNull ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
+                                                    @NonNull StartMessageDeployedEventMessageBuilderFactory messageBuilderFactory,
+                                                    @NonNull ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
         this.messageChannel = messageChannel;
         this.messageBuilderFactory = messageBuilderFactory;
         this.runtimeEventConverter = runtimeEventConverter;
