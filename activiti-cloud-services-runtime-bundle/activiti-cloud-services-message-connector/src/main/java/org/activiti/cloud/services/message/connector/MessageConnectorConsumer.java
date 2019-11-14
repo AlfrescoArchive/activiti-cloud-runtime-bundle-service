@@ -39,7 +39,7 @@ public class MessageConnectorConsumer {
     
     @StreamListener(MessageConnectorChannels.BPMN_MESSAGE_SENT_EVENT_CONSUMER_CHANNEL)
     public void handleCloudBPMNMessageSentEvent(Message<CloudBPMNMessageSentEvent> message) {
-        logger.info("handleCloudBPMNMessageSentEvent({})", message);
+        logger.debug("handleCloudBPMNMessageSentEvent({})", message);
 
         SubscriptionKey key = key(message.getPayload());
         
@@ -61,7 +61,7 @@ public class MessageConnectorConsumer {
 
     @StreamListener(MessageConnectorChannels.BPMN_MESSAGE_RECEIVED_EVENT_CONSUMER_CHANNEL)
     public void handleCloudBPMNMessageReceivedEvent(Message<CloudBPMNMessageReceivedEvent> message) {
-        logger.info("handleCloudBPMNMessageReceivedEvent({})", message);
+        logger.debug("handleCloudBPMNMessageReceivedEvent({})", message);
         
         SubscriptionKey key = key(message.getPayload());
 
@@ -73,7 +73,7 @@ public class MessageConnectorConsumer {
 
     @StreamListener(MessageConnectorChannels.BPMN_MESSAGE_WAITING_EVENT_CONSUMER_CHANNEL)
     public void handleCloudBPMNMessageWaitingEvent(Message<CloudBPMNMessageWaitingEvent> message) {
-        logger.info("handleCloudBPMNMessageWaitingEvent({})", message);
+        logger.debug("handleCloudBPMNMessageWaitingEvent({})", message);
 
         SubscriptionKey key = key(message.getPayload());
         Message<CloudBPMNMessageSentEvent> existingMessage = null;
@@ -94,7 +94,7 @@ public class MessageConnectorConsumer {
     
     @StreamListener(MessageConnectorChannels.MESSAGE_DEPLOYED_EVENT_CONSUMER_CHANNEL)
     public void handleCloudStartMessageDeployedEvent(Message<CloudStartMessageDeployedEvent> message) {
-        logger.info("handleCloudMessageDeployedEvent({})", message);
+        logger.debug("handleCloudMessageDeployedEvent({})", message);
         
         StartMessageSubscription messageEventSubscription = message.getPayload()
                                                                         .getEntity()
@@ -120,7 +120,7 @@ public class MessageConnectorConsumer {
     
     @StreamListener(MessageConnectorChannels.MESSAGE_SUBSCRIPTION_CANCELLED_EVENT_CONSUMER_CHANNEL)
     public void handleCloudMessageSubscriptionCancelledEvent(Message<CloudMessageSubscriptionCancelledEvent> message) {
-        logger.info("handleCloudMessageSubscriptionCancelledEvent({})", message);
+        logger.debug("handleCloudMessageSubscriptionCancelledEvent({})", message);
         
         MessageSubscription messageSubscription = message.getPayload().getEntity();
         
