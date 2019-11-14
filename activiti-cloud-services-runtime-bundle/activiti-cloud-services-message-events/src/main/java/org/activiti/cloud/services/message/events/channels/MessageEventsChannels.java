@@ -28,6 +28,7 @@ public interface MessageEventsChannels {
     public static final String BPMN_MESSAGE_WAITING_EVENT_RPODUCER_CHANNEL = "bpmnMessageWaitingEventProducerChannel";
     public static final String MESSAGE_DEPLOYED_EVENT_PRODUCER_CHANNEL = "messageDeployedEventProducerChannel";
     public static final String START_MESSAGE_PAYLOAD_CONSUMER_CHANNEL = "startMessagePayloadConsumerChannel";
+    public static final String MESSAGE_SUBSCRIPTION_CANCELLED_EVENT_PRODUCER_CHANNEL = "messageSubscriptionCancelledEventProducerChannel";
 
     interface Consumer {
 
@@ -41,6 +42,9 @@ public interface MessageEventsChannels {
 
     interface Producer {
 
+        @Output(MESSAGE_SUBSCRIPTION_CANCELLED_EVENT_PRODUCER_CHANNEL)
+        MessageChannel messageSubscriptionCancelledEventProducerChannel();
+        
         @Output(MESSAGE_DEPLOYED_EVENT_PRODUCER_CHANNEL)
         MessageChannel messageDeployedEventProducerChannel();
         

@@ -31,6 +31,7 @@ import org.activiti.api.process.model.events.BPMNTimerFailedEvent;
 import org.activiti.api.process.model.events.BPMNTimerFiredEvent;
 import org.activiti.api.process.model.events.BPMNTimerRetriesDecrementedEvent;
 import org.activiti.api.process.model.events.BPMNTimerScheduledEvent;
+import org.activiti.api.process.model.events.MessageSubscriptionCancelledEvent;
 import org.activiti.api.process.model.events.ProcessDeployedEvent;
 import org.activiti.api.process.model.events.StartMessageDeployedEvent;
 import org.activiti.api.process.runtime.events.ProcessCancelledEvent;
@@ -54,6 +55,7 @@ import org.activiti.cloud.api.process.model.events.CloudBPMNTimerFailedEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerFiredEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerRetriesDecrementedEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNTimerScheduledEvent;
+import org.activiti.cloud.api.process.model.events.CloudMessageSubscriptionCancelledEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessCancelledEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessCompletedEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessCreatedEvent;
@@ -78,6 +80,7 @@ import org.activiti.cloud.api.process.model.impl.events.CloudBPMNTimerFailedEven
 import org.activiti.cloud.api.process.model.impl.events.CloudBPMNTimerFiredEventImpl;
 import org.activiti.cloud.api.process.model.impl.events.CloudBPMNTimerRetriesDecrementedEventImpl;
 import org.activiti.cloud.api.process.model.impl.events.CloudBPMNTimerScheduledEventImpl;
+import org.activiti.cloud.api.process.model.impl.events.CloudMessageSubscriptionCancelledEventImpl;
 import org.activiti.cloud.api.process.model.impl.events.CloudProcessCancelledEventImpl;
 import org.activiti.cloud.api.process.model.impl.events.CloudProcessCompletedEventImpl;
 import org.activiti.cloud.api.process.model.impl.events.CloudProcessCreatedEventImpl;
@@ -190,6 +193,14 @@ public class ToCloudProcessRuntimeEventConverter {
         CloudStartMessageDeployedEventImpl cloudEvent = CloudStartMessageDeployedEventImpl.builder()
                                                                                           .withEntity(event.getEntity())
                                                                                           .build();
+        runtimeBundleInfoAppender.appendRuntimeBundleInfoTo(cloudEvent);
+        return cloudEvent;
+    }
+
+    public CloudMessageSubscriptionCancelledEvent from(MessageSubscriptionCancelledEvent event) {
+        CloudMessageSubscriptionCancelledEventImpl cloudEvent = CloudMessageSubscriptionCancelledEventImpl.builder()
+                                                                                                          .withEntity(event.getEntity())
+                                                                                                          .build();
         runtimeBundleInfoAppender.appendRuntimeBundleInfoTo(cloudEvent);
         return cloudEvent;
     }

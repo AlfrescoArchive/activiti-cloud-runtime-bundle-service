@@ -24,6 +24,8 @@ import org.activiti.cloud.services.message.events.BpmnMessageReceivedEventMessag
 import org.activiti.cloud.services.message.events.BpmnMessageSentEventMessageProducer;
 import org.activiti.cloud.services.message.events.BpmnMessageWaitingEventMessageProducer;
 import org.activiti.cloud.services.message.events.MessageEventsProcessEngineConfigurator;
+import org.activiti.cloud.services.message.events.MessageSubscriptionCancelledEventMessageProducer;
+import org.activiti.cloud.services.message.events.MessageSubscriptionEventMessageBuilderFactory;
 import org.activiti.cloud.services.message.events.ReceiveMessagePayloadMessageStreamListener;
 import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageBuilderFactory;
 import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageProducer;
@@ -34,6 +36,7 @@ import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.lang.NonNull;
 
 @Configuration
 @PropertySource("classpath:config/message-events-channels.properties")
@@ -53,6 +56,12 @@ public class MessageEventsAutoConfiguration {
     @ConditionalOnMissingBean
     public StartMessageDeployedEventMessageBuilderFactory messageDeployedEventMessageBuilderFactory(RuntimeBundleProperties properties) {
         return new StartMessageDeployedEventMessageBuilderFactory(properties);
+    }
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public MessageSubscriptionEventMessageBuilderFactory messageSubscriptionEventMessageBuilderFactory(RuntimeBundleProperties properties) {
+        return new MessageSubscriptionEventMessageBuilderFactory(properties);
     }
     
     @Bean
@@ -94,7 +103,17 @@ public class MessageEventsAutoConfiguration {
                                                        messageBuilderFactory,
                                                        runtimeEventConverter);
     }
-
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public MessageSubscriptionCancelledEventMessageProducer messageSubscriptionCancelledEventMessageProducer(@NonNull MessageEventsChannels.Producer producerChannels,
+                                                                                                             @NonNull MessageSubscriptionEventMessageBuilderFactory messageBuilderFactory,
+                                                                                                             @NonNull ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
+        return new MessageSubscriptionCancelledEventMessageProducer(producerChannels.messageSubscriptionCancelledEventProducerChannel(),
+                                                                    messageBuilderFactory,
+                                                                    runtimeEventConverter);
+    }
+    
     @Bean
     @ConditionalOnMissingBean
     public ReceiveMessagePayloadMessageStreamListener receiveMessagePayloadMessageStreamListener(ProcessAdminRuntime processAdminRuntime) {

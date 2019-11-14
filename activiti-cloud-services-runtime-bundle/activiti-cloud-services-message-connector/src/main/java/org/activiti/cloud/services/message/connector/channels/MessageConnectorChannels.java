@@ -1,4 +1,4 @@
-package org.activiti.cloud.services.message.connector;
+package org.activiti.cloud.services.message.connector.channels;
 
 import org.springframework.cloud.stream.annotation.Input;
 import org.springframework.cloud.stream.annotation.Output;
@@ -13,6 +13,7 @@ public interface MessageConnectorChannels {
     public static final String BPMN_MESSAGE_WAITING_EVENT_CONSUMER_CHANNEL = "bpmnMessageWaitingEventConsumerChannel";
     public static final String BPMN_MESSAGE_SENT_EVENT_CONSUMER_CHANNEL = "bpmnMessageSentEventConsumerChannel";
     public static final String MESSAGE_DEPLOYED_EVENT_CONSUMER_CHANNEL = "messageDeployedEventConsumerChannel";
+    public static final String MESSAGE_SUBSCRIPTION_CANCELLED_EVENT_CONSUMER_CHANNEL = "messageSubscriptionCancelledEventConsumerChannel";
 
     interface Producer {
 
@@ -24,7 +25,10 @@ public interface MessageConnectorChannels {
     }
     
     interface Consumer {
-
+        
+        @Input(MESSAGE_SUBSCRIPTION_CANCELLED_EVENT_CONSUMER_CHANNEL)
+        SubscribableChannel messageSubscriptionCancelledEventConsumerChannel();
+        
         @Input(BPMN_MESSAGE_SENT_EVENT_CONSUMER_CHANNEL)
         SubscribableChannel bpmnMessageSentEventConsumerChannel();
 

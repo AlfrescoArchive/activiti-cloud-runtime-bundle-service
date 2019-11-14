@@ -1,7 +1,7 @@
 package org.activiti.cloud.services.message.connector.config;
 
-import org.activiti.cloud.services.message.connector.MessageConnectorChannels;
 import org.activiti.cloud.services.message.connector.MessageConnectorConsumer;
+import org.activiti.cloud.services.message.connector.channels.MessageConnectorChannels;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;

@@ -22,6 +22,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.IntStream;
 
 import org.activiti.api.process.model.StartMessageDeploymentDefinition;
@@ -30,14 +32,19 @@ import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.events.BPMNMessageReceivedEvent;
 import org.activiti.api.process.model.events.BPMNMessageSentEvent;
 import org.activiti.api.process.model.events.BPMNMessageWaitingEvent;
+import org.activiti.api.process.model.events.MessageSubscriptionCancelledEvent;
 import org.activiti.api.process.model.events.StartMessageDeployedEvent;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
 import org.activiti.api.process.model.payloads.StartMessagePayload;
 import org.activiti.api.process.model.payloads.StartProcessPayload;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
+import org.activiti.cloud.api.process.model.events.CloudBPMNMessageWaitingEvent;
+import org.activiti.cloud.api.process.model.events.CloudMessageSubscriptionCancelledEvent;
+import org.activiti.cloud.services.message.connector.MessageConnectorConsumer;
 import org.activiti.cloud.services.message.events.BpmnMessageReceivedEventMessageProducer;
 import org.activiti.cloud.services.message.events.BpmnMessageSentEventMessageProducer;
 import org.activiti.cloud.services.message.events.BpmnMessageWaitingEventMessageProducer;
+import org.activiti.cloud.services.message.events.MessageSubscriptionCancelledEventMessageProducer;
 import org.activiti.cloud.services.message.events.ReceiveMessagePayloadMessageStreamListener;
 import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageProducer;
 import org.activiti.cloud.services.message.events.StartMessagePayloadMessageStreamListener;
@@ -111,6 +118,9 @@ public class MessageEventsIT {
     private RuntimeService runtimeService;
 
     @SpyBean
+    private MessageConnectorConsumer messageConnectorConsumer;
+
+    @SpyBean
     private BpmnMessageReceivedEventMessageProducer bpmnMessageReceivedEventMessageProducer;
 
     @SpyBean
@@ -124,6 +134,9 @@ public class MessageEventsIT {
 
     @SpyBean
     private ReceiveMessagePayloadMessageStreamListener receiveMessagePayloadMessageStreamListener;
+    
+    @SpyBean
+    private MessageSubscriptionCancelledEventMessageProducer messageSubscriptionCancelledEventMessageProducer; 
     
     @SpyBean(reset = MockReset.NONE)
     private StartMessageDeployedEventMessageProducer startMessageDeployedEventMessageProducer;
@@ -539,6 +552,53 @@ public class MessageEventsIT {
         verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
         verify(startMessagePayloadMessageStreamListener, never()).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
     }
-    
 
+    @Test
+    public void shouldCancelWaitingMessageSubscription() {
+        // given
+        int processInstances = 10;
+        List<ResponseEntity<CloudProcessInstance>> instances = new ArrayList<>();
+
+        // when
+        IntStream.range(0, processInstances)
+                 .mapToObj(i -> ProcessPayloadBuilder.start()
+                           .withProcessDefinitionKey(INTERMEDIATE_CATCH_MESSAGE_PROCESS)
+                           .withBusinessKey(BUSINESS_KEY+i)
+                           .build())
+                 .map(processInstanceRestTemplate::startProcess)
+                 .forEach(instances::add);
+
+        // then
+        assertThat(runtimeService.createProcessInstanceQuery()
+                                 .processDefinitionKey(INTERMEDIATE_CATCH_MESSAGE_PROCESS)
+                                 .list()).hasSize(processInstances);
+
+        verify(bpmnMessageWaitingEventMessageProducer, 
+               times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
+
+        // then
+        Awaitility.await().untilAsserted(() -> {
+            verify(messageConnectorConsumer, 
+                   times(processInstances)).handleCloudBPMNMessageWaitingEvent(ArgumentMatchers.<Message<CloudBPMNMessageWaitingEvent>>any());
+        });
+        
+        // when
+        IntStream.range(0, processInstances)
+                 .mapToObj(i -> instances.get(i))
+                 .forEach(processInstanceRestTemplate::delete);
+
+        // then
+        assertThat(runtimeService.createProcessInstanceQuery()
+                                 .processDefinitionKey(INTERMEDIATE_CATCH_MESSAGE_PROCESS)
+                                 .list()).isEmpty();
+        
+        verify(messageSubscriptionCancelledEventMessageProducer, 
+               times(processInstances)).onEvent(ArgumentMatchers.<MessageSubscriptionCancelledEvent>any());
+
+        // then
+        Awaitility.await().untilAsserted(() -> {
+            verify(messageConnectorConsumer, 
+                   times(processInstances)).handleCloudMessageSubscriptionCancelledEvent(ArgumentMatchers.<Message<CloudMessageSubscriptionCancelledEvent>>any());
+        });
+    }
 }

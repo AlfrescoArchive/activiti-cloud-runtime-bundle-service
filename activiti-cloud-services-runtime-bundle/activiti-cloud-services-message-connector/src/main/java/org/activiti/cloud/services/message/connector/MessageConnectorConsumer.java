@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.activiti.api.process.model.MessageSubscription;
 import org.activiti.api.process.model.StartMessageSubscription;
 import org.activiti.api.process.model.builders.MessagePayloadBuilder;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
@@ -16,7 +17,9 @@ import org.activiti.cloud.api.process.model.events.CloudBPMNMessageEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNMessageReceivedEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNMessageSentEvent;
 import org.activiti.cloud.api.process.model.events.CloudBPMNMessageWaitingEvent;
+import org.activiti.cloud.api.process.model.events.CloudMessageSubscriptionCancelledEvent;
 import org.activiti.cloud.api.process.model.events.CloudStartMessageDeployedEvent;
+import org.activiti.cloud.services.message.connector.channels.MessageConnectorChannels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,8 +116,22 @@ public class MessageConnectorConsumer {
             
             sendStartMessage(startMessage);
         }
-        
     }
+    
+    @StreamListener(MessageConnectorChannels.MESSAGE_SUBSCRIPTION_CANCELLED_EVENT_CONSUMER_CHANNEL)
+    public void handleCloudMessageSubscriptionCancelledEvent(Message<CloudMessageSubscriptionCancelledEvent> message) {
+        logger.info("handleCloudMessageSubscriptionCancelledEvent({})", message);
+        
+        MessageSubscription messageSubscription = message.getPayload().getEntity();
+        
+        SubscriptionKey key = new SubscriptionKey(messageSubscription.getEventName(),
+                                                  Optional.ofNullable(messageSubscription.getConfiguration()));
+        
+        synchronized (key.intern()) {
+            catchSubscriptions.remove(key);
+        }
+    }
+    
     
     private Message<ReceiveMessagePayload> receiveMessage(Message<CloudBPMNMessageSentEvent> message) {
         
