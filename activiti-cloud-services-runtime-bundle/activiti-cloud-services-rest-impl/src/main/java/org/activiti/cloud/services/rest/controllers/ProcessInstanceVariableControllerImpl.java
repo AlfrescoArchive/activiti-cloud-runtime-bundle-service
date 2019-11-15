@@ -15,7 +15,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
 import org.activiti.api.process.runtime.ProcessRuntime;
@@ -37,17 +36,14 @@ public class ProcessInstanceVariableControllerImpl implements ProcessInstanceVar
     private final ProcessInstanceVariableResourceAssembler variableResourceAssembler;
     private final ProcessRuntime processRuntime;
     private final ResourcesAssembler resourcesAssembler;
-    private final ProcessVariablesPayloadValidator processVariablesValidator;
-
+   
     @Autowired
     public ProcessInstanceVariableControllerImpl(ProcessInstanceVariableResourceAssembler variableResourceAssembler,
                                                  ProcessRuntime processRuntime,
-                                                 ResourcesAssembler resourcesAssembler,
-                                                 ProcessVariablesPayloadValidator processVariablesValidator) {
+                                                 ResourcesAssembler resourcesAssembler) {
         this.variableResourceAssembler = variableResourceAssembler;
         this.processRuntime = processRuntime;
         this.resourcesAssembler = resourcesAssembler;
-        this.processVariablesValidator = processVariablesValidator;
     }
 
     @Override
@@ -62,11 +58,9 @@ public class ProcessInstanceVariableControllerImpl implements ProcessInstanceVar
     public ResponseEntity<Void> setVariables(@PathVariable String processInstanceId,
                                              @RequestBody SetProcessVariablesPayload setProcessVariablesPayload) {
         
-        ProcessInstance processInstance = processRuntime.processInstance(processInstanceId);
-        setProcessVariablesPayload.setProcessInstanceId(processInstanceId);
-        
-        processVariablesValidator.checkPayloadVariables(setProcessVariablesPayload,
-                                                        processInstance.getProcessDefinitionKey());
+        if (setProcessVariablesPayload != null) {
+            setProcessVariablesPayload.setProcessInstanceId(processInstanceId);
+        }
 
         processRuntime.setVariables(setProcessVariablesPayload);
         return new ResponseEntity<>(HttpStatus.OK);

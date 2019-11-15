@@ -16,19 +16,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
@@ -65,6 +52,19 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @RunWith(SpringRunner.class)
 @WebMvcTest(ProcessInstanceVariableAdminControllerImpl.class)
 @EnableSpringDataWebSupport
@@ -94,9 +94,6 @@ public class ProcessInstanceVariableAdminControllerImplIT {
 
     @MockBean
     private MessageChannel commandResults;
-    
-    @MockBean
-    private ProcessVariablesPayloadValidator processVariablesValidator;
 
     @Autowired
     private ObjectMapper mapper;
@@ -106,7 +103,7 @@ public class ProcessInstanceVariableAdminControllerImplIT {
 
     @MockBean
     private RepositoryService repositoryService;
-    
+
     @MockBean
     private ProcessEngineChannels processEngineChannels;
 
@@ -119,14 +116,14 @@ public class ProcessInstanceVariableAdminControllerImplIT {
         processInstance = new ProcessInstanceImpl();
         processInstance.setId("1");
         processInstance.setProcessDefinitionKey("1");
-   
+
         this.mockMvc = MockMvcBuilders
-                .standaloneSetup(new ProcessInstanceVariableAdminControllerImpl(processAdminRuntime, processVariablesValidator))
+                .standaloneSetup(new ProcessInstanceVariableAdminControllerImpl(processAdminRuntime))
                 .setControllerAdvice(new RuntimeBundleExceptionHandler())
                 .build();
-        
+
         given(processAdminRuntime.processInstance(any()))
-              .willReturn(processInstance);
+                .willReturn(processInstance);
     }
 
     @Test
@@ -154,7 +151,7 @@ public class ProcessInstanceVariableAdminControllerImplIT {
         assertThat(expectedResponseBody).isEqualTo(actualResponseBody);
         verify(processAdminRuntime).setVariables(any());
     }
-    
+
     @Test
     public void deleteVariables() throws Exception {
         this.mockMvc.perform(delete("/admin/v1/process-instances/{processInstanceId}/variables",

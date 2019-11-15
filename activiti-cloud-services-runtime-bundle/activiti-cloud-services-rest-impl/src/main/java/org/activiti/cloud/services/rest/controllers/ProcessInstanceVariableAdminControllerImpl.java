@@ -16,7 +16,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.payloads.RemoveProcessVariablesPayload;
 import org.activiti.api.process.model.payloads.SetProcessVariablesPayload;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
@@ -31,35 +30,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class ProcessInstanceVariableAdminControllerImpl implements ProcessInstanceVariableAdminController {
     private final ProcessAdminRuntime processAdminRuntime;
-    private final ProcessVariablesPayloadValidator processVariablesValidator;
 
     @Autowired
-    public ProcessInstanceVariableAdminControllerImpl(ProcessAdminRuntime processAdminRuntime,
-                                                      ProcessVariablesPayloadValidator processVariablesValidator) {
+    public ProcessInstanceVariableAdminControllerImpl(ProcessAdminRuntime processAdminRuntime) {
         this.processAdminRuntime = processAdminRuntime;
-        this.processVariablesValidator = processVariablesValidator;
     }
 
     @Override
     public ResponseEntity<Void> updateVariables(@PathVariable String processInstanceId,
                                                 @RequestBody SetProcessVariablesPayload setProcessVariablesPayload) {
         
-        ProcessInstance processInstance = processAdminRuntime.processInstance(processInstanceId);
-        setProcessVariablesPayload.setProcessInstanceId(processInstanceId);
-        
-        processVariablesValidator.checkPayloadVariables(setProcessVariablesPayload,
-                                                        processInstance.getProcessDefinitionKey());
+        if (setProcessVariablesPayload != null) {
+            setProcessVariablesPayload.setProcessInstanceId(processInstanceId);
+        }
         
         processAdminRuntime.setVariables(setProcessVariablesPayload);
         return new ResponseEntity<>(HttpStatus.OK);
     }
-    
+
     @Override
     public ResponseEntity<Void> removeVariables(@PathVariable String processInstanceId,
                                                 @RequestBody RemoveProcessVariablesPayload removeProcessVariablesPayload) {
         if (removeProcessVariablesPayload!=null) {
             removeProcessVariablesPayload.setProcessInstanceId(processInstanceId);
-            
+
         }
         processAdminRuntime.removeVariables(removeProcessVariablesPayload);
 

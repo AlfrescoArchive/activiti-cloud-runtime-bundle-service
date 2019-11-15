@@ -16,6 +16,8 @@
 
 package org.activiti.cloud.services.rest.conf;
 
+import java.util.List;
+
 import org.activiti.cloud.services.events.converter.RuntimeBundleInfoAppender;
 import org.activiti.cloud.services.rest.assemblers.ConnectorDefinitionResourceAssembler;
 import org.activiti.cloud.services.rest.assemblers.ProcessDefinitionMetaResourceAssembler;
@@ -28,13 +30,8 @@ import org.activiti.cloud.services.rest.assemblers.ToCloudProcessDefinitionConve
 import org.activiti.cloud.services.rest.assemblers.ToCloudProcessInstanceConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudTaskConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudVariableInstanceConverter;
-import org.activiti.cloud.services.rest.controllers.ProcessVariablesPayloadValidator;
 import org.activiti.cloud.services.rest.controllers.ResourcesAssembler;
 import org.activiti.cloud.services.rest.controllers.RuntimeBundleRelProvider;
-import org.activiti.cloud.services.rest.controllers.TaskVariablesPayloadDateHandler;
-import org.activiti.common.util.DateFormatterProvider;
-import org.activiti.spring.process.model.ProcessExtensionModel;
-import org.activiti.spring.process.variable.VariableValidationService;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
@@ -45,9 +42,6 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.util.List;
-import java.util.Map;
 
 @Configuration
 @AutoConfigureAfter(WebMvcAutoConfiguration.class)
@@ -63,7 +57,7 @@ public class ServicesRestWebMvcAutoConfiguration implements WebMvcConfigurer {
     public ResourcesAssembler resourcesAssembler() {
         return new ResourcesAssembler();
     }
-    
+
     @Bean
     public ConnectorDefinitionResourceAssembler connectorDefinitionResourceAssembler() {
         return new ConnectorDefinitionResourceAssembler();
@@ -73,7 +67,7 @@ public class ServicesRestWebMvcAutoConfiguration implements WebMvcConfigurer {
     public ProcessDefinitionMetaResourceAssembler processDefinitionMetaResourceAssembler() {
         return new ProcessDefinitionMetaResourceAssembler();
     }
-    
+
     @Bean
     public ProcessInstanceResourceAssembler processInstanceResourceAssembler(RuntimeBundleInfoAppender runtimeBundleInfoAppender) {
         return new ProcessInstanceResourceAssembler(new ToCloudProcessInstanceConverter(runtimeBundleInfoAppender));
@@ -104,22 +98,6 @@ public class ServicesRestWebMvcAutoConfiguration implements WebMvcConfigurer {
         return new TaskVariableInstanceResourceAssembler(converter);
     }
     
-    @Bean
-    @ConditionalOnMissingBean
-    public ProcessVariablesPayloadValidator processVariablesPayloadValidator(DateFormatterProvider dateFormatterProvider,
-                                                                             Map<String, ProcessExtensionModel> processExtensionModelMap,
-                                                                             VariableValidationService variableValidationService) {
-        return new ProcessVariablesPayloadValidator(dateFormatterProvider,
-                                                    processExtensionModelMap,
-                                                    variableValidationService);
-    }
-    
-    @Bean
-    @ConditionalOnMissingBean
-    public TaskVariablesPayloadDateHandler taskVariablesPayloadValidator(DateFormatterProvider dateFormatterProvider) {
-        return new TaskVariablesPayloadDateHandler(dateFormatterProvider);
-    }
-
     @Override
     public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
         // for some, not yet identified, reason the ObjectMapper used by MappingJackson2HttpMessageConverter
@@ -133,7 +111,7 @@ public class ServicesRestWebMvcAutoConfiguration implements WebMvcConfigurer {
         }
 
     }
-    
+
     @Bean
     @ConditionalOnMissingBean
     public RuntimeBundleRelProvider runtimeBundleRelProvider() {

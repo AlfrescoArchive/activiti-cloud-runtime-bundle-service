@@ -15,9 +15,6 @@
 
 package org.activiti.cloud.services.rest.controllers;
 
-import java.util.Map;
-
-import org.activiti.api.process.model.ProcessDefinition;
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
@@ -50,19 +47,15 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
     private final ProcessAdminRuntime processAdminRuntime;
 
     private final SpringPageConverter pageConverter;
-    
-    private final ProcessVariablesPayloadValidator processVariablesValidator;
 
     public ProcessInstanceAdminControllerImpl(ProcessInstanceResourceAssembler resourceAssembler,
                                               AlfrescoPagedResourcesAssembler<ProcessInstance> pagedResourcesAssembler,
                                               ProcessAdminRuntime processAdminRuntime,
-                                              SpringPageConverter pageConverter,
-                                              ProcessVariablesPayloadValidator processVariablesValidator) {
+                                              SpringPageConverter pageConverter) {
         this.resourceAssembler = resourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
         this.processAdminRuntime = processAdminRuntime;
         this.pageConverter = pageConverter;
-        this.processVariablesValidator = processVariablesValidator;
     }
 
     @Override
@@ -72,35 +65,12 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
                                                   pageConverter.toSpringPage(pageable, processInstancePage),
                                                   resourceAssembler);
     }
-    
-    private String getProcessDefinitionKey(StartProcessPayload startProcessPayload) {
-        String processDefinitionKey = startProcessPayload.getProcessDefinitionKey();
-        
-        if (processDefinitionKey == null && startProcessPayload.getProcessDefinitionId() != null) {
-            ProcessDefinition processDefinition = processAdminRuntime.processDefinition(startProcessPayload.getProcessDefinitionId());
-            if (processDefinition != null) {
-                processDefinitionKey = processDefinition.getKey();
-            }
-        }
-        
-        if (processDefinitionKey == null) {
-            throw new IllegalStateException("At least Process Definition Id or Key needs to be provided to start a process");
-        }
-        
-        return processDefinitionKey;   
-    }
    
     @Override
     public Resource<CloudProcessInstance> startProcess(@RequestBody StartProcessPayload startProcessPayload) {
-        Map<String, Object> variables = startProcessPayload.getVariables(); 
-        if (variables != null && !variables.isEmpty()) {
-            
-            processVariablesValidator.checkStartProcessPayloadVariables(startProcessPayload,
-                                                                        getProcessDefinitionKey(startProcessPayload));
-        }    
         return resourceAssembler.toResource(processAdminRuntime.start(startProcessPayload));
     }
-    
+
     @Override
     public Resource<CloudProcessInstance> getProcessInstanceById(@PathVariable String processInstanceId) {
         return resourceAssembler.toResource(processAdminRuntime.processInstance(processInstanceId));
@@ -111,33 +81,32 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
         return resourceAssembler.toResource(processAdminRuntime.resume(ProcessPayloadBuilder.resume(processInstanceId)));
     }
 
-
 	@Override
 	public Resource<CloudProcessInstance> suspend(@PathVariable String processInstanceId) {
 		return resourceAssembler.toResource(processAdminRuntime.suspend(ProcessPayloadBuilder.suspend(processInstanceId)));
 	}
-	
+
     @Override
     public Resource<CloudProcessInstance> deleteProcessInstance(@PathVariable String processInstanceId) {
         return resourceAssembler.toResource(processAdminRuntime.delete(ProcessPayloadBuilder.delete(processInstanceId)));
     }
-    
+
     @Override
     public Resource<CloudProcessInstance> updateProcess(@PathVariable String processInstanceId,
                                                         @RequestBody UpdateProcessPayload payload) {
         if (payload!=null) {
             payload.setProcessInstanceId(processInstanceId);
-            
+
         }
         return resourceAssembler.toResource(processAdminRuntime.update(payload));
     }
-	
+
     @Override
     public PagedResources<Resource<CloudProcessInstance>> subprocesses(@PathVariable String processInstanceId,
                                                                        Pageable pageable) {
         Page<ProcessInstance> processInstancePage = processAdminRuntime.processInstances(pageConverter.toAPIPageable(pageable),
                                                                                          ProcessPayloadBuilder.subprocesses(processInstanceId));
-                
+
         return pagedResourcesAssembler.toResource(pageable,
                                                   pageConverter.toSpringPage(pageable, processInstancePage),
                                                   resourceAssembler);
@@ -146,14 +115,14 @@ public class ProcessInstanceAdminControllerImpl implements ProcessInstanceAdminC
     @Override
     public Resource<CloudProcessInstance> start(@RequestBody StartMessagePayload startMessagePayload) {
         ProcessInstance processInstance = processAdminRuntime.start(startMessagePayload);
-        
+
         return resourceAssembler.toResource(processInstance);
     }
 
     @Override
     public ResponseEntity<Void> receive(@RequestBody ReceiveMessagePayload receiveMessagePayload) {
         processAdminRuntime.receive(receiveMessagePayload);
-        
+
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
