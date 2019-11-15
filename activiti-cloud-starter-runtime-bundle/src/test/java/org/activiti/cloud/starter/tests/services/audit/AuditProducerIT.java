@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.activiti.api.model.shared.event.RuntimeEvent;
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
@@ -664,30 +665,49 @@ public class AuditProducerIT {
 
         //then
         await().untilAsserted(() -> {
-                List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
-                receivedEvents = receivedEvents.stream()
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+            receivedEvents = receivedEvents.stream()
                     .filter(event -> startProcessEntity.getBody().getId().equals(event.getProcessInstanceId()))
                     .collect(Collectors.toList());
 
-                assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == TASK_CREATED)
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_CREATED, "My Task 0"),
+                            tuple(TASK_CREATED, "My Task 1"),
+                            tuple(TASK_CREATED, "My Task 2"),
+                            tuple(TASK_CREATED, "My Task 3"),
+                            tuple(TASK_CREATED, "My Task 4")
+                    );
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == TASK_ASSIGNED)
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_ASSIGNED, "My Task 0"),
+                            tuple(TASK_ASSIGNED, "My Task 1"),
+                            tuple(TASK_ASSIGNED, "My Task 2"),
+                            tuple(TASK_ASSIGNED, "My Task 3"),
+                            tuple(TASK_ASSIGNED, "My Task 4")
+                    );
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == TASK_COMPLETED)
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_COMPLETED, "My Task 0"),
+                            tuple(TASK_COMPLETED, "My Task 1")
+                    );
 
 
-                assertThat(receivedEvents)
-                        .filteredOn(event -> event.getEventType() == TASK_CREATED)
-                        .size().isEqualTo(5);
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == TASK_CANCELLED)
+                    .size().isEqualTo(0);
+        });
 
-                assertThat(receivedEvents)
-                        .filteredOn(event -> event.getEventType() == TASK_ASSIGNED)
-                        .size().isEqualTo(5);
-
-                assertThat(receivedEvents)
-                        .filteredOn(event -> event.getEventType() == TASK_COMPLETED)
-                        .size().isEqualTo(2);
-
-                assertThat(receivedEvents)
-                        .filteredOn(event -> event.getEventType() == TASK_CANCELLED)
-                        .size().isEqualTo(0);
-            });
 
         //complete condition expression passed
         taskRestTemplate.complete(tasks.get(2));
@@ -706,23 +726,49 @@ public class AuditProducerIT {
 
             assertThat(receivedEvents)
                     .filteredOn(event -> event.getEventType() == TASK_CREATED)
-                    .size().isEqualTo(5);
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_CREATED, "My Task 0"),
+                            tuple(TASK_CREATED, "My Task 1"),
+                            tuple(TASK_CREATED, "My Task 2"),
+                            tuple(TASK_CREATED, "My Task 3"),
+                            tuple(TASK_CREATED, "My Task 4")
+                    );
 
             assertThat(receivedEvents)
                     .filteredOn(event -> event.getEventType() == TASK_ASSIGNED)
-                    .size().isEqualTo(5);
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_ASSIGNED, "My Task 0"),
+                            tuple(TASK_ASSIGNED, "My Task 1"),
+                            tuple(TASK_ASSIGNED, "My Task 2"),
+                            tuple(TASK_ASSIGNED, "My Task 3"),
+                            tuple(TASK_ASSIGNED, "My Task 4")
+                    );
 
             assertThat(receivedEvents)
                     .filteredOn(event -> event.getEventType() == TASK_COMPLETED)
-                    .size().isEqualTo(3);
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_COMPLETED, "My Task 0"),
+                            tuple(TASK_COMPLETED, "My Task 1"),
+                            tuple(TASK_COMPLETED, "My Task 2")
+                    );
 
             assertThat(receivedEvents)
                     .filteredOn(event -> event.getEventType() == TASK_CANCELLED)
-                    .size().isEqualTo(2);
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_CANCELLED, "My Task 3"),
+                            tuple(TASK_CANCELLED, "My Task 4")
+                    );
+
+            assertThat(receivedEvents).extracting(RuntimeEvent::getEventType,
+                    RuntimeEvent::getProcessInstanceId)
+                    .contains(tuple(PROCESS_COMPLETED, startProcessEntity.getBody().getId()));
         });
 
     }
-
 
     @Test
     public void shouldProduceEventsDuringMultiInstanceSubProcessExecution() {
@@ -746,12 +792,35 @@ public class AuditProducerIT {
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
 
             assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == TASK_CREATED)
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_CREATED, "My Task 0"),
+                            tuple(TASK_CREATED, "My Task 1"),
+                            tuple(TASK_CREATED, "My Task 2"),
+                            tuple(TASK_CREATED, "My Task 3"),
+                            tuple(TASK_CREATED, "My Task 4")
+                    );
+
+            assertThat(receivedEvents)
                     .filteredOn(event -> event.getEventType() == TASK_ASSIGNED)
-                    .size().isEqualTo(5);
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_ASSIGNED, "My Task 0"),
+                            tuple(TASK_ASSIGNED, "My Task 1"),
+                            tuple(TASK_ASSIGNED, "My Task 2"),
+                            tuple(TASK_ASSIGNED, "My Task 3"),
+                            tuple(TASK_ASSIGNED, "My Task 4")
+                    );
 
             assertThat(receivedEvents)
                     .filteredOn(event -> event.getEventType() == TASK_COMPLETED)
-                    .size().isEqualTo(2);
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_COMPLETED, "My Task 0"),
+                            tuple(TASK_COMPLETED, "My Task 1")
+                    );
+
 
             assertThat(receivedEvents)
                     .filteredOn(event -> event.getEventType() == TASK_CANCELLED)
@@ -775,6 +844,205 @@ public class AuditProducerIT {
 
             assertThat(receivedEvents)
                     .filteredOn(event -> event.getEventType() == TASK_CREATED)
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_CREATED, "My Task 0"),
+                            tuple(TASK_CREATED, "My Task 1"),
+                            tuple(TASK_CREATED, "My Task 2"),
+                            tuple(TASK_CREATED, "My Task 3"),
+                            tuple(TASK_CREATED, "My Task 4")
+                    );
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == TASK_ASSIGNED)
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_ASSIGNED, "My Task 0"),
+                            tuple(TASK_ASSIGNED, "My Task 1"),
+                            tuple(TASK_ASSIGNED, "My Task 2"),
+                            tuple(TASK_ASSIGNED, "My Task 3"),
+                            tuple(TASK_ASSIGNED, "My Task 4")
+                    );
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == TASK_COMPLETED)
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_COMPLETED, "My Task 0"),
+                            tuple(TASK_COMPLETED, "My Task 1"),
+                            tuple(TASK_COMPLETED, "My Task 2")
+                    );
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == TASK_CANCELLED)
+                    .extracting(RuntimeEvent::getEventType, event -> ((Task) event.getEntity()).getName())
+                    .contains(
+                            tuple(TASK_CANCELLED, "My Task 3"),
+                            tuple(TASK_CANCELLED, "My Task 4")
+                    );
+
+            assertThat(receivedEvents).extracting(RuntimeEvent::getEventType,
+                    RuntimeEvent::getProcessInstanceId)
+                    .contains(tuple(PROCESS_COMPLETED, startProcessEntity.getBody().getId()));
+        });
+
+    }
+
+    @Test
+    public void shouldProduceEventsDuringMultiInstanceManualTaskExecution() {
+
+        //when
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcessByKey("miParallelManualTasksCompletionCondition", null, null);
+
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> startProcessEntity.getBody().getId().equals(event.getProcessInstanceId()))
+                    .collect(Collectors.toList());
+
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> "miTasks".equals(event.getEntityId()))
+                    .collect(Collectors.toList());
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_STARTED)
+                    .size().isEqualTo(5);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_COMPLETED)
+                    .size().isEqualTo(1);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_CANCELLED)
+                    .size().isGreaterThanOrEqualTo(1);
+
+            assertThat(streamHandler.getAllReceivedEvents()).extracting(RuntimeEvent::getEventType,
+                    RuntimeEvent::getProcessInstanceId)
+                    .contains(tuple(PROCESS_COMPLETED, startProcessEntity.getBody().getId()));
+        });
+
+    }
+
+    @Test
+    public void shouldProduceEventsDuringMultiInstanceServiceTaskExecution() {
+
+        Map<String, Object> variable = new HashMap<>();
+        variable.put("result", 10);
+
+        //when
+        ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcessByKey("multiInstanceServiceTask", variable, null);
+
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> startProcessEntity.getBody().getId().equals(event.getProcessInstanceId()))
+                    .collect(Collectors.toList());
+
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> "miServiceTask".equals(event.getEntityId()))
+                    .collect(Collectors.toList());
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_STARTED)
+                    .size().isEqualTo(5);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_COMPLETED)
+                    .size().isEqualTo(1);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == ACTIVITY_CANCELLED)
+                    .size().isGreaterThanOrEqualTo(1);
+
+            assertThat(streamHandler.getAllReceivedEvents()).extracting(RuntimeEvent::getEventType,
+                    RuntimeEvent::getProcessInstanceId)
+                    .contains(tuple(PROCESS_COMPLETED, startProcessEntity.getBody().getId()));
+
+        });
+
+    }
+
+    @Test
+    public void shouldProduceEventsDuringMultiInstanceCallActivityExecution() {
+        List<CloudTask> tasks = null;
+
+        CloudProcessInstance startProcessEntity = processInstanceRestTemplate.startProcessByKey("miParallelCallActivity", null, null)
+                .getBody();
+
+        List<ProcessInstance> process = new ArrayList<ProcessInstance>(
+                processInstanceRestTemplate.getSubprocesses(startProcessEntity.getId())
+                        .getBody().getContent()
+        );
+        assertThat(process.size()).isEqualTo(5);
+
+
+        for(int i=0; i < 2; i++) {
+            tasks = new ArrayList<>(
+                    processInstanceRestTemplate.getTasks(process.get(i).getId()).getBody().getContent()
+            );
+            assertThat(tasks.size()).isEqualTo(1);
+            taskRestTemplate.complete(tasks.get(0));
+        }
+
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> startProcessEntity.getId().equals(event.getParentProcessInstanceId()))
+                    .collect(Collectors.toList());
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == PROCESS_STARTED)
+                    .size().isEqualTo(5);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == TASK_ASSIGNED)
+                    .size().isEqualTo(5);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == TASK_COMPLETED)
+                    .size().isEqualTo(2);
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == PROCESS_COMPLETED)
+                    .size().isEqualTo(2);
+
+        });
+
+        //complete condition expression passed
+        tasks = new ArrayList<>(processInstanceRestTemplate.getTasks(process.get(3).getId()).getBody().getContent());
+        assertThat(tasks.size()).isEqualTo(1);
+        taskRestTemplate.complete(tasks.get(0));
+
+        process = new ArrayList<ProcessInstance>(
+                processInstanceRestTemplate.getSubprocesses(startProcessEntity.getId())
+                        .getBody().getContent()
+        );
+        assertThat(process.size()).isEqualTo(0);
+
+        //then
+        await().untilAsserted(() -> {
+            List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
+            receivedEvents = receivedEvents.stream()
+                    .filter(event -> startProcessEntity.getId().equals(event.getParentProcessInstanceId()))
+                    .collect(Collectors.toList());
+
+            assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
+
+
+            assertThat(receivedEvents)
+                    .filteredOn(event -> event.getEventType() == PROCESS_STARTED)
                     .size().isEqualTo(5);
 
             assertThat(receivedEvents)
@@ -786,8 +1054,8 @@ public class AuditProducerIT {
                     .size().isEqualTo(3);
 
             assertThat(receivedEvents)
-                    .filteredOn(event -> event.getEventType() == TASK_CANCELLED)
-                    .size().isEqualTo(2);
+                    .filteredOn(event -> event.getEventType() == PROCESS_COMPLETED)
+                    .size().isEqualTo(5);
         });
 
     }
@@ -801,6 +1069,5 @@ public class AuditProducerIT {
                 null,
                 responseType);
     }
-
 
 }
