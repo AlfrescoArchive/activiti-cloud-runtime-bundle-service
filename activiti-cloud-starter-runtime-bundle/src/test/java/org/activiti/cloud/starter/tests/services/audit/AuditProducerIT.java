@@ -28,6 +28,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.model.builders.StartProcessPayloadBuilder;
@@ -65,11 +75,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(AuditProducerIT.AUDIT_PRODUCER_IT)
@@ -651,11 +656,11 @@ public class AuditProducerIT {
     public void shouldProduceCancelEventsDuringMultiInstanceExecution() {
 
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcessByKey("miParallelUserTasksCompletionCondition", null, null);
-        Collection<CloudTask> tasks = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
+        List<CloudTask> tasks = new ArrayList<>(processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent());
         assertThat(tasks.size()).isEqualTo(5);
 
-        taskRestTemplate.complete((Task) tasks.toArray()[0]);
-        taskRestTemplate.complete((Task) tasks.toArray()[1]);
+        taskRestTemplate.complete(tasks.get(0));
+        taskRestTemplate.complete(tasks.get(1));
 
         //then
         await().untilAsserted(() -> {
@@ -685,7 +690,7 @@ public class AuditProducerIT {
             });
 
         //complete condition expression passed
-        taskRestTemplate.complete((Task) tasks.toArray()[2]);
+        taskRestTemplate.complete(tasks.get(2));
 
         Collection<CloudTask> pendingTask = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
         assertThat(pendingTask.size()).isEqualTo(0);
@@ -725,11 +730,11 @@ public class AuditProducerIT {
         //when
         ResponseEntity<CloudProcessInstance> startProcessEntity = processInstanceRestTemplate.startProcessByKey("miParallelSubprocessCompletionCondition", null, null);
 
-        Collection<CloudTask> tasks = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
+        List<CloudTask> tasks = new ArrayList<>(processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent());
         assertThat(tasks.size()).isEqualTo(5);
 
-        taskRestTemplate.complete((Task) tasks.toArray()[0]);
-        taskRestTemplate.complete((Task) tasks.toArray()[1]);
+        taskRestTemplate.complete(tasks.get(0));
+        taskRestTemplate.complete(tasks.get(1));
 
         //then
         await().untilAsserted(() -> {
@@ -754,7 +759,7 @@ public class AuditProducerIT {
         });
 
         //complete condition expression passed
-        taskRestTemplate.complete((Task) tasks.toArray()[2]);
+        taskRestTemplate.complete(tasks.get(2));
 
         Collection<CloudTask> pendingTask = processInstanceRestTemplate.getTasks(startProcessEntity).getBody().getContent();
         assertThat(pendingTask.size()).isEqualTo(0);
