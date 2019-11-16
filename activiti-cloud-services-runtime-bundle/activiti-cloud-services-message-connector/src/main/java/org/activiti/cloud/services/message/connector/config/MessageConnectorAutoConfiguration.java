@@ -18,8 +18,8 @@ public class MessageConnectorAutoConfiguration {
     
     @Bean
     @ConditionalOnMissingBean
-    public MessageConnectorConsumer messageConnectorConsumer() {
-        return new MessageConnectorConsumer();
+    public MessageConnectorConsumer messageConnectorConsumer(MessageConnectorChannels.Producer producer) {
+        return new MessageConnectorConsumer(producer);
     }
 
 }

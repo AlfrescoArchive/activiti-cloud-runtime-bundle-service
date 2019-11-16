@@ -22,7 +22,6 @@ import org.activiti.cloud.api.process.model.events.CloudStartMessageDeployedEven
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorChannels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -34,8 +33,11 @@ public class MessageConnectorConsumer {
     private static Set<SubscriptionKey> catchSubscriptions = new HashSet<>();
     private static Set<SubscriptionKey> startSubscriptions = new HashSet<>();
     
-    @Autowired
-    private MessageConnectorChannels.Producer producer;
+    private final MessageConnectorChannels.Producer producer;
+    
+    public MessageConnectorConsumer(MessageConnectorChannels.Producer producer) {
+        this.producer = producer;
+    }
     
     @StreamListener(MessageConnectorChannels.BPMN_MESSAGE_SENT_EVENT_CONSUMER_CHANNEL)
     public void handleCloudBPMNMessageSentEvent(Message<CloudBPMNMessageSentEvent> message) {
