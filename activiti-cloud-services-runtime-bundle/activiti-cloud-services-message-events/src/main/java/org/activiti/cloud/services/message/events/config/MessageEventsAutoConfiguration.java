@@ -23,7 +23,6 @@ import org.activiti.cloud.services.message.events.BpmnMessageEventMessageBuilder
 import org.activiti.cloud.services.message.events.BpmnMessageReceivedEventMessageProducer;
 import org.activiti.cloud.services.message.events.BpmnMessageSentEventMessageProducer;
 import org.activiti.cloud.services.message.events.BpmnMessageWaitingEventMessageProducer;
-import org.activiti.cloud.services.message.events.MessageEventsProcessEngineConfigurator;
 import org.activiti.cloud.services.message.events.MessageSubscriptionCancelledEventMessageProducer;
 import org.activiti.cloud.services.message.events.MessageSubscriptionEventMessageBuilderFactory;
 import org.activiti.cloud.services.message.events.ReceiveMessagePayloadMessageStreamListener;
@@ -126,10 +125,4 @@ public class MessageEventsAutoConfiguration {
         return new StartMessagePayloadMessageStreamListener(processAdminRuntime);
     }
     
-    @Bean
-    @ConditionalOnMissingBean
-    public MessageEventsProcessEngineConfigurator bpmnMessagesEngineConfigurator() {
-        return new MessageEventsProcessEngineConfigurator();
-    }
-
 }
