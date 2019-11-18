@@ -1,10 +1,11 @@
 package org.activiti.cloud.starter.tests.services.audit;
 
-import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.*;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_STARTED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_COMPLETED;
+import static org.activiti.api.process.model.events.BPMNActivityEvent.ActivityEvents.ACTIVITY_CANCELLED;
 import static org.activiti.api.process.model.events.BPMNMessageEvent.MessageEvents.MESSAGE_RECEIVED;
 import static org.activiti.api.process.model.events.BPMNMessageEvent.MessageEvents.MESSAGE_WAITING;
 import static org.activiti.api.process.model.events.BPMNSignalEvent.SignalEvents.SIGNAL_RECEIVED;
-import static org.activiti.api.process.model.events.MessageSubscriptionEvent.MessageSubscriptionEvents.MESSAGE_SUBSCRIPTION_CANCELLED;
 import static org.activiti.api.process.model.events.MessageSubscriptionEvent.MessageSubscriptionEvents.MESSAGE_SUBSCRIPTION_CANCELLED;
 import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_COMPLETED;
 import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessEvents.PROCESS_CREATED;
@@ -12,7 +13,11 @@ import static org.activiti.api.process.model.events.ProcessRuntimeEvent.ProcessE
 import static org.activiti.api.process.model.events.SequenceFlowEvent.SequenceFlowEvents.SEQUENCE_FLOW_TAKEN;
 import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_ADDED;
 import static org.activiti.api.task.model.events.TaskCandidateGroupEvent.TaskCandidateGroupEvents.TASK_CANDIDATE_GROUP_REMOVED;
-import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.*;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CREATED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_COMPLETED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_CANCELLED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_ASSIGNED;
+import static org.activiti.api.task.model.events.TaskRuntimeEvent.TaskEvents.TASK_UPDATED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
@@ -444,6 +449,7 @@ public class EmbeddedSubProcessAuditIT {
         Execution executionWithMessage = runtimeService.createExecutionQuery().messageEventSubscriptionName("messageName").singleResult();
         assertThat(executionWithMessage).isNotNull();
 
+        // event-subprocess received interrupted message event
         runtimeService.messageEventReceived("messageName", executionWithMessage.getId());
 
         await().untilAsserted(() -> {
@@ -458,9 +464,9 @@ public class EmbeddedSubProcessAuditIT {
                         CloudRuntimeEvent::getProcessDefinitionKey)
             .containsExactly(
                              tuple(MESSAGE_RECEIVED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(MESSAGE_SUBSCRIPTION_CANCELLED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
                              tuple(ACTIVITY_CANCELLED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
                              tuple(TASK_CANCELLED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
+                             tuple(MESSAGE_SUBSCRIPTION_CANCELLED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
                              tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
                              tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
                              tuple(ACTIVITY_STARTED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
@@ -504,6 +510,7 @@ public class EmbeddedSubProcessAuditIT {
         Execution executionWithMessage = runtimeService.createExecutionQuery().messageEventSubscriptionName("messageName").singleResult();
         assertThat(executionWithMessage).isNotNull();
 
+        // event-subprocess received non interrupted message event
         runtimeService.messageEventReceived("messageName", executionWithMessage.getId());
 
         await().untilAsserted(() -> {
@@ -518,6 +525,7 @@ public class EmbeddedSubProcessAuditIT {
                         CloudRuntimeEvent::getProcessDefinitionKey)
             .containsExactly(
                              tuple(MESSAGE_RECEIVED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
+                             tuple(MESSAGE_SUBSCRIPTION_CANCELLED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
                              tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
                              tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
                              tuple(ACTIVITY_STARTED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
