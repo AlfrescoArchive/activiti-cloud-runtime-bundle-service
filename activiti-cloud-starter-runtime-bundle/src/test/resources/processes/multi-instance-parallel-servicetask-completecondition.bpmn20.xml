@@ -8,6 +8,7 @@
     <process id="multiInstanceServiceTask">
         <startEvent id="startevent1" name="Start"></startEvent>
         <sequenceFlow id="flow1" name="" sourceRef="startevent1" targetRef="miServiceTask"></sequenceFlow>
+
         <serviceTask id="miServiceTask" name="miServiceTask"
                      activiti:class="org.activiti.cloud.starter.tests.delegate.MultiInstanceDelegate">
             <multiInstanceLoopCharacteristics>
@@ -15,9 +16,8 @@
                 <completionCondition>${nrOfCompletedInstances/nrOfInstances >= 0.5}</completionCondition>
             </multiInstanceLoopCharacteristics>
         </serviceTask>
-        <sequenceFlow id="flow2" name="" sourceRef="miServiceTask" targetRef="wait"></sequenceFlow>
-        <receiveTask id="wait"></receiveTask>
-        <sequenceFlow id="flow3" name="" sourceRef="wait" targetRef="theEnd"></sequenceFlow>
+
+        <sequenceFlow id="flow2" name="" sourceRef="miServiceTask" targetRef="theEnd"></sequenceFlow>
         <endEvent id="theEnd"></endEvent>
     </process>
 
