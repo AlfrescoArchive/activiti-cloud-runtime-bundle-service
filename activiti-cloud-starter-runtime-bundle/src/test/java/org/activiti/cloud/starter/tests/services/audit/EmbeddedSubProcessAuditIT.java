@@ -74,8 +74,8 @@ public class EmbeddedSubProcessAuditIT {
     private static final String SIMPLE_EMBEDDED_SUB_PROCESS = "startSimpleSubProcess";
     private static final String SIMPLE_EMBEDDED_SUB_PROCESS_WITH_CALLACTIVITY = "startSimpleSubProcessWithCallActivity";
     private static final String SIMPLE_EMBEDDED_SUB_PROCESS_WITH_SIGNAL_EVENT = "signalSubProcess";
-    private static final String SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT = "messageInterruptingSubProcess";
-    private static final String SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT = "messageNonInterruptingSubProcess";
+    private static final String INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS = "messageInterruptingSubProcess";
+    private static final String NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS = "messageNonInterruptingSubProcess";
 
     private static final String ROUTING_KEY_HEADER = "routingKey";
     private static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
@@ -421,7 +421,7 @@ public class EmbeddedSubProcessAuditIT {
     @Test
     public void shouldExecuteProcessWithMessageInterruptedEventSubProcess() {
         //given
-        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(buildStartProcessPayload(SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT));
+        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(buildStartProcessPayload(INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS));
 
         String processInstanceId = processInstance.getBody().getId();
 
@@ -434,15 +434,24 @@ public class EmbeddedSubProcessAuditIT {
                                 CloudRuntimeEvent::getProcessInstanceId,
                                 CloudRuntimeEvent::getParentProcessInstanceId,
                                 CloudRuntimeEvent::getProcessDefinitionKey)
-                    .containsExactly(tuple(PROCESS_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(PROCESS_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(MESSAGE_WAITING,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(TASK_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(TASK_ASSIGNED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT)
+                    .containsExactly(tuple(PROCESS_CREATED, processInstanceId, null,
+                                           INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(PROCESS_STARTED, processInstanceId, null,
+                                           INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(MESSAGE_WAITING, processInstanceId, null,
+                                           INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(ACTIVITY_STARTED, processInstanceId, null,
+                                           INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(ACTIVITY_COMPLETED, processInstanceId, null,
+                                           INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null,
+                                           INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(ACTIVITY_STARTED, processInstanceId, null,
+                                           INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(TASK_CREATED, processInstanceId, null,
+                                           INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(TASK_ASSIGNED, processInstanceId, null,
+                                           INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS)
                     );
         });
 
@@ -463,16 +472,26 @@ public class EmbeddedSubProcessAuditIT {
                         CloudRuntimeEvent::getParentProcessInstanceId,
                         CloudRuntimeEvent::getProcessDefinitionKey)
             .containsExactly(
-                             tuple(MESSAGE_RECEIVED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(ACTIVITY_CANCELLED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(TASK_CANCELLED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(MESSAGE_SUBSCRIPTION_CANCELLED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(ACTIVITY_STARTED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(PROCESS_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_INTERRUPTING_MESSAGE_EVENT)
+                             tuple(MESSAGE_RECEIVED, processInstanceId, null,
+                                   INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(ACTIVITY_CANCELLED, processInstanceId, null,
+                                   INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(TASK_CANCELLED, processInstanceId, null,
+                                   INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(MESSAGE_SUBSCRIPTION_CANCELLED, processInstanceId, null,
+                                   INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(ACTIVITY_COMPLETED, processInstanceId, null,
+                                   INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null,
+                                   INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(ACTIVITY_STARTED, processInstanceId, null,
+                                   INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(ACTIVITY_COMPLETED, processInstanceId, null,
+                                   INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(ACTIVITY_COMPLETED, processInstanceId, null,
+                                   INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(PROCESS_COMPLETED, processInstanceId, null,
+                                   INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS)
             );
         });
 
@@ -482,7 +501,7 @@ public class EmbeddedSubProcessAuditIT {
     @Test
     public void shouldExecuteProcessWithMessageNonInterruptedEventSubProcess() {
         //given
-        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(buildStartProcessPayload(SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT));
+        ResponseEntity<CloudProcessInstance> processInstance = processInstanceRestTemplate.startProcess(buildStartProcessPayload(NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS));
 
         String processInstanceId = processInstance.getBody().getId();
 
@@ -495,15 +514,24 @@ public class EmbeddedSubProcessAuditIT {
                                 CloudRuntimeEvent::getProcessInstanceId,
                                 CloudRuntimeEvent::getParentProcessInstanceId,
                                 CloudRuntimeEvent::getProcessDefinitionKey)
-                    .containsExactly(tuple(PROCESS_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(PROCESS_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(MESSAGE_WAITING,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(ACTIVITY_STARTED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(TASK_CREATED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                                     tuple(TASK_ASSIGNED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT)
+                    .containsExactly(tuple(PROCESS_CREATED, processInstanceId, null,
+                                           NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(PROCESS_STARTED, processInstanceId, null,
+                                           NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(MESSAGE_WAITING, processInstanceId, null,
+                                           NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(ACTIVITY_STARTED, processInstanceId, null,
+                                           NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(ACTIVITY_COMPLETED, processInstanceId, null,
+                                           NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null,
+                                           NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(ACTIVITY_STARTED, processInstanceId, null,
+                                           NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(TASK_CREATED, processInstanceId, null,
+                                           NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                                     tuple(TASK_ASSIGNED, processInstanceId, null,
+                                           NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS)
                     );
         });
 
@@ -524,13 +552,20 @@ public class EmbeddedSubProcessAuditIT {
                         CloudRuntimeEvent::getParentProcessInstanceId,
                         CloudRuntimeEvent::getProcessDefinitionKey)
             .containsExactly(
-                             tuple(MESSAGE_RECEIVED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(MESSAGE_SUBSCRIPTION_CANCELLED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(ACTIVITY_STARTED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                             tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT)
+                             tuple(MESSAGE_RECEIVED, processInstanceId, null,
+                                   NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(MESSAGE_SUBSCRIPTION_CANCELLED, processInstanceId, null,
+                                   NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(ACTIVITY_COMPLETED, processInstanceId, null,
+                                   NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null,
+                                   NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(ACTIVITY_STARTED, processInstanceId, null,
+                                   NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(ACTIVITY_COMPLETED, processInstanceId, null,
+                                   NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                             tuple(ACTIVITY_COMPLETED, processInstanceId, null,
+                                   NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS)
             );
         });
 
@@ -550,12 +585,18 @@ public class EmbeddedSubProcessAuditIT {
                             CloudRuntimeEvent::getParentProcessInstanceId,
                             CloudRuntimeEvent::getProcessDefinitionKey)
                     .containsExactly(
-                            tuple(TASK_COMPLETED,processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                            tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                            tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                            tuple(ACTIVITY_STARTED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                            tuple(ACTIVITY_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT),
-                            tuple(PROCESS_COMPLETED, processInstanceId, null, SIMPLE_EMBEDDED_SUB_PROCESS_WITH_NON_INTERRUPTING_MESSAGE_EVENT)
+                            tuple(TASK_COMPLETED, processInstanceId, null,
+                                  NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                            tuple(ACTIVITY_COMPLETED, processInstanceId, null,
+                                  NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                            tuple(SEQUENCE_FLOW_TAKEN, processInstanceId, null,
+                                  NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                            tuple(ACTIVITY_STARTED, processInstanceId, null,
+                                  NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                            tuple(ACTIVITY_COMPLETED, processInstanceId, null,
+                                  NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS),
+                            tuple(PROCESS_COMPLETED, processInstanceId, null,
+                                  NON_INTERRUPTING_MESSAGE_EVENT_SUB_PROCESS)
                     );
         });
 
