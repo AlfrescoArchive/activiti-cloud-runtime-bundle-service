@@ -19,12 +19,12 @@ public class UserCandidatesResourceAssembler implements ResourceAssembler<String
         this.taskId = taskId;
     }
 
+    public String getTaskId() {
+        return taskId;
+    }
+
     @Override
     public Resource<String> toResource(String userCandidates) {
-
-        List<Link> links = new ArrayList<>();
-        links.add(linkTo(methodOn(TaskControllerImpl.class).getUserCandidates(taskId)).withSelfRel());
-
-        return new Resource<>(userCandidates, links);
+        return new Resource<>(userCandidates);
     }
 }

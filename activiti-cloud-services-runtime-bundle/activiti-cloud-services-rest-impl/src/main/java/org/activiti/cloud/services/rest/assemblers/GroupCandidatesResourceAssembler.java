@@ -19,10 +19,12 @@ public class GroupCandidatesResourceAssembler implements ResourceAssembler<Strin
         this.taskId = taskId;
     }
 
+    public String getTaskId() {
+        return taskId;
+    }
+
     @Override
     public Resource<String> toResource(String groupCandidates) {
-        List<Link> links = new ArrayList<>();
-        links.add(linkTo(methodOn(TaskControllerImpl.class).getGroupCandidates(taskId)).withSelfRel());
-        return new Resource<>(groupCandidates, links);
+        return new Resource<>(groupCandidates);
     }
 }
