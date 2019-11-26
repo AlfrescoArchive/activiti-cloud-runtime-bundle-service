@@ -55,8 +55,8 @@ import org.activiti.cloud.api.process.model.events.CloudBPMNActivityStartedEvent
 import org.activiti.cloud.api.process.model.events.CloudProcessDeployedEvent;
 import org.activiti.cloud.api.task.model.CloudTask;
 import org.activiti.cloud.api.task.model.events.CloudTaskCancelledEvent;
-import org.activiti.cloud.api.task.model.events.CloudTaskCreatedEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserRemovedEvent;
+import org.activiti.cloud.api.task.model.events.CloudTaskCreatedEvent;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.cloud.starter.tests.helper.TaskRestTemplate;
 import org.activiti.engine.RuntimeService;
@@ -211,8 +211,7 @@ public class AuditProducerIT {
                                            startProcessEntity.getBody().getBusinessKey(),
                                            "sid-CDFE7219-4627-43E9-8CA8-866CC38EBA94",
                                            "taskFormKey"));
-            
-            
+                       
         });
 
         //when
