@@ -3,7 +3,6 @@ package org.activiti.cloud.services.message.connector;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -35,7 +34,7 @@ public class MessageConnectorConsumer {
     
     private final MessageConnectorChannels.Producer producer;
     
-    public MessageConnectorConsumer(MessageConnectorChannels.Producer producer) {
+    public MessageConnectorConsumer(MessageConnectorChannels.Producer producer) { 
         this.producer = producer;
     }
     
@@ -45,7 +44,7 @@ public class MessageConnectorConsumer {
 
         SubscriptionKey key = key(message.getPayload());
         
-        synchronized (key.intern()) {
+        synchronized (key.getId()) {
             messages.put(key, message);
 
             if (startSubscriptions.contains(key)) {
@@ -67,7 +66,7 @@ public class MessageConnectorConsumer {
         
         SubscriptionKey key = key(message.getPayload());
 
-        synchronized (key.intern()) {
+        synchronized (key.getId()) {
             messages.remove(key);
             catchSubscriptions.remove(key);
         }
@@ -80,7 +79,7 @@ public class MessageConnectorConsumer {
         SubscriptionKey key = key(message.getPayload());
         Message<CloudBPMNMessageSentEvent> existingMessage = null;
 
-        synchronized (key.intern()) {
+        synchronized (key.getId()) {
             catchSubscriptions.add(key);
             
             existingMessage = messages.get(key);
@@ -107,7 +106,7 @@ public class MessageConnectorConsumer {
         
         Message<CloudBPMNMessageSentEvent> existingMessage = null;
 
-        synchronized (key.intern()) {
+        synchronized (key.getId()) {
             startSubscriptions.add(key);
             
             existingMessage = messages.get(key);
@@ -129,7 +128,7 @@ public class MessageConnectorConsumer {
         SubscriptionKey key = new SubscriptionKey(messageSubscription.getEventName(),
                                                   Optional.ofNullable(messageSubscription.getConfiguration()));
         
-        synchronized (key.intern()) {
+        synchronized (key.getId()) {
             catchSubscriptions.remove(key);
         }
     }
@@ -186,59 +185,6 @@ public class MessageConnectorConsumer {
                                    Optional.ofNullable(messagePayload.getCorrelationKey()));
     }
     
-    static class SubscriptionKey {
-        private final String messageName;
-        private final Optional<String> correlationKey;
-
-        public SubscriptionKey(String messageName, 
-                               Optional<String> correlationKey) {
-            this.messageName = messageName;
-            this.correlationKey = correlationKey;
-        }
-        
-        public String intern() {
-            return new String(this.messageName + this.correlationKey.orElse("")).intern();
-        }
-        
-        public String getMessageName() {
-            return messageName;
-        }
-        
-        public Optional<String> getCorrelationKey() {
-            return correlationKey;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(correlationKey, 
-                                messageName);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            SubscriptionKey other = (SubscriptionKey) obj;
-            return Objects.equals(correlationKey, other.correlationKey) && Objects.equals(messageName,
-                                                                                          other.messageName);
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("SubscriptionKey [messageName=");
-            builder.append(messageName);
-            builder.append(", correlationKey=");
-            builder.append(correlationKey);
-            builder.append("]");
-            return builder.toString();
-        }
-        
-    }
  
     
 }

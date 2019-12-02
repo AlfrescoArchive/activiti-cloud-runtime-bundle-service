@@ -1,2 +1,7 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-    org.activiti.cloud.services.message.connector.config.MessageConnectorAutoConfiguration
+    org.activiti.cloud.services.message.connector.config.MessageConnectorAutoConfiguration,\
+    org.activiti.cloud.services.message.connector.config.MessageStoreAutoConfiguration
+    
+org.springframework.boot.env.EnvironmentPostProcessor=\
+  org.activiti.cloud.services.message.connector.config.MessageStoreEnvironmentPostProcessor    
+    
