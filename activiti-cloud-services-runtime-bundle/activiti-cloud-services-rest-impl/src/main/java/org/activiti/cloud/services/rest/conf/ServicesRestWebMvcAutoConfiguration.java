@@ -27,6 +27,8 @@ import org.activiti.cloud.services.rest.assemblers.ProcessInstanceResourceAssemb
 import org.activiti.cloud.services.rest.assemblers.ProcessInstanceVariableResourceAssembler;
 import org.activiti.cloud.services.rest.assemblers.TaskResourceAssembler;
 import org.activiti.cloud.services.rest.assemblers.TaskVariableInstanceResourceAssembler;
+import org.activiti.cloud.services.rest.assemblers.ToCandidateGroupConverter;
+import org.activiti.cloud.services.rest.assemblers.ToCandidateUserConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudProcessDefinitionConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudProcessInstanceConverter;
 import org.activiti.cloud.services.rest.assemblers.ToCloudTaskConverter;
@@ -93,6 +95,16 @@ public class ServicesRestWebMvcAutoConfiguration implements WebMvcConfigurer {
     @Bean
     public GroupCandidatesResourceAssembler groupCandidatesResourceAssembler(){
         return new GroupCandidatesResourceAssembler();
+    }
+
+    @Bean
+    public ToCandidateUserConverter toCandidateUsersConverter(){
+        return new ToCandidateUserConverter();
+    }
+
+    @Bean
+    public ToCandidateGroupConverter toCandidateGroupsConverter(){
+        return new ToCandidateGroupConverter();
     }
 
     @Bean

@@ -1,17 +1,10 @@
 package org.activiti.cloud.services.rest.assemblers;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.activiti.cloud.services.rest.controllers.TaskControllerImpl;
-import org.springframework.hateoas.Link;
+import org.activiti.cloud.api.process.model.impl.CandidateUser;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.ResourceAssembler;
 
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
-import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
-
-public class UserCandidatesResourceAssembler implements ResourceAssembler<String, Resource<String>>{
+public class UserCandidatesResourceAssembler implements ResourceAssembler<CandidateUser, Resource<CandidateUser>>{
 
     private String taskId;
 
@@ -24,7 +17,7 @@ public class UserCandidatesResourceAssembler implements ResourceAssembler<String
     }
 
     @Override
-    public Resource<String> toResource(String userCandidates) {
-        return new Resource<>(userCandidates);
+    public Resource<CandidateUser> toResource(CandidateUser candidateUser) {
+        return new Resource<>(candidateUser);
     }
 }

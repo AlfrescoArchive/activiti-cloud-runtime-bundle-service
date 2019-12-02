@@ -53,6 +53,8 @@ import org.activiti.cloud.api.process.model.CloudProcessDefinition;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.api.process.model.events.CloudBPMNActivityStartedEvent;
 import org.activiti.cloud.api.process.model.events.CloudProcessDeployedEvent;
+import org.activiti.cloud.api.process.model.impl.CandidateGroup;
+import org.activiti.cloud.api.process.model.impl.CandidateUser;
 import org.activiti.cloud.api.task.model.CloudTask;
 import org.activiti.cloud.api.task.model.events.CloudTaskCancelledEvent;
 import org.activiti.cloud.api.task.model.events.CloudTaskCandidateUserRemovedEvent;
@@ -475,13 +477,14 @@ public class AuditProducerIT {
             assertThat(((TaskCandidateUser) receivedEvents.get(0).getEntity()).getUserId()).isEqualTo("testuser");
         });
 
-        ResponseEntity<Resources<Resource<String>>>  userCandidates = taskRestTemplate.getUserCandidates(task.getId());
+        ResponseEntity<Resources<Resource<CandidateUser>>>  userCandidates = taskRestTemplate.getUserCandidates(task.getId());
         assertThat(userCandidates).isNotNull();
         assertThat(userCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(userCandidates.getBody().getContent().size()).isEqualTo(2);
         assertThat(userCandidates.getBody().getContent()
                            .stream()
                            .map(Resource::getContent)
+                           .map(CandidateUser::getUser)
         ).containsExactly("hruser",
                           "testuser");
 
@@ -515,6 +518,7 @@ public class AuditProducerIT {
         assertThat(userCandidates.getBody().getContent()
                            .stream()
                            .map(Resource::getContent)
+                           .map(CandidateUser::getUser)
         ).containsExactly("hruser");
 
         //Delete task
@@ -530,7 +534,7 @@ public class AuditProducerIT {
         CloudTask task = taskRestTemplate.createTask(TaskPayloadBuilder.create().withName("task2").withDescription(
                 "test task description").withAssignee("hruser").build());
 
-        ResponseEntity<Resources<Resource<String>>> groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
+        ResponseEntity<Resources<Resource<CandidateGroup>>> groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
         assertThat(groupCandidates).isNotNull();
         assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(groupCandidates.getBody().getContent().size()).isEqualTo(0);
@@ -565,6 +569,7 @@ public class AuditProducerIT {
         assertThat(groupCandidates.getBody().getContent()
                            .stream()
                            .map(Resource::getContent)
+                           .map(CandidateGroup::getGroup)
         ).containsExactly("hr");
 
         //when

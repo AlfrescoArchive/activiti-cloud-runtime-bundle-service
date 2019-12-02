@@ -390,10 +390,10 @@ public class TaskControllerImplIT {
                 .andReturn();
 
         assertThatJson(result.getResponse().getContentAsString())
-                .node("list.entries[0].entry")
+                .node("list.entries[0].entry.user")
                 .isEqualTo("hruser");
         assertThatJson(result.getResponse().getContentAsString())
-                .node("list.entries[1].entry")
+                .node("list.entries[1].entry.user")
                 .isEqualTo("testuser");
     }
 
@@ -413,10 +413,10 @@ public class TaskControllerImplIT {
                 .andReturn();
 
         assertThatJson(result.getResponse().getContentAsString())
-                .node("list.entries[0].entry")
+                .node("list.entries[0].entry.group")
                 .isEqualTo("hrgroup");
         assertThatJson(result.getResponse().getContentAsString())
-                .node("list.entries[1].entry")
+                .node("list.entries[1].entry.group")
                 .isEqualTo("testgroup");
     }
 

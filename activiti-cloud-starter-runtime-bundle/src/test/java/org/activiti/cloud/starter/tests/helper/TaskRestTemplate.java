@@ -33,6 +33,8 @@ import org.activiti.api.task.model.payloads.SaveTaskPayload;
 import org.activiti.api.task.model.payloads.UpdateTaskPayload;
 import org.activiti.api.task.model.payloads.UpdateTaskVariablePayload;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
+import org.activiti.cloud.api.process.model.impl.CandidateGroup;
+import org.activiti.cloud.api.process.model.impl.CandidateUser;
 import org.activiti.cloud.api.task.model.CloudTask;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -57,7 +59,9 @@ public class TaskRestTemplate {
     };
     private static final ParameterizedTypeReference<PagedResources<CloudTask>> PAGED_TASKS_RESPONSE_TYPE = new ParameterizedTypeReference<PagedResources<CloudTask>>() {
     };
-    private static final ParameterizedTypeReference<Resources<Resource<String>>> CANDIDATES_RESPONSE_TYPE = new ParameterizedTypeReference<Resources<Resource<String>>> () {
+    private static final ParameterizedTypeReference<Resources<Resource<CandidateUser>>> CANDIDATE_USERS_RESPONSE_TYPE = new ParameterizedTypeReference<Resources<Resource<CandidateUser>>> () {
+    };
+    private static final ParameterizedTypeReference<Resources<Resource<CandidateGroup>>> CANDIDATES_GROUPS_RESPONSE_TYPE = new ParameterizedTypeReference<Resources<Resource<CandidateGroup>>> () {
     };
     private static final ParameterizedTypeReference<Void> VOID_RESPONSE_TYPE = new ParameterizedTypeReference<Void>() {
     };
@@ -156,11 +160,11 @@ public class TaskRestTemplate {
                                          TASK_RESPONSE_TYPE);
     }
     
-    public ResponseEntity<Resources<Resource<String>>> getUserCandidates(String taskId) {
-        ResponseEntity<Resources<Resource<String>>> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + taskId+"/candidate-users",
-                                                                             HttpMethod.GET,
-                                                                             null,
-                                                                                CANDIDATES_RESPONSE_TYPE);
+    public ResponseEntity<Resources<Resource<CandidateUser>>> getUserCandidates(String taskId) {
+        ResponseEntity<Resources<Resource<CandidateUser>>> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + taskId + "/candidate-users",
+                                                                                                      HttpMethod.GET,
+                                                                                                      null,
+                                                                                                      CANDIDATE_USERS_RESPONSE_TYPE);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }
@@ -183,11 +187,11 @@ public class TaskRestTemplate {
         return responseEntity;
     }
 
-    public ResponseEntity<Resources<Resource<String>>> getGroupCandidates(String taskId) {
-        ResponseEntity<Resources<Resource<String>>> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + taskId+"/candidate-groups",
-                                                                             HttpMethod.GET,
-                                                                             null,
-                                                                                CANDIDATES_RESPONSE_TYPE);
+    public ResponseEntity<Resources<Resource<CandidateGroup>>> getGroupCandidates(String taskId) {
+        ResponseEntity<Resources<Resource<CandidateGroup>>> responseEntity = testRestTemplate.exchange(TASK_VAR_RELATIVE_URL + taskId + "/candidate-groups",
+                                                                                                       HttpMethod.GET,
+                                                                                                       null,
+                                                                                                       CANDIDATES_GROUPS_RESPONSE_TYPE);
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         return responseEntity;
     }

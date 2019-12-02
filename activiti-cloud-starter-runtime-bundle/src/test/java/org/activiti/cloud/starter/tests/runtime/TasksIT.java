@@ -32,6 +32,8 @@ import org.activiti.api.task.model.payloads.UpdateTaskPayload;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.activiti.cloud.api.process.model.CloudProcessDefinition;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
+import org.activiti.cloud.api.process.model.impl.CandidateGroup;
+import org.activiti.cloud.api.process.model.impl.CandidateUser;
 import org.activiti.cloud.api.task.model.CloudTask;
 import org.activiti.cloud.services.test.identity.keycloak.interceptor.KeycloakTokenProducer;
 import org.activiti.cloud.starter.tests.helper.ProcessDefinitionRestTemplate;
@@ -467,13 +469,14 @@ public class TasksIT {
         Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
         
         //then check that we have one candidate
-        ResponseEntity<Resources<Resource<String>>> userCandidates = taskRestTemplate.getUserCandidates(task.getId());
+        ResponseEntity<Resources<Resource<CandidateUser>>> userCandidates = taskRestTemplate.getUserCandidates(task.getId());
         assertThat(userCandidates).isNotNull();
         assertThat(userCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(userCandidates.getBody().getContent().size()).isEqualTo(1);
         assertThat(userCandidates.getBody().getContent()
                            .stream()
                            .map(Resource::getContent)
+                           .map(CandidateUser::getUser)
         ).containsExactly("hruser");
         taskRestTemplate.claim(task);
         
@@ -497,6 +500,7 @@ public class TasksIT {
         assertThat(userCandidates.getBody().getContent()
                            .stream()
                            .map(Resource::getContent)
+                           .map(CandidateUser::getUser)
         ).containsExactly("hruser",
                           "testuser");
 
@@ -521,13 +525,14 @@ public class TasksIT {
         Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
         
         //then check that we have one candidate
-        ResponseEntity<Resources<Resource<String>>> userCandidates = taskRestTemplate.getUserCandidates(task.getId());
+        ResponseEntity<Resources<Resource<CandidateUser>>> userCandidates = taskRestTemplate.getUserCandidates(task.getId());
         assertThat(userCandidates).isNotNull();
         assertThat(userCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(userCandidates.getBody().getContent().size()).isEqualTo(1);
         assertThat(userCandidates.getBody().getContent()
                            .stream()
                            .map(Resource::getContent)
+                           .map(CandidateUser::getUser)
         ).containsExactly("hruser");
           
         taskRestTemplate.claim(task);
@@ -553,6 +558,7 @@ public class TasksIT {
         assertThat(userCandidates.getBody().getContent()
                            .stream()
                            .map(Resource::getContent)
+                           .map(CandidateUser::getUser)
         ).containsExactly("hruser",
                           "testuser");
         
@@ -576,6 +582,7 @@ public class TasksIT {
         assertThat(userCandidates.getBody().getContent()
                            .stream()
                            .map(Resource::getContent)
+                           .map(CandidateUser::getUser)
         ).containsExactly("hruser");
         
     }
@@ -587,13 +594,14 @@ public class TasksIT {
         Task task = processInstanceRestTemplate.getTasks(processInstanceEntity).getBody().iterator().next();
 
         //then check that we have no group candidate
-        ResponseEntity<Resources<Resource<String>>> groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
+        ResponseEntity<Resources<Resource<CandidateGroup>>> groupCandidates = taskRestTemplate.getGroupCandidates(task.getId());
         assertThat(groupCandidates).isNotNull();
         assertThat(groupCandidates.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(groupCandidates.getBody().getContent().size()).isEqualTo(1);
         assertThat(groupCandidates.getBody().getContent()
                            .stream()
                            .map(Resource::getContent)
+                           .map(CandidateGroup::getGroup)
         ).containsExactly("hr");
 
 
@@ -631,6 +639,7 @@ public class TasksIT {
         assertThat(groupCandidates.getBody().getContent()
                            .stream()
                            .map(Resource::getContent)
+                           .map(CandidateGroup::getGroup)
         ).containsExactly("hr");
 
     }

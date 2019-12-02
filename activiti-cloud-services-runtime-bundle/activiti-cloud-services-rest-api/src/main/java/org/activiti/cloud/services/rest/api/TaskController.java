@@ -1,14 +1,14 @@
 package org.activiti.cloud.services.rest.api;
 
-import java.util.List;
-
 import org.activiti.api.task.model.payloads.CandidateGroupsPayload;
 import org.activiti.api.task.model.payloads.CandidateUsersPayload;
 import org.activiti.api.task.model.payloads.CompleteTaskPayload;
 import org.activiti.api.task.model.payloads.CreateTaskPayload;
 import org.activiti.api.task.model.payloads.SaveTaskPayload;
 import org.activiti.api.task.model.payloads.UpdateTaskPayload;
+import org.activiti.cloud.api.process.model.impl.CandidateGroup;
 import org.activiti.cloud.api.task.model.CloudTask;
+import org.activiti.cloud.api.process.model.impl.CandidateUser;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedResources;
@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+
 
 @RequestMapping(value = "/v1/tasks", produces = {MediaTypes.HAL_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE})
 public interface TaskController {
@@ -65,7 +66,7 @@ public interface TaskController {
                               @RequestBody CandidateUsersPayload candidateUsersPayload);
     
     @RequestMapping(value = "/{taskId}/candidate-users", method = RequestMethod.GET)
-    Resources<Resource<String>> getUserCandidates(@PathVariable("taskId") String taskId);
+    Resources<Resource<CandidateUser>> getUserCandidates(@PathVariable("taskId") String taskId);
     
     
     @RequestMapping(value = "/{taskId}/candidate-groups", method = RequestMethod.POST)
@@ -78,5 +79,5 @@ public interface TaskController {
     
        
     @RequestMapping(value = "/{taskId}/candidate-groups", method = RequestMethod.GET)
-    Resources<Resource<String>> getGroupCandidates(@PathVariable("taskId") String taskId);
+    Resources<Resource<CandidateGroup>> getGroupCandidates(@PathVariable("taskId") String taskId);
 }
