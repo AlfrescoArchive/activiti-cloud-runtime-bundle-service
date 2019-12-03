@@ -3,6 +3,8 @@ package org.activiti.cloud.services.message.connector.processor;
 import java.util.Collection;
 import java.util.Comparator;
 
+import org.activiti.api.process.model.builders.MessagePayloadBuilder;
+import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
 import org.activiti.cloud.services.message.connector.support.MessageTimestampComparator;
 import org.activiti.cloud.services.message.connector.support.SpELEvaluatingMessageListProcessor;
@@ -49,8 +51,14 @@ public class ReceiveMessagePayloadGroupProcessor implements MessageGroupProcesso
     }
     
     private Message<?> receiveMessagePayload(Message<?> message) {
-        return MessageBuilder.fromMessage(message)
-                             .setHeader("payloadType", ReceiveMessagePayload.class.getSimpleName())
+        MessageEventPayload messageEventPayload = MessageEventPayload.class.cast(message.getPayload());
+
+        ReceiveMessagePayload payload = MessagePayloadBuilder.receive(messageEventPayload.getName())
+                                                             .withCorrelationKey(messageEventPayload.getCorrelationKey())
+                                                             .withVariables(messageEventPayload.getVariables())
+                                                             .build();
+        return MessageBuilder.withPayload(payload)
+                             .copyHeaders(message.getHeaders())
                              .build();
     }
     

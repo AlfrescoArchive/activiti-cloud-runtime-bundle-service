@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
+import org.activiti.api.process.model.builders.MessagePayloadBuilder;
+import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.model.payloads.StartMessagePayload;
 import org.activiti.cloud.services.message.connector.support.MessageTimestampComparator;
 import org.activiti.cloud.services.message.connector.support.SpELEvaluatingMessageListProcessor;
@@ -41,18 +43,24 @@ public class StartMessagePayloadGroupProcessor implements MessageGroupProcessorH
                                                       result);
             return result.stream()
                          .sorted(comparator)
-                         .map(this::startMessagePayload)
+                         .map(this::messageEventPayload)
                          .collect(Collectors.toList());
         }
         
         return null;
     }
     
-    private Message<?> startMessagePayload(Message<?> message) {
-        return MessageBuilder.fromMessage(message)
-                             .setHeader("payloadType",
-                                        StartMessagePayload.class.getSimpleName())
-                             .build();
+    private Message<?> messageEventPayload(Message<?> message) {
+        MessageEventPayload eventPayload = MessageEventPayload.class.cast(message.getPayload());
+
+        StartMessagePayload startPayload = MessagePayloadBuilder.start(eventPayload.getName())
+                                                                .withBusinessKey(eventPayload.getBusinessKey())
+                                                                .withVariables(eventPayload.getVariables())
+                                                                .build();
+
+        return MessageBuilder.withPayload(startPayload)
+                             .copyHeaders(message.getHeaders())
+                             .build();       
     }
     
     public boolean canProcess(MessageGroup group) {

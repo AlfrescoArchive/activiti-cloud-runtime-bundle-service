@@ -3,6 +3,8 @@ package org.activiti.cloud.services.message.connector.test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -14,6 +16,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+import org.activiti.api.process.model.builders.MessageEventPayloadBuilder;
+import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
 import org.activiti.cloud.services.message.connector.config.MessageConnectorAggregatorConfiguration;
 import org.junit.Test;
@@ -48,18 +52,18 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
         properties = {
-                "spring.cloud.stream.bindings.output.contentType=application/x-java-serialized-object",
-                "spring.cloud.stream.bindings.input.contentType=application/x-java-serialized-object"
+                "spring.cloud.stream.bindings.output.contentType=application/json",
+                "spring.cloud.stream.bindings.input.contentType=application/json"
         }
 )
 @DirtiesContext
-@Import(MessageConnectorAggregatorConfiguration.class)
+@Import({MessageConnectorAggregatorConfiguration.class})
 public abstract class MessageConnectorAggregatorTests {
 
     @Autowired
     protected Processor channels;
-
-    @Autowired
+    
+    @Autowired 
     protected MessageCollector collector;
 
     @Autowired
@@ -331,6 +335,7 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).hasSize(2)
                                        .extracting(Message::getPayload)
                                        .asList()
+                                       .extracting("name")
                                        .containsOnly("waiting1", "waiting2");
         
         send(messageReceivedEvent(correlationId, "received1"));
@@ -342,11 +347,12 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).hasSize(1)
                                        .extracting(Message::getPayload)
                                        .asList()
+                                       .extracting("name")
                                        .containsOnly("waiting2");
         
         send(messageSentEvent(correlationId, "sent2"));
 
-        out = poll(0, TimeUnit.SECONDS);
+        out = poll(1, TimeUnit.SECONDS);
 
         assertThat(peek()).isNull();
 
@@ -360,6 +366,7 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).hasSize(1)
                                        .extracting(Message::getPayload)
                                        .asList()
+                                       .extracting("name")
                                        .containsOnly("waiting2");
         
         send(messageReceivedEvent(correlationId, "received2"));
@@ -398,8 +405,8 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).hasSize(2)
                                        .extracting(Message::getPayload)
                                        .asList()
-                                       .containsOnly("sent2", "waiting1");
-        
+                                       .extracting("name")
+                                       .contains("sent2", "waiting1");
         // when 
         send(messageReceivedEvent(correlationId, "received1"));
 
@@ -411,8 +418,8 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).hasSize(1)
                                        .extracting(Message::getPayload)
                                        .asList()
+                                       .extracting("name")
                                        .containsOnly("sent2");
-        
         // when
         send(messageWaitingEvent(correlationId, "waiting2"));
 
@@ -430,6 +437,7 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).hasSize(1)
                                        .extracting(Message::getPayload)
                                        .asList()
+                                       .extracting("name")
                                        .containsOnly("waiting2");
         
         send(messageReceivedEvent(correlationId, "received2"));
@@ -469,11 +477,11 @@ public abstract class MessageConnectorAggregatorTests {
         String correlationId = "message:1";
         messageGroupStore.removeMessageGroup(correlationId);
 
-        Message<String> catchMessage = messageWaitingEvent(correlationId, "waiting"); 
+        Message<MessageEventPayload> waitingMessage = messageWaitingEvent(correlationId, "waiting"); 
 
         // when                                      
-        input().send(catchMessage);
-        input().send(catchMessage);
+        input().send(waitingMessage);
+        input().send(waitingMessage);
 
         // then
         assertThat(peek()).isNull();
@@ -483,7 +491,7 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).isNotNull()
                                        .hasSize(1);
         // given
-        Message<String> receivedMessage = messageReceivedEvent(correlationId, "recieved");
+        Message<MessageEventPayload> receivedMessage = messageReceivedEvent(correlationId, "recieved");
         
         // when
         input().send(receivedMessage);
@@ -509,7 +517,11 @@ public abstract class MessageConnectorAggregatorTests {
                              .build();
     }
     
-    private static <T> Message<T> messageSentEvent(String correlationId, T payload) {
+    private Message<MessageEventPayload> messageSentEvent(String correlationId, String name) {
+        MessageEventPayload payload = messageEventPayload(name,
+                                                          "businessKey",
+                                                          correlationId,
+                                                          Collections.emptyMap());
         return MessageBuilder.withPayload(payload)
                              .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
                              .setHeader("eventType", "MESSAGE_SENT")
@@ -517,7 +529,11 @@ public abstract class MessageConnectorAggregatorTests {
                              .build();
     }
 
-    private static <T> Message<T> messageWaitingEvent(String correlationId, T payload) {
+    private Message<MessageEventPayload> messageWaitingEvent(String correlationId, String name) {
+        MessageEventPayload payload = messageEventPayload(name,
+                                                          "businessKey",
+                                                          correlationId,
+                                                          Collections.emptyMap());
         return MessageBuilder.withPayload(payload)
                              .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
                              .setHeader("eventType", "MESSAGE_WAITING")
@@ -525,7 +541,12 @@ public abstract class MessageConnectorAggregatorTests {
                              .build();
     }
 
-    private static <T> Message<T> messageReceivedEvent(String correlationId, T payload) {
+    private Message<MessageEventPayload> messageReceivedEvent(String correlationId, String name) {
+        MessageEventPayload payload = messageEventPayload(name,
+                                                          "businessKey",
+                                                          correlationId,
+                                                          Collections.emptyMap());
+
         return MessageBuilder.withPayload(payload)
                              .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
                              .setHeader("eventType", "MESSAGE_RECEIVED")
@@ -533,14 +554,25 @@ public abstract class MessageConnectorAggregatorTests {
                              .build();
     }
 
-    private static <T> Message<T> subscriptionCancelledEvent(String correlationId, T payload) {
+    private <T> Message<T> subscriptionCancelledEvent(String correlationId, T payload) {
         return MessageBuilder.withPayload(payload)
                              .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
                              .setHeader("eventType", "MESSAGE_SUBSCRIPTION_CANCELLED")
                              .setHeader("messageId", UUID.randomUUID())
                              .build();
     }
-    
+
+    private MessageEventPayload messageEventPayload(String name,
+                                                    String businessKey,
+                                                    String correlationKey,
+                                                    Map<String, Object> variables) {
+        return MessageEventPayloadBuilder.messageEvent(name)
+                                         .withBusinessKey(businessKey)
+                                         .withVariables(variables)
+                                         .withCorrelationKey(correlationKey)
+                                         .build();
+    }    
+
     protected void send(Message<?> message) {
         this.channels.input()
                      .send(message);        
@@ -548,12 +580,12 @@ public abstract class MessageConnectorAggregatorTests {
  
     protected <T> Message<T> poll(long timeout, TimeUnit unit) throws InterruptedException {
         return (Message<T>) this.collector.forChannel(this.channels.output())
-                             .poll(timeout, unit);
+                                          .poll(timeout, unit);
     }
 
     protected <T> Message<T> peek() {
         return (Message<T>) this.collector.forChannel(this.channels.output())
-                             .peek();
+                                          .peek();
     }
  
     protected MessageChannel input() {
@@ -681,6 +713,6 @@ public abstract class MessageConnectorAggregatorTests {
         private static <T extends Throwable> void sneakyThrow(Throwable t) throws T {
             throw (T) t;
         }
-    }    
-
+    }
+    
 }
