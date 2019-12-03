@@ -72,16 +72,17 @@ public class MessageConnectorAggregatorConfiguration {
                                .gateway(flow -> flow.log()
                                                     //.filter("payloadType") // with discard
                                                     .handle(messageConnectorAggregator, 
-                                                            handler -> handler.advice(new MessageReceivedHandlerAdvice(messageStore,
+                                                            handler -> handler.id("aggregator")
+                                                                              .advice(new MessageReceivedHandlerAdvice(messageStore,
                                                                                                                        correlationStrategy,
                                                                                                                        lockTemplate))
                                                                               .advice(new SubscriptionCancelledHandlerAdvice(messageStore,
                                                                                                                              correlationStrategy,
                                                                                                                              lockTemplate)))
-                                                    //.transform(genericTransformer)
                                                     .channel(processor.output())                                                     
                                         ,
                                         flowSpec -> flowSpec.transactional()
+                                                            .id("gateway")
                                                             .requiresReply(false)
                                                             .async(true)
                                                             .replyTimeout(0L)
@@ -128,7 +129,6 @@ public class MessageConnectorAggregatorConfiguration {
     public CorrelationStrategy correlationStrategy() {
         return new HeaderAttributeCorrelationStrategy(IntegrationMessageHeaderAccessor.CORRELATION_ID);
     }
-
     
     @Bean
     @ConditionalOnMissingBean(name = "metadataStoreKeyStrategy")
