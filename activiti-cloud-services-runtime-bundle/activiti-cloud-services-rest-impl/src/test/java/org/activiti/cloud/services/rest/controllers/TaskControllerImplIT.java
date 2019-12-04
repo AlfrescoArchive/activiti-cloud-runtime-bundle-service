@@ -61,12 +61,9 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
-import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pageRequestParameters;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.pagedResourcesResponseFields;
-import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.resourcesResponseFields;
 import static org.activiti.alfresco.rest.docs.HALDocumentation.pagedTasksFields;
 import static org.activiti.api.task.model.Task.TaskStatus.CREATED;
 import static org.activiti.cloud.services.rest.controllers.TaskSamples.buildDefaultAssignedTask;
@@ -373,51 +370,6 @@ public class TaskControllerImplIT {
                                  .content(mapper.writeValueAsString(updateTaskCmd)))
                 .andExpect(status().isOk())
                 .andDo(print());
-    }
-
-    @Test
-    public void getUserCandidatesShouldUseAlfrescoGuidelineWhenMediaTypeIsApplicationJson() throws Exception {
-
-        List<String> stringList = Arrays.asList("hruser",
-                                                "testuser");
-        when(taskRuntime.userCandidates("1")).thenReturn(stringList);
-
-        MvcResult result = this.mockMvc.perform(get("/v1/tasks/{taskId}/candidate-users",
-                                                    1).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
-                                resourcesResponseFields()))
-                .andReturn();
-
-        assertThatJson(result.getResponse().getContentAsString())
-                .node("list.entries[0].entry.user")
-                .isEqualTo("hruser");
-        assertThatJson(result.getResponse().getContentAsString())
-                .node("list.entries[1].entry.user")
-                .isEqualTo("testuser");
-    }
-
-
-    @Test
-    public void getGroupCandidatesShouldUseAlfrescoGuidelineWhenMediaTypeIsApplicationJson() throws Exception {
-
-        List<String> stringList = Arrays.asList("hrgroup",
-                                                "testgroup");
-        when(taskRuntime.groupCandidates("1")).thenReturn(stringList);
-
-        MvcResult result = this.mockMvc.perform(get("/v1/tasks/{taskId}/candidate-groups",
-                                                    1).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
-                                resourcesResponseFields()))
-                .andReturn();
-
-        assertThatJson(result.getResponse().getContentAsString())
-                .node("list.entries[0].entry.group")
-                .isEqualTo("hrgroup");
-        assertThatJson(result.getResponse().getContentAsString())
-                .node("list.entries[1].entry.group")
-                .isEqualTo("testgroup");
     }
 
 }

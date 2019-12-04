@@ -1,19 +1,14 @@
 package org.activiti.cloud.services.rest.api;
 
-import org.activiti.api.task.model.payloads.CandidateGroupsPayload;
-import org.activiti.api.task.model.payloads.CandidateUsersPayload;
 import org.activiti.api.task.model.payloads.CompleteTaskPayload;
 import org.activiti.api.task.model.payloads.CreateTaskPayload;
 import org.activiti.api.task.model.payloads.SaveTaskPayload;
 import org.activiti.api.task.model.payloads.UpdateTaskPayload;
-import org.activiti.cloud.api.process.model.impl.CandidateGroup;
 import org.activiti.cloud.api.task.model.CloudTask;
-import org.activiti.cloud.api.process.model.impl.CandidateUser;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.Resources;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -56,28 +51,4 @@ public interface TaskController {
 
     @RequestMapping(value = "/{taskId}/subtasks", method = RequestMethod.GET)
     PagedResources<Resource<CloudTask>> getSubtasks(Pageable pageable, @PathVariable String taskId);
-    
-    @RequestMapping(value = "/{taskId}/candidate-users", method = RequestMethod.POST)
-    void addCandidateUsers(@PathVariable("taskId") String taskId,
-                           @RequestBody CandidateUsersPayload candidateUsersPayload);
-    
-    @RequestMapping(value = "/{taskId}/candidate-users", method = RequestMethod.DELETE)
-    void deleteCandidateUsers(@PathVariable("taskId") String taskId,
-                              @RequestBody CandidateUsersPayload candidateUsersPayload);
-    
-    @RequestMapping(value = "/{taskId}/candidate-users", method = RequestMethod.GET)
-    Resources<Resource<CandidateUser>> getUserCandidates(@PathVariable("taskId") String taskId);
-    
-    
-    @RequestMapping(value = "/{taskId}/candidate-groups", method = RequestMethod.POST)
-    void addCandidateGroups(@PathVariable("taskId") String taskId,
-                            @RequestBody CandidateGroupsPayload candidateGroupsPayload);
-    
-    @RequestMapping(value = "/{taskId}/candidate-groups", method = RequestMethod.DELETE)
-    void deleteCandidateGroups(@PathVariable("taskId") String taskId,
-                               @RequestBody CandidateGroupsPayload candidateGroupsPayload);
-    
-       
-    @RequestMapping(value = "/{taskId}/candidate-groups", method = RequestMethod.GET)
-    Resources<Resource<CandidateGroup>> getGroupCandidates(@PathVariable("taskId") String taskId);
 }

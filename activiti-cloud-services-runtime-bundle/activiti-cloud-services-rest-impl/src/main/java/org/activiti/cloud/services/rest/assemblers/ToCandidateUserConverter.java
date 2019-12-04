@@ -9,7 +9,7 @@ public class ToCandidateUserConverter {
 
     public List<CandidateUser> from (List<String> users){
         List<CandidateUser> list = new ArrayList();
-        users.forEach(u -> list.add(new CandidateUser(u)));
+        users.forEach(user -> list.add(new CandidateUser(user)));
         return list;
     }
 }

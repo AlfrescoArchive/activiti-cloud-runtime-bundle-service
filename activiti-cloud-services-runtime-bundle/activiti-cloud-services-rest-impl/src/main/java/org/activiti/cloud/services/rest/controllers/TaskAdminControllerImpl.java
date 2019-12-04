@@ -19,28 +19,18 @@ import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.api.task.model.Task;
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.api.task.model.payloads.AssignTaskPayload;
-import org.activiti.api.task.model.payloads.CandidateGroupsPayload;
-import org.activiti.api.task.model.payloads.CandidateUsersPayload;
 import org.activiti.api.task.model.payloads.CompleteTaskPayload;
 import org.activiti.api.task.model.payloads.UpdateTaskPayload;
 import org.activiti.api.task.runtime.TaskAdminRuntime;
 import org.activiti.cloud.alfresco.data.domain.AlfrescoPagedResourcesAssembler;
-import org.activiti.cloud.api.process.model.impl.CandidateGroup;
-import org.activiti.cloud.api.process.model.impl.CandidateUser;
 import org.activiti.cloud.api.task.model.CloudTask;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.rest.api.TaskAdminController;
-import org.activiti.cloud.services.rest.assemblers.GroupCandidatesResourceAssembler;
-import org.activiti.cloud.services.rest.assemblers.ResourcesAssembler;
 import org.activiti.cloud.services.rest.assemblers.TaskResourceAssembler;
-import org.activiti.cloud.services.rest.assemblers.ToCandidateGroupConverter;
-import org.activiti.cloud.services.rest.assemblers.ToCandidateUserConverter;
-import org.activiti.cloud.services.rest.assemblers.UserCandidatesResourceAssembler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.Resources;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -54,37 +44,17 @@ public class TaskAdminControllerImpl implements TaskAdminController {
 
     private final AlfrescoPagedResourcesAssembler<Task> pagedResourcesAssembler;
 
-    private final UserCandidatesResourceAssembler userCandidatesResourceAssembler;
-
-    private final GroupCandidatesResourceAssembler groupCandidatesResourceAssembler;
-
-    private final ToCandidateUserConverter toCandidateUserConverter;
-
-    private final ToCandidateGroupConverter toCandidateGroupConverter;
-
-    private final ResourcesAssembler resourcesAssembler;
-
     private final SpringPageConverter pageConverter;
 
     @Autowired
     public TaskAdminControllerImpl(TaskAdminRuntime taskAdminRuntime,
                                    TaskResourceAssembler taskResourceAssembler,
                                    AlfrescoPagedResourcesAssembler<Task> pagedResourcesAssembler,
-                                   SpringPageConverter pageConverter,
-                                   UserCandidatesResourceAssembler userCandidatesResourceAssembler,
-                                   GroupCandidatesResourceAssembler groupCandidatesResourceAssembler,
-                                   ResourcesAssembler resourcesAssembler,
-                                   ToCandidateUserConverter toCandidateUserConverter,
-                                   ToCandidateGroupConverter toCandidateGroupConverter) {
+                                   SpringPageConverter pageConverter) {
         this.taskAdminRuntime = taskAdminRuntime;
         this.taskResourceAssembler = taskResourceAssembler;
         this.pagedResourcesAssembler = pagedResourcesAssembler;
-        this.userCandidatesResourceAssembler = userCandidatesResourceAssembler;
-        this.groupCandidatesResourceAssembler = groupCandidatesResourceAssembler;
-        this.resourcesAssembler = resourcesAssembler;
         this.pageConverter = pageConverter;
-        this.toCandidateUserConverter = toCandidateUserConverter;
-        this.toCandidateGroupConverter = toCandidateGroupConverter;
     }
 
     @Override
@@ -144,56 +114,4 @@ public class TaskAdminControllerImpl implements TaskAdminController {
  
         return taskResourceAssembler.toResource(taskAdminRuntime.assign(assignTaskPayload));
     }
-    
-    @Override
-    public void addCandidateUsers(@PathVariable String taskId,
-                                  @RequestBody CandidateUsersPayload candidateUsersPayload) {
-        if (candidateUsersPayload!=null)
-            candidateUsersPayload.setTaskId(taskId);
-        
-        taskAdminRuntime.addCandidateUsers(candidateUsersPayload);
-    }
-    
-    @Override
-    public void deleteCandidateUsers(@PathVariable String taskId,
-                                     @RequestBody CandidateUsersPayload candidateUsersPayload) {
-        if (candidateUsersPayload!=null)
-            candidateUsersPayload.setTaskId(taskId);
-        
-        taskAdminRuntime.deleteCandidateUsers(candidateUsersPayload);
-        
-    }
-
-    @Override
-    public Resources<Resource<CandidateUser>> getUserCandidates(@PathVariable String taskId) {
-        userCandidatesResourceAssembler.setTaskId(taskId);
-        return resourcesAssembler.toResources(toCandidateUserConverter.from(taskAdminRuntime.userCandidates(taskId)),
-                                              userCandidatesResourceAssembler);
-    }
-    
-    @Override
-    public void addCandidateGroups(@PathVariable String taskId,
-                                   @RequestBody CandidateGroupsPayload candidateGroupsPayload) {
-        if (candidateGroupsPayload!=null)
-            candidateGroupsPayload.setTaskId(taskId);
-        
-        taskAdminRuntime.addCandidateGroups(candidateGroupsPayload);
-    }
-    
-    @Override
-    public void deleteCandidateGroups(@PathVariable String taskId,
-                                      @RequestBody CandidateGroupsPayload candidateGroupsPayload) {
-        if (candidateGroupsPayload!=null)
-            candidateGroupsPayload.setTaskId(taskId);
-        
-        taskAdminRuntime.deleteCandidateGroups(candidateGroupsPayload);
-    }
-    
-    @Override
-    public Resources<Resource<CandidateGroup>> getGroupCandidates(@PathVariable String taskId) {
-        groupCandidatesResourceAssembler.setTaskId(taskId);
-        return resourcesAssembler.toResources(toCandidateGroupConverter.from(taskAdminRuntime.groupCandidates(taskId)),
-                                              groupCandidatesResourceAssembler);
-    }
-
 }

@@ -9,7 +9,7 @@ public class ToCandidateGroupConverter {
 
     public List<CandidateGroup> from (List<String> users){
         List<CandidateGroup> list = new ArrayList();
-        users.forEach(u -> list.add(new CandidateGroup(u)));
+        users.forEach(user -> list.add(new CandidateGroup(user)));
         return list;
     }
 
