@@ -27,7 +27,6 @@ import org.springframework.core.env.PropertiesPropertySource;
  * An {@link EnvironmentPostProcessor} to add {@code spring.autoconfigure.exclude} property
  * since we can't use {@code application.properties} from the library perspective.
  *
- * @author Artem Bilan
  */
 public class MessageStoreEnvironmentPostProcessor implements EnvironmentPostProcessor {
 

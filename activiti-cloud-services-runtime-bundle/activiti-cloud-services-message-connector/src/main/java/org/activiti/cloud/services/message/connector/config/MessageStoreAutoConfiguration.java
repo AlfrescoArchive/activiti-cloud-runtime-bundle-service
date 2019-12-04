@@ -302,9 +302,8 @@ public class MessageStoreAutoConfiguration {
     @ConditionalOnProperty(prefix = MessageAggregatorProperties.PREFIX,
                            name = "message-store-type",
                            havingValue = MessageAggregatorProperties.MessageStoreType.JDBC)
-    @Import({
-            DataSourceAutoConfiguration.class,
-            DataSourceTransactionManagerAutoConfiguration.class })
+    @Import({DataSourceAutoConfiguration.class,
+             DataSourceTransactionManagerAutoConfiguration.class})
     static class Jdbc {
 
         @Bean

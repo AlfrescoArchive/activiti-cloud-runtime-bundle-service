@@ -91,7 +91,7 @@ public abstract class MessageConnectorAggregatorTests {
     }
 
     @TestPropertySource(properties = {
-            "aggregator.messageStoreType=jdbc"})
+            "aggregator.message-store-type=jdbc"})
     public static class JdbcMessageStoreTests extends MessageConnectorAggregatorTests {
 
         @Test
@@ -101,7 +101,7 @@ public abstract class MessageConnectorAggregatorTests {
     }
     
     @TestPropertySource(properties = {
-            "aggregator.messageStoreType=mongodb",
+            "aggregator.message-store-type=mongodb",
             "spring.data.mongodb.uri=mongodb://localhost:27017/test?maxPoolSize=150&minPoolSize=50"})
     @Ignore
     public static class MongodbMessageStoreIT extends MessageConnectorAggregatorTests {
@@ -113,7 +113,7 @@ public abstract class MessageConnectorAggregatorTests {
     }
 
     @TestPropertySource(properties = {
-            "aggregator.messageStoreType=redis",
+            "aggregator.message-store-type=redis",
             "spring.redis.host=localhost",
             "spring.redis.port=6379"})
     @Ignore
@@ -126,7 +126,7 @@ public abstract class MessageConnectorAggregatorTests {
     }
 
     @TestPropertySource(properties = {
-            "aggregator.messageStoreType=hazelcast"})
+            "aggregator.message-store-type=hazelcast"})
     @Ignore
     public static class HazelcastMessageStoreTests extends MessageConnectorAggregatorTests {
 

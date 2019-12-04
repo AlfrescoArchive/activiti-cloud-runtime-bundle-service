@@ -6,7 +6,6 @@ import org.springframework.expression.Expression;
 /**
  * Configuration properties for the Aggregator application.
  *
- * @author Artem Bilan
  */
 @ConfigurationProperties(MessageAggregatorProperties.PREFIX)
 public class MessageAggregatorProperties {
