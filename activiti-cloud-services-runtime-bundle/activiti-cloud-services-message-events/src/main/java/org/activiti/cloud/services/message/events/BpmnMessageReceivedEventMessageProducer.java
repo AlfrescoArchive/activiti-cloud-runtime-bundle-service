@@ -53,6 +53,8 @@ public class BpmnMessageReceivedEventMessageProducer implements BPMNElementEvent
 
         Message<CloudBPMNMessageReceivedEvent> message = messageBuilderFactory.create(event.getEntity())
                                                                               .withPayload(runtimeEventConverter.from(event))
+                                                                              .setHeader("eventType", event.getEventType()
+                                                                                                           .name())
                                                                               .build();
 
         TransactionSynchronizationManager.registerSynchronization(new MessageSenderTransactionSynchronization(message,

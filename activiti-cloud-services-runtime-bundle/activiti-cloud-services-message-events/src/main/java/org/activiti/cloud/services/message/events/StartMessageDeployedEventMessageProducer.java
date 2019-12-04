@@ -37,6 +37,8 @@ public class StartMessageDeployedEventMessageProducer implements ProcessRuntimeE
         
         Message<CloudStartMessageDeployedEvent> message = messageBuilderFactory.create(event)
                                                                                .withPayload(runtimeEventConverter.from(event))
+                                                                               .setHeader("eventType", event.getEventType()
+                                                                                                            .name())
                                                                                .build();
 
         TransactionSynchronizationManager.registerSynchronization(new MessageSenderTransactionSynchronization(message,

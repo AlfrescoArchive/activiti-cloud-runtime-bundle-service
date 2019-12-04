@@ -59,6 +59,7 @@ public class ReceiveMessagePayloadGroupProcessor implements MessageGroupProcesso
                                                              .build();
         return MessageBuilder.withPayload(payload)
                              .copyHeaders(message.getHeaders())
+                             .setHeader("payloadType", ReceiveMessagePayload.class.getSimpleName())
                              .build();
     }
     

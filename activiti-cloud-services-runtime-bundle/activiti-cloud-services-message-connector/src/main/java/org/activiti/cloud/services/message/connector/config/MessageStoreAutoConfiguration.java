@@ -70,8 +70,8 @@ import com.hazelcast.spring.transaction.HazelcastTransactionManager;
 public class MessageStoreAutoConfiguration {
 
     @ConditionalOnProperty(prefix = MessageAggregatorProperties.PREFIX,
-            name = "message-store-type",
-            havingValue = MessageAggregatorProperties.MessageStoreType.SIMPLE)
+                           name = "message-store-type",
+                           havingValue = MessageAggregatorProperties.MessageStoreType.SIMPLE)
     static class Simple {
 
         @Bean
@@ -88,7 +88,7 @@ public class MessageStoreAutoConfiguration {
         @ConditionalOnMissingBean
         public PlatformTransactionManager transactionManager(DataSource dataSource) throws SQLException {
           return new DataSourceTransactionManager(dataSource);
-        }        
+        }
         
         @Bean
         @ConditionalOnMissingBean
@@ -112,8 +112,8 @@ public class MessageStoreAutoConfiguration {
 
     @ConditionalOnClass(HazelcastInstance.class)
     @ConditionalOnProperty(prefix = MessageAggregatorProperties.PREFIX,
-            name = "message-store-type",
-            havingValue = MessageAggregatorProperties.MessageStoreType.HAZELCAST)
+                           name = "message-store-type",
+                           havingValue = MessageAggregatorProperties.MessageStoreType.HAZELCAST)
     static class Hazel {
 
         @Bean
@@ -175,8 +175,8 @@ public class MessageStoreAutoConfiguration {
     
     @ConditionalOnClass(ConfigurableMongoDbMessageStore.class)
     @ConditionalOnProperty(prefix = MessageAggregatorProperties.PREFIX,
-            name = "message-store-type",
-            havingValue = MessageAggregatorProperties.MessageStoreType.MONGODB)
+                           name = "message-store-type",
+                           havingValue = MessageAggregatorProperties.MessageStoreType.MONGODB)
     @Import({MongoAutoConfiguration.class,
              MongoDataAutoConfiguration.class})
     static class Mongo {
@@ -225,8 +225,8 @@ public class MessageStoreAutoConfiguration {
 
     @ConditionalOnClass(RedisMessageStore.class)
     @ConditionalOnProperty(prefix = MessageAggregatorProperties.PREFIX,
-            name = "message-store-type",
-            havingValue = MessageAggregatorProperties.MessageStoreType.REDIS)
+                           name = "message-store-type",
+                           havingValue = MessageAggregatorProperties.MessageStoreType.REDIS)
     @Import(RedisAutoConfiguration.class)
     static class Redis {
 
@@ -300,8 +300,8 @@ public class MessageStoreAutoConfiguration {
 
     @ConditionalOnClass(JdbcMessageStore.class)
     @ConditionalOnProperty(prefix = MessageAggregatorProperties.PREFIX,
-            name = "message-store-type",
-            havingValue = MessageAggregatorProperties.MessageStoreType.JDBC)
+                           name = "message-store-type",
+                           havingValue = MessageAggregatorProperties.MessageStoreType.JDBC)
     @Import({
             DataSourceAutoConfiguration.class,
             DataSourceTransactionManagerAutoConfiguration.class })

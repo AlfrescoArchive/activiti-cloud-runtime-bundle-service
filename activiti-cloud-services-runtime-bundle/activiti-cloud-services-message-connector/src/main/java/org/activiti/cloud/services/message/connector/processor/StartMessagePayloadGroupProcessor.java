@@ -59,7 +59,7 @@ public class StartMessagePayloadGroupProcessor implements MessageGroupProcessorH
                                                                 .build();
 
         return MessageBuilder.withPayload(startPayload)
-                             .copyHeaders(message.getHeaders())
+                             .setHeader("payloadType", StartMessagePayload.class.getSimpleName())
                              .build();       
     }
     

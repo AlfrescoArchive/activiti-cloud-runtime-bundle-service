@@ -21,6 +21,7 @@ import static org.activiti.cloud.services.message.events.MessageEventSubscriptio
 import org.activiti.api.process.model.StartMessageDeploymentDefinition;
 import org.activiti.api.process.model.StartMessageSubscription;
 import org.activiti.cloud.services.events.message.MessageBuilderAppender;
+import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
@@ -43,6 +44,7 @@ public class StartMessageDeploymentDefinitionMessageBuilderAppender implements M
         // TODO Add more headers
         return request.setHeader(MESSAGE_EVENT_SUBSCRIPTION_EVENT_NAME, messageEventSubscription.getEventName())
                       .setHeader(MESSAGE_EVENT_SUBSCRIPTION_CONFIGURATION, messageEventSubscription.getConfiguration())
+                      .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, messageEventSubscription.getEventName())
        ;
     }
 

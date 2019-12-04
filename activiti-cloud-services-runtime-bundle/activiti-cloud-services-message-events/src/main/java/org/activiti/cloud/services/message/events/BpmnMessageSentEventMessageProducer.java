@@ -52,6 +52,8 @@ public class BpmnMessageSentEventMessageProducer implements BPMNElementEventList
 
         Message<CloudBPMNMessageSentEvent> message = messageBuilderFactory.create(event.getEntity())
                                                                           .withPayload(runtimeEventConverter.from(event))
+                                                                          .setHeader("eventType", event.getEventType()
+                                                                                                       .name())
                                                                           .build();
 
         TransactionSynchronizationManager.registerSynchronization(new MessageSenderTransactionSynchronization(message,
