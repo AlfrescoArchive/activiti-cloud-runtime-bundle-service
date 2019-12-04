@@ -52,8 +52,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
         properties = {
-                "spring.cloud.stream.bindings.output.contentType=application/json",
-                "spring.cloud.stream.bindings.input.contentType=application/json"
+                "spring.cloud.stream.bindings.output.contentType=application/x-java-serialized-object",
+                "spring.cloud.stream.bindings.input.contentType=application/x-java-serialized-object"
         }
 )
 @DirtiesContext
@@ -230,7 +230,7 @@ public abstract class MessageConnectorAggregatorTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .asString()
+                       .extracting("name")
                        .contains("sent1");
 
         MessageGroup group = messageGroup(messageName);
@@ -249,7 +249,7 @@ public abstract class MessageConnectorAggregatorTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .asString()
+                       .extracting("name")
                        .contains("sent2");
 
         group = messageGroup(messageName);
@@ -278,7 +278,7 @@ public abstract class MessageConnectorAggregatorTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .asString()
+                       .extracting("name")
                        .contains("sent1");
 
         MessageGroup group = messageGroup(messageName);
@@ -298,7 +298,7 @@ public abstract class MessageConnectorAggregatorTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .asString()
+                       .extracting("name")
                        .contains("sent2");
 
         group = messageGroup(messageName);
@@ -327,7 +327,7 @@ public abstract class MessageConnectorAggregatorTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .asString()
+                       .extracting("name")
                        .contains("sent1");
 
         MessageGroup group = messageGroup(correlationId);
@@ -358,7 +358,7 @@ public abstract class MessageConnectorAggregatorTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .asString()
+                       .extracting("name")
                        .contains("sent2");
 
         group = messageGroup(correlationId);
@@ -395,7 +395,7 @@ public abstract class MessageConnectorAggregatorTests {
         
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .asString()
+                       .extracting("name")
                        .contains("sent1");
 
         assertThat(peek()).isNull();
@@ -429,7 +429,7 @@ public abstract class MessageConnectorAggregatorTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .asString()
+                       .extracting("name")
                        .contains("sent2");
 
         group = messageGroup(correlationId);
