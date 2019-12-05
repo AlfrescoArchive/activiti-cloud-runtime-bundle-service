@@ -17,7 +17,6 @@
 package org.activiti.cloud.services.message.events.config;
 
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
 import org.activiti.cloud.services.message.events.BpmnMessageEventMessageBuilderFactory;
 import org.activiti.cloud.services.message.events.BpmnMessageReceivedEventMessageProducer;
 import org.activiti.cloud.services.message.events.BpmnMessageSentEventMessageProducer;
@@ -26,19 +25,17 @@ import org.activiti.cloud.services.message.events.MessageSubscriptionCancelledEv
 import org.activiti.cloud.services.message.events.MessageSubscriptionEventMessageBuilderFactory;
 import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageBuilderFactory;
 import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageProducer;
-import org.activiti.cloud.services.message.events.channels.MessageEventsChannels;
+import org.activiti.cloud.services.message.events.channels.MessageEventsSource;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.lang.NonNull;
 
 @Configuration
 @PropertySource("classpath:config/message-events-channels.properties")
 @EnableBinding({
-    MessageEventsChannels.Producer.class
-//    MessageEventsChannels.Consumer.class
+    MessageEventsSource.class
 })
 public class MessageEventsAutoConfiguration {
 
@@ -62,51 +59,41 @@ public class MessageEventsAutoConfiguration {
     
     @Bean
     @ConditionalOnMissingBean
-    public BpmnMessageReceivedEventMessageProducer throwMessageReceivedEventListener(MessageEventsChannels.Producer producerChannels,
-                                                                                     BpmnMessageEventMessageBuilderFactory messageBuilderFactory,
-                                                                                     ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
-        return new BpmnMessageReceivedEventMessageProducer(producerChannels.bpmnMessageReceivedEventProducerChannel(),
-                                                           messageBuilderFactory,
-                                                           runtimeEventConverter);
+    public BpmnMessageReceivedEventMessageProducer throwMessageReceivedEventListener(MessageEventsSource producerChannels,
+                                                                                     BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
+        return new BpmnMessageReceivedEventMessageProducer(producerChannels.messageConnector(),
+                                                           messageBuilderFactory);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public BpmnMessageWaitingEventMessageProducer throwMessageWaitingEventMessageProducer(MessageEventsChannels.Producer producerChannels,
-                                                                                          BpmnMessageEventMessageBuilderFactory messageBuilderFactory,
-                                                                                          ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
-        return new BpmnMessageWaitingEventMessageProducer(producerChannels.bpmnMessageWaitingEventProducerChannel(),
-                                                          messageBuilderFactory,
-                                                          runtimeEventConverter);
+    public BpmnMessageWaitingEventMessageProducer throwMessageWaitingEventMessageProducer(MessageEventsSource producerChannels,
+                                                                                          BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
+        return new BpmnMessageWaitingEventMessageProducer(producerChannels.messageConnector(),
+                                                          messageBuilderFactory);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public BpmnMessageSentEventMessageProducer bpmnMessageSentEventProducer(MessageEventsChannels.Producer producerChannels,
-                                                                            BpmnMessageEventMessageBuilderFactory messageBuilderFactory,
-                                                                            ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
-        return new BpmnMessageSentEventMessageProducer(producerChannels.bpmnMessageSentEventProducerChannel(),
-                                                       messageBuilderFactory,
-                                                       runtimeEventConverter);
+    public BpmnMessageSentEventMessageProducer bpmnMessageSentEventProducer(MessageEventsSource producerChannels,
+                                                                            BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
+        return new BpmnMessageSentEventMessageProducer(producerChannels.messageConnector(),
+                                                       messageBuilderFactory);
     }
     
     @Bean
     @ConditionalOnMissingBean
-    public StartMessageDeployedEventMessageProducer MessageDeployedEventMessageProducer(MessageEventsChannels.Producer producerChannels,
-                                                                                   StartMessageDeployedEventMessageBuilderFactory messageBuilderFactory,
-                                                                                   ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
-        return new StartMessageDeployedEventMessageProducer(producerChannels.messageDeployedEventProducerChannel(),
-                                                       messageBuilderFactory,
-                                                       runtimeEventConverter);
+    public StartMessageDeployedEventMessageProducer MessageDeployedEventMessageProducer(MessageEventsSource producerChannels,
+                                                                                        StartMessageDeployedEventMessageBuilderFactory messageBuilderFactory) {
+        return new StartMessageDeployedEventMessageProducer(producerChannels.messageConnector(),
+                                                            messageBuilderFactory);
     }
     
     @Bean
     @ConditionalOnMissingBean
-    public MessageSubscriptionCancelledEventMessageProducer messageSubscriptionCancelledEventMessageProducer(@NonNull MessageEventsChannels.Producer producerChannels,
-                                                                                                             @NonNull MessageSubscriptionEventMessageBuilderFactory messageBuilderFactory,
-                                                                                                             @NonNull ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
-        return new MessageSubscriptionCancelledEventMessageProducer(producerChannels.messageSubscriptionCancelledEventProducerChannel(),
-                                                                    messageBuilderFactory,
-                                                                    runtimeEventConverter);
+    public MessageSubscriptionCancelledEventMessageProducer messageSubscriptionCancelledEventMessageProducer(MessageEventsSource producerChannels,
+                                                                                                             MessageSubscriptionEventMessageBuilderFactory messageBuilderFactory) {
+        return new MessageSubscriptionCancelledEventMessageProducer(producerChannels.messageConnector(),
+                                                                    messageBuilderFactory);
     }
 }

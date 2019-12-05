@@ -19,7 +19,8 @@ import java.util.stream.IntStream;
 import org.activiti.api.process.model.builders.MessageEventPayloadBuilder;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
-import org.activiti.cloud.services.message.connector.config.MessageConnectorAggregatorConfiguration;
+import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
+import org.activiti.cloud.services.message.connector.config.MessageConnectorIntegrationConfiguration;
 import org.activiti.cloud.services.message.connector.config.MessageConnectorAutoConfiguration;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -27,7 +28,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.stream.messaging.Processor;
 import org.springframework.cloud.stream.test.binder.MessageCollector;
 import org.springframework.context.annotation.Import;
 import org.springframework.integration.IntegrationMessageHeaderAccessor;
@@ -40,10 +40,12 @@ import org.springframework.integration.store.MessageGroupStore;
 import org.springframework.integration.store.SimpleMessageStore;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageChannel;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 /**
@@ -59,11 +61,13 @@ import org.springframework.test.context.junit4.SpringRunner;
         }
 )
 @DirtiesContext
-@Import({MessageConnectorAggregatorConfiguration.class})
-public abstract class MessageConnectorAggregatorTests {
+@Import({MessageConnectorIntegrationConfiguration.class})
+public abstract class MessageConnectorIntegrationTests {
 
+    protected ObjectMapper objectMapper = new ObjectMapper();
+    
     @Autowired
-    protected Processor channels;
+    protected MessageConnectorProcessor channels;
     
     @Autowired 
     protected MessageCollector collector;
@@ -82,7 +86,7 @@ public abstract class MessageConnectorAggregatorTests {
     
     @TestPropertySource(properties = {
             "aggregator.message-store-type=simple"})
-    public static class SimpleMessageStoreTests extends MessageConnectorAggregatorTests {
+    public static class SimpleMessageStoreTests extends MessageConnectorIntegrationTests {
 
         @Test
         public void testMessageStore() throws Exception {
@@ -92,7 +96,7 @@ public abstract class MessageConnectorAggregatorTests {
 
     @TestPropertySource(properties = {
             "aggregator.message-store-type=jdbc"})
-    public static class JdbcMessageStoreTests extends MessageConnectorAggregatorTests {
+    public static class JdbcMessageStoreTests extends MessageConnectorIntegrationTests {
 
         @Test
         public void testMessageStore() throws Exception {
@@ -104,7 +108,7 @@ public abstract class MessageConnectorAggregatorTests {
             "aggregator.message-store-type=mongodb",
             "spring.data.mongodb.uri=mongodb://localhost:27017/test?maxPoolSize=150&minPoolSize=50"})
     @Ignore
-    public static class MongodbMessageStoreIT extends MessageConnectorAggregatorTests {
+    public static class MongodbMessageStoreIT extends MessageConnectorIntegrationTests {
 
         @Test
         public void testMessageStore() throws Exception {
@@ -117,7 +121,7 @@ public abstract class MessageConnectorAggregatorTests {
             "spring.redis.host=localhost",
             "spring.redis.port=6379"})
     @Ignore
-    public static class RedisMessageStoreIT extends MessageConnectorAggregatorTests {
+    public static class RedisMessageStoreIT extends MessageConnectorIntegrationTests {
         
         @Test
         public void testMessageStore() throws Exception {
@@ -128,7 +132,7 @@ public abstract class MessageConnectorAggregatorTests {
     @TestPropertySource(properties = {
             "aggregator.message-store-type=hazelcast"})
     @Ignore
-    public static class HazelcastMessageStoreTests extends MessageConnectorAggregatorTests {
+    public static class HazelcastMessageStoreTests extends MessageConnectorIntegrationTests {
 
         @Test
         public void testMessageStore() throws Exception {
@@ -138,7 +142,7 @@ public abstract class MessageConnectorAggregatorTests {
     
 
     @Test(timeout = 10000)
-    public void shouldProcessMessageEventsConcurrently() throws InterruptedException {
+    public void shouldProcessMessageEventsConcurrently() throws InterruptedException, JsonProcessingException {
         // given
         String messageName = "start";
         Integer count = 100;
@@ -178,7 +182,7 @@ public abstract class MessageConnectorAggregatorTests {
     }
     
     @Test(timeout = 10000)
-    public void shouldProcessMessageEventsConcurrentlyInReversedOrder() throws InterruptedException {
+    public void shouldProcessMessageEventsConcurrentlyInReversedOrder() throws InterruptedException, JsonProcessingException {
         // given
         String messageName = "start";
         Integer count = 100;
@@ -244,6 +248,7 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).hasSize(1)
                                        .extracting(Message::getPayload)
                                        .asList()
+                                       .extracting("name")
                                        .containsOnly(messageName);
         // when
         send(messageSentEvent(messageName, "sent2"));
@@ -263,6 +268,7 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).hasSize(1)
                                        .extracting(Message::getPayload)
                                        .asList()
+                                       .extracting("name")
                                        .containsOnly(messageName);
     }
 
@@ -292,6 +298,7 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).hasSize(1)
                                        .extracting(Message::getPayload)
                                        .asList()
+                                       .extracting("name")
                                        .containsOnly("start2");
 
         // when
@@ -312,6 +319,7 @@ public abstract class MessageConnectorAggregatorTests {
         assertThat(group.getMessages()).hasSize(1)
                                        .extracting(Message::getPayload)
                                        .asList()
+                                       .extracting("name")
                                        .containsOnly("start2");
     }
     
@@ -486,8 +494,8 @@ public abstract class MessageConnectorAggregatorTests {
         Message<MessageEventPayload> waitingMessage = messageWaitingEvent(correlationId, "waiting"); 
 
         // when                                      
-        input().send(waitingMessage);
-        input().send(waitingMessage);
+        send(waitingMessage);
+        send(waitingMessage);
 
         // then
         assertThat(peek()).isNull();
@@ -500,8 +508,8 @@ public abstract class MessageConnectorAggregatorTests {
         Message<MessageEventPayload> receivedMessage = messageReceivedEvent(correlationId, "recieved");
         
         // when
-        input().send(receivedMessage);
-        input().send(receivedMessage);
+        send(receivedMessage);
+        send(receivedMessage);
         
         // then 
         assertThat(peek()).isNull();
@@ -515,8 +523,12 @@ public abstract class MessageConnectorAggregatorTests {
     
     
     
-    private static Message<?> startMessageDeployedEvent(String messageName) {
-        return MessageBuilder.withPayload(messageName)
+    private Message<?> startMessageDeployedEvent(String messageName) {
+        MessageEventPayload payload = messageEventPayload(messageName,
+                                                          "businessKey",
+                                                          null,
+                                                          Collections.emptyMap());
+        return MessageBuilder.withPayload(payload)
                              .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, messageName)
                              .setHeader("eventType", "START_MESSAGE_DEPLOYED")
                              .setHeader("messageId", UUID.randomUUID())
@@ -560,7 +572,11 @@ public abstract class MessageConnectorAggregatorTests {
                              .build();
     }
 
-    private <T> Message<T> subscriptionCancelledEvent(String correlationId, T payload) {
+    private Message<MessageEventPayload> subscriptionCancelledEvent(String correlationId, String name) {
+        MessageEventPayload payload = messageEventPayload(name,
+                                                          "businessKey",
+                                                          correlationId,
+                                                          Collections.emptyMap());
         return MessageBuilder.withPayload(payload)
                              .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
                              .setHeader("eventType", "MESSAGE_SUBSCRIPTION_CANCELLED")
@@ -579,9 +595,13 @@ public abstract class MessageConnectorAggregatorTests {
                                          .build();
     }    
 
-    protected void send(Message<?> message) {
+    protected void send(Message<?> message) throws JsonProcessingException {
+        String json = objectMapper.writeValueAsString(message.getPayload());
+        
         this.channels.input()
-                     .send(message);        
+                     .send(MessageBuilder.withPayload(json)
+                                         .copyHeaders(message.getHeaders())
+                                         .build());        
     }
  
     protected <T> Message<T> poll(long timeout, TimeUnit unit) throws InterruptedException {
@@ -594,10 +614,6 @@ public abstract class MessageConnectorAggregatorTests {
                                           .peek();
     }
  
-    protected MessageChannel input() {
-        return this.channels.input();
-    }
-
     protected MessageGroup messageGroup(String groupName) {
         return aggregatingMessageHandler.getMessageStore()
                                         .getMessageGroup(groupName);
@@ -613,8 +629,8 @@ public abstract class MessageConnectorAggregatorTests {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            this.channels.input()
-                         .send(message);
+            
+            Try.run(() -> send(message));
             
             sent.countDown();
         });

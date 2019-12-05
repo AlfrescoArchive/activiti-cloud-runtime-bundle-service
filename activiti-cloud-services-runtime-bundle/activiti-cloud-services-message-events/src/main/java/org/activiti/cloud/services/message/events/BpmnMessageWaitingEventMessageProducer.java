@@ -17,9 +17,8 @@
 package org.activiti.cloud.services.message.events;
 
 import org.activiti.api.process.model.events.BPMNMessageWaitingEvent;
+import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
-import org.activiti.cloud.api.process.model.events.CloudBPMNMessageWaitingEvent;
-import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -33,14 +32,11 @@ public class BpmnMessageWaitingEventMessageProducer implements BPMNElementEventL
 
     private final BpmnMessageEventMessageBuilderFactory messageBuilderFactory;
     private final MessageChannel messageChannel;
-    private final ToCloudProcessRuntimeEventConverter runtimeEventConverter;
 
     public BpmnMessageWaitingEventMessageProducer(@NonNull MessageChannel messageChannel,
-                                                  @NonNull BpmnMessageEventMessageBuilderFactory messageBuilderFactory,
-                                                  @NonNull ToCloudProcessRuntimeEventConverter runtimeEventConverter) {
+                                                  @NonNull BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
         this.messageChannel = messageChannel;
         this.messageBuilderFactory = messageBuilderFactory;
-        this.runtimeEventConverter = runtimeEventConverter;
     }
 
     @Override
@@ -51,11 +47,13 @@ public class BpmnMessageWaitingEventMessageProducer implements BPMNElementEventL
 
         logger.debug("onEvent: {}", event);
         
-        Message<CloudBPMNMessageWaitingEvent> message = messageBuilderFactory.create(event.getEntity())
-                                                                             .withPayload(runtimeEventConverter.from(event))
-                                                                             .setHeader("eventType", event.getEventType()
-                                                                                                          .name())                                                                             
-                                                                             .build();
+        Message<MessageEventPayload> message = messageBuilderFactory.create(event.getEntity())
+                                                                    .withPayload(event.getEntity()
+                                                                                      .getMessagePayload())
+                                                                    .setHeader("eventType",
+                                                                               event.getEventType()
+                                                                                    .name())
+                                                                    .build();
 
         TransactionSynchronizationManager.registerSynchronization(new MessageSenderTransactionSynchronization(message,
                                                                                                               messageChannel));

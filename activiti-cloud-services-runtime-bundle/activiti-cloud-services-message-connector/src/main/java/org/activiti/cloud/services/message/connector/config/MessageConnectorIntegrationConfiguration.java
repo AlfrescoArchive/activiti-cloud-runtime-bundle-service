@@ -2,17 +2,19 @@ package org.activiti.cloud.services.message.connector.config;
 
 import java.util.Optional;
 
+import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.cloud.services.message.connector.advice.MessageReceivedHandlerAdvice;
 import org.activiti.cloud.services.message.connector.advice.SubscriptionCancelledHandlerAdvice;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregatorFactoryBean;
+import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
 import org.activiti.cloud.services.message.connector.processor.MessageGroupProcessorChain;
 import org.activiti.cloud.services.message.connector.processor.MessageGroupProcessorHandlerChain;
 import org.activiti.cloud.services.message.connector.processor.ReceiveMessagePayloadGroupProcessor;
 import org.activiti.cloud.services.message.connector.processor.StartMessagePayloadGroupProcessor;
-import org.activiti.cloud.services.message.connector.release.DefaultMessageReleaseStrategyHandler;
 import org.activiti.cloud.services.message.connector.release.MessageGroupReleaseChain;
 import org.activiti.cloud.services.message.connector.release.MessageGroupReleaseStrategyChain;
+import org.activiti.cloud.services.message.connector.release.MessageSentReleaseHandler;
 import org.activiti.cloud.services.message.connector.support.ChainBuilder;
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
 import org.springframework.beans.factory.BeanFactory;
@@ -24,15 +26,18 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.messaging.Processor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.integration.aggregator.CorrelationStrategy;
 import org.springframework.integration.aggregator.DefaultAggregatingMessageGroupProcessor;
 import org.springframework.integration.aggregator.HeaderAttributeCorrelationStrategy;
 import org.springframework.integration.aggregator.MessageGroupProcessor;
 import org.springframework.integration.aggregator.ReleaseStrategy;
+import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.dsl.Transformers;
 import org.springframework.integration.handler.MessageProcessor;
 import org.springframework.integration.handler.advice.IdempotentReceiverInterceptor;
 import org.springframework.integration.metadata.ConcurrentMetadataStore;
@@ -45,31 +50,34 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * A Processor app that performs aggregation.
  *
  */
-@EnableBinding(Processor.class)
+@Configuration
+@EnableIntegration
+@EnableBinding(MessageConnectorProcessor.class)
 //@EnableMessageHistory // FIXME does not work with RabbitMQ binder
 @EnableIntegrationManagement
 @EnableConfigurationProperties(MessageAggregatorProperties.class)
 @EnableTransactionManagement
-public class MessageConnectorAggregatorConfiguration {
+public class MessageConnectorIntegrationConfiguration {
 
     @Autowired
     private MessageAggregatorProperties properties;
     
-    @Bean
-    public LockTemplate lockTemplate(LockRegistry lockRegistry) {
-        return new LockTemplate(lockRegistry);
-    }
-
-    @Bean
-    public IntegrationFlow integrationFlow(Processor processor,
-                                           MessageGroupStore messageStore,
-                                           CorrelationStrategy correlationStrategy,
-                                           LockTemplate lockTemplate,
-                                           MessageConnectorAggregator messageConnectorAggregator,
-                                           IdempotentReceiverInterceptor idempotentReceiverInterceptor) {
+    // TODO controlBus()
+    
+    @Bean("messageConnectorIntegrationFlow")
+    public IntegrationFlow messageConnectorIntegrationFlow(MessageConnectorProcessor processor,
+                                                           MessageGroupStore messageStore,
+                                                           CorrelationStrategy correlationStrategy,
+                                                           LockTemplate lockTemplate,
+                                                           MessageConnectorAggregator messageConnectorAggregator,
+                                                           IdempotentReceiverInterceptor idempotentReceiverInterceptor) {
         return IntegrationFlows.from(processor.input())
                                .gateway(flow -> flow.log()
-                                                    //.filter("payloadType") // with discard
+                                                    .filter("headers.eventType != null", // FIXME use MessageSelector
+                                                            filter -> filter.id("filter")
+                                                                            .discardChannel("errorChannel") 
+                                                    )
+                                                    .transform(Transformers.fromJson(MessageEventPayload.class))
                                                     .handle(messageConnectorAggregator, 
                                                             handler -> handler.id("aggregator")
                                                                               .advice(new MessageReceivedHandlerAdvice(messageStore,
@@ -77,7 +85,8 @@ public class MessageConnectorAggregatorConfiguration {
                                                                                                                        lockTemplate))
                                                                               .advice(new SubscriptionCancelledHandlerAdvice(messageStore,
                                                                                                                              correlationStrategy,
-                                                                                                                             lockTemplate)))
+                                                                                                                             lockTemplate))
+                                                    )
                                                     .log()
                                                     .channel(processor.output())                                                     
                                         ,
@@ -87,10 +96,8 @@ public class MessageConnectorAggregatorConfiguration {
                                                             .async(true)
                                                             .replyTimeout(0L)
                                                             .advice(idempotentReceiverInterceptor))
-                               //.controlBus()
                                .get();
     }
-    
     
     @Bean
     public MessageConnectorAggregator messageConnectorAggregator(ObjectProvider<CorrelationStrategy> correlationStrategy,
@@ -123,16 +130,23 @@ public class MessageConnectorAggregatorConfiguration {
 
         return factoryBean.getObject();
     }
+
+    @Bean
+    public LockTemplate lockTemplate(LockRegistry lockRegistry) {
+        return new LockTemplate(lockRegistry);
+    }
     
     @Bean
     @ConditionalOnMissingBean
     public CorrelationStrategy correlationStrategy() {
-        return new HeaderAttributeCorrelationStrategy(IntegrationMessageHeaderAccessor.CORRELATION_ID);
+        // FIXME refactor correlation strategy by Rb, message, correlationKey headers
+        return new HeaderAttributeCorrelationStrategy(IntegrationMessageHeaderAccessor.CORRELATION_ID); 
     }
     
     @Bean
     @ConditionalOnMissingBean(name = "metadataStoreKeyStrategy")
     public MessageProcessor<String> metadataStoreKeyStrategy() {
+        // FIXME refactor idempotent message key strategy using dynamic headers
         return m -> Optional.ofNullable(m.getHeaders().get("messageId"))
                             .map(Object::toString)
                             .orElseGet(() -> m.getHeaders().getId()
@@ -176,7 +190,7 @@ public class MessageConnectorAggregatorConfiguration {
     @ConditionalOnMissingBean
     public MessageGroupReleaseChain messageGroupReleaseChain(MessageGroupStore messageGroupStore) {
         return ChainBuilder.of(MessageGroupReleaseChain.class)
-                           .first(new DefaultMessageReleaseStrategyHandler())
+                           .first(new MessageSentReleaseHandler())
                            .build();
     }
     
