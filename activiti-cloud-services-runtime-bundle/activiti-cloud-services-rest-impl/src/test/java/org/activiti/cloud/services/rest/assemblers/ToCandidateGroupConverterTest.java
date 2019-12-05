@@ -21,11 +21,11 @@ public class ToCandidateGroupConverterTest {
     @Test
     public void shouldConvertStringGroupsToCanidateGroups(){
         //given
-        String group = "user1";
-        List<String> userList = new ArrayList<>();
-        userList.add(group);
+        String group = "group1";
+        List<String> groupList = new ArrayList<>();
+        groupList.add(group);
         //when
-        List<CandidateGroup> convertedGroupList = toCandidateGroupConverter.from(userList);
+        List<CandidateGroup> convertedGroupList = toCandidateGroupConverter.from(groupList);
         //then
         assertThat(convertedGroupList.get(0)).isInstanceOf(CandidateGroup.class);
         assertThat(convertedGroupList.get(0).getGroup()).isEqualTo(group);
