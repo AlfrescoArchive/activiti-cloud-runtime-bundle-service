@@ -9,6 +9,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.messaging.Processor;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
@@ -19,7 +20,7 @@ public class ActivitiCloudStarterMessageConnectorTest {
     private MessageConnectorChannels.Consumer consumer;
 
     @Autowired
-    private MessageConnectorChannels.Producer producer;
+    private Processor processor;
     
     @Autowired
     private MessageConnectorConsumer messageConnectorConsumer;
@@ -32,7 +33,7 @@ public class ActivitiCloudStarterMessageConnectorTest {
     @Test
     public void contextLoads() {
         assertThat(consumer).isNotNull();
-        assertThat(producer).isNotNull();
+        assertThat(processor).isNotNull();
         assertThat(messageConnectorConsumer).isNotNull();
     }
 }
