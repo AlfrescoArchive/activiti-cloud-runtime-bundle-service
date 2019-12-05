@@ -62,7 +62,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 )
 @DirtiesContext
 @Import({MessageConnectorIntegrationConfiguration.class})
-public abstract class MessageConnectorIntegrationTests {
+public abstract class MessageConnectorIntegrationFlowTests {
 
     protected ObjectMapper objectMapper = new ObjectMapper();
     
@@ -86,7 +86,7 @@ public abstract class MessageConnectorIntegrationTests {
     
     @TestPropertySource(properties = {
             "aggregator.message-store-type=simple"})
-    public static class SimpleMessageStoreTests extends MessageConnectorIntegrationTests {
+    public static class SimpleMessageStoreTests extends MessageConnectorIntegrationFlowTests {
 
         @Test
         public void testMessageStore() throws Exception {
@@ -96,7 +96,7 @@ public abstract class MessageConnectorIntegrationTests {
 
     @TestPropertySource(properties = {
             "aggregator.message-store-type=jdbc"})
-    public static class JdbcMessageStoreTests extends MessageConnectorIntegrationTests {
+    public static class JdbcMessageStoreTests extends MessageConnectorIntegrationFlowTests {
 
         @Test
         public void testMessageStore() throws Exception {
@@ -108,7 +108,7 @@ public abstract class MessageConnectorIntegrationTests {
             "aggregator.message-store-type=mongodb",
             "spring.data.mongodb.uri=mongodb://localhost:27017/test?maxPoolSize=150&minPoolSize=50"})
     @Ignore
-    public static class MongodbMessageStoreIT extends MessageConnectorIntegrationTests {
+    public static class MongodbMessageStoreIT extends MessageConnectorIntegrationFlowTests {
 
         @Test
         public void testMessageStore() throws Exception {
@@ -121,7 +121,7 @@ public abstract class MessageConnectorIntegrationTests {
             "spring.redis.host=localhost",
             "spring.redis.port=6379"})
     @Ignore
-    public static class RedisMessageStoreIT extends MessageConnectorIntegrationTests {
+    public static class RedisMessageStoreIT extends MessageConnectorIntegrationFlowTests {
         
         @Test
         public void testMessageStore() throws Exception {
@@ -132,7 +132,7 @@ public abstract class MessageConnectorIntegrationTests {
     @TestPropertySource(properties = {
             "aggregator.message-store-type=hazelcast"})
     @Ignore
-    public static class HazelcastMessageStoreTests extends MessageConnectorIntegrationTests {
+    public static class HazelcastMessageStoreTests extends MessageConnectorIntegrationFlowTests {
 
         @Test
         public void testMessageStore() throws Exception {

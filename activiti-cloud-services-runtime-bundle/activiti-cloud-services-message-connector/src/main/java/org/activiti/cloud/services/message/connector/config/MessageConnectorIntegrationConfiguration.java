@@ -2,12 +2,10 @@ package org.activiti.cloud.services.message.connector.config;
 
 import java.util.Optional;
 
-import org.activiti.api.process.model.payloads.MessageEventPayload;
-import org.activiti.cloud.services.message.connector.advice.MessageReceivedHandlerAdvice;
-import org.activiti.cloud.services.message.connector.advice.SubscriptionCancelledHandlerAdvice;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregatorFactoryBean;
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
+import org.activiti.cloud.services.message.connector.integration.MessageConnectorIntegrationFlow;
 import org.activiti.cloud.services.message.connector.processor.MessageGroupProcessorChain;
 import org.activiti.cloud.services.message.connector.processor.MessageGroupProcessorHandlerChain;
 import org.activiti.cloud.services.message.connector.processor.ReceiveMessagePayloadGroupProcessor;
@@ -36,8 +34,6 @@ import org.springframework.integration.aggregator.ReleaseStrategy;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.dsl.IntegrationFlow;
-import org.springframework.integration.dsl.IntegrationFlows;
-import org.springframework.integration.dsl.Transformers;
 import org.springframework.integration.handler.MessageProcessor;
 import org.springframework.integration.handler.advice.IdempotentReceiverInterceptor;
 import org.springframework.integration.metadata.ConcurrentMetadataStore;
@@ -71,32 +67,12 @@ public class MessageConnectorIntegrationConfiguration {
                                                            LockTemplate lockTemplate,
                                                            MessageConnectorAggregator messageConnectorAggregator,
                                                            IdempotentReceiverInterceptor idempotentReceiverInterceptor) {
-        return IntegrationFlows.from(processor.input())
-                               .gateway(flow -> flow.log()
-                                                    .filter("headers.eventType != null", // FIXME use MessageSelector
-                                                            filter -> filter.id("filter")
-                                                                            .discardChannel("errorChannel") 
-                                                    )
-                                                    .transform(Transformers.fromJson(MessageEventPayload.class))
-                                                    .handle(messageConnectorAggregator, 
-                                                            handler -> handler.id("aggregator")
-                                                                              .advice(new MessageReceivedHandlerAdvice(messageStore,
-                                                                                                                       correlationStrategy,
-                                                                                                                       lockTemplate))
-                                                                              .advice(new SubscriptionCancelledHandlerAdvice(messageStore,
-                                                                                                                             correlationStrategy,
-                                                                                                                             lockTemplate))
-                                                    )
-                                                    .log()
-                                                    .channel(processor.output())                                                     
-                                        ,
-                                        flowSpec -> flowSpec.transactional()
-                                                            .id("gateway")
-                                                            .requiresReply(false)
-                                                            .async(true)
-                                                            .replyTimeout(0L)
-                                                            .advice(idempotentReceiverInterceptor))
-                               .get();
+        return new MessageConnectorIntegrationFlow(processor,
+                                                   messageStore,
+                                                   correlationStrategy,
+                                                   lockTemplate,
+                                                   messageConnectorAggregator,
+                                                   idempotentReceiverInterceptor);
     }
     
     @Bean
