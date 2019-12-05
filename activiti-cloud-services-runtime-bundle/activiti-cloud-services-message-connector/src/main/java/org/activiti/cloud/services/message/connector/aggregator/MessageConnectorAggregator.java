@@ -1,6 +1,7 @@
 package org.activiti.cloud.services.message.connector.aggregator;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import org.springframework.integration.aggregator.AbstractCorrelatingMessageHandler;
 import org.springframework.integration.aggregator.CorrelationStrategy;
@@ -73,9 +74,16 @@ public class MessageConnectorAggregator extends AbstractCorrelatingMessageHandle
         MessageGroupStore messageStore = getMessageStore();
         boolean isCompleted = false;
 
-//        if (completedMessages != null && !completedMessages.isEmpty()) {
-//            messageStore.removeMessagesFromGroup(groupId, completedMessages);
-//        }
+        if (completedMessages != null && !completedMessages.isEmpty()) {
+            Collection<Message<?>> deletedMessages = messageGroup.getMessages()
+                        .stream()
+                        .filter(completedMessages::contains)
+                        .collect(Collectors.toList());
+                        
+            if (!deletedMessages.isEmpty()) {
+                messageStore.removeMessagesFromGroup(groupId, deletedMessages);
+            }
+        }
         
         if (this.completeGroupsWhenEmpty) {
             if (messageStore.messageGroupSize(groupId) == 0) {
