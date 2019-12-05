@@ -46,9 +46,11 @@ import org.activiti.image.impl.DefaultProcessDiagramGenerator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.messaging.MessageChannel;
 
 @Configuration
+@PropertySource("classpath:config/command-endpoint-channels.properties")
 public class ServicesCoreAutoConfiguration {
 
     @Bean
