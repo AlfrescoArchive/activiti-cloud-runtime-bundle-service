@@ -69,14 +69,8 @@ public class CandidateUserControllerImplIT {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper mapper;
-
     @MockBean
     private RepositoryService repositoryService;
-
-    @MockBean
-    private SecurityManager securityManager;
 
     @MockBean
     private TaskRuntime taskRuntime;
@@ -86,9 +80,6 @@ public class CandidateUserControllerImplIT {
 
     @MockBean
     private ProcessEngineChannels processEngineChannels;
-
-    @Mock
-    private Page<Task> taskPage;
 
     @MockBean
     private CloudProcessDeployedProducer processDeployedProducer;
