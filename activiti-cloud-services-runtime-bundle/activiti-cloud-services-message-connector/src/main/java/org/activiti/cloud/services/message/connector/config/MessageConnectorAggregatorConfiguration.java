@@ -46,7 +46,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  *
  */
 @EnableBinding(Processor.class)
-//@EnableMessageHistory
+//@EnableMessageHistory // FIXME does not work with RabbitMQ binder
 @EnableIntegrationManagement
 @EnableConfigurationProperties(MessageAggregatorProperties.class)
 @EnableTransactionManagement

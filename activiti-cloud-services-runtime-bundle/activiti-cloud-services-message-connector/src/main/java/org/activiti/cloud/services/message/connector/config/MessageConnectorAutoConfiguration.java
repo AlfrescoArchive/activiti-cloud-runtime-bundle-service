@@ -14,8 +14,7 @@ import org.springframework.integration.dsl.IntegrationFlows;
 
 @Configuration
 @EnableBinding({
-    MessageConnectorChannels.Consumer.class,
-    MessageConnectorChannels.Producer.class
+    MessageConnectorChannels.Consumer.class
 })
 @PropertySource("classpath:config/message-connector-channels.properties")
 @Import(MessageConnectorAggregatorConfiguration.class)
@@ -27,7 +26,8 @@ public class MessageConnectorAutoConfiguration {
         return new MessageConnectorConsumer(processor);
     }
     
-    @Bean
+    // FIXME implement dynamic destination router
+    //@Bean
     public IntegrationFlow outputProducerIntegrationFlow(Processor processor,
                                                          MessageConnectorChannels.Producer producer) {
         return IntegrationFlows.from(processor.output())

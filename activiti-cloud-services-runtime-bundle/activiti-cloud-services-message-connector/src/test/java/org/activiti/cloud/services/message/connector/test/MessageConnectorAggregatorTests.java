@@ -54,8 +54,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
         properties = {
-                "spring.cloud.stream.bindings.output.contentType=application/x-java-serialized-object",
-                "spring.cloud.stream.bindings.input.contentType=application/x-java-serialized-object"
+                "spring.cloud.stream.bindings.input.contentType=application/x-java-object",
+                "spring.cloud.stream.bindings.output.contentType=application/x-java-object"
         }
 )
 @DirtiesContext
@@ -77,7 +77,7 @@ public abstract class MessageConnectorAggregatorTests {
     // FIXME 
     @SpringBootApplication(exclude = MessageConnectorAutoConfiguration.class)
     public static class DefaultAggregatorApplication {
-
+        
     }
     
     @TestPropertySource(properties = {

@@ -16,7 +16,6 @@
 
 package org.activiti.cloud.services.message.events.config;
 
-import org.activiti.api.process.runtime.ProcessAdminRuntime;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.events.converter.ToCloudProcessRuntimeEventConverter;
 import org.activiti.cloud.services.message.events.BpmnMessageEventMessageBuilderFactory;
@@ -25,10 +24,8 @@ import org.activiti.cloud.services.message.events.BpmnMessageSentEventMessagePro
 import org.activiti.cloud.services.message.events.BpmnMessageWaitingEventMessageProducer;
 import org.activiti.cloud.services.message.events.MessageSubscriptionCancelledEventMessageProducer;
 import org.activiti.cloud.services.message.events.MessageSubscriptionEventMessageBuilderFactory;
-import org.activiti.cloud.services.message.events.ReceiveMessagePayloadMessageStreamListener;
 import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageBuilderFactory;
 import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageProducer;
-import org.activiti.cloud.services.message.events.StartMessagePayloadMessageStreamListener;
 import org.activiti.cloud.services.message.events.channels.MessageEventsChannels;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cloud.stream.annotation.EnableBinding;
@@ -40,8 +37,8 @@ import org.springframework.lang.NonNull;
 @Configuration
 @PropertySource("classpath:config/message-events-channels.properties")
 @EnableBinding({
-    MessageEventsChannels.Producer.class,
-    MessageEventsChannels.Consumer.class
+    MessageEventsChannels.Producer.class
+//    MessageEventsChannels.Consumer.class
 })
 public class MessageEventsAutoConfiguration {
 
@@ -112,17 +109,4 @@ public class MessageEventsAutoConfiguration {
                                                                     messageBuilderFactory,
                                                                     runtimeEventConverter);
     }
-    
-    @Bean
-    @ConditionalOnMissingBean
-    public ReceiveMessagePayloadMessageStreamListener receiveMessagePayloadMessageStreamListener(ProcessAdminRuntime processAdminRuntime) {
-        return new ReceiveMessagePayloadMessageStreamListener(processAdminRuntime);
-    }
-    
-    @Bean
-    @ConditionalOnMissingBean
-    public StartMessagePayloadMessageStreamListener startMessagePayloadMessageStreamListener(ProcessAdminRuntime processAdminRuntime) {
-        return new StartMessagePayloadMessageStreamListener(processAdminRuntime);
-    }
-    
 }

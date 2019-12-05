@@ -43,14 +43,14 @@ import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
 import org.activiti.cloud.api.process.model.events.CloudBPMNMessageWaitingEvent;
 import org.activiti.cloud.api.process.model.events.CloudMessageSubscriptionCancelledEvent;
+import org.activiti.cloud.services.core.commands.ReceiveMessageCmdExecutor;
+import org.activiti.cloud.services.core.commands.StartMessageCmdExecutor;
 import org.activiti.cloud.services.message.connector.MessageConnectorConsumer;
 import org.activiti.cloud.services.message.events.BpmnMessageReceivedEventMessageProducer;
 import org.activiti.cloud.services.message.events.BpmnMessageSentEventMessageProducer;
 import org.activiti.cloud.services.message.events.BpmnMessageWaitingEventMessageProducer;
 import org.activiti.cloud.services.message.events.MessageSubscriptionCancelledEventMessageProducer;
-import org.activiti.cloud.services.message.events.ReceiveMessagePayloadMessageStreamListener;
 import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageProducer;
-import org.activiti.cloud.services.message.events.StartMessagePayloadMessageStreamListener;
 import org.activiti.cloud.starter.tests.helper.ProcessInstanceRestTemplate;
 import org.activiti.engine.RuntimeService;
 import org.awaitility.Awaitility;
@@ -134,10 +134,10 @@ public class MessageEventsIT {
     private BpmnMessageWaitingEventMessageProducer bpmnMessageWaitingEventMessageProducer;
     
     @SpyBean
-    private StartMessagePayloadMessageStreamListener startMessagePayloadMessageStreamListener; 
+    private StartMessageCmdExecutor startMessagePayloadMessageStreamListener; 
 
     @SpyBean
-    private ReceiveMessagePayloadMessageStreamListener receiveMessagePayloadMessageStreamListener;
+    private ReceiveMessageCmdExecutor receiveMessagePayloadMessageStreamListener;
     
     @SpyBean
     private MessageSubscriptionCancelledEventMessageProducer messageSubscriptionCancelledEventMessageProducer; 
@@ -219,8 +219,8 @@ public class MessageEventsIT {
         verify(bpmnMessageWaitingEventMessageProducer, times(1)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
         verify(bpmnMessageReceivedEventMessageProducer, times(1)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
 
-        verify(receiveMessagePayloadMessageStreamListener, times(1)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
-        verify(startMessagePayloadMessageStreamListener, never()).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
+        verify(receiveMessagePayloadMessageStreamListener, times(1)).execute(ArgumentMatchers.<ReceiveMessagePayload>any());
+        verify(startMessagePayloadMessageStreamListener, never()).execute(ArgumentMatchers.<StartMessagePayload>any());
     }
     
     @Test
@@ -256,8 +256,8 @@ public class MessageEventsIT {
         verify(bpmnMessageWaitingEventMessageProducer, times(1)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
         verify(bpmnMessageReceivedEventMessageProducer, times(3)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
         
-        verify(receiveMessagePayloadMessageStreamListener, times(1)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
-        verify(startMessagePayloadMessageStreamListener, times(2)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
+        verify(receiveMessagePayloadMessageStreamListener, times(1)).execute(ArgumentMatchers.<ReceiveMessagePayload>any());
+        verify(startMessagePayloadMessageStreamListener, times(2)).execute(ArgumentMatchers.<StartMessagePayload>any());
     }
     
     @Test
@@ -292,8 +292,8 @@ public class MessageEventsIT {
         verify(bpmnMessageWaitingEventMessageProducer, times(1)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
         verify(bpmnMessageReceivedEventMessageProducer, times(3)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
         
-        verify(receiveMessagePayloadMessageStreamListener, times(1)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
-        verify(startMessagePayloadMessageStreamListener, times(2)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
+        verify(receiveMessagePayloadMessageStreamListener, times(1)).execute(ArgumentMatchers.<ReceiveMessagePayload>any());
+        verify(startMessagePayloadMessageStreamListener, times(2)).execute(ArgumentMatchers.<StartMessagePayload>any());
     }
     
 
@@ -329,8 +329,8 @@ public class MessageEventsIT {
         verify(bpmnMessageWaitingEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
         verify(bpmnMessageReceivedEventMessageProducer, times(3 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
         
-        verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
-        verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
+        verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).execute(ArgumentMatchers.<ReceiveMessagePayload>any());
+        verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).execute(ArgumentMatchers.<StartMessagePayload>any());
     }
     
     @Test
@@ -365,8 +365,8 @@ public class MessageEventsIT {
         verify(bpmnMessageWaitingEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
         verify(bpmnMessageReceivedEventMessageProducer, times(3 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
         
-        verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
-        verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
+        verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).execute(ArgumentMatchers.<ReceiveMessagePayload>any());
+        verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).execute(ArgumentMatchers.<StartMessagePayload>any());
     }
 
     @Test
@@ -401,8 +401,8 @@ public class MessageEventsIT {
         verify(bpmnMessageWaitingEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
         verify(bpmnMessageReceivedEventMessageProducer, times(3 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
         
-        verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
-        verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
+        verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).execute(ArgumentMatchers.<ReceiveMessagePayload>any());
+        verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).execute(ArgumentMatchers.<StartMessagePayload>any());
     }
     
     @Test
@@ -437,8 +437,8 @@ public class MessageEventsIT {
         verify(bpmnMessageWaitingEventMessageProducer, times(2 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
         verify(bpmnMessageReceivedEventMessageProducer, times(4 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
         
-        verify(receiveMessagePayloadMessageStreamListener, times(2 * processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
-        verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
+        verify(receiveMessagePayloadMessageStreamListener, times(2 * processInstances)).execute(ArgumentMatchers.<ReceiveMessagePayload>any());
+        verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).execute(ArgumentMatchers.<StartMessagePayload>any());
     }
     
     
@@ -474,8 +474,8 @@ public class MessageEventsIT {
         verify(bpmnMessageWaitingEventMessageProducer, times(2 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
         verify(bpmnMessageReceivedEventMessageProducer, times(4 * processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
 
-        verify(receiveMessagePayloadMessageStreamListener, times(2 * processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
-        verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
+        verify(receiveMessagePayloadMessageStreamListener, times(2 * processInstances)).execute(ArgumentMatchers.<ReceiveMessagePayload>any());
+        verify(startMessagePayloadMessageStreamListener, times(2 * processInstances)).execute(ArgumentMatchers.<StartMessagePayload>any());
     }    
     
     @Test
@@ -513,8 +513,8 @@ public class MessageEventsIT {
         verify(bpmnMessageWaitingEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
         verify(bpmnMessageReceivedEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
         
-        verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
-        verify(startMessagePayloadMessageStreamListener, never()).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
+        verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).execute(ArgumentMatchers.<ReceiveMessagePayload>any());
+        verify(startMessagePayloadMessageStreamListener, never()).execute(ArgumentMatchers.<StartMessagePayload>any());
     }
 
     @Test
@@ -553,8 +553,8 @@ public class MessageEventsIT {
         verify(bpmnMessageWaitingEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageWaitingEvent>any());
         verify(bpmnMessageReceivedEventMessageProducer, times(processInstances)).onEvent(ArgumentMatchers.<BPMNMessageReceivedEvent>any());
 
-        verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).receiveMessage(ArgumentMatchers.<Message<ReceiveMessagePayload>>any());
-        verify(startMessagePayloadMessageStreamListener, never()).startMessage(ArgumentMatchers.<Message<StartMessagePayload>>any());
+        verify(receiveMessagePayloadMessageStreamListener, times(processInstances)).execute(ArgumentMatchers.<ReceiveMessagePayload>any());
+        verify(startMessagePayloadMessageStreamListener, never()).execute(ArgumentMatchers.<StartMessagePayload>any());
     }
 
     @Test

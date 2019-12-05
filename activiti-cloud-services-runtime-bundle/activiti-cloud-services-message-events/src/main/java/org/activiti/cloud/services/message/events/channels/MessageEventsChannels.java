@@ -16,29 +16,15 @@
 
 package org.activiti.cloud.services.message.events.channels;
 
-import org.springframework.cloud.stream.annotation.Input;
 import org.springframework.cloud.stream.annotation.Output;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.SubscribableChannel;
 
 public interface MessageEventsChannels {
-    public static final String RECEIVE_MESSAGE_PAYLOAD_CONSUMER_CHANNEL = "receiveMessagePayloadConsumerChannel";
     public static final String BPMN_MESSAGE_SENT_EVENT_PRODUCER_CHANNEL = "bpmnMessageSentEventProducerChannel";
     public static final String BPMN_MESSAGE_RECEIVED_EVENT_PRODUCER_CHANNEL = "bpmnMessageReceivedEventProducerChannel";
     public static final String BPMN_MESSAGE_WAITING_EVENT_RPODUCER_CHANNEL = "bpmnMessageWaitingEventProducerChannel";
     public static final String MESSAGE_DEPLOYED_EVENT_PRODUCER_CHANNEL = "messageDeployedEventProducerChannel";
-    public static final String START_MESSAGE_PAYLOAD_CONSUMER_CHANNEL = "startMessagePayloadConsumerChannel";
     public static final String MESSAGE_SUBSCRIPTION_CANCELLED_EVENT_PRODUCER_CHANNEL = "messageSubscriptionCancelledEventProducerChannel";
-
-    interface Consumer {
-
-        @Input(RECEIVE_MESSAGE_PAYLOAD_CONSUMER_CHANNEL)
-        SubscribableChannel receiveMessagePayloadConsumerChannel();
-
-        @Input(START_MESSAGE_PAYLOAD_CONSUMER_CHANNEL)
-        SubscribableChannel startMessagePayloadConsumerChannel();
-        
-    }
 
     interface Producer {
 

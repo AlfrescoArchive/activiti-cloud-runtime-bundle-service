@@ -16,6 +16,8 @@
 
 package org.activiti.cloud.services.core.conf;
 
+import java.util.Set;
+
 import org.activiti.api.model.shared.Payload;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
 import org.activiti.api.task.runtime.TaskAdminRuntime;
@@ -25,11 +27,13 @@ import org.activiti.cloud.services.core.commands.CommandEndpoint;
 import org.activiti.cloud.services.core.commands.CommandExecutor;
 import org.activiti.cloud.services.core.commands.CompleteTaskCmdExecutor;
 import org.activiti.cloud.services.core.commands.CreateTaskVariableCmdExecutor;
+import org.activiti.cloud.services.core.commands.ReceiveMessageCmdExecutor;
 import org.activiti.cloud.services.core.commands.ReleaseTaskCmdExecutor;
 import org.activiti.cloud.services.core.commands.RemoveProcessVariablesCmdExecutor;
 import org.activiti.cloud.services.core.commands.ResumeProcessInstanceCmdExecutor;
 import org.activiti.cloud.services.core.commands.SetProcessVariablesCmdExecutor;
 import org.activiti.cloud.services.core.commands.SignalCmdExecutor;
+import org.activiti.cloud.services.core.commands.StartMessageCmdExecutor;
 import org.activiti.cloud.services.core.commands.StartProcessInstanceCmdExecutor;
 import org.activiti.cloud.services.core.commands.SuspendProcessInstanceCmdExecutor;
 import org.activiti.cloud.services.core.commands.UpdateTaskVariableCmdExecutor;
@@ -43,8 +47,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.MessageChannel;
-
-import java.util.Set;
 
 @Configuration
 public class ServicesCoreAutoConfiguration {
@@ -141,6 +143,18 @@ public class ServicesCoreAutoConfiguration {
         return new SuspendProcessInstanceCmdExecutor(processAdminRuntime,
                                                      commandResults);
     }    
+
+    @Bean
+    @ConditionalOnMissingBean
+    public StartMessageCmdExecutor startMessageCmdExecutor(ProcessAdminRuntime processAdminRuntime) {
+        return new StartMessageCmdExecutor(processAdminRuntime);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public ReceiveMessageCmdExecutor receiveMessageCmdExecutor(ProcessAdminRuntime processAdminRuntime) {
+        return new ReceiveMessageCmdExecutor(processAdminRuntime);
+    }
     
     @Bean
     public <T extends Payload> CommandEndpoint<T> commandEndpoint(Set<CommandExecutor<T>> cmdExecutors) {
