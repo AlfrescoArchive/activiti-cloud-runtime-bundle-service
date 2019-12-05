@@ -1,7 +1,9 @@
 package org.activiti.cloud.services.rest.conf;
 
-import org.activiti.cloud.services.rest.controllers.CandidateAdminControllerImpl;
-import org.activiti.cloud.services.rest.controllers.CandidateControllerImpl;
+import org.activiti.cloud.services.rest.controllers.CandidateGroupAdminControllerImpl;
+import org.activiti.cloud.services.rest.controllers.CandidateGroupControllerImpl;
+import org.activiti.cloud.services.rest.controllers.CandidateUserAdminControllerImpl;
+import org.activiti.cloud.services.rest.controllers.CandidateUserControllerImpl;
 import org.activiti.cloud.services.rest.controllers.ConnectorDefinitionControllerImpl;
 import org.activiti.cloud.services.rest.controllers.HomeControllerImpl;
 import org.activiti.cloud.services.rest.controllers.ProcessDefinitionAdminControllerImpl;
@@ -40,8 +42,10 @@ import org.springframework.context.annotation.Import;
         TaskControllerImpl.class,
         TaskVariableAdminControllerImpl.class,
         TaskVariableControllerImpl.class,
-        CandidateControllerImpl.class,
-        CandidateAdminControllerImpl.class})
+        CandidateUserControllerImpl.class,
+        CandidateUserAdminControllerImpl.class,
+        CandidateGroupControllerImpl.class,
+        CandidateGroupAdminControllerImpl.class})
 public class ServicesRestControllersAutoConfiguration {
 
 }

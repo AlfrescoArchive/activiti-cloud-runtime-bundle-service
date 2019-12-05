@@ -3,8 +3,13 @@ package org.activiti.cloud.services.rest.controllers;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.activiti.alfresco.rest.docs.HALDocumentation.unpagedCandidateGroups;
-import org.activiti.api.task.runtime.TaskAdminRuntime;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.activiti.api.runtime.conf.impl.CommonModelAutoConfiguration;
+import org.activiti.api.runtime.shared.query.Page;
+import org.activiti.api.runtime.shared.security.SecurityManager;
+import org.activiti.api.task.conf.impl.TaskModelAutoConfiguration;
+import org.activiti.api.task.model.Task;
+import org.activiti.api.task.runtime.TaskRuntime;
 import org.activiti.cloud.alfresco.config.AlfrescoWebAutoConfiguration;
 import org.activiti.cloud.services.core.pageable.SpringPageConverter;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
@@ -18,6 +23,7 @@ import org.activiti.spring.process.conf.ProcessExtensionsAutoConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -35,49 +41,61 @@ import org.springframework.test.web.servlet.MvcResult;
 import static net.javacrumbs.jsonunit.fluent.JsonFluentAssert.assertThatJson;
 import static org.activiti.alfresco.rest.docs.AlfrescoDocumentation.resourcesResponseFields;
 import static org.activiti.alfresco.rest.docs.HALDocumentation.unpagedCandidateUsers;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
-@WebMvcTest(controllers = CandidateAdminControllerImpl.class, secure = true)
+@WebMvcTest(controllers = CandidateUserControllerImpl.class, secure = true)
 @EnableSpringDataWebSupport
 @AutoConfigureMockMvc(secure = false)
 @AutoConfigureRestDocs(outputDir = "target/snippets")
-@Import({RuntimeBundleProperties.class,
+@Import({CommonModelAutoConfiguration.class,
+        TaskModelAutoConfiguration.class,
+        RuntimeBundleProperties.class,
         CloudEventsAutoConfiguration.class,
-        TaskSamples.class,
         ActivitiCoreCommonUtilAutoConfiguration.class,
         ProcessExtensionsAutoConfiguration.class,
         ServicesRestWebMvcAutoConfiguration.class,
         AlfrescoWebAutoConfiguration.class})
-public class CandidateAdminControllerIT {
+public class CandidateUserControllerImplIT {
 
-    private static final String DOCUMENTATION_IDENTIFIER = "task-admin";
+    private static final String DOCUMENTATION_IDENTIFIER = "candidate-user";
+
+    private static final String DOCUMENTATION_IDENTIFIER_ALFRESCO = "candidate-user-alfresco";
 
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
-    private TaskAdminRuntime taskAdminRuntime;
+    @Autowired
+    private ObjectMapper mapper;
 
     @MockBean
     private RepositoryService repositoryService;
 
+    @MockBean
+    private SecurityManager securityManager;
+
+    @MockBean
+    private TaskRuntime taskRuntime;
+
     @SpyBean
-    private SpringPageConverter pageConverter;
+    private SpringPageConverter springPageConverter;
 
     @MockBean
     private ProcessEngineChannels processEngineChannels;
+
+    @Mock
+    private Page<Task> taskPage;
 
     @MockBean
     private CloudProcessDeployedProducer processDeployedProducer;
 
     @Before
     public void setUp() {
-        assertThat(pageConverter).isNotNull();
+        assertThat(springPageConverter).isNotNull();
         assertThat(processEngineChannels).isNotNull();
         assertThat(processDeployedProducer).isNotNull();
     }
@@ -87,12 +105,12 @@ public class CandidateAdminControllerIT {
 
         List<String> stringList = Arrays.asList("hruser",
                                                 "testuser");
-        when(taskAdminRuntime.userCandidates("1")).thenReturn(stringList);
+        when(taskRuntime.userCandidates("1")).thenReturn(stringList);
 
-        MvcResult result = this.mockMvc.perform(get("/admin/v1/tasks/{taskId}/candidate-users",
+        MvcResult result = this.mockMvc.perform(get("/v1/tasks/{taskId}/candidate-users",
                                                     1).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
+                .andDo(document(DOCUMENTATION_IDENTIFIER_ALFRESCO + "/list",
                                 resourcesResponseFields()))
                 .andReturn();
 
@@ -109,9 +127,9 @@ public class CandidateAdminControllerIT {
 
         List<String> stringList = Arrays.asList("hruser",
                                                 "testuser");
-        when(taskAdminRuntime.userCandidates("1")).thenReturn(stringList);
+        when(taskRuntime.userCandidates("1")).thenReturn(stringList);
 
-        MvcResult result = this.mockMvc.perform(get("/admin/v1/tasks/{taskId}/candidate-users",
+        MvcResult result = this.mockMvc.perform(get("/v1/tasks/{taskId}/candidate-users",
                                                     1).accept(MediaTypes.HAL_JSON_VALUE))
                 .andExpect(status().isOk())
                 .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
@@ -124,51 +142,6 @@ public class CandidateAdminControllerIT {
         assertThatJson(result.getResponse().getContentAsString())
                 .node("_embedded.candidateUsers[1].user")
                 .isEqualTo("testuser");
-    }
-
-
-    @Test
-    public void getGroupCandidatesShouldUseAlfrescoGuidelineWhenMediaTypeIsApplicationJson() throws Exception {
-
-        List<String> stringList = Arrays.asList("hrgroup",
-                                                "testgroup");
-        when(taskAdminRuntime.groupCandidates("1")).thenReturn(stringList);
-
-        MvcResult result = this.mockMvc.perform(get("/admin/v1/tasks/{taskId}/candidate-groups",
-                                                    1).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
-                                resourcesResponseFields()))
-                .andReturn();
-
-        assertThatJson(result.getResponse().getContentAsString())
-                .node("list.entries[0].entry.group")
-                .isEqualTo("hrgroup");
-        assertThatJson(result.getResponse().getContentAsString())
-                .node("list.entries[1].entry.group")
-                .isEqualTo("testgroup");
-    }
-
-    @Test
-    public void getGroupCandidatesShouldHaveProperHALFormat() throws Exception {
-
-        List<String> stringList = Arrays.asList("hrgroup",
-                                                "testgroup");
-        when(taskAdminRuntime.groupCandidates("1")).thenReturn(stringList);
-
-        MvcResult result = this.mockMvc.perform(get("/admin/v1/tasks/{taskId}/candidate-groups",
-                                                    1).accept(MediaTypes.HAL_JSON_VALUE))
-                .andExpect(status().isOk())
-                .andDo(document(DOCUMENTATION_IDENTIFIER + "/list",
-                                unpagedCandidateGroups()))
-                .andReturn();
-
-        assertThatJson(result.getResponse().getContentAsString())
-                .node("_embedded.candidateGroups[0].group")
-                .isEqualTo("hrgroup");
-        assertThatJson(result.getResponse().getContentAsString())
-                .node("_embedded.candidateGroups[1].group")
-                .isEqualTo("testgroup");
     }
 
 }
