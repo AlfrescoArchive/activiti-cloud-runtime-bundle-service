@@ -44,11 +44,10 @@ public class MessageStoreEnvironmentPostProcessor implements EnvironmentPostProc
                                          EmbeddedMongoAutoConfiguration.class,
                                          RedisAutoConfiguration.class,
                                          HazelcastAutoConfiguration.class,
+//                                         ClientCacheAutoConfiguration.class, // TODO GemFire configuration 
                                          RedisRepositoriesAutoConfiguration.class)
                                      .map(Class::getName)
                                      .collect(Collectors.joining(",")));
-        
-//      TODO    ClientCacheAutoConfiguration.class.getName() + ", " +
 
         propertySources.addLast(
                 new PropertiesPropertySource("aggregator.exclude.stores.auto-configuration", properties));
