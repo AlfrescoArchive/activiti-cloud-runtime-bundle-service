@@ -17,7 +17,6 @@
 package org.activiti.cloud.services.message.connector.processor;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import org.activiti.api.process.model.builders.MessagePayloadBuilder;
@@ -41,8 +40,6 @@ public class StartMessagePayloadGroupProcessor implements MessageGroupProcessorH
 
     private final static ReleaseStrategy strategy = new SpELEvaluatingReleaseStrategy(condition);
     
-    private final Comparator<Message<?>> comparator = new MessageTimestampComparator();
-    
     private final static MessageListProcessor processor = new SpELEvaluatingMessageListProcessor("#this.?[headers['eventType'] == 'MESSAGE_SENT']");
 
     private final MessageGroupStore messageGroupStore;
@@ -59,7 +56,7 @@ public class StartMessagePayloadGroupProcessor implements MessageGroupProcessorH
             messageGroupStore.removeMessagesFromGroup(group.getGroupId(),
                                                       result);
             return result.stream()
-                         .sorted(comparator)
+                         .sorted(MessageTimestampComparator.INSTANCE)
                          .map(this::messageEventPayload)
                          .collect(Collectors.toList());
         }
