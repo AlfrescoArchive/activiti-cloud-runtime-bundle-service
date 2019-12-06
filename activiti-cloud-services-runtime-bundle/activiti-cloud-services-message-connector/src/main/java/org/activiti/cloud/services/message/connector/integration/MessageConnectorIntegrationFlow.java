@@ -20,7 +20,6 @@ import static org.activiti.cloud.services.message.connector.integration.MessageE
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_NAME;
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.SERVICE_FULL_NAME;
-import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
 import java.util.Objects;
 
@@ -31,8 +30,10 @@ import org.activiti.cloud.services.message.connector.aggregator.MessageConnector
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
 import org.aopalliance.aop.Advice;
+import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.integration.aggregator.CorrelationStrategy;
-import org.springframework.integration.core.GenericSelector;
+import org.springframework.integration.annotation.Filter;
+import org.springframework.integration.annotation.Transformer;
 import org.springframework.integration.dsl.IntegrationFlowAdapter;
 import org.springframework.integration.dsl.IntegrationFlowDefinition;
 import org.springframework.integration.dsl.Transformers;
@@ -49,9 +50,6 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
     private final LockTemplate lockTemplate;
     private final MessageConnectorAggregator messageConnectorAggregator;
     private final IdempotentReceiverInterceptor idempotentReceiverInterceptor;
-
-    private final GenericSelector<Message<?>> messageHeaders = message -> Objects.nonNull(message.getHeaders()
-                                                                                                 .get(MESSAGE_EVENT_TYPE));
 
     public MessageConnectorIntegrationFlow(MessageConnectorProcessor processor,
                                            MessageGroupStore messageStore,
@@ -72,12 +70,12 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
         return this.from(processor.input())
                    .gateway(flow -> flow.log()
                                         .filter(Message.class,
-                                                messageHeaders::accept,
-                                                filterSpec -> filterSpec.id("filter-has-valid-headers")
+                                                this::hasMessageEventTypeHeader,
+                                                filterSpec -> filterSpec.id("filter-message-headers")
                                                                         .discardChannel("errorChannel")
                                         )
                                         .enrichHeaders(enricher -> enricher.id("enrich-correlation-id")
-                                                                           .headerFunction(CORRELATION_ID, 
+                                                                           .headerFunction(IntegrationMessageHeaderAccessor.CORRELATION_ID, 
                                                                                            MessageConnectorIntegrationFlow::getCorrelationId)
                                         )
                                         .transform(Transformers.fromJson(MessageEventPayload.class))
@@ -98,7 +96,6 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                                                 .advice(idempotentReceiverInterceptor));
     }
     
-
     public Advice getMessageReceivedHandlerAdvice() {
         return new MessageReceivedHandlerAdvice(messageStore,
                                                 correlationStrategy,
@@ -110,7 +107,14 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                                                       correlationStrategy,
                                                       lockTemplate);
     }
+
+    @Filter
+    public boolean hasMessageEventTypeHeader(Message<?> message) {
+        return Objects.nonNull(message.getHeaders()
+                                      .get(MESSAGE_EVENT_TYPE));
+    }
     
+    @Transformer
     public static String getCorrelationId(Message<?> message) {
         MessageHeaders headers = message.getHeaders();
         String serviceFullName = headers.get(SERVICE_FULL_NAME, String.class);
