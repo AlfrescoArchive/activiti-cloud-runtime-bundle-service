@@ -32,7 +32,7 @@ import org.activiti.cloud.services.message.connector.channels.MessageConnectorPr
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
 import org.aopalliance.aop.Advice;
 import org.springframework.integration.aggregator.CorrelationStrategy;
-import org.springframework.integration.core.MessageSelector;
+import org.springframework.integration.core.GenericSelector;
 import org.springframework.integration.dsl.IntegrationFlowAdapter;
 import org.springframework.integration.dsl.IntegrationFlowDefinition;
 import org.springframework.integration.dsl.Transformers;
@@ -50,9 +50,9 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
     private final MessageConnectorAggregator messageConnectorAggregator;
     private final IdempotentReceiverInterceptor idempotentReceiverInterceptor;
 
-    private final MessageSelector hasValidHeaders = message -> Objects.nonNull(message.getHeaders()
-                                                                                             .get(MESSAGE_EVENT_TYPE));
-    
+    private final GenericSelector<Message<?>> messageHeaders = message -> Objects.nonNull(message.getHeaders()
+                                                                                                 .get(MESSAGE_EVENT_TYPE));
+
     public MessageConnectorIntegrationFlow(MessageConnectorProcessor processor,
                                            MessageGroupStore messageStore,
                                            CorrelationStrategy correlationStrategy,
@@ -71,7 +71,8 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
     protected IntegrationFlowDefinition<?> buildFlow() {
         return this.from(processor.input())
                    .gateway(flow -> flow.log()
-                                        .filter(hasValidHeaders::accept,
+                                        .filter(Message.class,
+                                                messageHeaders::accept,
                                                 filterSpec -> filterSpec.id("filter-has-valid-headers")
                                                                         .discardChannel("errorChannel")
                                         )
