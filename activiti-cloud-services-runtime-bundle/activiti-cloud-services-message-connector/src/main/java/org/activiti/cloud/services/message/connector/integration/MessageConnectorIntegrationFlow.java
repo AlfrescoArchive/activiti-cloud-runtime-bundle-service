@@ -18,8 +18,11 @@ package org.activiti.cloud.services.message.connector.integration;
 
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_CORRELATION_KEY;
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_NAME;
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.SERVICE_FULL_NAME;
 import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
+
+import java.util.Objects;
 
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.cloud.services.message.connector.advice.MessageReceivedHandlerAdvice;
@@ -29,6 +32,7 @@ import org.activiti.cloud.services.message.connector.channels.MessageConnectorPr
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
 import org.aopalliance.aop.Advice;
 import org.springframework.integration.aggregator.CorrelationStrategy;
+import org.springframework.integration.core.MessageSelector;
 import org.springframework.integration.dsl.IntegrationFlowAdapter;
 import org.springframework.integration.dsl.IntegrationFlowDefinition;
 import org.springframework.integration.dsl.Transformers;
@@ -46,6 +50,9 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
     private final MessageConnectorAggregator messageConnectorAggregator;
     private final IdempotentReceiverInterceptor idempotentReceiverInterceptor;
 
+    private final MessageSelector hasValidHeaders = message -> Objects.nonNull(message.getHeaders()
+                                                                                             .get(MESSAGE_EVENT_TYPE));
+    
     public MessageConnectorIntegrationFlow(MessageConnectorProcessor processor,
                                            MessageGroupStore messageStore,
                                            CorrelationStrategy correlationStrategy,
@@ -64,9 +71,9 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
     protected IntegrationFlowDefinition<?> buildFlow() {
         return this.from(processor.input())
                    .gateway(flow -> flow.log()
-                                        .filter("headers.eventType != null", // FIXME use MessageSelector
-                                                filter -> filter.id("filter-message-event-type")
-                                                                .discardChannel("errorChannel")
+                                        .filter(hasValidHeaders::accept,
+                                                filterSpec -> filterSpec.id("filter-has-valid-headers")
+                                                                        .discardChannel("errorChannel")
                                         )
                                         .enrichHeaders(enricher -> enricher.id("enrich-correlation-id")
                                                                            .headerFunction(CORRELATION_ID, 
