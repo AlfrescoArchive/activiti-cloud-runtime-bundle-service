@@ -16,8 +16,12 @@
 
 package org.activiti.cloud.services.message.connector.config;
 
+import java.util.List;
 import java.util.Optional;
 
+import org.activiti.cloud.services.message.connector.advice.MessageConnectorHandlerAdvice;
+import org.activiti.cloud.services.message.connector.advice.MessageReceivedHandlerAdvice;
+import org.activiti.cloud.services.message.connector.advice.SubscriptionCancelledHandlerAdvice;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregatorFactoryBean;
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
@@ -39,7 +43,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.cloud.stream.messaging.Processor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.IntegrationMessageHeaderAccessor;
@@ -77,22 +80,20 @@ public class MessageConnectorIntegrationConfiguration {
     
     // TODO controlBus()
     
-    @Bean("messageConnectorIntegrationFlow")
+    @Bean
+    @ConditionalOnMissingBean(name = "messageConnectorIntegrationFlow")
     public IntegrationFlow messageConnectorIntegrationFlow(MessageConnectorProcessor processor,
-                                                           MessageGroupStore messageStore,
-                                                           CorrelationStrategy correlationStrategy,
-                                                           LockTemplate lockTemplate,
-                                                           MessageConnectorAggregator messageConnectorAggregator,
-                                                           IdempotentReceiverInterceptor idempotentReceiverInterceptor) {
+                                                           MessageConnectorAggregator aggregator,
+                                                           IdempotentReceiverInterceptor interceptor,
+                                                           List<MessageConnectorHandlerAdvice> advices) { 
         return new MessageConnectorIntegrationFlow(processor,
-                                                   messageStore,
-                                                   correlationStrategy,
-                                                   lockTemplate,
-                                                   messageConnectorAggregator,
-                                                   idempotentReceiverInterceptor);
+                                                   aggregator,
+                                                   interceptor,
+                                                   advices);
     }
     
     @Bean
+    @ConditionalOnMissingBean
     public MessageConnectorAggregator messageConnectorAggregator(ObjectProvider<CorrelationStrategy> correlationStrategy,
                                                                  ObjectProvider<ReleaseStrategy> releaseStrategy,
                                                                  ObjectProvider<MessageGroupProcessor> messageGroupProcessor,
@@ -100,7 +101,7 @@ public class MessageConnectorIntegrationConfiguration {
                                                                  ObjectProvider<LockRegistry> lockRegistry,
                                                                  ObjectProvider<BeanFactory> beanFactory) {
         MessageConnectorAggregatorFactoryBean factoryBean = new MessageConnectorAggregatorFactoryBean();
-        factoryBean.setOutputChannelName(Processor.OUTPUT);
+        factoryBean.setOutputChannelName(MessageConnectorProcessor.OUTPUT);
         factoryBean.setExpireGroupsUponCompletion(true);
         factoryBean.setCompleteGroupsWhenEmpty(true);
         factoryBean.setSendPartialResultOnExpiry(true);
@@ -125,6 +126,7 @@ public class MessageConnectorIntegrationConfiguration {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     public LockTemplate lockTemplate(LockRegistry lockRegistry) {
         return new LockTemplate(lockRegistry);
     }
@@ -144,6 +146,24 @@ public class MessageConnectorIntegrationConfiguration {
                             .map(Object::toString)
                             .orElseGet(() -> m.getHeaders().getId()
                                                            .toString());
+    }
+    
+    @Bean
+    public MessageConnectorHandlerAdvice messageReceivedHandlerAdvice(MessageGroupStore messageStore,
+                                                                      CorrelationStrategy correlationStrategy,
+                                                                      LockTemplate lockTemplate) {
+        return new MessageReceivedHandlerAdvice(messageStore,
+                                                correlationStrategy,
+                                                lockTemplate);
+    }
+
+    @Bean
+    public MessageConnectorHandlerAdvice subscriptionCancelledHandlerAdvice(MessageGroupStore messageStore,
+                                                                            CorrelationStrategy correlationStrategy,
+                                                                            LockTemplate lockTemplate) {
+        return new SubscriptionCancelledHandlerAdvice(messageStore,
+                                                      correlationStrategy,
+                                                      lockTemplate);
     }
     
     @Bean

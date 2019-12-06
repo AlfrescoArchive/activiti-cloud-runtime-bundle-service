@@ -16,30 +16,26 @@
 
 package org.activiti.cloud.services.message.connector.advice;
 
+import static org.activiti.api.process.model.events.MessageSubscriptionEvent.MessageSubscriptionEvents.MESSAGE_SUBSCRIPTION_CANCELLED;
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
+import static org.activiti.cloud.services.message.connector.support.Predicates.not;
+
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
-import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.integration.aggregator.CorrelationStrategy;
-import org.springframework.integration.core.MessageSelector;
-import org.springframework.integration.handler.advice.AbstractHandleMessageAdvice;
 import org.springframework.integration.store.MessageGroup;
 import org.springframework.integration.store.MessageGroupStore;
 import org.springframework.integration.util.UUIDConverter;
 import org.springframework.messaging.Message;
 
-public class SubscriptionCancelledHandlerAdvice extends AbstractHandleMessageAdvice {
+public class SubscriptionCancelledHandlerAdvice extends AbstractMessageConnectorHandlerAdvice {
 
     private final MessageGroupStore messageStore;
     private final LockTemplate lockTemplate;
     private final CorrelationStrategy correlationStrategy;
-    
-    private final MessageSelector messageSelector = message -> "MESSAGE_SUBSCRIPTION_CANCELLED".equals(message.getHeaders()
-                                                                                                              .get("eventType"));
-    
-    private final MessageSelector pendingSelector  = message -> !("START_MESSAGE_DEPLOYED".equals(message.getHeaders()
-                                                                                          .get("eventType")));
     
     public SubscriptionCancelledHandlerAdvice(MessageGroupStore messageStore,
                                               CorrelationStrategy correlationStrategy,
@@ -50,18 +46,7 @@ public class SubscriptionCancelledHandlerAdvice extends AbstractHandleMessageAdv
     }
     
     @Override
-    public String getComponentType() {
-        return SubscriptionCancelledHandlerAdvice.class.getSimpleName();
-    }
-
-    @Override
-    protected Object doInvoke(MethodInvocation invocation, 
-                              Message<?> message) throws Throwable {
-        
-        if (!messageSelector.accept(message)) {
-            return invocation.proceed();            
-        }
-        
+    public <T> T doHandle(Message<?> message) {
         Object groupId = correlationStrategy.getCorrelationKey(message);
         Object key = UUIDConverter.getUUID(groupId).toString();
 
@@ -70,7 +55,7 @@ public class SubscriptionCancelledHandlerAdvice extends AbstractHandleMessageAdv
             
             Collection<Message<?>> messages = group.getMessages()
                                                    .stream()
-                                                   .filter(pendingSelector::accept)
+                                                   .filter(this::canRemove)
                                                    .collect(Collectors.toList());
             if(!messages.isEmpty()) {
                 messageStore.removeMessagesFromGroup(groupId, messages);
@@ -78,6 +63,21 @@ public class SubscriptionCancelledHandlerAdvice extends AbstractHandleMessageAdv
         });
         
         return null;
-    }
+    } 
     
+    @Override
+    public boolean canHandle(Message<?> message) {
+        return Optional.ofNullable(message.getHeaders()
+                                          .get(MESSAGE_EVENT_TYPE))
+                       .filter(MESSAGE_SUBSCRIPTION_CANCELLED.name()::equals)
+                       .isPresent();        
+    }
+
+    public boolean canRemove(Message<?> message) {
+        return Optional.ofNullable(message.getHeaders()
+                                          .get(MESSAGE_EVENT_TYPE))
+                       .filter(not(MESSAGE_SUBSCRIPTION_CANCELLED.name()::equals))
+                       .isPresent();
+    }
+
 }

@@ -16,28 +16,25 @@
 
 package org.activiti.cloud.services.message.connector.advice;
 
+import static org.activiti.api.process.model.events.BPMNMessageEvent.MessageEvents.MESSAGE_RECEIVED;
+import static org.activiti.api.process.model.events.BPMNMessageEvent.MessageEvents.MESSAGE_WAITING;
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
+
+import java.util.Optional;
+
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
 import org.activiti.cloud.services.message.connector.support.MessageTimestampComparator;
-import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.integration.aggregator.CorrelationStrategy;
-import org.springframework.integration.core.MessageSelector;
-import org.springframework.integration.handler.advice.AbstractHandleMessageAdvice;
 import org.springframework.integration.store.MessageGroup;
 import org.springframework.integration.store.MessageGroupStore;
 import org.springframework.integration.util.UUIDConverter;
 import org.springframework.messaging.Message;
 
-public class MessageReceivedHandlerAdvice extends AbstractHandleMessageAdvice {
+public class MessageReceivedHandlerAdvice extends AbstractMessageConnectorHandlerAdvice {
 
     private final MessageGroupStore messageStore;
     private final LockTemplate lockTemplate;
     private final CorrelationStrategy correlationStrategy;
-    
-    private final MessageSelector messageSelector = (message) -> "MESSAGE_RECEIVED".equals(message.getHeaders()
-                                                                                                  .get("eventType"));
-
-    private final MessageSelector waitingSelector = (message) -> "MESSAGE_WAITING".equals(message.getHeaders()
-                                                                                                 .get("eventType"));
     
     public MessageReceivedHandlerAdvice(MessageGroupStore messageStore,
                                         CorrelationStrategy correlationStrategy,
@@ -48,17 +45,7 @@ public class MessageReceivedHandlerAdvice extends AbstractHandleMessageAdvice {
     }
     
     @Override
-    public String getComponentType() {
-        return MessageReceivedHandlerAdvice.class.getSimpleName();
-    }
-
-    @Override
-    protected Object doInvoke(MethodInvocation invocation, 
-                              Message<?> message) throws Throwable {
-        if (!messageSelector.accept(message)) {
-            return invocation.proceed();
-        }
-            
+    public <T> T doHandle(Message<?> message) {
         Object groupId = correlationStrategy.getCorrelationKey(message);
         Object key = UUIDConverter.getUUID(groupId).toString();
 
@@ -67,7 +54,7 @@ public class MessageReceivedHandlerAdvice extends AbstractHandleMessageAdvice {
             
             group.getMessages()
                  .stream()
-                 .filter(it -> waitingSelector.accept(it))
+                 .filter(this::canRemove)
                  .min(MessageTimestampComparator.INSTANCE)
                  .ifPresent(result -> {
                      messageStore.removeMessagesFromGroup(groupId, result);                            
@@ -76,5 +63,20 @@ public class MessageReceivedHandlerAdvice extends AbstractHandleMessageAdvice {
         
         return null;
         
+    }
+
+    @Override
+    public boolean canHandle(Message<?> message) {
+        return Optional.ofNullable(message.getHeaders()
+                                          .get(MESSAGE_EVENT_TYPE))
+                       .filter(MESSAGE_RECEIVED.name()::equals)
+                       .isPresent();
+    }
+    
+    public boolean canRemove(Message<?> message) {
+        return Optional.ofNullable(message.getHeaders()
+                                          .get(MESSAGE_EVENT_TYPE))
+                       .filter(MESSAGE_WAITING.name()::equals)
+                       .isPresent();
     }
 }

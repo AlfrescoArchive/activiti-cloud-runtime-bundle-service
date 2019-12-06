@@ -22,48 +22,38 @@ import static org.activiti.cloud.services.message.connector.integration.MessageE
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.SERVICE_FULL_NAME;
 import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.activiti.api.process.model.payloads.MessageEventPayload;
-import org.activiti.cloud.services.message.connector.advice.MessageReceivedHandlerAdvice;
-import org.activiti.cloud.services.message.connector.advice.SubscriptionCancelledHandlerAdvice;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
-import org.activiti.cloud.services.message.connector.support.LockTemplate;
-import org.aopalliance.aop.Advice;
-import org.springframework.integration.aggregator.CorrelationStrategy;
 import org.springframework.integration.annotation.Filter;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.annotation.Transformer;
 import org.springframework.integration.dsl.IntegrationFlowAdapter;
 import org.springframework.integration.dsl.IntegrationFlowDefinition;
 import org.springframework.integration.dsl.Transformers;
+import org.springframework.integration.handler.advice.HandleMessageAdvice;
 import org.springframework.integration.handler.advice.IdempotentReceiverInterceptor;
-import org.springframework.integration.store.MessageGroupStore;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 
 public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
 
     private final MessageConnectorProcessor processor;
-    private final MessageGroupStore messageStore;
-    private final CorrelationStrategy correlationStrategy;
-    private final LockTemplate lockTemplate;
-    private final MessageConnectorAggregator messageConnectorAggregator;
-    private final IdempotentReceiverInterceptor idempotentReceiverInterceptor;
+    private final MessageConnectorAggregator aggregator;
+    private final IdempotentReceiverInterceptor interceptor;
+    private final HandleMessageAdvice[] advices;
 
     public MessageConnectorIntegrationFlow(MessageConnectorProcessor processor,
-                                           MessageGroupStore messageStore,
-                                           CorrelationStrategy correlationStrategy,
-                                           LockTemplate lockTemplate,
-                                           MessageConnectorAggregator messageConnectorAggregator,
-                                           IdempotentReceiverInterceptor idempotentReceiverInterceptor) {
+                                           MessageConnectorAggregator aggregator,
+                                           IdempotentReceiverInterceptor interceptor,
+                                           List<? extends HandleMessageAdvice> advices) {
         this.processor = processor;
-        this.messageStore = messageStore;
-        this.correlationStrategy = correlationStrategy;
-        this.lockTemplate = lockTemplate;
-        this.messageConnectorAggregator = messageConnectorAggregator;
-        this.idempotentReceiverInterceptor = idempotentReceiverInterceptor;
+        this.aggregator = aggregator;
+        this.interceptor = interceptor;
+        this.advices = advices.toArray(new HandleMessageAdvice[] {});
     }
 
     @Override
@@ -80,8 +70,7 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                                         .transform(Transformers.fromJson(MessageEventPayload.class))
                                         .handle(this::aggregate,
                                                 handlerSpec -> handlerSpec.id("message-aggregator")
-                                                                          .advice(getMessageReceivedHandlerAdvice())
-                                                                          .advice(getSubscriptionCancelledHandlerAdvice())),
+                                                                          .advice(advices)),
                             flowSpec -> flowSpec.transactional()
                                                 .id("message-gateway")
                                                 .requiresReply(false)
@@ -89,24 +78,12 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                                                 .replyTimeout(0L)
                                                 //.advice(retry)
                                                 //.notPropagatedHeaders(headerPatterns)
-                                                .advice(idempotentReceiverInterceptor));
-    }
-    
-    public Advice getMessageReceivedHandlerAdvice() {
-        return new MessageReceivedHandlerAdvice(messageStore,
-                                                correlationStrategy,
-                                                lockTemplate);
-    }    
-
-    public Advice getSubscriptionCancelledHandlerAdvice() {
-        return new SubscriptionCancelledHandlerAdvice(messageStore,
-                                                      correlationStrategy,
-                                                      lockTemplate);
+                                                .advice(interceptor));
     }
     
     @ServiceActivator
     public void aggregate(Message<?> message) {
-        messageConnectorAggregator.handleMessage(message);
+        aggregator.handleMessage(message);
     }
 
     @Filter
