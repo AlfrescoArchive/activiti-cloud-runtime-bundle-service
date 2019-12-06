@@ -17,12 +17,11 @@
 package org.activiti.cloud.services.message.connector.advice;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
-import org.activiti.cloud.services.message.connector.support.SpELEvaluatingMessageListProcessor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.integration.aggregator.CorrelationStrategy;
-import org.springframework.integration.aggregator.MessageListProcessor;
 import org.springframework.integration.core.MessageSelector;
 import org.springframework.integration.handler.advice.AbstractHandleMessageAdvice;
 import org.springframework.integration.store.MessageGroup;
@@ -39,7 +38,8 @@ public class SubscriptionCancelledHandlerAdvice extends AbstractHandleMessageAdv
     private final MessageSelector messageSelector = message -> "MESSAGE_SUBSCRIPTION_CANCELLED".equals(message.getHeaders()
                                                                                                               .get("eventType"));
     
-    private final MessageListProcessor pending = new SpELEvaluatingMessageListProcessor("#this.?[headers['eventType'] != 'START_MESSAGE_DEPLOYED']");
+    private final MessageSelector pendingSelector  = message -> !("START_MESSAGE_DEPLOYED".equals(message.getHeaders()
+                                                                                          .get("eventType")));
     
     public SubscriptionCancelledHandlerAdvice(MessageGroupStore messageStore,
                                               CorrelationStrategy correlationStrategy,
@@ -67,8 +67,11 @@ public class SubscriptionCancelledHandlerAdvice extends AbstractHandleMessageAdv
 
         lockTemplate.lockInterruptibly(key, () -> {
             MessageGroup group = messageStore.getMessageGroup(groupId);
-            Collection<Message<?>> messages = process(pending, 
-                                                      group.getMessages());;
+            
+            Collection<Message<?>> messages = group.getMessages()
+                                                   .stream()
+                                                   .filter(pendingSelector::accept)
+                                                   .collect(Collectors.toList());
             if(!messages.isEmpty()) {
                 messageStore.removeMessagesFromGroup(groupId, messages);
             }
@@ -77,9 +80,4 @@ public class SubscriptionCancelledHandlerAdvice extends AbstractHandleMessageAdv
         return null;
     }
     
-    @SuppressWarnings("unchecked")
-    private Collection<Message<?>> process(MessageListProcessor processor, Collection<Message<?>> messages) {
-        return ( Collection<Message<?>>) processor.process(messages);
-    }
-
 }
