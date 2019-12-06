@@ -20,6 +20,7 @@ import static org.activiti.cloud.services.message.connector.integration.MessageE
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_NAME;
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.SERVICE_FULL_NAME;
+import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
 import java.util.Objects;
 
@@ -30,9 +31,9 @@ import org.activiti.cloud.services.message.connector.aggregator.MessageConnector
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
 import org.aopalliance.aop.Advice;
-import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.integration.aggregator.CorrelationStrategy;
 import org.springframework.integration.annotation.Filter;
+import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.annotation.Transformer;
 import org.springframework.integration.dsl.IntegrationFlowAdapter;
 import org.springframework.integration.dsl.IntegrationFlowDefinition;
@@ -70,22 +71,17 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
         return this.from(processor.input())
                    .gateway(flow -> flow.log()
                                         .filter(Message.class,
-                                                this::hasMessageEventTypeHeader,
+                                                this::isMessageEventType,
                                                 filterSpec -> filterSpec.id("filter-message-headers")
-                                                                        .discardChannel("errorChannel")
-                                        )
+                                                                        .discardChannel("errorChannel"))
                                         .enrichHeaders(enricher -> enricher.id("enrich-correlation-id")
-                                                                           .headerFunction(IntegrationMessageHeaderAccessor.CORRELATION_ID, 
-                                                                                           MessageConnectorIntegrationFlow::getCorrelationId)
-                                        )
+                                                                           .headerFunction(CORRELATION_ID, 
+                                                                                           MessageConnectorIntegrationFlow::getCorrelationId))
                                         .transform(Transformers.fromJson(MessageEventPayload.class))
-                                        .handle(messageConnectorAggregator,
-                                                handler -> handler.id("message-aggregator")
-                                                                  .advice(getMessageReceivedHandlerAdvice())
-                                                                  .advice(getSubscriptionCancelledHandlerAdvice())
-                                        )
-                                        .log()
-                                        .channel(processor.output()),
+                                        .handle(this::aggregate,
+                                                handlerSpec -> handlerSpec.id("message-aggregator")
+                                                                          .advice(getMessageReceivedHandlerAdvice())
+                                                                          .advice(getSubscriptionCancelledHandlerAdvice())),
                             flowSpec -> flowSpec.transactional()
                                                 .id("message-gateway")
                                                 .requiresReply(false)
@@ -107,9 +103,14 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                                                       correlationStrategy,
                                                       lockTemplate);
     }
+    
+    @ServiceActivator
+    public void aggregate(Message<?> message) {
+        messageConnectorAggregator.handleMessage(message);
+    }
 
     @Filter
-    public boolean hasMessageEventTypeHeader(Message<?> message) {
+    public boolean isMessageEventType(Message<?> message) {
         return Objects.nonNull(message.getHeaders()
                                       .get(MESSAGE_EVENT_TYPE));
     }
