@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.activiti.api.process.model.builders.MessagePayloadBuilder;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.model.payloads.StartMessagePayload;
+import org.activiti.cloud.services.message.connector.integration.MessageEventHeaders;
 import org.activiti.cloud.services.message.connector.support.MessageTimestampComparator;
 import org.activiti.cloud.services.message.connector.support.SpELEvaluatingMessageListProcessor;
 import org.activiti.cloud.services.message.connector.support.SpELEvaluatingReleaseStrategy;
@@ -75,7 +76,8 @@ public class StartMessagePayloadGroupProcessor implements MessageGroupProcessorH
                                                                 .build();
 
         return MessageBuilder.withPayload(startPayload)
-                             .setHeader("payloadType", StartMessagePayload.class.getSimpleName())
+                             .setHeader(MessageEventHeaders.MESSAGE_PAYLOAD_TYPE, 
+                                        StartMessagePayload.class.getSimpleName())
                              .build();       
     }
     

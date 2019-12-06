@@ -24,10 +24,6 @@ import org.springframework.integration.transformer.AbstractPayloadTransformer;
 
 public class ReceiveMessagePayloadTransformer extends AbstractPayloadTransformer<MessageEventPayload, ReceiveMessagePayload> {
 
-    public static ReceiveMessagePayloadTransformer transform() {
-        return new ReceiveMessagePayloadTransformer();
-    }
-    
     @Override
     protected ReceiveMessagePayload transformPayload(MessageEventPayload eventPayload) throws Exception {
         return MessagePayloadBuilder.receive(eventPayload.getName())

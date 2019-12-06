@@ -22,6 +22,7 @@ import java.util.Comparator;
 import org.activiti.api.process.model.builders.MessagePayloadBuilder;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
+import org.activiti.cloud.services.message.connector.integration.MessageEventHeaders;
 import org.activiti.cloud.services.message.connector.support.MessageTimestampComparator;
 import org.activiti.cloud.services.message.connector.support.SpELEvaluatingMessageListProcessor;
 import org.activiti.cloud.services.message.connector.support.SpELEvaluatingReleaseStrategy;
@@ -74,7 +75,8 @@ public class ReceiveMessagePayloadGroupProcessor implements MessageGroupProcesso
                                                              .withVariables(messageEventPayload.getVariables())
                                                              .build();
         return MessageBuilder.withPayload(payload)
-                             .setHeader("payloadType", ReceiveMessagePayload.class.getSimpleName())
+                             .setHeader(MessageEventHeaders.MESSAGE_PAYLOAD_TYPE, 
+                                        ReceiveMessagePayload.class.getSimpleName())
                              .build();
     }
     

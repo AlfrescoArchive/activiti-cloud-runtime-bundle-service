@@ -29,5 +29,6 @@ public final class MessageEventHeaders {
     public static final String MESSAGE_EVENT_BUSINESS_KEY = "messageEventBusinessKey";
     public static final String MESSAGE_EVENT_NAME = "messageEventName";
     public static final String MESSAGE_EVENT_TYPE = "eventType"; // FIXME
+    public static final String MESSAGE_PAYLOAD_TYPE = "messagePayloadType"; 
 
 }

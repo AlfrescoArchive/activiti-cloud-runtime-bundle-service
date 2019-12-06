@@ -24,10 +24,6 @@ import org.springframework.integration.transformer.AbstractPayloadTransformer;
 
 public class StartMessagePayloadTransformer extends AbstractPayloadTransformer<MessageEventPayload, StartMessagePayload> {
 
-    public static StartMessagePayloadTransformer transform() {
-        return new StartMessagePayloadTransformer();
-    }
-    
     @Override
     protected StartMessagePayload transformPayload(MessageEventPayload eventPayload) throws Exception {
         return MessagePayloadBuilder.start(eventPayload.getName())
