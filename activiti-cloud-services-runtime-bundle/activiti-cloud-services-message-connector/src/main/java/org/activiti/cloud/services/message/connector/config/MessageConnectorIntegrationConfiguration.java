@@ -22,6 +22,7 @@ import org.activiti.cloud.services.message.connector.aggregator.MessageConnector
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregatorFactoryBean;
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
 import org.activiti.cloud.services.message.connector.integration.MessageConnectorIntegrationFlow;
+import org.activiti.cloud.services.message.connector.integration.MessageEventHeaders;
 import org.activiti.cloud.services.message.connector.processor.MessageGroupProcessorChain;
 import org.activiti.cloud.services.message.connector.processor.MessageGroupProcessorHandlerChain;
 import org.activiti.cloud.services.message.connector.processor.ReceiveMessagePayloadGroupProcessor;
@@ -139,7 +140,7 @@ public class MessageConnectorIntegrationConfiguration {
     @ConditionalOnMissingBean(name = "metadataStoreKeyStrategy")
     public MessageProcessor<String> metadataStoreKeyStrategy() {
         // FIXME refactor idempotent message key strategy using dynamic headers
-        return m -> Optional.ofNullable(m.getHeaders().get("messageId"))
+        return m -> Optional.ofNullable(m.getHeaders().get(MessageEventHeaders.MESSAGE_EVENT_ID))
                             .map(Object::toString)
                             .orElseGet(() -> m.getHeaders().getId()
                                                            .toString());

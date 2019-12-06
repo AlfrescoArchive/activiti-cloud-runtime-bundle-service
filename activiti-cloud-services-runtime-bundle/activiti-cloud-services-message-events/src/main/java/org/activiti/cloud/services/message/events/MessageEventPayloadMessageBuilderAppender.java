@@ -15,15 +15,13 @@
  */
 package org.activiti.cloud.services.message.events;
 
-import static org.activiti.cloud.services.message.events.MessageEventPayloadMessageHeaders.MESSAGE_EVENT_PAYLOAD_BUSINESS_KEY;
-import static org.activiti.cloud.services.message.events.MessageEventPayloadMessageHeaders.MESSAGE_EVENT_PAYLOAD_CORRELATION_KEY;
-import static org.activiti.cloud.services.message.events.MessageEventPayloadMessageHeaders.MESSAGE_EVENT_PAYLOAD_NAME;
-
-import java.util.Optional;
+import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_BUSINESS_KEY;
+import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_CORRELATION_KEY;
+import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_ID;
+import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_NAME;
 
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.cloud.services.events.message.MessageBuilderAppender;
-import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
@@ -41,16 +39,10 @@ public class MessageEventPayloadMessageBuilderAppender implements MessageBuilder
     public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
         Assert.notNull(request, "request must not be null");
         
-        String correlationKey = Optional.ofNullable(messageEventPayload.getCorrelationKey())
-                                        .map(it -> ":" + it)
-                                        .orElse("");
-        
-        String correlationId = messageEventPayload.getName() + correlationKey;
-        
-        return request.setHeader(MESSAGE_EVENT_PAYLOAD_BUSINESS_KEY, messageEventPayload.getBusinessKey())
-                      .setHeader(MESSAGE_EVENT_PAYLOAD_CORRELATION_KEY, messageEventPayload.getCorrelationKey())
-                      .setHeader(MESSAGE_EVENT_PAYLOAD_NAME, messageEventPayload.getName())
-                      .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
+        return request.setHeader(MESSAGE_EVENT_ID, messageEventPayload.getId())
+                      .setHeader(MESSAGE_EVENT_BUSINESS_KEY, messageEventPayload.getBusinessKey())
+                      .setHeader(MESSAGE_EVENT_CORRELATION_KEY, messageEventPayload.getCorrelationKey())
+                      .setHeader(MESSAGE_EVENT_NAME, messageEventPayload.getName())
         ;
     }
 

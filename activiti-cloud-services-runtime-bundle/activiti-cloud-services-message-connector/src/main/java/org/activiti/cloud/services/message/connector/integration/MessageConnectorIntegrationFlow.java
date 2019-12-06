@@ -16,18 +16,26 @@
 
 package org.activiti.cloud.services.message.connector.integration;
 
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_CORRELATION_KEY;
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_NAME;
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.SERVICE_FULL_NAME;
+import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
+
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.cloud.services.message.connector.advice.MessageReceivedHandlerAdvice;
 import org.activiti.cloud.services.message.connector.advice.SubscriptionCancelledHandlerAdvice;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
+import org.aopalliance.aop.Advice;
 import org.springframework.integration.aggregator.CorrelationStrategy;
 import org.springframework.integration.dsl.IntegrationFlowAdapter;
 import org.springframework.integration.dsl.IntegrationFlowDefinition;
 import org.springframework.integration.dsl.Transformers;
 import org.springframework.integration.handler.advice.IdempotentReceiverInterceptor;
 import org.springframework.integration.store.MessageGroupStore;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageHeaders;
 
 public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
 
@@ -57,25 +65,61 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
         return this.from(processor.input())
                    .gateway(flow -> flow.log()
                                         .filter("headers.eventType != null", // FIXME use MessageSelector
-                                                filter -> filter.id("filter")
-                                                                .discardChannel("errorChannel"))
+                                                filter -> filter.id("filter-message-event-type")
+                                                                .discardChannel("errorChannel")
+                                        )
+                                        .enrichHeaders(enricher -> enricher.id("enrich-correlation-id")
+                                                                           .headerFunction(CORRELATION_ID, 
+                                                                                           MessageConnectorIntegrationFlow::getCorrelationId)
+                                        )
                                         .transform(Transformers.fromJson(MessageEventPayload.class))
                                         .handle(messageConnectorAggregator,
-                                                handler -> handler.id("aggregator")
-                                                                  .advice(new MessageReceivedHandlerAdvice(messageStore,
-                                                                                                           correlationStrategy,
-                                                                                                           lockTemplate))
-                                                                  .advice(new SubscriptionCancelledHandlerAdvice(messageStore,
-                                                                                                                 correlationStrategy,
-                                                                                                                 lockTemplate)))
+                                                handler -> handler.id("message-aggregator")
+                                                                  .advice(getMessageReceivedHandlerAdvice())
+                                                                  .advice(getSubscriptionCancelledHandlerAdvice())
+                                        )
                                         .log()
                                         .channel(processor.output()),
                             flowSpec -> flowSpec.transactional()
-                                                .id("gateway")
+                                                .id("message-gateway")
                                                 .requiresReply(false)
                                                 .async(true)
                                                 .replyTimeout(0L)
+                                                //.advice(retry)
+                                                //.notPropagatedHeaders(headerPatterns)
                                                 .advice(idempotentReceiverInterceptor));
+    }
+    
+
+    public Advice getMessageReceivedHandlerAdvice() {
+        return new MessageReceivedHandlerAdvice(messageStore,
+                                                correlationStrategy,
+                                                lockTemplate);
+    }    
+
+    public Advice getSubscriptionCancelledHandlerAdvice() {
+        return new SubscriptionCancelledHandlerAdvice(messageStore,
+                                                      correlationStrategy,
+                                                      lockTemplate);
+    }
+    
+    public static String getCorrelationId(Message<?> message) {
+        MessageHeaders headers = message.getHeaders();
+        String serviceFullName = headers.get(SERVICE_FULL_NAME, String.class);
+        String messageEventName = headers.get(MESSAGE_EVENT_NAME, String.class);
+        String messageCorrelationKey = headers.get(MESSAGE_EVENT_CORRELATION_KEY, String.class);
+        
+        StringBuilder builder = new StringBuilder();
+        builder.append(serviceFullName)
+               .append(":")
+               .append(messageEventName);
+               
+        if (messageCorrelationKey != null) {
+            builder.append(":")
+                   .append(messageCorrelationKey);
+        }
+        
+        return builder.toString();        
     }
 
 }

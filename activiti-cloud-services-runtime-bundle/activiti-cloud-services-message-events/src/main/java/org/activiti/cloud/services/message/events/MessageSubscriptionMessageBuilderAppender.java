@@ -15,13 +15,13 @@
  */
 package org.activiti.cloud.services.message.events;
 
-import static org.activiti.cloud.services.message.events.MessageEventPayloadMessageHeaders.MESSAGE_EVENT_PAYLOAD_BUSINESS_KEY;
-import static org.activiti.cloud.services.message.events.MessageEventPayloadMessageHeaders.MESSAGE_EVENT_PAYLOAD_CORRELATION_KEY;
-import static org.activiti.cloud.services.message.events.MessageEventPayloadMessageHeaders.MESSAGE_EVENT_PAYLOAD_NAME;
+import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_BUSINESS_KEY;
+import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_CORRELATION_KEY;
+import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_ID;
+import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_NAME;
 
 import org.activiti.api.process.model.MessageSubscription;
 import org.activiti.cloud.services.events.message.MessageBuilderAppender;
-import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
@@ -39,13 +39,10 @@ public class MessageSubscriptionMessageBuilderAppender implements MessageBuilder
     public <P> MessageBuilder<P> apply(MessageBuilder<P> request) {
         Assert.notNull(request, "request must not be null");
         
-        String correlationId = messageSubscription.getEventName()+ ":" + messageSubscription.getConfiguration();
-        
-        // TODO add headers
-        return request.setHeader(MESSAGE_EVENT_PAYLOAD_BUSINESS_KEY, messageSubscription.getBusinessKey())
-                      .setHeader(MESSAGE_EVENT_PAYLOAD_CORRELATION_KEY, messageSubscription.getConfiguration())
-                      .setHeader(MESSAGE_EVENT_PAYLOAD_NAME, messageSubscription.getEventName())
-                      .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
+        return request.setHeader(MESSAGE_EVENT_BUSINESS_KEY, messageSubscription.getBusinessKey())
+                      .setHeader(MESSAGE_EVENT_CORRELATION_KEY, messageSubscription.getConfiguration())
+                      .setHeader(MESSAGE_EVENT_NAME, messageSubscription.getEventName())
+                      .setHeader(MESSAGE_EVENT_ID, messageSubscription.getId())
        ;
     }
 

@@ -18,10 +18,15 @@
 package org.activiti.cloud.services.message.connector.test;
 
 
+import static java.util.Collections.singletonMap;
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_CORRELATION_KEY;
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_ID;
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_NAME;
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.SERVICE_FULL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -34,11 +39,15 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import org.activiti.api.process.model.builders.MessageEventPayloadBuilder;
+import org.activiti.api.process.model.events.BPMNMessageEvent.MessageEvents;
+import org.activiti.api.process.model.events.MessageDefinitionEvent.MessageDefinitionEvents;
+import org.activiti.api.process.model.events.MessageSubscriptionEvent.MessageSubscriptionEvents;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
 import org.activiti.cloud.services.message.connector.config.MessageConnectorAutoConfiguration;
 import org.activiti.cloud.services.message.connector.config.MessageConnectorIntegrationConfiguration;
+import org.activiti.cloud.services.message.connector.integration.MessageConnectorIntegrationFlow;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,7 +56,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.test.binder.MessageCollector;
 import org.springframework.context.annotation.Import;
-import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.integration.hazelcast.store.HazelcastMessageStore;
 import org.springframework.integration.jdbc.store.JdbcMessageStore;
 import org.springframework.integration.mongodb.store.ConfigurableMongoDbMessageStore;
@@ -161,12 +169,17 @@ public abstract class MessageConnectorIntegrationFlowTests {
     @Test(timeout = 10000)
     public void shouldProcessMessageEventsConcurrently() throws InterruptedException, JsonProcessingException {
         // given
-        String messageName = "start";
+        String messageEventName = "start";
         Integer count = 100;
-        messageGroupStore.removeMessageGroup(messageName);
 
-        send(startMessageDeployedEvent(messageName));
+        Message<?> startMessage = startMessageDeployedEvent(messageEventName);
+        String correlationId = correlationId(startMessage);
+        removeMessageGroup(correlationId);
 
+        send(startMessage);
+
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1);
+        
         // when
         final CountDownLatch start = new CountDownLatch(1);
         final CountDownLatch sent = new CountDownLatch(count);
@@ -174,11 +187,10 @@ public abstract class MessageConnectorIntegrationFlowTests {
         ExecutorService exec = Executors.newSingleThreadExecutor();
         
         IntStream.range(0, count)
-                 .forEach(i -> sendAsync(messageSentEvent(messageName, "sent" + i),
+                 .forEach(i -> sendAsync(messageSentEvent(messageEventName),
                                          start,
                                          sent,
                                          exec));
-
         start.countDown();
 
         try {
@@ -194,6 +206,8 @@ public abstract class MessageConnectorIntegrationFlowTests {
                  .forEach(out -> assertThat(out).isNotNull());
         
         exec.shutdownNow();
+
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1);
         
         assertThat(peek()).isNull();
     }
@@ -201,9 +215,12 @@ public abstract class MessageConnectorIntegrationFlowTests {
     @Test(timeout = 10000)
     public void shouldProcessMessageEventsConcurrentlyInReversedOrder() throws InterruptedException, JsonProcessingException {
         // given
-        String messageName = "start";
+        String messageEventName = "start";
         Integer count = 100;
-        messageGroupStore.removeMessageGroup(messageName);
+        Message<?> startMessage = startMessageDeployedEvent(messageEventName);
+        String correlationId = correlationId(startMessage);
+        
+        removeMessageGroup(correlationId);
         
         final CountDownLatch start = new CountDownLatch(1);
         final CountDownLatch sent = new CountDownLatch(count);
@@ -211,7 +228,7 @@ public abstract class MessageConnectorIntegrationFlowTests {
         ExecutorService exec = Executors.newSingleThreadExecutor();
         
         IntStream.range(0, count)
-                 .forEach(i -> sendAsync(messageSentEvent(messageName, "sent" + i),
+                 .forEach(i -> sendAsync(messageSentEvent(messageEventName),
                                          start,
                                          sent,
                                          exec));
@@ -224,8 +241,10 @@ public abstract class MessageConnectorIntegrationFlowTests {
             Thread.currentThread().interrupt();
         }
 
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(count);
+        
         // when
-        send(startMessageDeployedEvent(messageName));
+        send(startMessage);
 
         // then
         IntStream.range(0, count)
@@ -235,6 +254,8 @@ public abstract class MessageConnectorIntegrationFlowTests {
                  );
         
         exec.shutdownNow();
+
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1);
         
         assertThat(peek()).isNull();
     }
@@ -243,12 +264,16 @@ public abstract class MessageConnectorIntegrationFlowTests {
     public void testStartMessageBeforeSent() throws Exception {
         // given
         String messageName = "start1";
-        messageGroupStore.removeMessageGroup(messageName);
+        Message<?> startMessage = startMessageDeployedEvent(messageName);
+        String correlationId = correlationId(startMessage);
+        removeMessageGroup(correlationId);
         
-        send(startMessageDeployedEvent(messageName));
+        send(startMessage);
+
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1);
         
         // when
-        send(messageSentEvent(messageName, "sent1"));
+        send(messageSentEvent(messageName, null, "sent1"));
         
         // then
         Message<?> out = poll(0, TimeUnit.SECONDS);
@@ -257,18 +282,17 @@ public abstract class MessageConnectorIntegrationFlowTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .extracting("name")
-                       .contains("sent1");
+                       .extracting("name", "variables")
+                       .contains("start1", 
+                                 singletonMap("key", "sent1"));
 
-        MessageGroup group = messageGroup(messageName);
-        
-        assertThat(group.getMessages()).hasSize(1)
-                                       .extracting(Message::getPayload)
-                                       .asList()
-                                       .extracting("name")
-                                       .containsOnly(messageName);
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1)
+                                                             .extracting(Message::getPayload)
+                                                             .asList()
+                                                             .extracting("name")
+                                                             .containsOnly(messageName);
         // when
-        send(messageSentEvent(messageName, "sent2"));
+        send(messageSentEvent(messageName, null, "sent2"));
         
         // then
         out = poll(0, TimeUnit.SECONDS);
@@ -277,25 +301,27 @@ public abstract class MessageConnectorIntegrationFlowTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .extracting("name")
-                       .contains("sent2");
+                       .extracting("name", "variables")
+                       .contains("start1", 
+                                 singletonMap("key", "sent2"));
 
-        group = messageGroup(messageName);
-        
-        assertThat(group.getMessages()).hasSize(1)
-                                       .extracting(Message::getPayload)
-                                       .asList()
-                                       .extracting("name")
-                                       .containsOnly(messageName);
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1)
+                                                             .extracting(Message::getPayload)
+                                                             .asList()
+                                                             .extracting("name")
+                                                             .containsOnly(messageName);
     }
 
     @Test
     public void testStartMessageAfterSent() throws Exception {
         // given
         String messageName = "start2";
-        messageGroupStore.removeMessageGroup(messageName);
+        Message<?> messageSentEvent = messageSentEvent(messageName, null, "sent1");
+        String correlationId = correlationId(messageSentEvent);
 
-        send(messageSentEvent(messageName, "sent1"));
+        messageGroupStore.removeMessageGroup(correlationId);
+
+        send(messageSentEvent);
         
         // when
         send(startMessageDeployedEvent(messageName));
@@ -307,19 +333,18 @@ public abstract class MessageConnectorIntegrationFlowTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .extracting("name")
-                       .contains("sent1");
+                       .extracting("name", "variables")
+                       .contains(messageName,
+                                 singletonMap("key", "sent1"));
 
-        MessageGroup group = messageGroup(messageName);
-        
-        assertThat(group.getMessages()).hasSize(1)
-                                       .extracting(Message::getPayload)
-                                       .asList()
-                                       .extracting("name")
-                                       .containsOnly("start2");
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1)
+                                                             .extracting(Message::getPayload)
+                                                             .asList()
+                                                             .extracting("name")
+                                                             .containsOnly("start2");
 
         // when
-        send(messageSentEvent(messageName, "sent2"));
+        send(messageSentEvent(messageName, null, "sent2"));
         
         // then
         out = poll(0, TimeUnit.SECONDS);
@@ -328,188 +353,195 @@ public abstract class MessageConnectorIntegrationFlowTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .extracting("name")
-                       .contains("sent2");
+                       .extracting("name", "variables")
+                       .contains(messageName,
+                                 singletonMap("key", "sent2"));
 
-        group = messageGroup(messageName);
-        
-        assertThat(group.getMessages()).hasSize(1)
-                                       .extracting(Message::getPayload)
-                                       .asList()
-                                       .extracting("name")
-                                       .containsOnly("start2");
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1)
+                                                             .extracting(Message::getPayload)
+                                                             .asList()
+                                                             .extracting("name")
+                                                             .containsOnly("start2");
     }
     
     @Test
     public void testSentMessagesWithBuffer() throws Exception {
         // given
-        String correlationId = "message:1";
+        String messageName = "message";
+        String correlationKey = "1";
+        Message<?> messageSentEvent = messageSentEvent(messageName, correlationKey, "sent1");
+        String correlationId = correlationId(messageSentEvent);
+
         messageGroupStore.removeMessageGroup(correlationId);
 
-        send(messageSentEvent(correlationId, "sent1"));
+        send(messageSentEvent);
         
         // when
-        send(messageWaitingEvent(correlationId, "waiting1"));
-        send(messageWaitingEvent(correlationId, "waiting2"));
+        send(messageWaitingEvent(messageName, correlationKey, "waiting1"));
+        send(messageWaitingEvent(messageName, correlationKey, "waiting2"));
         
+        // then
         Message<?> out = poll(0, TimeUnit.SECONDS);
         
-        assertThat(peek()).isNull();
-
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .extracting("name")
-                       .contains("sent1");
-
-        MessageGroup group = messageGroup(correlationId);
-        
-        assertThat(group.getMessages()).hasSize(2)
-                                       .extracting(Message::getPayload)
-                                       .asList()
-                                       .extracting("name")
-                                       .containsOnly("waiting1", "waiting2");
-        
-        send(messageReceivedEvent(correlationId, "received1"));
+                       .extracting("variables")
+                       .contains(singletonMap("key", "sent1"));
 
         assertThat(peek()).isNull();
-        
-        group = messageGroup(correlationId);
-        
-        assertThat(group.getMessages()).hasSize(1)
+
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(2)
                                        .extracting(Message::getPayload)
                                        .asList()
-                                       .extracting("name")
-                                       .containsOnly("waiting2");
+                                       .extracting("variables")
+                                       .containsOnly(singletonMap("key", "waiting1"), 
+                                                     singletonMap("key", "waiting2"));
         
-        send(messageSentEvent(correlationId, "sent2"));
+        // when
+        send(messageReceivedEvent(messageName, correlationKey));
 
+        // then
+        assertThat(peek()).isNull();
+        
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1)
+                                                             .extracting(Message::getPayload)
+                                                             .asList()
+                                                             .extracting("variables")
+                                                             .containsOnly(singletonMap("key", "waiting2"));
+
+        // when
+        send(messageSentEvent(messageName, correlationKey, "sent2"));
+
+        // then
         out = poll(1, TimeUnit.SECONDS);
 
-        assertThat(peek()).isNull();
-
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .extracting("name")
-                       .contains("sent2");
-
-        group = messageGroup(correlationId);
-        
-        assertThat(group.getMessages()).hasSize(1)
-                                       .extracting(Message::getPayload)
-                                       .asList()
-                                       .extracting("name")
-                                       .containsOnly("waiting2");
-        
-        send(messageReceivedEvent(correlationId, "received2"));
+                       .extracting("variables")
+                       .contains(singletonMap("key", "sent2"));
 
         assertThat(peek()).isNull();
 
-        group = messageGroup(correlationId);
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1)
+                                                             .extracting(Message::getPayload)
+                                                             .asList()
+                                                             .extracting("variables")
+                                                             .containsOnly(singletonMap("key", "waiting2"));
+        
+        // then
+        send(messageReceivedEvent(messageName, correlationKey));
 
-        assertThat(group.getMessages()).isEmpty();
+        assertThat(peek()).isNull();
+
+        assertThat(messageGroup(correlationId).getMessages()).isEmpty();
     }
     
     @Test
     public void testSentMessagesWithBufferInDifferentOrder() throws Exception {
         // given
-        String correlationId = "message:1";
+        String messageName = "message";
+        String correlationKey = "1";
+        String correlationId = correlationId(messageWaitingEvent(messageName, correlationKey));
+
         messageGroupStore.removeMessageGroup(correlationId);
 
-        send(messageSentEvent(correlationId, "sent1"));
-        send(messageSentEvent(correlationId, "sent2"));
+        send(messageSentEvent(messageName, correlationKey, "sent1"));
+        send(messageSentEvent(messageName, correlationKey, "sent2"));
         
         // when
-        send(messageWaitingEvent(correlationId, "waiting1"));
+        send(messageWaitingEvent(messageName, correlationKey, "waiting1"));
         
         // then
         Message<?> out = poll(0, TimeUnit.SECONDS);
         
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .extracting("name")
-                       .contains("sent1");
+                       .extracting("variables")
+                       .contains(singletonMap("key", "sent1"));
 
         assertThat(peek()).isNull();
         
-        MessageGroup group = messageGroup(correlationId);
-        
-        assertThat(group.getMessages()).hasSize(2)
-                                       .extracting(Message::getPayload)
-                                       .asList()
-                                       .extracting("name")
-                                       .contains("sent2", "waiting1");
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(2)
+                                                             .extracting(Message::getPayload)
+                                                             .asList()
+                                                             .extracting("variables")
+                                                             .contains(singletonMap("key", "sent2"),
+                                                                       singletonMap("key", "waiting1"));
         // when 
-        send(messageReceivedEvent(correlationId, "received1"));
+        send(messageReceivedEvent(messageName, correlationKey, "received1"));
 
         // then
         assertThat(peek()).isNull();
         
-        group = messageGroup(correlationId);
-        
-        assertThat(group.getMessages()).hasSize(1)
-                                       .extracting(Message::getPayload)
-                                       .asList()
-                                       .extracting("name")
-                                       .containsOnly("sent2");
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1)
+                                                             .extracting(Message::getPayload)
+                                                             .asList()
+                                                             .extracting("variables")
+                                                             .containsOnly(singletonMap("key", "sent2"));
         // when
-        send(messageWaitingEvent(correlationId, "waiting2"));
+        send(messageWaitingEvent(messageName, correlationKey, "waiting2"));
 
+        // then
         out = poll(0, TimeUnit.SECONDS);
 
         assertThat(peek()).isNull();
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .extracting("name")
-                       .contains("sent2");
+                       .extracting("variables")
+                       .contains(singletonMap("key", "sent2"));
 
-        group = messageGroup(correlationId);
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1)
+                                                             .extracting(Message::getPayload)
+                                                             .asList()
+                                                             .extracting("variables")
+                                                             .containsOnly(singletonMap("key", "waiting2"));
         
-        assertThat(group.getMessages()).hasSize(1)
-                                       .extracting(Message::getPayload)
-                                       .asList()
-                                       .extracting("name")
-                                       .containsOnly("waiting2");
-        
-        send(messageReceivedEvent(correlationId, "received2"));
+        // when
+        send(messageReceivedEvent(messageName, correlationKey, "received2"));
 
+        // then
         assertThat(peek()).isNull();
 
-        group = messageGroup(correlationId);
-
-        assertThat(group.getMessages()).isEmpty();
+        assertThat(messageGroup(correlationId).getMessages()).isEmpty();
     }
     
     
     @Test
     public void testSubscriptionCancelled() throws Exception {
         // given
-        String correlationId = "message:1";
-        messageGroupStore.removeMessageGroup(correlationId);
+        String messageName = "message";
+        String correlationKey = "1";
+        Message<?> subscriptionCancelled = subscriptionCancelledEvent(messageName, correlationKey);
+        String groupName = correlationId(subscriptionCancelled);
+        
+        messageGroupStore.removeMessageGroup(groupName);
 
-        send(messageWaitingEvent(correlationId, "waiting1"));
-        send(messageWaitingEvent(correlationId, "waiting2"));
+        send(messageWaitingEvent(messageName, correlationKey));
+        send(messageWaitingEvent(messageName, correlationKey));
+
+        assertThat(messageGroup(groupName).getMessages()).hasSize(2);
         
         // when
-        send(subscriptionCancelledEvent(correlationId, "cancelled1"));
+        send(subscriptionCancelled);
         
         // then
         assertThat(peek()).isNull();
 
-        MessageGroup group = messageGroup(correlationId);
-        
-        assertThat(group.getMessages()).isEmpty();
+        assertThat(messageGroup(groupName).getMessages()).isEmpty();
     }
     
 
     @Test
     public void testIdempotentMessageInterceptor() throws Exception {
         // given
-        String correlationId = "message:1";
+        String messageName = "message";
+        String correlationKey = "1";
+        Message<MessageEventPayload> waitingMessage = messageWaitingEvent(messageName, correlationKey);
+        String correlationId = MessageConnectorIntegrationFlow.getCorrelationId(waitingMessage);
+
         messageGroupStore.removeMessageGroup(correlationId);
-
-        Message<MessageEventPayload> waitingMessage = messageWaitingEvent(correlationId, "waiting"); 
-
+        
         // when                                      
         send(waitingMessage);
         send(waitingMessage);
@@ -517,12 +549,10 @@ public abstract class MessageConnectorIntegrationFlowTests {
         // then
         assertThat(peek()).isNull();
 
-        MessageGroup group = messageGroup(correlationId);
-        
-        assertThat(group.getMessages()).isNotNull()
-                                       .hasSize(1);
+        assertThat(messageGroup(correlationId).getMessages()).isNotNull()
+                                                             .hasSize(1);
         // given
-        Message<MessageEventPayload> receivedMessage = messageReceivedEvent(correlationId, "recieved");
+        Message<MessageEventPayload> receivedMessage = messageReceivedEvent(messageName, correlationKey);
         
         // when
         send(receivedMessage);
@@ -531,86 +561,116 @@ public abstract class MessageConnectorIntegrationFlowTests {
         // then 
         assertThat(peek()).isNull();
         
-        group = messageGroup(correlationId);
-
-        assertThat(group.getMessages()).hasSize(0);
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(0);
         
     }        
     
-    
-    
-    
-    private Message<?> startMessageDeployedEvent(String messageName) {
-        MessageEventPayload payload = messageEventPayload(messageName,
-                                                          "businessKey",
-                                                          null,
-                                                          Collections.emptyMap());
-        return MessageBuilder.withPayload(payload)
-                             .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, messageName)
-                             .setHeader("eventType", "START_MESSAGE_DEPLOYED")
-                             .setHeader("messageId", UUID.randomUUID())
-                             .build();
+
+    protected MessageBuilder<MessageEventPayload> messageBuilder(String messageName) {
+        return messageBuilder(messageName,
+                              null,
+                              null);
     }
     
-    private Message<MessageEventPayload> messageSentEvent(String correlationId, String name) {
-        MessageEventPayload payload = messageEventPayload(name,
-                                                          "businessKey",
-                                                          correlationId,
-                                                          Collections.emptyMap());
+    protected MessageBuilder<MessageEventPayload> messageBuilder(String messageName,
+                                                                 String correlationKey) {
+        return messageBuilder(messageName,
+                              correlationKey,
+                              null);
+    }
+    
+    protected MessageBuilder<MessageEventPayload> messageBuilder(String messageName,
+                                                                 String correlationKey,
+                                                                 String businessKey) {
+        MessageEventPayload payload = MessageEventPayloadBuilder.messageEvent(messageName)
+                                                                .withCorrelationKey(correlationKey)
+                                                                .withBusinessKey(businessKey)
+                                                                .withVariables(Collections.singletonMap("key", businessKey))
+                                                                .build();
         return MessageBuilder.withPayload(payload)
-                             .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
-                             .setHeader("eventType", "MESSAGE_SENT")
-                             .setHeader("messageId", UUID.randomUUID())
-                             .build();
+                             .setHeader(MESSAGE_EVENT_NAME, messageName)
+                             .setHeader(MESSAGE_EVENT_CORRELATION_KEY, correlationKey)
+                             .setHeader(MESSAGE_EVENT_ID, UUID.randomUUID())
+                             .setHeader(SERVICE_FULL_NAME, "rb");
+
+    }
+    
+    protected Message<MessageEventPayload> startMessageDeployedEvent(String messageName) {
+        return messageBuilder(messageName,
+                              null).setHeader(MESSAGE_EVENT_TYPE, 
+                                              MessageDefinitionEvents.START_MESSAGE_DEPLOYED.name())
+                                   .build();
     }
 
-    private Message<MessageEventPayload> messageWaitingEvent(String correlationId, String name) {
-        MessageEventPayload payload = messageEventPayload(name,
-                                                          "businessKey",
-                                                          correlationId,
-                                                          Collections.emptyMap());
-        return MessageBuilder.withPayload(payload)
-                             .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
-                             .setHeader("eventType", "MESSAGE_WAITING")
-                             .setHeader("messageId", UUID.randomUUID())
-                             .build();
+    protected Message<MessageEventPayload> messageSentEvent(String messageName) {
+        return messageSentEvent(messageName,
+                                null);
+    }
+    
+    protected Message<MessageEventPayload> messageSentEvent(String messageName, 
+                                                            String correlationKey) {
+        return messageSentEvent(messageName,
+                                correlationKey,
+                                null);
     }
 
-    private Message<MessageEventPayload> messageReceivedEvent(String correlationId, String name) {
-        MessageEventPayload payload = messageEventPayload(name,
-                                                          "businessKey",
-                                                          correlationId,
-                                                          Collections.emptyMap());
-
-        return MessageBuilder.withPayload(payload)
-                             .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
-                             .setHeader("eventType", "MESSAGE_RECEIVED")
-                             .setHeader("messageId", UUID.randomUUID())
-                             .build();
+    protected Message<MessageEventPayload> messageSentEvent(String messageName, 
+                                                            String correlationKey,
+                                                            String businessKey) {
+        return messageBuilder(messageName,
+                              correlationKey,
+                              businessKey).setHeader(MESSAGE_EVENT_TYPE, 
+                                                        MessageEvents.MESSAGE_SENT.name())
+                                             .build();
+    }
+    
+    protected Message<MessageEventPayload> messageWaitingEvent(String messageName) {
+        return messageWaitingEvent(messageName,
+                                   null);
     }
 
-    private Message<MessageEventPayload> subscriptionCancelledEvent(String correlationId, String name) {
-        MessageEventPayload payload = messageEventPayload(name,
-                                                          "businessKey",
-                                                          correlationId,
-                                                          Collections.emptyMap());
-        return MessageBuilder.withPayload(payload)
-                             .setHeader(IntegrationMessageHeaderAccessor.CORRELATION_ID, correlationId)
-                             .setHeader("eventType", "MESSAGE_SUBSCRIPTION_CANCELLED")
-                             .setHeader("messageId", UUID.randomUUID())
-                             .build();
+    protected Message<MessageEventPayload> messageWaitingEvent(String messageName, 
+                                                               String correlationKey,
+                                                               String businessKey) {
+        return messageBuilder(messageName,
+                              correlationKey,
+                              businessKey).setHeader(MESSAGE_EVENT_TYPE, 
+                                                        MessageEvents.MESSAGE_WAITING.name())
+                                             .build();
+    }
+    
+    protected Message<MessageEventPayload> messageWaitingEvent(String messageName, 
+                                                               String correlationKey) {
+        return messageBuilder(messageName,
+                              correlationKey).setHeader(MESSAGE_EVENT_TYPE, 
+                                                        MessageEvents.MESSAGE_WAITING.name())
+                                             .build();
     }
 
-    private MessageEventPayload messageEventPayload(String name,
-                                                    String businessKey,
-                                                    String correlationKey,
-                                                    Map<String, Object> variables) {
-        return MessageEventPayloadBuilder.messageEvent(name)
-                                         .withBusinessKey(businessKey)
-                                         .withVariables(variables)
-                                         .withCorrelationKey(correlationKey)
-                                         .build();
-    }    
+    protected Message<MessageEventPayload> messageReceivedEvent(String messageName, 
+                                                                String correlationKey) {
+        return messageReceivedEvent(messageName,
+                                    correlationKey,
+                                    null);
+    }
+
+    protected Message<MessageEventPayload> messageReceivedEvent(String messageName, 
+                                                                String correlationKey,
+                                                                String businessKey) {
+        return messageBuilder(messageName,
+                              correlationKey,
+                              businessKey).setHeader(MESSAGE_EVENT_TYPE,
+                                                     MessageEvents.MESSAGE_RECEIVED.name())
+                                          .build();
+    }
+    
+    protected Message<MessageEventPayload> subscriptionCancelledEvent(String messageName, 
+                                                                      String correlationKey) {
+        return messageBuilder(messageName,
+                              correlationKey).setHeader(MESSAGE_EVENT_TYPE, 
+                                                        MessageSubscriptionEvents.MESSAGE_SUBSCRIPTION_CANCELLED.name())
+                                             .build();
+    }
 
     protected void send(Message<?> message) throws JsonProcessingException {
         String json = objectMapper.writeValueAsString(message.getPayload());
@@ -621,11 +681,13 @@ public abstract class MessageConnectorIntegrationFlowTests {
                                          .build());        
     }
  
+    @SuppressWarnings("unchecked")
     protected <T> Message<T> poll(long timeout, TimeUnit unit) throws InterruptedException {
         return (Message<T>) this.collector.forChannel(this.channels.output())
                                           .poll(timeout, unit);
     }
 
+    @SuppressWarnings("unchecked")
     protected <T> Message<T> peek() {
         return (Message<T>) this.collector.forChannel(this.channels.output())
                                           .peek();
@@ -634,6 +696,14 @@ public abstract class MessageConnectorIntegrationFlowTests {
     protected MessageGroup messageGroup(String groupName) {
         return aggregatingMessageHandler.getMessageStore()
                                         .getMessageGroup(groupName);
+    }
+
+    protected String correlationId(Message<?> message) { 
+        return MessageConnectorIntegrationFlow.getCorrelationId(message);
+    }
+
+    protected void removeMessageGroup(String correlationId) {
+        messageGroupStore.removeMessageGroup(correlationId);
     }
     
     protected void sendAsync(final Message<?> message,

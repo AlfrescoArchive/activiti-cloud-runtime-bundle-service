@@ -43,7 +43,7 @@ public class StartMessageDeployedEventMessageProducer implements ProcessRuntimeE
         
         Message<MessageEventPayload> message = messageBuilderFactory.create(event)
                                                                     .withPayload(messageEventPayload)
-                                                                    .setHeader("eventType",
+                                                                    .setHeader(MessageEventHeaders.MESSAGE_EVENT_TYPE,
                                                                                event.getEventType()
                                                                                     .name())
                                                                     .build();

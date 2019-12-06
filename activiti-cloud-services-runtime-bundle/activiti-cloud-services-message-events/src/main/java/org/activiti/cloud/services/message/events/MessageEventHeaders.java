@@ -15,9 +15,12 @@
  */
 package org.activiti.cloud.services.message.events;
 
-public final class MessageEventSubscriptionMessageHeaders {
+public final class MessageEventHeaders {
     
-    public static final String MESSAGE_EVENT_SUBSCRIPTION_EVENT_NAME = "messageEventSubscriptionEventName";
-    public static final String MESSAGE_EVENT_SUBSCRIPTION_CONFIGURATION = "messageEventSubscriptionEventConfiguration";
-
+    public static final String MESSAGE_EVENT_ID = "messageEventId";
+    public static final String MESSAGE_EVENT_NAME = "messageEventName";
+    public static final String MESSAGE_EVENT_TYPE = "eventType"; // FIXME
+    public static final String MESSAGE_EVENT_CORRELATION_KEY = "messageEventCorrelationKey";
+    public static final String MESSAGE_EVENT_BUSINESS_KEY = "messageEventBusinessKey";
+    
 }

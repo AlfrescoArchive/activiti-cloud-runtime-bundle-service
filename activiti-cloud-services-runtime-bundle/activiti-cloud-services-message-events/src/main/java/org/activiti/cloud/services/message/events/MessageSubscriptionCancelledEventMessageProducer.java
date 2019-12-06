@@ -57,7 +57,7 @@ public class MessageSubscriptionCancelledEventMessageProducer implements Process
         
         Message<MessageEventPayload> message = messageBuilderFactory.create(event.getEntity())
                                                                     .withPayload(messageEventPayload)
-                                                                    .setHeader("eventType",
+                                                                    .setHeader(MessageEventHeaders.MESSAGE_EVENT_TYPE,
                                                                                event.getEventType()
                                                                                     .name())
                                                                     .build();

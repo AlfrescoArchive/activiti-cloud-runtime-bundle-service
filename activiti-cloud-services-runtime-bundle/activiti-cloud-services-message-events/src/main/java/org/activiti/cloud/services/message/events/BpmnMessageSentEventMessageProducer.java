@@ -49,7 +49,7 @@ public class BpmnMessageSentEventMessageProducer implements BPMNElementEventList
         Message<MessageEventPayload> message = messageBuilderFactory.create(event.getEntity())
                                                                     .withPayload(event.getEntity()
                                                                                       .getMessagePayload())
-                                                                    .setHeader("eventType",
+                                                                    .setHeader(MessageEventHeaders.MESSAGE_EVENT_TYPE,
                                                                                event.getEventType()
                                                                                     .name())
                                                                     .build();
