@@ -95,7 +95,7 @@ public class AuditProducerIT {
     private static final String CALL_TWO_SUB_PROCESSES = "callTwoSubProcesses";
 
     public static final String ROUTING_KEY_HEADER = "routingKey";
-    public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "appVersion", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
+    public static final String[] RUNTIME_BUNDLE_INFO_HEADERS = {"appName", "serviceName", "serviceVersion", "serviceFullName", ROUTING_KEY_HEADER};
     public static final String[] ALL_REQUIRED_HEADERS = Stream.of(RUNTIME_BUNDLE_INFO_HEADERS)
             .flatMap(Stream::of)
             .toArray(String[]::new);

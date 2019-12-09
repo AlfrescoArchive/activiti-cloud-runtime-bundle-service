@@ -59,7 +59,6 @@ public class MessageProducerCommandContextCloseListenerTest {
     private static final String SPRING_APP_NAME = "springAppName";
     private static final String SERVICE_VERSION = "serviceVersion";
     private static final String SERVICE_TYPE = "serviceType";
-    private static final String APP_VERSION = "appVersion";
     private static final String APP_NAME = "appName";
     private static final String MOCK_DEPLOYMENT_NAME = "mockDeploymentName";
     private static final String MOCK_DEPLOYMENT_ID = "mockDeploymentId";
@@ -82,7 +81,6 @@ public class MessageProducerCommandContextCloseListenerTest {
     private RuntimeBundleProperties properties = new RuntimeBundleProperties() {
         {
             setAppName(APP_NAME);
-            setAppVersion(APP_VERSION);
             setServiceType(SERVICE_TYPE);
             setServiceVersion(SERVICE_VERSION);
             setRbSpringAppName(SPRING_APP_NAME);
@@ -155,7 +153,6 @@ public class MessageProducerCommandContextCloseListenerTest {
         assertThat(result[0].getProcessDefinitionVersion()).isEqualTo(MOCK_PROCESS_DEFINITION_VERSION);
 
         assertThat(result[0].getAppName()).isEqualTo(APP_NAME);
-        assertThat(result[0].getAppVersion()).isEqualTo(APP_VERSION);
         assertThat(result[0].getServiceName()).isEqualTo(SPRING_APP_NAME);
         assertThat(result[0].getServiceType()).isEqualTo(SERVICE_TYPE);
         assertThat(result[0].getServiceVersion()).isEqualTo(SERVICE_VERSION);        
@@ -204,7 +201,6 @@ public class MessageProducerCommandContextCloseListenerTest {
                                         .getHeaders()).containsEntry("routingKey", MOCK_ROUTING_KEY)
                                                       .containsEntry("messagePayloadType",LORG_ACTIVITI_CLOUD_API_MODEL_SHARED_EVENTS_CLOUD_RUNTIME_EVENT)
                                                       .containsEntry("appName", APP_NAME)
-                                                      .containsEntry("appVersion", APP_VERSION)
                                                       .containsEntry("serviceName",SPRING_APP_NAME)
                                                       .containsEntry("serviceType", SERVICE_TYPE)
                                                       .containsEntry("serviceVersion", SERVICE_VERSION)

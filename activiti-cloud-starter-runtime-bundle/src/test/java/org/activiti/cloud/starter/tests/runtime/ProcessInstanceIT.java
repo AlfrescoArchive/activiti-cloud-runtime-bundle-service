@@ -120,7 +120,6 @@ public class ProcessInstanceIT {
         assertThat(returnedProcInst.getInitiator()).isEqualTo(keycloakTestUser);//will only match if using username not id
         assertThat(returnedProcInst.getBusinessKey()).isEqualTo("business_key");
         assertThat(returnedProcInst.getAppName()).isEqualTo(runtimeBundleProperties.getAppName());
-        assertThat(returnedProcInst.getAppVersion()).isEqualTo(runtimeBundleProperties.getAppVersion());
         assertThat(returnedProcInst.getServiceName()).isEqualTo(runtimeBundleProperties.getServiceName());
         assertThat(returnedProcInst.getServiceFullName()).isEqualTo(runtimeBundleProperties.getServiceFullName());
         assertThat(returnedProcInst.getServiceType()).isEqualTo(runtimeBundleProperties.getServiceType());
