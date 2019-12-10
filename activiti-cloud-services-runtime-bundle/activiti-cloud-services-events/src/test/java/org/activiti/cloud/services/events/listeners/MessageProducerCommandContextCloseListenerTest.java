@@ -27,6 +27,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.Collections;
 
+import org.activiti.api.process.model.ProcessInstance;
+import org.activiti.api.runtime.model.impl.ProcessInstanceImpl;
 import org.activiti.cloud.api.model.shared.events.CloudRuntimeEvent;
 import org.activiti.cloud.api.model.shared.impl.events.CloudRuntimeEventImpl;
 import org.activiti.cloud.api.process.model.impl.events.CloudProcessCreatedEventImpl;
@@ -112,7 +114,8 @@ public class MessageProducerCommandContextCloseListenerTest {
     @Before
     public void setUp() throws Exception {
         initMocks(this);
-        event = new CloudProcessCreatedEventImpl();
+        ProcessInstance processInstance = new ProcessInstanceImpl();
+        event = new CloudProcessCreatedEventImpl(processInstance);
         
         when(producer.auditProducer()).thenReturn(auditChannel);
 
