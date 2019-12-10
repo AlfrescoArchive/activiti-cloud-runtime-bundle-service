@@ -59,17 +59,17 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                    .gateway(flow -> flow.log()
                                         .filter(Message.class,
                                                 this::filterMessage,
-                                                filterSpec -> filterSpec.id("filter-messages")
+                                                filterSpec -> filterSpec.id("filterMessages")
                                                                         .discardChannel("errorChannel"))
-                                        .enrichHeaders(enricher -> enricher.id("enrich-correlation-id")
+                                        .enrichHeaders(enricher -> enricher.id("enrichHeaders")
                                                                            .headerFunction(CORRELATION_ID, 
                                                                                            this::enrichHeaders))
                                         .transform(Transformers.fromJson(MessageEventPayload.class))
                                         .handle(this::aggregate,
-                                                handlerSpec -> handlerSpec.id("message-aggregator")
+                                                handlerSpec -> handlerSpec.id("aggregator")
                                                                           .advice(advices)),
                             flowSpec -> flowSpec.transactional()
-                                                .id("message-gateway")
+                                                .id("messageGateway")
                                                 .requiresReply(false)
                                                 .async(true)
                                                 .errorChannel("errorChannel")

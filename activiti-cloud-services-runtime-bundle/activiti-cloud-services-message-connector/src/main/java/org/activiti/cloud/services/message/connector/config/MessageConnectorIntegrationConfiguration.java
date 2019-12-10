@@ -25,6 +25,7 @@ import org.activiti.cloud.services.message.connector.advice.SubscriptionCancelle
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregatorFactoryBean;
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
+import org.activiti.cloud.services.message.connector.controlbus.ControlBusGateway;
 import org.activiti.cloud.services.message.connector.integration.MessageConnectorIntegrationFlow;
 import org.activiti.cloud.services.message.connector.integration.MessageEventHeaders;
 import org.activiti.cloud.services.message.connector.processor.MessageGroupProcessorChain;
@@ -54,6 +55,7 @@ import org.springframework.integration.aggregator.ReleaseStrategy;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.dsl.IntegrationFlow;
+import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.handler.MessageProcessor;
 import org.springframework.integration.handler.advice.IdempotentReceiverInterceptor;
 import org.springframework.integration.metadata.ConcurrentMetadataStore;
@@ -78,7 +80,12 @@ public class MessageConnectorIntegrationConfiguration {
     @Autowired
     private MessageAggregatorProperties properties;
     
-    // TODO controlBus()
+    @Bean
+    public IntegrationFlow controlBusFlow() {
+        return IntegrationFlows.from(ControlBusGateway.class)
+                               .controlBus(spec -> spec.id("controlBus"))
+                               .get();
+    }
     
     @Bean
     @ConditionalOnMissingBean(name = "messageConnectorIntegrationFlow")

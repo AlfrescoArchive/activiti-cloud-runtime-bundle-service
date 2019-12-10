@@ -48,7 +48,8 @@ import org.activiti.cloud.services.message.connector.aggregator.MessageConnector
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
 import org.activiti.cloud.services.message.connector.config.MessageConnectorAutoConfiguration;
 import org.activiti.cloud.services.message.connector.config.MessageConnectorIntegrationConfiguration;
-import org.activiti.cloud.services.message.connector.integration.MessageConnectorIntegrationFlow;
+import org.activiti.cloud.services.message.connector.controlbus.ControlBusGateway;
+import org.activiti.cloud.services.message.connector.correlation.Correlations;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -112,6 +113,9 @@ public abstract class MessageConnectorIntegrationFlowTests {
     
     @Autowired
     protected QueueChannel errorQueue;
+    
+    @Autowired
+    protected ControlBusGateway controlBus;
     
     // FIXME 
     @SpringBootApplication(exclude = MessageConnectorAutoConfiguration.class)
@@ -557,7 +561,7 @@ public abstract class MessageConnectorIntegrationFlowTests {
         String messageName = "message";
         String correlationKey = "1";
         Message<MessageEventPayload> waitingMessage = messageWaitingEvent(messageName, correlationKey);
-        String correlationId = MessageConnectorIntegrationFlow.getCorrelationId(waitingMessage);
+        String correlationId = correlationId(waitingMessage);
 
         messageGroupStore.removeMessageGroup(correlationId);
         
@@ -625,6 +629,13 @@ public abstract class MessageConnectorIntegrationFlowTests {
         assertThat(out.getPayload()).isInstanceOf(MessageTransformationException.class);
         
     }     
+ 
+    @Test
+    public void testControlBus() throws Exception {
+        this.controlBus.send("@aggregator.stop()");
+        
+        this.controlBus.send("@aggregator.start()");
+    }
     
     protected MessageBuilder<MessageEventPayload> messageBuilder(String messageName) {
         return messageBuilder(messageName,
