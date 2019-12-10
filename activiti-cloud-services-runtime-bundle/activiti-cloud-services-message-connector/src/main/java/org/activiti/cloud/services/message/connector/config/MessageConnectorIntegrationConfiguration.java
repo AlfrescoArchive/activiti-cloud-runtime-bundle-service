@@ -111,6 +111,8 @@ public class MessageConnectorIntegrationConfiguration {
         factoryBean.setCorrelationStrategy(correlationStrategy.getIfAvailable());
         factoryBean.setReleaseStrategy(releaseStrategy.getIfAvailable());
         factoryBean.setBeanFactory(beanFactory.getObject());
+        factoryBean.setStatsEnabled(true);
+        factoryBean.setCountsEnabled(true);
 
         MessageGroupProcessor groupProcessor = messageGroupProcessor.getIfAvailable();
 

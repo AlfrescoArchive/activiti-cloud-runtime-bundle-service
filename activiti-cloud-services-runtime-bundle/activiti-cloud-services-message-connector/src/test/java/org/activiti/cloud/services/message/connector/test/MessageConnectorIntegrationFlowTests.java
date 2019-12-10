@@ -759,7 +759,7 @@ public abstract class MessageConnectorIntegrationFlowTests {
     }
 
     protected String correlationId(Message<?> message) { 
-        return MessageConnectorIntegrationFlow.getCorrelationId(message);
+        return Correlations.getCorrelationId(message);
     }
 
     protected void removeMessageGroup(String correlationId) {

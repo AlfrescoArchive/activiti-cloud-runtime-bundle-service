@@ -16,10 +16,7 @@
 
 package org.activiti.cloud.services.message.connector.integration;
 
-import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_CORRELATION_KEY;
-import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_NAME;
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
-import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.SERVICE_FULL_NAME;
 import static org.springframework.integration.IntegrationMessageHeaderAccessor.CORRELATION_ID;
 
 import java.util.List;
@@ -28,6 +25,7 @@ import java.util.Objects;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
+import org.activiti.cloud.services.message.connector.correlation.Correlations;
 import org.springframework.integration.annotation.Filter;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.annotation.Transformer;
@@ -37,7 +35,6 @@ import org.springframework.integration.dsl.Transformers;
 import org.springframework.integration.handler.advice.HandleMessageAdvice;
 import org.springframework.integration.handler.advice.IdempotentReceiverInterceptor;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
 
 public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
 
@@ -66,7 +63,7 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                                                                         .discardChannel("errorChannel"))
                                         .enrichHeaders(enricher -> enricher.id("enrich-correlation-id")
                                                                            .headerFunction(CORRELATION_ID, 
-                                                                                           MessageConnectorIntegrationFlow::getCorrelationId))
+                                                                                           this::enrichHeaders))
                                         .transform(Transformers.fromJson(MessageEventPayload.class))
                                         .handle(this::aggregate,
                                                 handlerSpec -> handlerSpec.id("message-aggregator")
@@ -92,25 +89,10 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
         return Objects.nonNull(message.getHeaders()
                                       .get(MESSAGE_EVENT_TYPE));
     }
-    
-    @Transformer
-    public static String getCorrelationId(Message<?> message) {
-        MessageHeaders headers = message.getHeaders();
-        String serviceFullName = headers.get(SERVICE_FULL_NAME, String.class);
-        String messageEventName = headers.get(MESSAGE_EVENT_NAME, String.class);
-        String messageCorrelationKey = headers.get(MESSAGE_EVENT_CORRELATION_KEY, String.class);
-        
-        StringBuilder builder = new StringBuilder();
-        builder.append(serviceFullName)
-               .append(":")
-               .append(messageEventName);
-               
-        if (messageCorrelationKey != null) {
-            builder.append(":")
-                   .append(messageCorrelationKey);
-        }
-        
-        return builder.toString();        
-    }
 
+    @Transformer
+    public String enrichHeaders(Message<?> message) {
+        return Correlations.getCorrelationId(message);
+    }
+    
 }
