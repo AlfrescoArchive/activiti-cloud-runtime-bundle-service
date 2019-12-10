@@ -58,8 +58,8 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
         return this.from(processor.input())
                    .gateway(flow -> flow.log()
                                         .filter(Message.class,
-                                                this::isMessageEventType,
-                                                filterSpec -> filterSpec.id("filter-message-headers")
+                                                this::filterMessage,
+                                                filterSpec -> filterSpec.id("filter-messages")
                                                                         .discardChannel("errorChannel"))
                                         .enrichHeaders(enricher -> enricher.id("enrich-correlation-id")
                                                                            .headerFunction(CORRELATION_ID, 
@@ -85,7 +85,7 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
     }
 
     @Filter
-    public boolean isMessageEventType(Message<?> message) {
+    public boolean filterMessage(Message<?> message) {
         return Objects.nonNull(message.getHeaders()
                                       .get(MESSAGE_EVENT_TYPE));
     }
