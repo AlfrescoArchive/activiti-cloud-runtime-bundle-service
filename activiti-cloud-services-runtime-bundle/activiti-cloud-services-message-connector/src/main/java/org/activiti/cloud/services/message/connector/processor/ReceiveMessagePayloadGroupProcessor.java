@@ -16,31 +16,22 @@
 
 package org.activiti.cloud.services.message.connector.processor;
 
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_PAYLOAD_TYPE;
+import static org.activiti.cloud.services.message.connector.support.Predicates.MESSAGE_SENT;
+import static org.activiti.cloud.services.message.connector.support.Predicates.MESSAGE_WAITING;
+
 import java.util.Collection;
 
-import org.activiti.api.process.model.builders.MessagePayloadBuilder;
-import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
-import org.activiti.cloud.services.message.connector.integration.MessageEventHeaders;
-import org.activiti.cloud.services.message.connector.support.MessageTimestampComparator;
-import org.activiti.cloud.services.message.connector.support.SpELEvaluatingMessageListProcessor;
-import org.activiti.cloud.services.message.connector.support.SpELEvaluatingReleaseStrategy;
-import org.springframework.integration.aggregator.MessageListProcessor;
-import org.springframework.integration.aggregator.ReleaseStrategy;
+import org.activiti.cloud.services.message.connector.support.MessageComparators;
+import org.activiti.cloud.services.message.connector.transformer.ReceiveMessagePayloadTransformer;
 import org.springframework.integration.store.MessageGroup;
 import org.springframework.integration.store.MessageGroupStore;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 
-public class ReceiveMessagePayloadGroupProcessor implements MessageGroupProcessorHandler {
+public class ReceiveMessagePayloadGroupProcessor extends AbstractMessageGroupProcessorHandler {
     
-    private final static String condition = "!messages.?[headers['eventType'] == 'MESSAGE_WAITING'].empty " 
-                                             + "&& !messages.?[headers['eventType'] == 'MESSAGE_SENT'].empty";
-
-    private final static ReleaseStrategy strategy = new SpELEvaluatingReleaseStrategy(condition);
-    
-    private final static MessageListProcessor processor = new SpELEvaluatingMessageListProcessor("#this.?[headers['eventType'] == 'MESSAGE_SENT']");
-
     private final MessageGroupStore messageGroupStore;
 
     public ReceiveMessagePayloadGroupProcessor(MessageGroupStore messageGroupStore) {
@@ -48,41 +39,33 @@ public class ReceiveMessagePayloadGroupProcessor implements MessageGroupProcesso
     }
     
     @Override
-    public Message<?> handle(MessageGroup group) {
-        
-        if (canProcess(group)) {
-            Message<?> result = process(group.getMessages()).stream()
-                                                            .min(MessageTimestampComparator.INSTANCE)
-                                                            .get();
-                                    
-            messageGroupStore.removeMessagesFromGroup(group.getGroupId(), 
-                                                      result);
-            
-            return receiveMessagePayload(result);
-        }
-        
-        return null;
+    protected Message<?> process(MessageGroup group) {
+        Message<?> result = group.getMessages()
+                                 .stream()
+                                 .filter(MESSAGE_SENT)
+                                 .min(MessageComparators.TIMESTAMP)
+                                 .get();
+
+        messageGroupStore.removeMessagesFromGroup(group.getGroupId(),
+                                                  result);
+        return buildOutputMessage(result);     
     }
     
-    private Message<?> receiveMessagePayload(Message<?> message) {
-        MessageEventPayload messageEventPayload = MessageEventPayload.class.cast(message.getPayload());
-
-        ReceiveMessagePayload payload = MessagePayloadBuilder.receive(messageEventPayload.getName())
-                                                             .withCorrelationKey(messageEventPayload.getCorrelationKey())
-                                                             .withVariables(messageEventPayload.getVariables())
-                                                             .build();
+    
+    protected Message<?> buildOutputMessage(Message<?> message) {
+        ReceiveMessagePayload payload = ReceiveMessagePayloadTransformer.from(message);
+        
         return MessageBuilder.withPayload(payload)
-                             .setHeader(MessageEventHeaders.MESSAGE_PAYLOAD_TYPE, 
+                             .setHeader(MESSAGE_PAYLOAD_TYPE,
                                         ReceiveMessagePayload.class.getSimpleName())
                              .build();
     }
     
-    private boolean canProcess(MessageGroup group) {
-        return strategy.canRelease(group);
+    @Override
+    protected boolean canProcess(MessageGroup group) {
+        Collection<Message<?>> messages = group.getMessages();
+             
+        return messages.stream().anyMatch(MESSAGE_WAITING) 
+                && messages.stream().anyMatch(MESSAGE_SENT);
     }
-
-    private Collection<Message<?>> process(Collection<Message<?>> messages) {
-        return (Collection<Message<?>>) processor.process(messages);
-    }
-
 }

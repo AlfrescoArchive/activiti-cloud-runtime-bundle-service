@@ -16,74 +16,60 @@
 
 package org.activiti.cloud.services.message.connector.processor;
 
+import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_PAYLOAD_TYPE;
+import static org.activiti.cloud.services.message.connector.support.Predicates.MESSAGE_SENT;
+import static org.activiti.cloud.services.message.connector.support.Predicates.START_MESSAGE_DEPLOYED;
+
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import org.activiti.api.process.model.builders.MessagePayloadBuilder;
-import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.model.payloads.StartMessagePayload;
-import org.activiti.cloud.services.message.connector.integration.MessageEventHeaders;
-import org.activiti.cloud.services.message.connector.support.MessageTimestampComparator;
-import org.activiti.cloud.services.message.connector.support.SpELEvaluatingMessageListProcessor;
-import org.activiti.cloud.services.message.connector.support.SpELEvaluatingReleaseStrategy;
-import org.springframework.integration.aggregator.MessageListProcessor;
-import org.springframework.integration.aggregator.ReleaseStrategy;
+import org.activiti.cloud.services.message.connector.support.MessageComparators;
+import org.activiti.cloud.services.message.connector.transformer.StartMessagePayloadTransformer;
 import org.springframework.integration.store.MessageGroup;
 import org.springframework.integration.store.MessageGroupStore;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 
-public class StartMessagePayloadGroupProcessor implements MessageGroupProcessorHandler {
+public class StartMessagePayloadGroupProcessor extends AbstractMessageGroupProcessorHandler {
     
-    private final static String condition = "!messages.?[headers['eventType'] == 'START_MESSAGE_DEPLOYED'].empty " 
-                                             + "&& !messages.?[headers['eventType'] == 'MESSAGE_SENT'].empty";
-
-    private final static ReleaseStrategy strategy = new SpELEvaluatingReleaseStrategy(condition);
-    
-    private final static MessageListProcessor processor = new SpELEvaluatingMessageListProcessor("#this.?[headers['eventType'] == 'MESSAGE_SENT']");
-
     private final MessageGroupStore messageGroupStore;
 
     public StartMessagePayloadGroupProcessor(MessageGroupStore messageGroupStore) {
         this.messageGroupStore = messageGroupStore;
     }    
+    
     @Override
-    public Collection<Message<?>> handle(MessageGroup group) {
-        
-        if (canProcess(group)) {
-            Collection<Message<?>> result = process(group.getMessages());
+    protected Collection<Message<?>> process(MessageGroup group) {
+        Collection<Message<?>> result =group.getMessages()
+                                            .stream()
+                                            .filter(MESSAGE_SENT)
+                                            .collect(Collectors.toList());
 
-            messageGroupStore.removeMessagesFromGroup(group.getGroupId(),
-                                                      result);
-            return result.stream()
-                         .sorted(MessageTimestampComparator.INSTANCE)
-                         .map(this::messageEventPayload)
-                         .collect(Collectors.toList());
-        }
+        messageGroupStore.removeMessagesFromGroup(group.getGroupId(),
+                                                  result);
+        return result.stream()
+                     .sorted(MessageComparators.TIMESTAMP)
+                     .map(this::buildOutputMessage)
+                     .collect(Collectors.toList());
         
-        return null;
     }
     
-    private Message<?> messageEventPayload(Message<?> message) {
-        MessageEventPayload eventPayload = MessageEventPayload.class.cast(message.getPayload());
-
-        StartMessagePayload startPayload = MessagePayloadBuilder.start(eventPayload.getName())
-                                                                .withBusinessKey(eventPayload.getBusinessKey())
-                                                                .withVariables(eventPayload.getVariables())
-                                                                .build();
+    protected Message<?> buildOutputMessage(Message<?> message) {
+        StartMessagePayload startPayload = StartMessagePayloadTransformer.from(message);
 
         return MessageBuilder.withPayload(startPayload)
-                             .setHeader(MessageEventHeaders.MESSAGE_PAYLOAD_TYPE, 
+                             .setHeader(MESSAGE_PAYLOAD_TYPE, 
                                         StartMessagePayload.class.getSimpleName())
                              .build();       
     }
     
-    public boolean canProcess(MessageGroup group) {
-        return strategy.canRelease(group);
+    @Override
+    protected boolean canProcess(MessageGroup group) {
+        Collection<Message<?>> messages = group.getMessages();
+        
+        return messages.stream().anyMatch(START_MESSAGE_DEPLOYED) 
+                && messages.stream().anyMatch(MESSAGE_SENT);
     }
     
-    public <R> R process(Collection<Message<?>> messages) {
-        return (R) processor.process(messages);
-    }
-
 }

@@ -16,6 +16,8 @@
 
 package org.activiti.cloud.services.message.connector.config;
 
+import static org.activiti.cloud.services.message.connector.integration.MessageConnectorIntegrationFlow.DISCARD_CHANNEL;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -38,17 +40,15 @@ import org.activiti.cloud.services.message.connector.release.MessageSentReleaseH
 import org.activiti.cloud.services.message.connector.support.ChainBuilder;
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.integration.IntegrationMessageHeaderAccessor;
 import org.springframework.integration.aggregator.CorrelationStrategy;
-import org.springframework.integration.aggregator.DefaultAggregatingMessageGroupProcessor;
 import org.springframework.integration.aggregator.HeaderAttributeCorrelationStrategy;
 import org.springframework.integration.aggregator.MessageGroupProcessor;
 import org.springframework.integration.aggregator.ReleaseStrategy;
@@ -56,12 +56,14 @@ import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.config.EnableIntegrationManagement;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.handler.MessageProcessor;
 import org.springframework.integration.handler.advice.IdempotentReceiverInterceptor;
 import org.springframework.integration.metadata.ConcurrentMetadataStore;
 import org.springframework.integration.selector.MetadataStoreSelector;
 import org.springframework.integration.store.MessageGroupStore;
 import org.springframework.integration.support.locks.LockRegistry;
+import org.springframework.messaging.MessageChannel;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
@@ -77,61 +79,59 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 public class MessageConnectorIntegrationConfiguration {
 
+    private static final String MESSAGE_CONNECTOR_AGGREGATOR_FACTORY_BEAN = "messageConnectorAggregatorFactoryBean";
+    private static final String CONTROL_BUS = "controlBus";
+    private static final String CONTROL_BUS_FLOW = "controlBusFlow";
+    private static final String MESSAGE_CONNECTOR_INTEGRATION_FLOW = "messageConnectorIntegrationFlow";
+    
     @Autowired
     private MessageAggregatorProperties properties;
     
     @Bean
+    @ConditionalOnMissingBean(name = CONTROL_BUS_FLOW)
     public IntegrationFlow controlBusFlow() {
         return IntegrationFlows.from(ControlBusGateway.class)
-                               .controlBus(spec -> spec.id("controlBus"))
+                               .controlBus(spec -> spec.id(CONTROL_BUS))
                                .get();
     }
     
     @Bean
-    @ConditionalOnMissingBean(name = "messageConnectorIntegrationFlow")
+    @DependsOn(MESSAGE_CONNECTOR_AGGREGATOR_FACTORY_BEAN)
+    @ConditionalOnMissingBean(name = MESSAGE_CONNECTOR_INTEGRATION_FLOW)
     public IntegrationFlow messageConnectorIntegrationFlow(MessageConnectorProcessor processor,
                                                            MessageConnectorAggregator aggregator,
                                                            IdempotentReceiverInterceptor interceptor,
-                                                           List<MessageConnectorHandlerAdvice> advices) { 
+                                                           List<MessageConnectorHandlerAdvice> adviceChain) { 
         return new MessageConnectorIntegrationFlow(processor,
                                                    aggregator,
                                                    interceptor,
-                                                   advices);
+                                                   adviceChain);
     }
     
     @Bean
-    @ConditionalOnMissingBean
-    public MessageConnectorAggregator messageConnectorAggregator(ObjectProvider<CorrelationStrategy> correlationStrategy,
-                                                                 ObjectProvider<ReleaseStrategy> releaseStrategy,
-                                                                 ObjectProvider<MessageGroupProcessor> messageGroupProcessor,
-                                                                 ObjectProvider<MessageGroupStore> messageStore,
-                                                                 ObjectProvider<LockRegistry> lockRegistry,
-                                                                 ObjectProvider<BeanFactory> beanFactory) {
-        MessageConnectorAggregatorFactoryBean factoryBean = new MessageConnectorAggregatorFactoryBean();
-        factoryBean.setOutputChannelName(MessageConnectorProcessor.OUTPUT);
-        factoryBean.setExpireGroupsUponCompletion(true);
-        factoryBean.setCompleteGroupsWhenEmpty(true);
-        factoryBean.setSendPartialResultOnExpiry(true);
-        factoryBean.setGroupTimeoutExpression(this.properties.getGroupTimeout());
-        factoryBean.setPopSequence(false);
-        factoryBean.setLockRegistry(lockRegistry.getIfAvailable());
-        factoryBean.setCorrelationStrategy(correlationStrategy.getIfAvailable());
-        factoryBean.setReleaseStrategy(releaseStrategy.getIfAvailable());
-        factoryBean.setBeanFactory(beanFactory.getObject());
-        factoryBean.setStatsEnabled(true);
-        factoryBean.setCountsEnabled(true);
+    @ConditionalOnMissingBean(name = DISCARD_CHANNEL)
+    public MessageChannel discardChannel() {
+        return MessageChannels.direct()
+                              .get();
+    }
 
-        MessageGroupProcessor groupProcessor = messageGroupProcessor.getIfAvailable();
-
-        if (groupProcessor == null) {
-            groupProcessor = new DefaultAggregatingMessageGroupProcessor();
-            ((BeanFactoryAware) groupProcessor).setBeanFactory(beanFactory.getObject());
-        }
-        factoryBean.setProcessorBean(groupProcessor);
-
-        factoryBean.setMessageStore(messageStore.getIfAvailable());
-
-        return factoryBean.getObject();
+    @Bean
+    @ConditionalOnMissingBean(MessageConnectorAggregator.class)
+    public MessageConnectorAggregatorFactoryBean messageConnectorAggregatorFactoryBean(CorrelationStrategy correlationStrategy,
+                                                                                       ReleaseStrategy releaseStrategy,
+                                                                                       MessageGroupProcessor processorBean,
+                                                                                       MessageGroupStore messageStore,
+                                                                                       LockRegistry lockRegistry,
+                                                                                       BeanFactory beanFactory,
+                                                                                       MessageChannel discardChannel) {
+        return new MessageConnectorAggregatorFactoryBean().discardChannel(discardChannel)
+                                                          .groupTimeoutExpression(this.properties.getGroupTimeout())
+                                                          .lockRegistry(lockRegistry)
+                                                          .correlationStrategy(correlationStrategy)
+                                                          .releaseStrategy(releaseStrategy)
+                                                          .beanFactory(beanFactory)
+                                                          .processorBean(processorBean)
+                                                          .messageStore(messageStore);
     }
 
     @Bean

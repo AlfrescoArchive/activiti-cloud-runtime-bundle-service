@@ -21,9 +21,20 @@ import org.activiti.api.process.model.builders.MessagePayloadBuilder;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.model.payloads.StartMessagePayload;
 import org.springframework.integration.transformer.AbstractPayloadTransformer;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.converter.MessageConversionException;
 
 public class StartMessagePayloadTransformer extends AbstractPayloadTransformer<MessageEventPayload, StartMessagePayload> {
 
+    private static final StartMessagePayloadTransformer INSTANCE = new StartMessagePayloadTransformer();
+    
+    public static StartMessagePayload from(Message<?> message) {
+        try {
+            return INSTANCE.doTransform(message);
+        } catch (Exception cause) {
+            throw new MessageConversionException(message, cause.getMessage());
+        }
+    }    
     @Override
     protected StartMessagePayload transformPayload(MessageEventPayload eventPayload) throws Exception {
         return MessagePayloadBuilder.start(eventPayload.getName())

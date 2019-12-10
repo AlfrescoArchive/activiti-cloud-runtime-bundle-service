@@ -26,8 +26,6 @@ import static org.activiti.cloud.services.message.connector.integration.MessageE
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.SERVICE_FULL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.doReturn;
 import static org.springframework.messaging.MessageHeaders.CONTENT_TYPE;
 
 import java.util.Collections;
@@ -56,17 +54,15 @@ import org.activiti.cloud.services.message.connector.correlation.Correlations;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.stream.test.binder.MessageCollector;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.integration.annotation.BridgeFrom;
+import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.integration.channel.QueueChannel;
-import org.springframework.integration.dsl.IntegrationFlow;
-import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.hazelcast.store.HazelcastMessageStore;
 import org.springframework.integration.jdbc.store.JdbcMessageStore;
@@ -79,6 +75,8 @@ import org.springframework.integration.support.MessageBuilder;
 import org.springframework.integration.transformer.MessageTransformationException;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageDeliveryException;
+import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -86,6 +84,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hazelcast.transaction.TransactionException;
 
 
 /**
@@ -120,6 +119,9 @@ public abstract class MessageConnectorIntegrationFlowTests {
     
     @Autowired
     protected QueueChannel errorQueue;
+
+    @Autowired
+    protected QueueChannel discardQueue;
     
     @Autowired
     protected ControlBusGateway controlBus;
@@ -127,22 +129,26 @@ public abstract class MessageConnectorIntegrationFlowTests {
     @Autowired
     protected PlatformTransactionManager transactionManager;
     
-    @SpyBean(name="output")
-    protected MessageChannel output;
+    @Autowired
+    protected AbstractMessageChannel output;
     
     // FIXME 
     @SpringBootApplication(exclude = MessageConnectorAutoConfiguration.class)
     public static class DefaultAggregatorApplication {
         
         @Bean
-        IntegrationFlow errorFlow() {
-            return IntegrationFlows.from("errorChannel")
-                                   .bridge()
-                                   .channel(MessageChannels.queue("errorQueue"))
-                                   .get();
-                        
+        @BridgeFrom("errorChannel")
+        MessageChannel errorQueue() {
+            return MessageChannels.queue()
+                                  .get();
         }
         
+        @Bean
+        @BridgeFrom("discardChannel")
+        MessageChannel discardQueue() {
+            return MessageChannels.queue()
+                                  .get();
+        }
     }
     
     @TestPropertySource(properties = {
@@ -369,9 +375,8 @@ public abstract class MessageConnectorIntegrationFlowTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .extracting("name", "variables")
-                       .contains(messageName,
-                                 singletonMap("key", "sent1"));
+                       .extracting("name", "businessKey", "variables")
+                       .contains(messageName, "sent1", singletonMap("key", "sent1"));
 
         assertThat(messageGroup(correlationId).getMessages()).hasSize(1)
                                                              .extracting(Message::getPayload)
@@ -389,9 +394,8 @@ public abstract class MessageConnectorIntegrationFlowTests {
 
         assertThat(out).isNotNull()
                        .extracting(Message::getPayload)
-                       .extracting("name", "variables")
-                       .contains(messageName,
-                                 singletonMap("key", "sent2"));
+                       .extracting("name", "businessKey", "variables")
+                       .contains(messageName, "sent2", singletonMap("key", "sent2"));
 
         assertThat(messageGroup(correlationId).getMessages()).hasSize(1)
                                                              .extracting(Message::getPayload)
@@ -471,6 +475,69 @@ public abstract class MessageConnectorIntegrationFlowTests {
 
         assertThat(messageGroup(correlationId).getMessages()).isEmpty();
     }
+    
+    @Test
+    public void testReceiveMessagePayload() throws Exception {
+        // given
+        String messageName = "message";
+        String correlationKey = "1";
+        String businessKey = "businessKey";
+        Message<?> messageSentEvent = messageSentEvent(messageName, correlationKey, businessKey);
+        String correlationId = correlationId(messageSentEvent);
+
+        messageGroupStore.removeMessageGroup(correlationId);
+
+        send(messageSentEvent);
+        
+        // when
+        send(messageWaitingEvent(messageName, correlationKey, businessKey));
+        
+        // then
+        Message<?> out = poll(0, TimeUnit.SECONDS);
+        
+        assertThat(out).isNotNull()
+                       .extracting(Message::getPayload)
+                       .extracting("name", "correlationKey", "variables")
+                       .contains(messageName, correlationKey, singletonMap("key", businessKey));
+
+        assertThat(peek()).isNull();
+
+        // cleanup
+        messageGroupStore.removeMessageGroup(correlationId);
+
+    }
+    
+    @Test
+    public void testStartMessagePayload() throws Exception {
+        // given
+        String messageName = "message";
+        String correlationKey = null;
+        String businessKey = "businessKey";
+        Message<?> startMessageDeployedEvent = startMessageDeployedEvent(messageName);
+        String correlationId = correlationId(startMessageDeployedEvent);
+
+        messageGroupStore.removeMessageGroup(correlationId);
+
+        send(startMessageDeployedEvent);
+        
+        // when
+        send(messageSentEvent(messageName, correlationKey, businessKey));
+        
+        // then
+        Message<?> out = poll(0, TimeUnit.SECONDS);
+        
+        assertThat(out).isNotNull()
+                       .extracting(Message::getPayload)
+                       .extracting("name", "businessKey", "variables")
+                       .contains(messageName, businessKey, singletonMap("key", businessKey));
+
+        assertThat(peek()).isNull();
+
+        // cleanup
+        messageGroupStore.removeMessageGroup(correlationId);
+
+    }
+
     
     @Test
     public void testSentMessagesWithBufferInDifferentOrder() throws Exception {
@@ -602,12 +669,11 @@ public abstract class MessageConnectorIntegrationFlowTests {
         assertThat(errorQueue.receive(0)).isNotNull();
         
         assertThat(messageGroup(correlationId).getMessages()).hasSize(0);
-
     }        
     
 
     @Test
-    public void testInvalidMessageFilter() throws Exception {
+    public void testMessageFilterDiscardChannel() throws Exception {
         // given
         Message<String> invalidMessage = MessageBuilder.withPayload("message")
                                                        .setHeader(CONTENT_TYPE, "text/plain")
@@ -618,14 +684,14 @@ public abstract class MessageConnectorIntegrationFlowTests {
         // then
         assertThat(peek()).isNull();
         
-        Message<?> out = errorQueue.receive();
+        Message<?> out = discardQueue.receive(0);
         
         assertThat(out.getPayload()).isEqualTo("message");
         
     }  
     
     @Test
-    public void testInvalidMessagePayload() throws Exception {
+    public void testInvalidMessagePayloadDiscardChannel() throws Exception {
         // given
         Message<String> invalidMessage = MessageBuilder.withPayload("payload")
                                                        .setHeader(CONTENT_TYPE, "text/plain")
@@ -647,16 +713,23 @@ public abstract class MessageConnectorIntegrationFlowTests {
     }     
  
     @Test
-    public void testControlBus() throws Exception {
+    public void testControlBusStartStopComponents() throws Exception {
+        String messageName = "test";
+
         this.controlBus.send("@aggregator.stop()");
+
+        Throwable thrown = catchThrowable(() -> {
+            send(messageSentEvent(messageName, null, "error"));
+        });
+        
+        assertThat(thrown).isInstanceOf(MessageDeliveryException.class);
         
         this.controlBus.send("@aggregator.start()");
     }
 
     
     @Test
-    @Ignore
-    public void testTransaction() throws Exception {
+    public void testTransactionException() throws Exception {
         // given
         String messageName = "start1";
         Message<?> startMessage = startMessageDeployedEvent(messageName);
@@ -664,35 +737,30 @@ public abstract class MessageConnectorIntegrationFlowTests {
         removeMessageGroup(correlationId);
 
         send(startMessage);
-
+        
         assertThat(messageGroup(correlationId).getMessages()).hasSize(1);
         
         // when
-        doReturn(false).when(output)
-                       .send(ArgumentMatchers.any());
-        
-//        new TransactionTemplate(transactionManager).execute(new TransactionCallbackWithoutResult() {
-//
-//            @Override
-//            protected void doInTransactionWithoutResult(TransactionStatus status) {
-//                try {
-//                    send(messageSentEvent(messageName, null, "error"));
-//                    fail("should throw exception");
-//                } catch (Exception e) {
-//                    
-//                }
-//            }
-//           
-//        });
+        ChannelInterceptor assertionInterceptor =
+                new ChannelInterceptor() {
 
-        try {
+                    @Override
+                    public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                        throw new TransactionException("transaction failed");
+                    }
+
+                };        
+
+        output.addInterceptor(assertionInterceptor);    
+        
+        Throwable thrown = catchThrowable(() -> {
             send(messageSentEvent(messageName, null, "error"));
-            fail("should throw exception");
-        } catch (Exception e) {
-            
-        }
+        });
+
+        output.removeInterceptor(assertionInterceptor);    
         
         assertThat(messageGroup(correlationId).getMessages()).hasSize(1);
+        assertThat(thrown).isInstanceOf(MessageDeliveryException.class);
     }
     
     protected MessageBuilder<MessageEventPayload> messageBuilder(String messageName) {

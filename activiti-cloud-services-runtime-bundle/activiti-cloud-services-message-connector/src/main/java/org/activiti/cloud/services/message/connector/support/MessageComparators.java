@@ -17,15 +17,15 @@
 
 package org.activiti.cloud.services.message.connector.support;
 
-import org.springframework.integration.aggregator.ExpressionEvaluatingReleaseStrategy;
+import java.util.Comparator;
 
-public class SpELEvaluatingReleaseStrategy extends ExpressionEvaluatingReleaseStrategy {
+import org.springframework.integration.aggregator.MessageSequenceComparator;
+import org.springframework.messaging.Message;
 
-    public SpELEvaluatingReleaseStrategy(String expression) {
-        super(expression);
-        
-        getEvaluationContext(false);
-    }
+public class MessageComparators {
+    
+    public static final Comparator<Message<?>> TIMESTAMP = new MessageTimestampComparator();
 
+    public static final Comparator<Message<?>> SEQUENCE = new MessageSequenceComparator();
     
 }

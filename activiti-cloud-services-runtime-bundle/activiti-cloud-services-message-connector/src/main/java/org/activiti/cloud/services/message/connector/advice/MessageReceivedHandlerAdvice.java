@@ -16,14 +16,11 @@
 
 package org.activiti.cloud.services.message.connector.advice;
 
-import static org.activiti.api.process.model.events.BPMNMessageEvent.MessageEvents.MESSAGE_RECEIVED;
-import static org.activiti.api.process.model.events.BPMNMessageEvent.MessageEvents.MESSAGE_WAITING;
-import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
-
-import java.util.Optional;
+import static org.activiti.cloud.services.message.connector.support.MessageComparators.TIMESTAMP;
+import static org.activiti.cloud.services.message.connector.support.Predicates.MESSAGE_RECEIVED;
+import static org.activiti.cloud.services.message.connector.support.Predicates.MESSAGE_WAITING;
 
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
-import org.activiti.cloud.services.message.connector.support.MessageTimestampComparator;
 import org.springframework.integration.aggregator.CorrelationStrategy;
 import org.springframework.integration.store.MessageGroup;
 import org.springframework.integration.store.MessageGroupStore;
@@ -54,8 +51,8 @@ public class MessageReceivedHandlerAdvice extends AbstractMessageConnectorHandle
             
             group.getMessages()
                  .stream()
-                 .filter(this::canRemove)
-                 .min(MessageTimestampComparator.INSTANCE)
+                 .filter(MESSAGE_WAITING)
+                 .min(TIMESTAMP)
                  .ifPresent(result -> {
                      messageStore.removeMessagesFromGroup(groupId, result);                            
                  });
@@ -67,16 +64,7 @@ public class MessageReceivedHandlerAdvice extends AbstractMessageConnectorHandle
 
     @Override
     public boolean canHandle(Message<?> message) {
-        return Optional.ofNullable(message.getHeaders()
-                                          .get(MESSAGE_EVENT_TYPE))
-                       .filter(MESSAGE_RECEIVED.name()::equals)
-                       .isPresent();
+        return MESSAGE_RECEIVED.test(message);
     }
     
-    public boolean canRemove(Message<?> message) {
-        return Optional.ofNullable(message.getHeaders()
-                                          .get(MESSAGE_EVENT_TYPE))
-                       .filter(MESSAGE_WAITING.name()::equals)
-                       .isPresent();
-    }
 }

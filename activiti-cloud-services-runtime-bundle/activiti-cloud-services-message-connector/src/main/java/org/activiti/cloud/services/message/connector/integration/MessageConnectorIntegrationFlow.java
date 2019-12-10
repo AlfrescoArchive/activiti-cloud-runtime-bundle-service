@@ -32,12 +32,19 @@ import org.springframework.integration.annotation.Transformer;
 import org.springframework.integration.dsl.IntegrationFlowAdapter;
 import org.springframework.integration.dsl.IntegrationFlowDefinition;
 import org.springframework.integration.dsl.Transformers;
+import org.springframework.integration.handler.AbstractMessageProducingHandler;
 import org.springframework.integration.handler.advice.HandleMessageAdvice;
 import org.springframework.integration.handler.advice.IdempotentReceiverInterceptor;
 import org.springframework.messaging.Message;
 
 public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
 
+    private static final String MESSAGE_GATEWAY = "messageGateway";
+    private static final String AGGREGATOR = "aggregator";
+    private static final String ENRICH_HEADERS = "enrichHeaders";
+    private static final String FILTER_MESSAGE = "filterMessage";
+    public final static String DISCARD_CHANNEL = "discardChannel";
+    
     private final MessageConnectorProcessor processor;
     private final MessageConnectorAggregator aggregator;
     private final IdempotentReceiverInterceptor interceptor;
@@ -59,28 +66,30 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                    .gateway(flow -> flow.log()
                                         .filter(Message.class,
                                                 this::filterMessage,
-                                                filterSpec -> filterSpec.id("filterMessage")
-                                                                        .discardChannel("errorChannel"))
-                                        .enrichHeaders(enricher -> enricher.id("enrichHeaders")
+                                                filterSpec -> filterSpec.id(FILTER_MESSAGE)
+                                                                        .discardChannel(DISCARD_CHANNEL))
+                                        .enrichHeaders(enricher -> enricher.id(ENRICH_HEADERS)
                                                                            .headerFunction(CORRELATION_ID, 
                                                                                            this::enrichHeaders))
                                         .transform(Transformers.fromJson(MessageEventPayload.class))
-                                        .handle(this::aggregate,
-                                                handlerSpec -> handlerSpec.id("aggregator")
-                                                                          .advice(advices)),
+                                        .handle(this.aggregator(),
+                                                handlerSpec -> handlerSpec.id(AGGREGATOR)
+                                                                          .advice(advices))
+                                        .channel(processor.output()),
                             flowSpec -> flowSpec.transactional()
-                                                .id("messageGateway")
+                                                .id(MESSAGE_GATEWAY)
                                                 .requiresReply(false)
                                                 .async(true)
-                                                //.errorChannel("errorChannel")
                                                 .replyTimeout(0L)
-                                                //.advice(retry)
-                                                //.notPropagatedHeaders(headerPatterns)
                                                 .advice(interceptor));
     }
     
+    public AbstractMessageProducingHandler aggregator() {
+        return this.aggregator;
+    }
+    
     @ServiceActivator
-    public void aggregate(Message<?> message) {
+    public void aggregator(Message<?> message) {
         aggregator.handleMessage(message);
     }
 

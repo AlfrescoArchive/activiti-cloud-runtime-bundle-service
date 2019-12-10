@@ -16,12 +16,11 @@
 
 package org.activiti.cloud.services.message.connector.advice;
 
-import static org.activiti.api.process.model.events.MessageSubscriptionEvent.MessageSubscriptionEvents.MESSAGE_SUBSCRIPTION_CANCELLED;
-import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
+import static org.activiti.cloud.services.message.connector.support.Predicates.MESSAGE_SUBSCRIPTION_CANCELLED;
+import static org.activiti.cloud.services.message.connector.support.Predicates.START_MESSAGE_DEPLOYED;
 import static org.activiti.cloud.services.message.connector.support.Predicates.not;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.activiti.cloud.services.message.connector.support.LockTemplate;
@@ -55,7 +54,7 @@ public class SubscriptionCancelledHandlerAdvice extends AbstractMessageConnector
             
             Collection<Message<?>> messages = group.getMessages()
                                                    .stream()
-                                                   .filter(this::canRemove)
+                                                   .filter(not(START_MESSAGE_DEPLOYED))
                                                    .collect(Collectors.toList());
             if(!messages.isEmpty()) {
                 messageStore.removeMessagesFromGroup(groupId, messages);
@@ -67,17 +66,7 @@ public class SubscriptionCancelledHandlerAdvice extends AbstractMessageConnector
     
     @Override
     public boolean canHandle(Message<?> message) {
-        return Optional.ofNullable(message.getHeaders()
-                                          .get(MESSAGE_EVENT_TYPE))
-                       .filter(MESSAGE_SUBSCRIPTION_CANCELLED.name()::equals)
-                       .isPresent();        
-    }
-
-    public boolean canRemove(Message<?> message) {
-        return Optional.ofNullable(message.getHeaders()
-                                          .get(MESSAGE_EVENT_TYPE))
-                       .filter(not(MESSAGE_SUBSCRIPTION_CANCELLED.name()::equals))
-                       .isPresent();
+        return MESSAGE_SUBSCRIPTION_CANCELLED.test(message);        
     }
 
 }

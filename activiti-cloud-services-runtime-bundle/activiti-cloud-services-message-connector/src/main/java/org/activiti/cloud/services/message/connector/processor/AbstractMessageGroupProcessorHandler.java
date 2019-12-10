@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
+package org.activiti.cloud.services.message.connector.processor;
 
-package org.activiti.cloud.services.message.connector.support;
+import org.springframework.integration.store.MessageGroup;
 
-import org.springframework.integration.aggregator.ExpressionEvaluatingMessageListProcessor;
+public abstract class AbstractMessageGroupProcessorHandler implements MessageGroupProcessorHandler {
 
-public class SpELEvaluatingMessageListProcessor extends ExpressionEvaluatingMessageListProcessor {
-
-    public SpELEvaluatingMessageListProcessor(String expression) {
-        super(expression);
+    @Override
+    public Object handle(MessageGroup group) {
         
-        getEvaluationContext(false);
+        if (canProcess(group)) {
+            return process(group);
+        }
+        
+        return null;
     }
+
+    protected abstract Object process(MessageGroup group);
+
+    protected abstract boolean canProcess(MessageGroup group);    
 }

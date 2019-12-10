@@ -16,27 +16,34 @@
 
 package org.activiti.cloud.services.message.connector.release;
 
-import org.activiti.cloud.services.message.connector.support.SpELEvaluatingReleaseStrategy;
-import org.springframework.integration.aggregator.ReleaseStrategy;
+import static org.activiti.cloud.services.message.connector.support.Predicates.MESSAGE_SENT;
+import static org.activiti.cloud.services.message.connector.support.Predicates.MESSAGE_WAITING;
+import static org.activiti.cloud.services.message.connector.support.Predicates.START_MESSAGE_DEPLOYED;
+
+import java.util.Collection;
+
 import org.springframework.integration.store.MessageGroup;
+import org.springframework.messaging.Message;
 
 public class MessageSentReleaseHandler implements MessageGroupReleaseHandler {
-
-    private final static String condition = "!messages.?[headers['eventType'] == 'MESSAGE_WAITING' || headers['eventType'] == 'START_MESSAGE_DEPLOYED'].empty " 
-                                            + "&& !messages.?[headers['eventType'] == 'MESSAGE_SENT'].empty";
-    
-    private final static ReleaseStrategy strategy = new SpELEvaluatingReleaseStrategy(condition);
 
     public MessageSentReleaseHandler() {
     }
     
     @Override
     public Boolean handle(MessageGroup group) {
-        if (strategy.canRelease(group)) {
+        if (canRelease(group)) {
             return true;
         }
         
         return null;
+    }
+    
+    protected boolean canRelease(MessageGroup group) {
+        Collection<Message<?>> messages = group.getMessages();
+
+        return messages.stream().anyMatch(MESSAGE_WAITING.or(START_MESSAGE_DEPLOYED)) 
+                && messages.stream().anyMatch(MESSAGE_SENT);
     }
 
 }

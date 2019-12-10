@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package org.activiti.cloud.services.message.connector.support;
 
 import java.util.Comparator;
@@ -25,8 +24,6 @@ import org.springframework.messaging.MessageHeaders;
 
 public class MessageTimestampComparator implements Comparator<Message<?>> {
     
-    public static final MessageTimestampComparator INSTANCE = new MessageTimestampComparator();
-
     @Override
     public int compare(Message<?> o1, Message<?> o2) {
         Long sequenceNumber1 = getTimestamp(o1);
