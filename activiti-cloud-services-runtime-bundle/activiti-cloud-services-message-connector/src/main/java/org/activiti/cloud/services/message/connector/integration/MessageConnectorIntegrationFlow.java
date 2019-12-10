@@ -75,6 +75,7 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                                                 .id("message-gateway")
                                                 .requiresReply(false)
                                                 .async(true)
+                                                .errorChannel("errorChannel")
                                                 .replyTimeout(0L)
                                                 //.advice(retry)
                                                 //.notPropagatedHeaders(headerPatterns)

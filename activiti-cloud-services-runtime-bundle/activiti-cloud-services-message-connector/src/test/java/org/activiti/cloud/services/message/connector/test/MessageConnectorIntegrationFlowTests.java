@@ -25,6 +25,7 @@ import static org.activiti.cloud.services.message.connector.integration.MessageE
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.SERVICE_FULL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.messaging.MessageHeaders.CONTENT_TYPE;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -55,7 +56,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.test.binder.MessageCollector;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.integration.channel.QueueChannel;
+import org.springframework.integration.dsl.IntegrationFlow;
+import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.dsl.MessageChannels;
 import org.springframework.integration.hazelcast.store.HazelcastMessageStore;
 import org.springframework.integration.jdbc.store.JdbcMessageStore;
 import org.springframework.integration.mongodb.store.ConfigurableMongoDbMessageStore;
@@ -64,6 +70,7 @@ import org.springframework.integration.store.MessageGroup;
 import org.springframework.integration.store.MessageGroupStore;
 import org.springframework.integration.store.SimpleMessageStore;
 import org.springframework.integration.support.MessageBuilder;
+import org.springframework.integration.transformer.MessageTransformationException;
 import org.springframework.messaging.Message;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
@@ -103,9 +110,21 @@ public abstract class MessageConnectorIntegrationFlowTests {
     @Autowired
     protected MessageConnectorAggregator aggregatingMessageHandler;
     
+    @Autowired
+    protected QueueChannel errorQueue;
+    
     // FIXME 
     @SpringBootApplication(exclude = MessageConnectorAutoConfiguration.class)
     public static class DefaultAggregatorApplication {
+        
+        @Bean
+        IntegrationFlow errorFlow() {
+            return IntegrationFlows.from("errorChannel")
+                                   .bridge()
+                                   .channel(MessageChannels.queue("errorQueue"))
+                                   .get();
+                        
+        }
         
     }
     
@@ -549,6 +568,8 @@ public abstract class MessageConnectorIntegrationFlowTests {
         // then
         assertThat(peek()).isNull();
 
+        assertThat(errorQueue.receive(0)).isNotNull();
+
         assertThat(messageGroup(correlationId).getMessages()).isNotNull()
                                                              .hasSize(1);
         // given
@@ -560,12 +581,51 @@ public abstract class MessageConnectorIntegrationFlowTests {
         
         // then 
         assertThat(peek()).isNull();
+
+        assertThat(errorQueue.receive(0)).isNotNull();
         
         assertThat(messageGroup(correlationId).getMessages()).hasSize(0);
-        
+
     }        
     
 
+    @Test
+    public void testInvalidMessageFilter() throws Exception {
+        // given
+        Message<String> invalidMessage = MessageBuilder.withPayload("message")
+                                                       .setHeader(CONTENT_TYPE, "text/plain")
+                                                       .build();
+        // when                                      
+        this.channels.input().send(invalidMessage);
+
+        // then
+        assertThat(peek()).isNull();
+        
+        Message<?> out = errorQueue.receive();
+        
+        assertThat(out.getPayload()).isEqualTo("message");
+        
+    }  
+    
+    @Test
+    public void testInvalidMessagePayload() throws Exception {
+        // given
+        Message<String> invalidMessage = MessageBuilder.withPayload("payload")
+                                                       .setHeader(CONTENT_TYPE, "text/plain")
+                                                       .setHeader(MESSAGE_EVENT_TYPE, MessageEvents.MESSAGE_SENT.name())
+                                                       .build();
+        // when                                      
+        this.channels.input().send(invalidMessage);
+
+        // then
+        assertThat(peek()).isNull();
+        
+        Message<?> out = errorQueue.receive();
+        
+        assertThat(out.getPayload()).isInstanceOf(MessageTransformationException.class);
+        
+    }     
+    
     protected MessageBuilder<MessageEventPayload> messageBuilder(String messageName) {
         return messageBuilder(messageName,
                               null,
