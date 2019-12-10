@@ -25,6 +25,9 @@ import static org.activiti.cloud.services.message.connector.integration.MessageE
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.MESSAGE_EVENT_TYPE;
 import static org.activiti.cloud.services.message.connector.integration.MessageEventHeaders.SERVICE_FULL_NAME;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.messaging.MessageHeaders.CONTENT_TYPE;
 
 import java.util.Collections;
@@ -53,9 +56,11 @@ import org.activiti.cloud.services.message.connector.correlation.Correlations;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.stream.test.binder.MessageCollector;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -73,9 +78,11 @@ import org.springframework.integration.store.SimpleMessageStore;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.integration.transformer.MessageTransformationException;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -116,6 +123,12 @@ public abstract class MessageConnectorIntegrationFlowTests {
     
     @Autowired
     protected ControlBusGateway controlBus;
+    
+    @Autowired
+    protected PlatformTransactionManager transactionManager;
+    
+    @SpyBean(name="output")
+    protected MessageChannel output;
     
     // FIXME 
     @SpringBootApplication(exclude = MessageConnectorAutoConfiguration.class)
@@ -618,15 +631,18 @@ public abstract class MessageConnectorIntegrationFlowTests {
                                                        .setHeader(CONTENT_TYPE, "text/plain")
                                                        .setHeader(MESSAGE_EVENT_TYPE, MessageEvents.MESSAGE_SENT.name())
                                                        .build();
-        // when                                      
-        this.channels.input().send(invalidMessage);
+        // when
+        Throwable thrown = catchThrowable(() -> {
+            this.channels.input().send(invalidMessage);
+        });
 
         // then
         assertThat(peek()).isNull();
         
-        Message<?> out = errorQueue.receive();
-        
-        assertThat(out.getPayload()).isInstanceOf(MessageTransformationException.class);
+        Message<?> out = errorQueue.receive(0);
+
+        assertThat(out).isNull();
+        assertThat(thrown).isInstanceOf(MessageTransformationException.class);
         
     }     
  
@@ -635,6 +651,48 @@ public abstract class MessageConnectorIntegrationFlowTests {
         this.controlBus.send("@aggregator.stop()");
         
         this.controlBus.send("@aggregator.start()");
+    }
+
+    
+    @Test
+    @Ignore
+    public void testTransaction() throws Exception {
+        // given
+        String messageName = "start1";
+        Message<?> startMessage = startMessageDeployedEvent(messageName);
+        String correlationId = correlationId(startMessage);
+        removeMessageGroup(correlationId);
+
+        send(startMessage);
+
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1);
+        
+        // when
+        doReturn(false).when(output)
+                       .send(ArgumentMatchers.any());
+        
+//        new TransactionTemplate(transactionManager).execute(new TransactionCallbackWithoutResult() {
+//
+//            @Override
+//            protected void doInTransactionWithoutResult(TransactionStatus status) {
+//                try {
+//                    send(messageSentEvent(messageName, null, "error"));
+//                    fail("should throw exception");
+//                } catch (Exception e) {
+//                    
+//                }
+//            }
+//           
+//        });
+
+        try {
+            send(messageSentEvent(messageName, null, "error"));
+            fail("should throw exception");
+        } catch (Exception e) {
+            
+        }
+        
+        assertThat(messageGroup(correlationId).getMessages()).hasSize(1);
     }
     
     protected MessageBuilder<MessageEventPayload> messageBuilder(String messageName) {
@@ -665,7 +723,7 @@ public abstract class MessageConnectorIntegrationFlowTests {
                              .setHeader(SERVICE_FULL_NAME, "rb");
 
     }
-    
+
     protected Message<MessageEventPayload> startMessageDeployedEvent(String messageName) {
         return messageBuilder(messageName,
                               null).setHeader(MESSAGE_EVENT_TYPE, 
@@ -743,8 +801,13 @@ public abstract class MessageConnectorIntegrationFlowTests {
                                              .build();
     }
 
-    protected void send(Message<?> message) throws JsonProcessingException {
-        String json = objectMapper.writeValueAsString(message.getPayload());
+    protected void send(Message<?> message) {
+        String json;
+        try {
+            json = objectMapper.writeValueAsString(message.getPayload());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         
         this.channels.input()
                      .send(MessageBuilder.withPayload(json)

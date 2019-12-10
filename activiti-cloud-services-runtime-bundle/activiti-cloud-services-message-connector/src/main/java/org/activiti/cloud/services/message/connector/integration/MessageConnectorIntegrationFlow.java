@@ -59,7 +59,7 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                    .gateway(flow -> flow.log()
                                         .filter(Message.class,
                                                 this::filterMessage,
-                                                filterSpec -> filterSpec.id("filterMessages")
+                                                filterSpec -> filterSpec.id("filterMessage")
                                                                         .discardChannel("errorChannel"))
                                         .enrichHeaders(enricher -> enricher.id("enrichHeaders")
                                                                            .headerFunction(CORRELATION_ID, 
@@ -72,7 +72,7 @@ public class MessageConnectorIntegrationFlow extends IntegrationFlowAdapter {
                                                 .id("messageGateway")
                                                 .requiresReply(false)
                                                 .async(true)
-                                                .errorChannel("errorChannel")
+                                                //.errorChannel("errorChannel")
                                                 .replyTimeout(0L)
                                                 //.advice(retry)
                                                 //.notPropagatedHeaders(headerPatterns)
