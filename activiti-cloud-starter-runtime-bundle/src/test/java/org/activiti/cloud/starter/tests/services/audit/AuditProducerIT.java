@@ -875,7 +875,7 @@ public class AuditProducerIT {
                                                                                                                    .withBusinessKey("my business key")
                                                                                                                    .build());
         //then
-        await().untilAsserted(() -> {
+        //await().untilAsserted(() -> {
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
 
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
@@ -888,14 +888,14 @@ public class AuditProducerIT {
             assertThat(receivedEvents)
                     .filteredOn(event -> event.getEntity().getClass().getSuperclass().equals(ApplicationElementImpl.class))
                     .extracting(event ->(event.getAppVersion()))
-                    .contains("1");
+                    .containsOnly("1");
 
             assertThat(receivedEvents)
                     .filteredOn(event -> event.getEntity().getClass().getSuperclass().equals(ApplicationElementImpl.class))
                     .extracting(event ->((ApplicationElementImpl) event.getEntity()).getAppVersion())
-                    .contains("1");
+                    .containsOnly("1");
 
-        });
+        //});
 
         runtimeService.deleteProcessInstance(startProcessEntity.getBody().getId(), "Clean up");
     }

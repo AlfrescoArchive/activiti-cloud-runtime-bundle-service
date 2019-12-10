@@ -36,9 +36,9 @@ public class RuntimeBundleInfoAppender {
         cloudRuntimeEvent.setServiceType(properties.getServiceType());
         cloudRuntimeEvent.setServiceVersion(properties.getServiceVersion());
 
-        if (cloudRuntimeEvent.getEntity().getClass().getSuperclass().equals(ApplicationElementImpl.class)) {
-            cloudRuntimeEvent.setAppVersion(((ApplicationElementImpl) cloudRuntimeEvent.getEntity()).getAppVersion());
-        }
+//        if (cloudRuntimeEvent.getEntity().getClass().getSuperclass().equals(ApplicationElementImpl.class)) {
+//            cloudRuntimeEvent.setAppVersion(((ApplicationElementImpl) cloudRuntimeEvent.getEntity()).getAppVersion());
+//        }
 
         return cloudRuntimeEvent;
     }
