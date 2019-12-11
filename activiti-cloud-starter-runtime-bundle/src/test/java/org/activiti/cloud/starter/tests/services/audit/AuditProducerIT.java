@@ -880,18 +880,20 @@ public class AuditProducerIT {
 
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
 
-            assertThat(receivedEvents)
-                    .filteredOn(event -> event.getEntity().getClass().getSuperclass().equals(ApplicationElementImpl.class))
+            List<CloudRuntimeEvent<?, ?>> applicationElementEvents = receivedEvents
+                    .stream()
+                    .filter(event -> event.getEntity().getClass().getSuperclass().equals(ApplicationElementImpl.class))
+                    .collect(Collectors.toList());
+
+            assertThat(applicationElementEvents)
                     .extracting(event -> event.getEventType().name())
                     .containsOnlyElementsOf(APPLICATION_ELEMENT_EVENTS);
 
-            assertThat(receivedEvents)
-                    .filteredOn(event -> event.getEntity().getClass().getSuperclass().equals(ApplicationElementImpl.class))
+            assertThat(applicationElementEvents)
                     .extracting(event ->(event.getAppVersion()))
                     .containsOnly("1");
 
-            assertThat(receivedEvents)
-                    .filteredOn(event -> event.getEntity().getClass().getSuperclass().equals(ApplicationElementImpl.class))
+            assertThat(applicationElementEvents)
                     .extracting(event ->((ApplicationElementImpl) event.getEntity()).getAppVersion())
                     .containsOnly("1");
 
