@@ -875,7 +875,7 @@ public class AuditProducerIT {
                                                                                                                    .withBusinessKey("my business key")
                                                                                                                    .build());
         //then
-        //await().untilAsserted(() -> {
+        await().untilAsserted(() -> {
             List<CloudRuntimeEvent<?, ?>> receivedEvents = streamHandler.getAllReceivedEvents();
 
             assertThat(streamHandler.getReceivedHeaders()).containsKeys(ALL_REQUIRED_HEADERS);
@@ -895,7 +895,7 @@ public class AuditProducerIT {
                     .extracting(event ->((ApplicationElementImpl) event.getEntity()).getAppVersion())
                     .containsOnly("1");
 
-        //});
+        });
 
         runtimeService.deleteProcessInstance(startProcessEntity.getBody().getId(), "Clean up");
     }
