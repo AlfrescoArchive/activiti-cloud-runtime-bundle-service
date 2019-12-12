@@ -7,7 +7,7 @@ import org.springframework.integration.store.SimpleMessageStore;
 import org.springframework.test.context.TestPropertySource;
 
 @TestPropertySource(properties = {
-        "activiti.cloud.messages.aggregator.message-store-type=simple"})
+        "activiti.cloud.services.messages.aggregator.message-store-type=simple"})
 public class SimpleMessageStoreTests extends AbstractIntegrationFlowTests {
 
     @Test

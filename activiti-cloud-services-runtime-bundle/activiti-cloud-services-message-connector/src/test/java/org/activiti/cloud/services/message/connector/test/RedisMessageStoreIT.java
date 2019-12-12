@@ -8,7 +8,7 @@ import org.springframework.integration.redis.store.RedisMessageStore;
 import org.springframework.test.context.TestPropertySource;
 
 @TestPropertySource(properties = {
-        "activiti.cloud.messages.aggregator.message-store-type=redis",
+        "activiti.cloud.services.messages.aggregator.message-store-type=redis",
         "spring.redis.host=localhost",
         "spring.redis.port=6379"})
 @Ignore

@@ -8,7 +8,7 @@ import org.springframework.integration.mongodb.store.ConfigurableMongoDbMessageS
 import org.springframework.test.context.TestPropertySource;
 
 @TestPropertySource(properties = {
-        "activiti.cloud.messages.aggregator.message-store-type=mongodb",
+        "activiti.cloud.services.messages.aggregator.message-store-type=mongodb",
         "spring.data.mongodb.uri=mongodb://localhost:27017/test?maxPoolSize=150&minPoolSize=50"})
 @Ignore
 public class MongodbMessageStoreIT extends AbstractIntegrationFlowTests {

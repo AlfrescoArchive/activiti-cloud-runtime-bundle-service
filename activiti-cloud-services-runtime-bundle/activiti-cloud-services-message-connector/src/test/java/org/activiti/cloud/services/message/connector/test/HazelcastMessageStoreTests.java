@@ -8,7 +8,7 @@ import org.springframework.integration.hazelcast.store.HazelcastMessageStore;
 import org.springframework.test.context.TestPropertySource;
 
 @TestPropertySource(properties = {
-        "activiti.cloud.messages.aggregator.message-store-type=hazelcast"})
+        "activiti.cloud.services.messages.aggregator.message-store-type=hazelcast"})
 @Ignore
 public class HazelcastMessageStoreTests extends AbstractIntegrationFlowTests {
 

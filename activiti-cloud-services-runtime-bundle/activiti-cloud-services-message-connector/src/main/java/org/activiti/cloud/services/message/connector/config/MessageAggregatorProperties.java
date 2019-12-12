@@ -26,7 +26,7 @@ import org.springframework.expression.Expression;
 @ConfigurationProperties(MessageAggregatorProperties.PREFIX)
 public class MessageAggregatorProperties {
 
-    static final String PREFIX = "activiti.cloud.messages.aggregator";
+    static final String PREFIX = "activiti.cloud.services.messages.aggregator";
 
     /**
      * SpEL expression for timeout to expiring uncompleted groups
