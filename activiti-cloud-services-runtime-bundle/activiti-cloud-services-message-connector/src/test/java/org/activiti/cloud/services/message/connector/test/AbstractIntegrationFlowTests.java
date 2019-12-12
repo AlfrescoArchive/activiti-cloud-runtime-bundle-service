@@ -50,7 +50,6 @@ import org.activiti.cloud.services.message.connector.channels.MessageConnectorPr
 import org.activiti.cloud.services.message.connector.config.MessageConnectorIntegrationConfiguration;
 import org.activiti.cloud.services.message.connector.controlbus.ControlBusGateway;
 import org.activiti.cloud.services.message.connector.correlation.Correlations;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,13 +62,8 @@ import org.springframework.integration.annotation.BridgeFrom;
 import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.dsl.MessageChannels;
-import org.springframework.integration.hazelcast.store.HazelcastMessageStore;
-import org.springframework.integration.jdbc.store.JdbcMessageStore;
-import org.springframework.integration.mongodb.store.ConfigurableMongoDbMessageStore;
-import org.springframework.integration.redis.store.RedisMessageStore;
 import org.springframework.integration.store.MessageGroup;
 import org.springframework.integration.store.MessageGroupStore;
-import org.springframework.integration.store.SimpleMessageStore;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.integration.transformer.MessageTransformationException;
 import org.springframework.messaging.Message;
@@ -77,7 +71,6 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -100,7 +93,7 @@ import com.hazelcast.transaction.TransactionException;
 )
 @DirtiesContext
 @Import({MessageConnectorIntegrationConfiguration.class})
-public abstract class MessageConnectorIntegrationFlowTests {
+public abstract class AbstractIntegrationFlowTests {
 
     protected ObjectMapper objectMapper = new ObjectMapper();
     
@@ -149,63 +142,6 @@ public abstract class MessageConnectorIntegrationFlowTests {
         }
     }
     
-    @TestPropertySource(properties = {
-            "activiti.cloud.messages.aggregator.message-store-type=simple"})
-    public static class SimpleMessageStoreTests extends MessageConnectorIntegrationFlowTests {
-
-        @Test
-        public void testMessageStore() throws Exception {
-            assertThat(this.aggregatingMessageHandler.getMessageStore()).isInstanceOf(SimpleMessageStore.class);
-        }
-    }
-
-    @TestPropertySource(properties = {
-            "activiti.cloud.messages.aggregator.message-store-type=jdbc"})
-    public static class JdbcMessageStoreTests extends MessageConnectorIntegrationFlowTests {
-
-        @Test
-        public void testMessageStore() throws Exception {
-            assertThat(this.aggregatingMessageHandler.getMessageStore()).isInstanceOf(JdbcMessageStore.class);
-        }
-    }
-    
-    @TestPropertySource(properties = {
-            "activiti.cloud.messages.aggregator.message-store-type=mongodb",
-            "spring.data.mongodb.uri=mongodb://localhost:27017/test?maxPoolSize=150&minPoolSize=50"})
-    @Ignore
-    public static class MongodbMessageStoreIT extends MessageConnectorIntegrationFlowTests {
-
-        @Test
-        public void testMessageStore() throws Exception {
-            assertThat(this.aggregatingMessageHandler.getMessageStore()).isInstanceOf(ConfigurableMongoDbMessageStore.class);
-        }
-    }
-
-    @TestPropertySource(properties = {
-            "activiti.cloud.messages.aggregator.message-store-type=redis",
-            "spring.redis.host=localhost",
-            "spring.redis.port=6379"})
-    @Ignore
-    public static class RedisMessageStoreIT extends MessageConnectorIntegrationFlowTests {
-        
-        @Test
-        public void testMessageStore() throws Exception {
-            assertThat(this.aggregatingMessageHandler.getMessageStore()).isInstanceOf(RedisMessageStore.class);
-        }
-    }
-
-    @TestPropertySource(properties = {
-            "activiti.cloud.messages.aggregator.message-store-type=hazelcast"})
-    @Ignore
-    public static class HazelcastMessageStoreTests extends MessageConnectorIntegrationFlowTests {
-
-        @Test
-        public void testMessageStore() throws Exception {
-            assertThat(this.aggregatingMessageHandler.getMessageStore()).isInstanceOf(HazelcastMessageStore.class);
-        }
-    }
-    
-
     @Test(timeout = 10000)
     public void shouldProcessMessageEventsConcurrently() throws InterruptedException, JsonProcessingException {
         // given
