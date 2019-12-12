@@ -199,7 +199,7 @@ public class ServiceTaskConsumerHandler {
                   .containsEntry(PROCESS_INSTANCE_ID, integrationContext.getProcessInstanceId())
                   .containsEntry(PROCESS_DEFINITION_ID, integrationContext.getProcessDefinitionId())
                   .containsEntry(APP_NAME, integrationRequest.getAppName())
-                  .containsEntry(APP_VERSION, integrationRequest.getAppVersion())
+                  .containsEntry(APP_VERSION, integrationRequest.getIntegrationContext().getAppVersion())
                   .containsEntry(SERVICE_NAME, integrationRequest.getServiceName())
                   .containsEntry(SERVICE_TYPE, integrationRequest.getServiceType())
                   .containsEntry(SERVICE_VERSION, integrationRequest.getServiceVersion())
