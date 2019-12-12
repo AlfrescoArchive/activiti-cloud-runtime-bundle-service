@@ -47,7 +47,6 @@ import org.activiti.api.process.model.events.MessageSubscriptionEvent.MessageSub
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.cloud.services.message.connector.aggregator.MessageConnectorAggregator;
 import org.activiti.cloud.services.message.connector.channels.MessageConnectorProcessor;
-import org.activiti.cloud.services.message.connector.config.MessageConnectorAutoConfiguration;
 import org.activiti.cloud.services.message.connector.config.MessageConnectorIntegrationConfiguration;
 import org.activiti.cloud.services.message.connector.controlbus.ControlBusGateway;
 import org.activiti.cloud.services.message.connector.correlation.Correlations;
@@ -132,8 +131,7 @@ public abstract class MessageConnectorIntegrationFlowTests {
     @Autowired
     protected AbstractMessageChannel output;
     
-    // FIXME 
-    @SpringBootApplication(exclude = MessageConnectorAutoConfiguration.class)
+    @SpringBootApplication
     public static class DefaultAggregatorApplication {
         
         @Bean
@@ -152,7 +150,7 @@ public abstract class MessageConnectorIntegrationFlowTests {
     }
     
     @TestPropertySource(properties = {
-            "aggregator.message-store-type=simple"})
+            "activiti.cloud.messages.aggregator.message-store-type=simple"})
     public static class SimpleMessageStoreTests extends MessageConnectorIntegrationFlowTests {
 
         @Test
@@ -162,7 +160,7 @@ public abstract class MessageConnectorIntegrationFlowTests {
     }
 
     @TestPropertySource(properties = {
-            "aggregator.message-store-type=jdbc"})
+            "activiti.cloud.messages.aggregator.message-store-type=jdbc"})
     public static class JdbcMessageStoreTests extends MessageConnectorIntegrationFlowTests {
 
         @Test
@@ -172,7 +170,7 @@ public abstract class MessageConnectorIntegrationFlowTests {
     }
     
     @TestPropertySource(properties = {
-            "aggregator.message-store-type=mongodb",
+            "activiti.cloud.messages.aggregator.message-store-type=mongodb",
             "spring.data.mongodb.uri=mongodb://localhost:27017/test?maxPoolSize=150&minPoolSize=50"})
     @Ignore
     public static class MongodbMessageStoreIT extends MessageConnectorIntegrationFlowTests {
@@ -184,7 +182,7 @@ public abstract class MessageConnectorIntegrationFlowTests {
     }
 
     @TestPropertySource(properties = {
-            "aggregator.message-store-type=redis",
+            "activiti.cloud.messages.aggregator.message-store-type=redis",
             "spring.redis.host=localhost",
             "spring.redis.port=6379"})
     @Ignore
@@ -197,7 +195,7 @@ public abstract class MessageConnectorIntegrationFlowTests {
     }
 
     @TestPropertySource(properties = {
-            "aggregator.message-store-type=hazelcast"})
+            "activiti.cloud.messages.aggregator.message-store-type=hazelcast"})
     @Ignore
     public static class HazelcastMessageStoreTests extends MessageConnectorIntegrationFlowTests {
 

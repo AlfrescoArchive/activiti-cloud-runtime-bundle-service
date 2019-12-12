@@ -26,23 +26,7 @@ import org.springframework.expression.Expression;
 @ConfigurationProperties(MessageAggregatorProperties.PREFIX)
 public class MessageAggregatorProperties {
 
-    // FIXME change to activiti.cloud.services.message.connector.aggregator
-    static final String PREFIX = "aggregator";
-
-    /**
-     * SpEL expression for correlation key. Default to correlationId header
-     */
-    private Expression correlation;
-
-    /**
-     * SpEL expression for release strategy. Default is based on the sequenceSize header
-     */
-    private Expression release;
-
-    /**
-     * SpEL expression for aggregation strategy. Default is collection of payloads
-     */
-    private Expression aggregation;
+    static final String PREFIX = "activiti.cloud.messages.aggregator";
 
     /**
      * SpEL expression for timeout to expiring uncompleted groups
@@ -58,30 +42,7 @@ public class MessageAggregatorProperties {
      * Persistence message store entity: table prefix in RDBMS, collection name in MongoDb, etc
      */
     private String messageStoreEntity;
-
-    public Expression getCorrelation() {
-        return this.correlation;
-    }
-
-    public void setCorrelation(Expression correlation) {
-        this.correlation = correlation;
-    }
-
-    public Expression getRelease() {
-        return this.release;
-    }
-
-    public void setRelease(Expression release) {
-        this.release = release;
-    }
-
-    public Expression getAggregation() {
-        return this.aggregation;
-    }
-
-    public void setAggregation(Expression aggregation) {
-        this.aggregation = aggregation;
-    }
+    
 
     public Expression getGroupTimeout() {
         return this.groupTimeout;
