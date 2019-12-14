@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.services.message.events;
+package org.activiti.cloud.services.messages.events.producer;
 
 import org.activiti.api.process.model.events.BPMNMessageReceivedEvent;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
+import org.activiti.cloud.services.messages.events.MessageEventHeaders;
+import org.activiti.cloud.services.messages.events.support.BpmnMessageEventMessageBuilderFactory;
+import org.activiti.cloud.services.messages.events.support.MessageSenderTransactionSynchronization;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;

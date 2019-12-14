@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.services.message.events;
+package org.activiti.cloud.services.messages.events.support;
 
-import org.activiti.api.process.model.BPMNMessage;
+import org.activiti.api.process.model.MessageSubscription;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
 import org.activiti.cloud.services.events.message.MessageBuilderAppenderChain;
 import org.activiti.cloud.services.events.message.RuntimeBundleInfoMessageBuilderAppender;
 
-public class BpmnMessageEventMessageBuilderFactory {
+public class MessageSubscriptionEventMessageBuilderFactory {
 
     private final RuntimeBundleProperties properties;
 
-    public BpmnMessageEventMessageBuilderFactory(RuntimeBundleProperties properties) {
+    public MessageSubscriptionEventMessageBuilderFactory(RuntimeBundleProperties properties) {
         this.properties = properties;
     }
 
-    public MessageBuilderAppenderChain create(BPMNMessage bpmnMessage) {
+    public MessageBuilderAppenderChain create(MessageSubscription messageSubscription) {
         return new MessageBuilderAppenderChain().chain(new RuntimeBundleInfoMessageBuilderAppender(properties))
-                                                .chain(new MessageEventPayloadMessageBuilderAppender(bpmnMessage.getMessagePayload()));
+                                                .chain(new MessageSubscriptionMessageBuilderAppender(messageSubscription));
     }
 }

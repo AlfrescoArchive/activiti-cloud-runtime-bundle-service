@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.activiti.cloud.services.message.events;
+package org.activiti.cloud.services.messages.events.support;
 
-import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_BUSINESS_KEY;
-import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_CORRELATION_KEY;
-import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_ID;
-import static org.activiti.cloud.services.message.events.MessageEventHeaders.MESSAGE_EVENT_NAME;
+import static org.activiti.cloud.services.messages.events.MessageEventHeaders.MESSAGE_EVENT_BUSINESS_KEY;
+import static org.activiti.cloud.services.messages.events.MessageEventHeaders.MESSAGE_EVENT_CORRELATION_KEY;
+import static org.activiti.cloud.services.messages.events.MessageEventHeaders.MESSAGE_EVENT_ID;
+import static org.activiti.cloud.services.messages.events.MessageEventHeaders.MESSAGE_EVENT_NAME;
 
 import org.activiti.api.process.model.MessageSubscription;
 import org.activiti.cloud.services.events.message.MessageBuilderAppender;

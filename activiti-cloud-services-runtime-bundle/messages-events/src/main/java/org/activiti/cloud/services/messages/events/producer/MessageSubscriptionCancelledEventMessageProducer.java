@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Alfresco, Inc. and/or its affiliates.
+ * Copyright 2019 Alfresco, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.services.message.events;
+package org.activiti.cloud.services.messages.events.producer;
 
-import org.activiti.api.process.model.events.BPMNMessageSentEvent;
+import org.activiti.api.process.model.MessageSubscription;
+import org.activiti.api.process.model.builders.MessageEventPayloadBuilder;
+import org.activiti.api.process.model.events.MessageSubscriptionCancelledEvent;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
-import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
+import org.activiti.api.process.runtime.events.listener.ProcessRuntimeEventListener;
+import org.activiti.cloud.services.messages.events.MessageEventHeaders;
+import org.activiti.cloud.services.messages.events.support.MessageSenderTransactionSynchronization;
+import org.activiti.cloud.services.messages.events.support.MessageSubscriptionEventMessageBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -26,29 +31,35 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-public class BpmnMessageSentEventMessageProducer implements BPMNElementEventListener<BPMNMessageSentEvent>  {
-    private static final Logger logger = LoggerFactory.getLogger(BpmnMessageSentEventMessageProducer.class);
+public class MessageSubscriptionCancelledEventMessageProducer implements ProcessRuntimeEventListener<MessageSubscriptionCancelledEvent> {
 
-    private final BpmnMessageEventMessageBuilderFactory messageBuilderFactory;
+    private static final Logger logger = LoggerFactory.getLogger(MessageSubscriptionCancelledEventMessageProducer.class);
+
+    private final MessageSubscriptionEventMessageBuilderFactory messageBuilderFactory;
     private final MessageChannel messageChannel;
 
-    public BpmnMessageSentEventMessageProducer(@NonNull MessageChannel messageChannel,
-                                               @NonNull BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
+    public MessageSubscriptionCancelledEventMessageProducer(@NonNull MessageChannel messageChannel,
+                                                            @NonNull MessageSubscriptionEventMessageBuilderFactory messageBuilderFactory) {
         this.messageChannel = messageChannel;
         this.messageBuilderFactory = messageBuilderFactory;
     }
-    
+
     @Override
-    public void onEvent(@NonNull BPMNMessageSentEvent event) {
+    public void onEvent(@NonNull MessageSubscriptionCancelledEvent event) {
         logger.debug("onEvent: {}", event);
         
-        if(!TransactionSynchronizationManager.isSynchronizationActive()) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             throw new IllegalStateException("requires active transaction synchronization");
         }
 
+        MessageSubscription messageSubscription = event.getEntity();
+
+        MessageEventPayload messageEventPayload = MessageEventPayloadBuilder.messageEvent(messageSubscription.getEventName())
+                                                                            .withCorrelationKey(messageSubscription.getConfiguration())
+                                                                            .build();
+        
         Message<MessageEventPayload> message = messageBuilderFactory.create(event.getEntity())
-                                                                    .withPayload(event.getEntity()
-                                                                                      .getMessagePayload())
+                                                                    .withPayload(messageEventPayload)
                                                                     .setHeader(MessageEventHeaders.MESSAGE_EVENT_TYPE,
                                                                                event.getEventType()
                                                                                     .name())
@@ -56,6 +67,7 @@ public class BpmnMessageSentEventMessageProducer implements BPMNElementEventList
 
         TransactionSynchronizationManager.registerSynchronization(new MessageSenderTransactionSynchronization(message,
                                                                                                               messageChannel));
-    }    
-    
+    }
+
+
 }

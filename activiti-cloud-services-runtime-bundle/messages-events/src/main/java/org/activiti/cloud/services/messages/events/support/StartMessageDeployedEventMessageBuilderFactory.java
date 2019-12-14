@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.services.message.events;
+package org.activiti.cloud.services.messages.events.support;
 
 import org.activiti.api.process.model.events.StartMessageDeployedEvent;
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;

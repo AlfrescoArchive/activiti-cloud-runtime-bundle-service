@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.services.message.events.config;
+package org.activiti.cloud.services.messages.events.config;
 
 import org.activiti.cloud.services.events.configuration.RuntimeBundleProperties;
-import org.activiti.cloud.services.message.events.BpmnMessageEventMessageBuilderFactory;
-import org.activiti.cloud.services.message.events.BpmnMessageReceivedEventMessageProducer;
-import org.activiti.cloud.services.message.events.BpmnMessageSentEventMessageProducer;
-import org.activiti.cloud.services.message.events.BpmnMessageWaitingEventMessageProducer;
-import org.activiti.cloud.services.message.events.MessageSubscriptionCancelledEventMessageProducer;
-import org.activiti.cloud.services.message.events.MessageSubscriptionEventMessageBuilderFactory;
-import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageBuilderFactory;
-import org.activiti.cloud.services.message.events.StartMessageDeployedEventMessageProducer;
-import org.activiti.cloud.services.message.events.channels.MessageEventsSource;
+import org.activiti.cloud.services.messages.events.channels.MessageEventsSource;
+import org.activiti.cloud.services.messages.events.producer.BpmnMessageReceivedEventMessageProducer;
+import org.activiti.cloud.services.messages.events.producer.BpmnMessageSentEventMessageProducer;
+import org.activiti.cloud.services.messages.events.producer.BpmnMessageWaitingEventMessageProducer;
+import org.activiti.cloud.services.messages.events.producer.MessageSubscriptionCancelledEventMessageProducer;
+import org.activiti.cloud.services.messages.events.producer.StartMessageDeployedEventMessageProducer;
+import org.activiti.cloud.services.messages.events.support.BpmnMessageEventMessageBuilderFactory;
+import org.activiti.cloud.services.messages.events.support.MessageSubscriptionEventMessageBuilderFactory;
+import org.activiti.cloud.services.messages.events.support.StartMessageDeployedEventMessageBuilderFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.context.annotation.Bean;

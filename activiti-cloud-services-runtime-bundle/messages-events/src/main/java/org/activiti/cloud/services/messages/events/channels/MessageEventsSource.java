@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Alfresco, Inc. and/or its affiliates.
+ * Copyright 2019 Alfresco, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.activiti.cloud.services.message.events;
 
-public final class MessageEventHeaders {
-    
-    public static final String MESSAGE_EVENT_ID = "messageEventId";
-    public static final String MESSAGE_EVENT_NAME = "messageEventName";
-    public static final String MESSAGE_EVENT_TYPE = "messageEventType";
-    public static final String MESSAGE_EVENT_CORRELATION_KEY = "messageEventCorrelationKey";
-    public static final String MESSAGE_EVENT_BUSINESS_KEY = "messageEventBusinessKey";
-    
+package org.activiti.cloud.services.messages.events.channels;
+
+import org.springframework.cloud.stream.annotation.Output;
+import org.springframework.messaging.MessageChannel;
+
+public interface MessageEventsSource {
+
+    @Output
+    MessageChannel messageConnector();
+
 }

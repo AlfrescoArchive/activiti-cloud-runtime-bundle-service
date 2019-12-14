@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Alfresco, Inc. and/or its affiliates.
+ * Copyright 2018 Alfresco, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.services.message.events;
+package org.activiti.cloud.services.messages.events.producer;
 
-import org.activiti.api.process.model.events.BPMNMessageWaitingEvent;
+import org.activiti.api.process.model.events.BPMNMessageSentEvent;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
+import org.activiti.cloud.services.messages.events.MessageEventHeaders;
+import org.activiti.cloud.services.messages.events.support.BpmnMessageEventMessageBuilderFactory;
+import org.activiti.cloud.services.messages.events.support.MessageSenderTransactionSynchronization;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -26,27 +29,26 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-public class BpmnMessageWaitingEventMessageProducer implements BPMNElementEventListener<BPMNMessageWaitingEvent> {
-
-    private static final Logger logger = LoggerFactory.getLogger(BpmnMessageWaitingEventMessageProducer.class);
+public class BpmnMessageSentEventMessageProducer implements BPMNElementEventListener<BPMNMessageSentEvent>  {
+    private static final Logger logger = LoggerFactory.getLogger(BpmnMessageSentEventMessageProducer.class);
 
     private final BpmnMessageEventMessageBuilderFactory messageBuilderFactory;
     private final MessageChannel messageChannel;
 
-    public BpmnMessageWaitingEventMessageProducer(@NonNull MessageChannel messageChannel,
-                                                  @NonNull BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
+    public BpmnMessageSentEventMessageProducer(@NonNull MessageChannel messageChannel,
+                                               @NonNull BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
         this.messageChannel = messageChannel;
         this.messageBuilderFactory = messageBuilderFactory;
     }
-
+    
     @Override
-    public void onEvent(BPMNMessageWaitingEvent event) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+    public void onEvent(@NonNull BPMNMessageSentEvent event) {
+        logger.debug("onEvent: {}", event);
+        
+        if(!TransactionSynchronizationManager.isSynchronizationActive()) {
             throw new IllegalStateException("requires active transaction synchronization");
         }
 
-        logger.debug("onEvent: {}", event);
-        
         Message<MessageEventPayload> message = messageBuilderFactory.create(event.getEntity())
                                                                     .withPayload(event.getEntity()
                                                                                       .getMessagePayload())
@@ -57,6 +59,6 @@ public class BpmnMessageWaitingEventMessageProducer implements BPMNElementEventL
 
         TransactionSynchronizationManager.registerSynchronization(new MessageSenderTransactionSynchronization(message,
                                                                                                               messageChannel));
-    }
-
+    }    
+    
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.activiti.cloud.services.message.events;
+package org.activiti.cloud.services.messages.events.support;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
