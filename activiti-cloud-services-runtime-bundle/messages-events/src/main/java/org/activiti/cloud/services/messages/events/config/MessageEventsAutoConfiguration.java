@@ -33,7 +33,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
 @Configuration
-@PropertySource("classpath:config/message-events-channels.properties")
+@PropertySource("classpath:config/messages-events-channels.properties")
 @EnableBinding({
     MessageEventsSource.class
 })
@@ -61,7 +61,7 @@ public class MessageEventsAutoConfiguration {
     @ConditionalOnMissingBean
     public BpmnMessageReceivedEventMessageProducer throwMessageReceivedEventListener(MessageEventsSource producerChannels,
                                                                                      BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
-        return new BpmnMessageReceivedEventMessageProducer(producerChannels.messageConnector(),
+        return new BpmnMessageReceivedEventMessageProducer(producerChannels.messageEvents(),
                                                            messageBuilderFactory);
     }
 
@@ -69,7 +69,7 @@ public class MessageEventsAutoConfiguration {
     @ConditionalOnMissingBean
     public BpmnMessageWaitingEventMessageProducer throwMessageWaitingEventMessageProducer(MessageEventsSource producerChannels,
                                                                                           BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
-        return new BpmnMessageWaitingEventMessageProducer(producerChannels.messageConnector(),
+        return new BpmnMessageWaitingEventMessageProducer(producerChannels.messageEvents(),
                                                           messageBuilderFactory);
     }
 
@@ -77,7 +77,7 @@ public class MessageEventsAutoConfiguration {
     @ConditionalOnMissingBean
     public BpmnMessageSentEventMessageProducer bpmnMessageSentEventProducer(MessageEventsSource producerChannels,
                                                                             BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
-        return new BpmnMessageSentEventMessageProducer(producerChannels.messageConnector(),
+        return new BpmnMessageSentEventMessageProducer(producerChannels.messageEvents(),
                                                        messageBuilderFactory);
     }
     
@@ -85,7 +85,7 @@ public class MessageEventsAutoConfiguration {
     @ConditionalOnMissingBean
     public StartMessageDeployedEventMessageProducer MessageDeployedEventMessageProducer(MessageEventsSource producerChannels,
                                                                                         StartMessageDeployedEventMessageBuilderFactory messageBuilderFactory) {
-        return new StartMessageDeployedEventMessageProducer(producerChannels.messageConnector(),
+        return new StartMessageDeployedEventMessageProducer(producerChannels.messageEvents(),
                                                             messageBuilderFactory);
     }
     
@@ -93,7 +93,7 @@ public class MessageEventsAutoConfiguration {
     @ConditionalOnMissingBean
     public MessageSubscriptionCancelledEventMessageProducer messageSubscriptionCancelledEventMessageProducer(MessageEventsSource producerChannels,
                                                                                                              MessageSubscriptionEventMessageBuilderFactory messageBuilderFactory) {
-        return new MessageSubscriptionCancelledEventMessageProducer(producerChannels.messageConnector(),
+        return new MessageSubscriptionCancelledEventMessageProducer(producerChannels.messageEvents(),
                                                                     messageBuilderFactory);
     }
 }

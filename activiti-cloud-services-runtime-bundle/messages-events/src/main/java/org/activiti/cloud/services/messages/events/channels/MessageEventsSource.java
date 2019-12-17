@@ -22,6 +22,6 @@ import org.springframework.messaging.MessageChannel;
 public interface MessageEventsSource {
 
     @Output
-    MessageChannel messageConnector();
+    MessageChannel messageEvents();
 
 }
