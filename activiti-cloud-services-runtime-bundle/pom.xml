@@ -23,6 +23,5 @@
     <module>activiti-cloud-services-identity-keycloak</module>
     <module>activiti-cloud-services-job-executor</module>
     <module>messages-events</module>
-    <module>messages-aggregator</module>
   </modules>
 </project>
