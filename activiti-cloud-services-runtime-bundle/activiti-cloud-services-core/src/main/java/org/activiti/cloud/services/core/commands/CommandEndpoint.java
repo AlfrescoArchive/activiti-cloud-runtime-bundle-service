@@ -40,7 +40,7 @@ public class CommandEndpoint<T extends Payload> {
     }
 
     @StreamListener(ProcessEngineChannels.COMMAND_CONSUMER)
-    public void consumeActivateProcessInstanceCmd(T payload) {
+    public void execute(T payload) {
         
         SecurityContextHolder.getContext()
                              .setAuthentication(new CommandEndpointAdminAuthentication());
