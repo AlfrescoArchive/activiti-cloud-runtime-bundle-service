@@ -17,21 +17,25 @@
 package org.activiti.cloud.services.core.commands;
 
 import org.activiti.api.model.shared.EmptyResult;
-import org.activiti.api.process.model.payloads.SignalPayload;
+import org.activiti.api.process.model.ProcessInstance;
+import org.activiti.api.process.model.payloads.DeleteProcessPayload;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
 
-public class SignalCmdExecutor extends AbstractCommandExecutor<SignalPayload> {
+public class DeleteProcessInstanceCmdExecutor extends AbstractCommandExecutor<DeleteProcessPayload> {
 
     private ProcessAdminRuntime processAdminRuntime;
 
-    public SignalCmdExecutor(ProcessAdminRuntime processAdminRuntime) {
+    public DeleteProcessInstanceCmdExecutor(ProcessAdminRuntime processAdminRuntime) {
         this.processAdminRuntime = processAdminRuntime;
     }
 
     @Override
-    public EmptyResult execute(SignalPayload signalPayload) {
-        processAdminRuntime.signal(signalPayload);
-        
-        return new EmptyResult(signalPayload);
+    public EmptyResult execute(DeleteProcessPayload deleteProcessPayload) {
+        ProcessInstance processInstance = processAdminRuntime.delete(deleteProcessPayload);
+        if (processInstance != null) {
+            return new EmptyResult(deleteProcessPayload);
+        } else {
+            throw new IllegalStateException("Failed to delete processInstance");
+        }
     }
 }

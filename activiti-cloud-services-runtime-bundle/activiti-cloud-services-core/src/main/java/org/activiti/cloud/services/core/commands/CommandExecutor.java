@@ -22,5 +22,5 @@ public interface CommandExecutor<T extends Payload> {
 
     String getHandledType();
 
-    void execute(T cmd);
+    Object execute(T cmd);
 }

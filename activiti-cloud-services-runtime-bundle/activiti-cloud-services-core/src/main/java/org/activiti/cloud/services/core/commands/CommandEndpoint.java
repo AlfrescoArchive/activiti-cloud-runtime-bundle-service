@@ -21,18 +21,20 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.activiti.api.model.shared.EmptyResult;
 import org.activiti.api.model.shared.Payload;
 import org.activiti.cloud.services.events.ProcessEngineChannels;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.stream.annotation.StreamListener;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 public class CommandEndpoint<T extends Payload> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommandEndpoint.class);
     private Map<String, CommandExecutor<T>> commandExecutors;
-
+    
     public CommandEndpoint(Set<CommandExecutor<T>> cmdExecutors) {
         this.commandExecutors = cmdExecutors.stream()
                                             .collect(Collectors.toMap(CommandExecutor::getHandledType,
@@ -40,13 +42,13 @@ public class CommandEndpoint<T extends Payload> {
     }
 
     @StreamListener(ProcessEngineChannels.COMMAND_CONSUMER)
-    public void execute(T payload) {
+    @SendTo(ProcessEngineChannels.COMMAND_RESULTS)
+    public <R> R execute(T payload) {
         
         SecurityContextHolder.getContext()
                              .setAuthentication(new CommandEndpointAdminAuthentication());
         try {
-            // FIXME refactor to send return value of the command to reply channel
-            processCommand(payload);
+            return (R) processCommand(payload);
             
         } finally {
             SecurityContextHolder.clearContext();
@@ -54,13 +56,16 @@ public class CommandEndpoint<T extends Payload> {
 
     }
 
-    private void processCommand(T payload) {
+    private Object processCommand(T payload) {
 
         CommandExecutor<T> cmdExecutor = commandExecutors.get(payload.getClass().getName());
         if (cmdExecutor != null) {
-            cmdExecutor.execute(payload);
+            return cmdExecutor.execute(payload);
+            
         } else {
             LOGGER.warn(">>> No Command Found for type: " + payload.getClass());
         }
+        
+        return new EmptyResult();
     }
 }

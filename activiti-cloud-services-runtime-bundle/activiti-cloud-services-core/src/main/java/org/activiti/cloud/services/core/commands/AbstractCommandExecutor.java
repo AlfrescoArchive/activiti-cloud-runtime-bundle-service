@@ -16,23 +16,21 @@
 
 package org.activiti.cloud.services.core.commands;
 
-import org.activiti.api.task.model.Task;
-import org.activiti.api.task.model.payloads.CompleteTaskPayload;
-import org.activiti.api.task.model.results.TaskResult;
-import org.activiti.api.task.runtime.TaskAdminRuntime;
+import org.activiti.api.model.shared.Payload;
+import org.springframework.core.GenericTypeResolver;
 
-public class CompleteTaskCmdExecutor extends AbstractCommandExecutor<CompleteTaskPayload> {
+public abstract class AbstractCommandExecutor<T extends Payload> implements CommandExecutor<T>{
+    
+    private final Class<?> handledType;
 
-    private TaskAdminRuntime taskAdminRuntime;
-
-    public CompleteTaskCmdExecutor(TaskAdminRuntime taskAdminRuntime) {
-        this.taskAdminRuntime = taskAdminRuntime;
+    public AbstractCommandExecutor() {
+        this.handledType = GenericTypeResolver.resolveTypeArguments(getClass(),
+                                                                    AbstractCommandExecutor.class)[0];
     }
-
+    
     @Override
-    public TaskResult execute(CompleteTaskPayload completeTaskPayload) {
-        Task task = taskAdminRuntime.complete(completeTaskPayload);
-
-        return new TaskResult(completeTaskPayload, task);
+    public String getHandledType() {
+        return handledType.getName();
     }
+    
 }

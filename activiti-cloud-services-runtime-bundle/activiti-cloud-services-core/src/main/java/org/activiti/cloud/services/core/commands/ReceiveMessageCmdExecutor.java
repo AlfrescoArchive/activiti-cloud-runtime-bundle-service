@@ -16,10 +16,11 @@
 
 package org.activiti.cloud.services.core.commands;
 
+import org.activiti.api.model.shared.EmptyResult;
 import org.activiti.api.process.model.payloads.ReceiveMessagePayload;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
 
-public class ReceiveMessageCmdExecutor implements CommandExecutor<ReceiveMessagePayload> {
+public class ReceiveMessageCmdExecutor extends AbstractCommandExecutor<ReceiveMessagePayload> {
     
     private final ProcessAdminRuntime processAdminRuntime;
     
@@ -28,13 +29,10 @@ public class ReceiveMessageCmdExecutor implements CommandExecutor<ReceiveMessage
     }
     
     @Override
-    public String getHandledType() {
-        return ReceiveMessagePayload.class.getName();
-    }
-
-    @Override
-    public void execute(ReceiveMessagePayload command) {
+    public EmptyResult execute(ReceiveMessagePayload command) {
         processAdminRuntime.receive(command);
+        
+        return new EmptyResult(command);
     }
 
 }

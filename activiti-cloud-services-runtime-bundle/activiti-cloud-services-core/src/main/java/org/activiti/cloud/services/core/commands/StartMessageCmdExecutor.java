@@ -16,10 +16,12 @@
 
 package org.activiti.cloud.services.core.commands;
 
+import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.payloads.StartMessagePayload;
+import org.activiti.api.process.model.results.ProcessInstanceResult;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
 
-public class StartMessageCmdExecutor implements CommandExecutor<StartMessagePayload> {
+public class StartMessageCmdExecutor extends AbstractCommandExecutor<StartMessagePayload> {
     
     private final ProcessAdminRuntime processAdminRuntime;
     
@@ -28,13 +30,11 @@ public class StartMessageCmdExecutor implements CommandExecutor<StartMessagePayl
     }
     
     @Override
-    public String getHandledType() {
-        return StartMessagePayload.class.getName();
-    }
-
-    @Override
-    public void execute(StartMessagePayload command) {
-        processAdminRuntime.start(command);
+    public ProcessInstanceResult execute(StartMessagePayload command) {
+        ProcessInstance result = processAdminRuntime.start(command);
+        
+        return new ProcessInstanceResult(command, 
+                                         result);
     }
 
 }
