@@ -24,6 +24,7 @@ import org.activiti.cloud.services.messages.events.producer.BpmnMessageWaitingEv
 import org.activiti.cloud.services.messages.events.producer.MessageSubscriptionCancelledEventMessageProducer;
 import org.activiti.cloud.services.messages.events.producer.StartMessageDeployedEventMessageProducer;
 import org.activiti.cloud.services.messages.events.support.BpmnMessageEventMessageBuilderFactory;
+import org.activiti.cloud.services.messages.events.support.MessageEventsDispatcher;
 import org.activiti.cloud.services.messages.events.support.MessageSubscriptionEventMessageBuilderFactory;
 import org.activiti.cloud.services.messages.events.support.StartMessageDeployedEventMessageBuilderFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -39,6 +40,13 @@ import org.springframework.context.annotation.PropertySource;
 })
 public class MessageEventsAutoConfiguration {
 
+    
+    @Bean
+    @ConditionalOnMissingBean
+    public MessageEventsDispatcher messageEventsDispatcher(MessageEventsSource messageEventsSource) {
+        return new MessageEventsDispatcher(messageEventsSource.messageEvents());
+    }
+    
     @Bean
     @ConditionalOnMissingBean
     public BpmnMessageEventMessageBuilderFactory messageEventPayloadMessageBuilderFactory(RuntimeBundleProperties properties) {
@@ -59,41 +67,41 @@ public class MessageEventsAutoConfiguration {
     
     @Bean
     @ConditionalOnMissingBean
-    public BpmnMessageReceivedEventMessageProducer throwMessageReceivedEventListener(MessageEventsSource producerChannels,
+    public BpmnMessageReceivedEventMessageProducer throwMessageReceivedEventListener(MessageEventsDispatcher messageEventsDispatcher,
                                                                                      BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
-        return new BpmnMessageReceivedEventMessageProducer(producerChannels.messageEvents(),
+        return new BpmnMessageReceivedEventMessageProducer(messageEventsDispatcher,
                                                            messageBuilderFactory);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public BpmnMessageWaitingEventMessageProducer throwMessageWaitingEventMessageProducer(MessageEventsSource producerChannels,
+    public BpmnMessageWaitingEventMessageProducer throwMessageWaitingEventMessageProducer(MessageEventsDispatcher messageEventsDispatcher,
                                                                                           BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
-        return new BpmnMessageWaitingEventMessageProducer(producerChannels.messageEvents(),
+        return new BpmnMessageWaitingEventMessageProducer(messageEventsDispatcher,
                                                           messageBuilderFactory);
     }
 
     @Bean
     @ConditionalOnMissingBean
-    public BpmnMessageSentEventMessageProducer bpmnMessageSentEventProducer(MessageEventsSource producerChannels,
+    public BpmnMessageSentEventMessageProducer bpmnMessageSentEventProducer(MessageEventsDispatcher messageEventsDispatcher,
                                                                             BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
-        return new BpmnMessageSentEventMessageProducer(producerChannels.messageEvents(),
+        return new BpmnMessageSentEventMessageProducer(messageEventsDispatcher,
                                                        messageBuilderFactory);
     }
     
     @Bean
     @ConditionalOnMissingBean
-    public StartMessageDeployedEventMessageProducer MessageDeployedEventMessageProducer(MessageEventsSource producerChannels,
+    public StartMessageDeployedEventMessageProducer MessageDeployedEventMessageProducer(MessageEventsDispatcher messageEventsDispatcher,
                                                                                         StartMessageDeployedEventMessageBuilderFactory messageBuilderFactory) {
-        return new StartMessageDeployedEventMessageProducer(producerChannels.messageEvents(),
+        return new StartMessageDeployedEventMessageProducer(messageEventsDispatcher,
                                                             messageBuilderFactory);
     }
     
     @Bean
     @ConditionalOnMissingBean
-    public MessageSubscriptionCancelledEventMessageProducer messageSubscriptionCancelledEventMessageProducer(MessageEventsSource producerChannels,
+    public MessageSubscriptionCancelledEventMessageProducer messageSubscriptionCancelledEventMessageProducer(MessageEventsDispatcher messageEventsDispatcher,
                                                                                                              MessageSubscriptionEventMessageBuilderFactory messageBuilderFactory) {
-        return new MessageSubscriptionCancelledEventMessageProducer(producerChannels.messageEvents(),
+        return new MessageSubscriptionCancelledEventMessageProducer(messageEventsDispatcher,
                                                                     messageBuilderFactory);
     }
 }

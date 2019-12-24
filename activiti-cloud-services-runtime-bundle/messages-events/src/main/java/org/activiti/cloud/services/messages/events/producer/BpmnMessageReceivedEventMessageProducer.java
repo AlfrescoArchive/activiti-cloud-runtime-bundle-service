@@ -21,24 +21,22 @@ import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.runtime.events.listener.BPMNElementEventListener;
 import org.activiti.cloud.services.messages.events.MessageEventHeaders;
 import org.activiti.cloud.services.messages.events.support.BpmnMessageEventMessageBuilderFactory;
-import org.activiti.cloud.services.messages.events.support.MessageSenderTransactionSynchronization;
+import org.activiti.cloud.services.messages.events.support.MessageEventsDispatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 public class BpmnMessageReceivedEventMessageProducer implements BPMNElementEventListener<BPMNMessageReceivedEvent> {
 
     private static final Logger logger = LoggerFactory.getLogger(BpmnMessageReceivedEventMessageProducer.class);
 
     private final BpmnMessageEventMessageBuilderFactory messageBuilderFactory;
-    private final MessageChannel messageChannel;
+    private final MessageEventsDispatcher messageEventsDispatcher;
 
-    public BpmnMessageReceivedEventMessageProducer(@NonNull MessageChannel messageChannel,
+    public BpmnMessageReceivedEventMessageProducer(@NonNull MessageEventsDispatcher messageEventsDispatcher,
                                                    @NonNull BpmnMessageEventMessageBuilderFactory messageBuilderFactory) {
-        this.messageChannel = messageChannel;
+        this.messageEventsDispatcher = messageEventsDispatcher;
         this.messageBuilderFactory = messageBuilderFactory;
     }
 
@@ -46,10 +44,6 @@ public class BpmnMessageReceivedEventMessageProducer implements BPMNElementEvent
     public void onEvent(@NonNull BPMNMessageReceivedEvent event) {
         logger.debug("onEvent: {}", event);
         
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            throw new IllegalStateException("requires active transaction synchronization");
-        }
-
         Message<MessageEventPayload> message = messageBuilderFactory.create(event.getEntity())
                                                                     .withPayload(event.getEntity()
                                                                                       .getMessagePayload())
@@ -58,9 +52,6 @@ public class BpmnMessageReceivedEventMessageProducer implements BPMNElementEvent
                                                                                     .name())
                                                                     .build();
 
-        TransactionSynchronizationManager.registerSynchronization(new MessageSenderTransactionSynchronization(message,
-                                                                                                              messageChannel));
+        messageEventsDispatcher.dispatch(message);
     }
-
-
 }

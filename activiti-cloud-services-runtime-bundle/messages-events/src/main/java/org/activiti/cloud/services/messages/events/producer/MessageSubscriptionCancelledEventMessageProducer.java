@@ -22,25 +22,23 @@ import org.activiti.api.process.model.events.MessageSubscriptionCancelledEvent;
 import org.activiti.api.process.model.payloads.MessageEventPayload;
 import org.activiti.api.process.runtime.events.listener.ProcessRuntimeEventListener;
 import org.activiti.cloud.services.messages.events.MessageEventHeaders;
-import org.activiti.cloud.services.messages.events.support.MessageSenderTransactionSynchronization;
+import org.activiti.cloud.services.messages.events.support.MessageEventsDispatcher;
 import org.activiti.cloud.services.messages.events.support.MessageSubscriptionEventMessageBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 public class MessageSubscriptionCancelledEventMessageProducer implements ProcessRuntimeEventListener<MessageSubscriptionCancelledEvent> {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageSubscriptionCancelledEventMessageProducer.class);
 
     private final MessageSubscriptionEventMessageBuilderFactory messageBuilderFactory;
-    private final MessageChannel messageChannel;
+    private final MessageEventsDispatcher messageEventsDispatcher;
 
-    public MessageSubscriptionCancelledEventMessageProducer(@NonNull MessageChannel messageChannel,
+    public MessageSubscriptionCancelledEventMessageProducer(@NonNull MessageEventsDispatcher messageEventsDispatcher,
                                                             @NonNull MessageSubscriptionEventMessageBuilderFactory messageBuilderFactory) {
-        this.messageChannel = messageChannel;
+        this.messageEventsDispatcher = messageEventsDispatcher;
         this.messageBuilderFactory = messageBuilderFactory;
     }
 
@@ -48,10 +46,6 @@ public class MessageSubscriptionCancelledEventMessageProducer implements Process
     public void onEvent(@NonNull MessageSubscriptionCancelledEvent event) {
         logger.debug("onEvent: {}", event);
         
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            throw new IllegalStateException("requires active transaction synchronization");
-        }
-
         MessageSubscription messageSubscription = event.getEntity();
 
         MessageEventPayload messageEventPayload = MessageEventPayloadBuilder.messageEvent(messageSubscription.getEventName())
@@ -65,8 +59,7 @@ public class MessageSubscriptionCancelledEventMessageProducer implements Process
                                                                                     .name())
                                                                     .build();
 
-        TransactionSynchronizationManager.registerSynchronization(new MessageSenderTransactionSynchronization(message,
-                                                                                                              messageChannel));
+        messageEventsDispatcher.dispatch(message);
     }
 
 
