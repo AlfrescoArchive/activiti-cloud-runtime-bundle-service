@@ -8,17 +8,17 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
-import org.activiti.api.process.model.payloads.StartProcessPayload;
+import org.activiti.api.process.model.payloads.DeleteProcessPayload;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-public class StartProcessInstanceCmdExecutorTest {
+public class DeleteProcessInstanceCmdExecutorTest {
 
     @InjectMocks
-    private StartProcessInstanceCmdExecutor startProcessInstanceCmdExecutor;
+    private DeleteProcessInstanceCmdExecutor subject;
 
     @Mock
     private ProcessAdminRuntime processAdminRuntime;
@@ -30,21 +30,19 @@ public class StartProcessInstanceCmdExecutorTest {
 
     @Test
     public void startProcessInstanceCmdExecutorTest() {
-        StartProcessPayload startProcessInstanceCmd = ProcessPayloadBuilder.start()
-                .withProcessDefinitionKey("def key")
-                .withName("name")
-                .withBusinessKey("business key")
-        .build();
+        DeleteProcessPayload payload = ProcessPayloadBuilder.delete()
+                                                            .withProcessInstanceId("def key")
+                                                            .build();
 
         ProcessInstance fakeProcessInstance = mock(ProcessInstance.class);
 
-        given(processAdminRuntime.start(startProcessInstanceCmd)).willReturn(fakeProcessInstance);
+        given(processAdminRuntime.delete(payload)).willReturn(fakeProcessInstance);
 
-        assertThat(startProcessInstanceCmdExecutor.getHandledType()).isEqualTo(StartProcessPayload.class.getName());
+        assertThat(subject.getHandledType()).isEqualTo(DeleteProcessPayload.class.getName());
 
-        startProcessInstanceCmdExecutor.execute(startProcessInstanceCmd);
+        subject.execute(payload);
 
-        verify(processAdminRuntime).start(startProcessInstanceCmd);
+        verify(processAdminRuntime).delete(payload);
 
     }
 }

@@ -4,17 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 
-import org.activiti.api.process.model.payloads.SignalPayload;
+import java.util.Collections;
+
+import org.activiti.api.process.model.payloads.StartMessagePayload;
 import org.activiti.api.process.runtime.ProcessAdminRuntime;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-public class SignalCmdExecutorTest {
+public class StartMessageCmdExecutorTest {
 
     @InjectMocks
-    private SignalCmdExecutor signalCmdExecutor;
+    private StartMessageCmdExecutor subject;
 
     @Mock
     private ProcessAdminRuntime processAdminRuntime;
@@ -26,13 +28,14 @@ public class SignalCmdExecutorTest {
 
     @Test
     public void signalProcessInstancesCmdExecutorTest() {
-        SignalPayload signalPayload = new SignalPayload("x",
-                                                        null);
+        StartMessagePayload payload = new StartMessagePayload("messageName",
+                                                              "businessKey",
+                                                              Collections.emptyMap());
 
-        assertThat(signalCmdExecutor.getHandledType()).isEqualTo(SignalPayload.class.getName());
+        assertThat(subject.getHandledType()).isEqualTo(StartMessagePayload.class.getName());
 
-        signalCmdExecutor.execute(signalPayload);
+        subject.execute(payload);
 
-        verify(processAdminRuntime).signal(signalPayload);
+        verify(processAdminRuntime).start(payload);
     }
 }
