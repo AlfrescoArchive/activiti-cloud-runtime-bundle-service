@@ -94,15 +94,15 @@ public class ProcessEngineEventsAggregator extends BaseCommandContextEventsAggre
         if(executionId != null && commandContext.getGenericAttribute(executionId) == null) {
             ExecutionEntity executionEntity = commandContext.getExecutionEntityManager()
                                                             .findById(executionId);
+
+            mayBeAddRootExecutionContext(commandContext, 
+                                         executionEntity);
             
             ExecutionContext executionContext = createExecutionContext(executionEntity);
             
             if (executionEntity != null) {
                 commandContext.addAttribute(executionId,
                                             executionContext);
-                
-                mayBeAddRootExecutionContext(commandContext, 
-                                             executionEntity);
             }
         }
         
@@ -151,7 +151,8 @@ public class ProcessEngineEventsAggregator extends BaseCommandContextEventsAggre
         } else if(element instanceof CloudTaskCandidateGroupEvent) {
             return ((CloudTaskCandidateGroupEvent) element).getProcessInstanceId();
         } else if(element instanceof CloudBPMNSignalEvent) {
-            return ((CloudBPMNSignalEvent) element).getEntity().getProcessInstanceId();        } else if(element instanceof CloudBPMNTimerEvent) {
+            return ((CloudBPMNSignalEvent) element).getEntity().getProcessInstanceId();        
+        } else if(element instanceof CloudBPMNTimerEvent) {
             return ((CloudBPMNTimerEvent) element).getEntity().getProcessInstanceId();
         } else if(element instanceof CloudBPMNMessageEvent) {
             return ((CloudBPMNMessageEvent) element).getEntity().getProcessInstanceId();
