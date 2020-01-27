@@ -27,7 +27,7 @@ public class RuntimeBundleExceptionHandler {
     @ResponseStatus(NO_CONTENT)
     public Resource<ActivitiErrorMessage> handleAppException(ActivitiInterchangeInfoNotFoundException ex, HttpServletResponse response) {
         response.setContentType(APPLICATION_JSON_VALUE);
-        return new Resource<>(new ActivitiErrorMessageImpl(NO_CONTENT.value(), ex.getMessage()));
+        return new Resource<>(new ActivitiErrorMessageImpl(NOT_FOUND.value(), ex.getMessage()));
     }
 
     @ExceptionHandler(ActivitiForbiddenException.class)
