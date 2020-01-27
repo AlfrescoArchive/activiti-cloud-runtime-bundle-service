@@ -296,7 +296,7 @@ public class ProcessInstanceControllerImplIT {
         mockMvc.perform(get("/v1/process-instances/{processInstanceId}/model", processInstanceId)
             .contentType("image/svg+xml"))
             .andExpect(status().isNoContent())
-            .andExpect(jsonPath("entry.code", is(204)))
+            .andExpect(jsonPath("entry.code", is(404)))
             .andExpect(jsonPath("entry.message", is("No interchange information found.")));
     }
 
