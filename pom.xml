@@ -5,11 +5,11 @@
   <parent>
     <groupId>org.activiti.cloud.build</groupId>
     <artifactId>activiti-cloud-parent</artifactId>
-    <version>7.1.33</version>
+    <version>7.1.0.M6</version>
   </parent>
   <groupId>org.activiti.cloud.rb</groupId>
   <artifactId>activiti-cloud-runtime-bundle-service-parent</artifactId>
-  <version>7.1.250</version>
+  <version>7.1.0.M6</version>
   <packaging>pom</packaging>
   <name>Activiti Cloud Runtime Bundle Service :: Parent</name>
   <modules>
@@ -21,10 +21,10 @@
   </modules>
   <properties>
 	<project.scm.repository>activiti-cloud-runtime-bundle-service</project.scm.repository>
-    <activiti-dependencies.version>7.1.190</activiti-dependencies.version>
-    <activiti-cloud-build.version>7.1.33</activiti-cloud-build.version>
-    <activiti-cloud-service-common.version>7.1.166</activiti-cloud-service-common.version>
-    <activiti-cloud-runtime-bundle-service.version>${project.version}</activiti-cloud-runtime-bundle-service.version>
+    <activiti-dependencies.version>7.1.0.M6</activiti-dependencies.version>
+    <activiti-cloud-build.version>7.1.0.M6</activiti-cloud-build.version>
+    <activiti-cloud-service-common.version>7.1.0.M6</activiti-cloud-service-common.version>
+    <activiti-cloud-runtime-bundle-service.version>7.1.0.M6</activiti-cloud-runtime-bundle-service.version>
     <skipITs>false</skipITs>
   </properties>
   <dependencyManagement>
