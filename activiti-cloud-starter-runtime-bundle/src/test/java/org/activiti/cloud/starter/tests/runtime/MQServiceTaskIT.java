@@ -24,8 +24,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.cloud.api.model.shared.CloudVariableInstance;
 import org.activiti.cloud.api.process.model.CloudProcessInstance;
@@ -136,7 +134,7 @@ public class MQServiceTaskIT {
                                false);
 
         //engine can resolve annotated pojo in var to correct type but not without annotation
-        assertThat(updatedVariables.get("customPojo").getClass()).isEqualTo(ObjectNode.class);
+        assertThat(updatedVariables.get("customPojo").getClass()).isEqualTo(CustomPojo.class);
         assertThat(updatedVariables.get("customPojoAnnotated").getClass()).isEqualTo(CustomPojoAnnotated.class);
 
         assertThat(updatedVariables.get("customPojoTypeInConnector")).isEqualTo("Type of customPojo var in connector is " + LinkedHashMap.class);
@@ -183,32 +181,36 @@ public class MQServiceTaskIT {
                         .withBusinessKey("businessKey")
                         .build());
 
-        //await().untilAsserted(() -> {
+        await().untilAsserted(() -> {
             //when
             ResponseEntity<Resources<CloudVariableInstance>> responseEntity = processInstanceRestTemplate.getVariables(processInstanceResponseEntity);
 
             //then
             assertThat(responseEntity.getBody()).isNotNull();
             assertThat(responseEntity.getBody().getContent())
-                    .isNotNull()
-                    .extracting(CloudVariableInstance::getName,
-                                CloudVariableInstance::getValue)
-                    .containsOnly(tuple("name",
-                                        "outName"), //mapped from connector outputs based on extension mappings
-                                  tuple("age",
-                                        25),        //mapped from connector outputs based on extension mappings
-                                  tuple("input_unmapped_variable_with_matching_name",
-                                        "inTest"), //kept unchanging because no connector output is updating it
-                                  tuple("input_unmapped_variable_with_non_matching_connector_input_name",
-                                        "inTest"), //kept unchanging because no connector output is updating it
-                                  tuple("nickName",
-                                        "testName"),//kept unchanging because no connector output is updating it
-                                  tuple("out_unmapped_variable_matching_name",
-                                        "default"),//not present in extension mappings, hence not updated although
-                                                    // the process variable have the same name as the connector output
-                                  tuple("output_unmapped_variable_with_non_matching_connector_output_name",
-                                        "default"));//kept unchanging because no connector output is updating it
-       // });
+                .isNotNull()
+                .extracting(CloudVariableInstance::getName,
+                    CloudVariableInstance::getValue)
+                .containsOnly(tuple("name",
+                    "outName"), //mapped from connector outputs based on extension mappings
+                    tuple("age",
+                        25),        //mapped from connector outputs based on extension mappings
+                    tuple("input_unmapped_variable_with_matching_name",
+                        "inTest"), //kept unchanging because no connector output is updating it
+                    tuple("input_unmapped_variable_with_non_matching_connector_input_name",
+                        "inTest"), //kept unchanging because no connector output is updating it
+                    tuple("nickName",
+                        "testName"),//kept unchanging because no connector output is updating it
+                    tuple("out_unmapped_variable_matching_name",
+                        "default"),//not present in extension mappings, hence not updated although
+                    // the process variable have the same name as the connector output
+                    tuple("output_unmapped_variable_with_non_matching_connector_output_name",
+                        "default"),
+                    tuple("outVarFromJsonExpression", "Tower of London"),
+                    tuple("outVarFromListExpression",
+                        "Peter"));//kept unchanging because no connector output is updating it
+
+        });
 
         ResponseEntity<PagedResources<CloudTask>> tasks = processInstanceRestTemplate.getTasks(processInstanceResponseEntity);
         assertThat(tasks.getBody()).isNotNull();
