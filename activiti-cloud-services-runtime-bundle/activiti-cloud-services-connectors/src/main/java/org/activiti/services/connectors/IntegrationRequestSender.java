@@ -63,7 +63,7 @@ public class IntegrationRequestSender {
             CloudIntegrationRequestedEventImpl integrationRequested = new CloudIntegrationRequestedEventImpl(integrationRequest.getIntegrationContext());
             runtimeBundleInfoAppender.appendRuntimeBundleInfoTo(integrationRequested);
 
-            Message<CloudRuntimeEvent<?, ?>[]> message = MessageBuilder.withPayload(Stream.of(integrationRequested)
+            Message<CloudRuntimeEvent<?, ?>[]> message = messageBuilderFactory.create(integrationRequest.getIntegrationContext()).withPayload(Stream.of(integrationRequested)
                                                                                         .toArray(CloudRuntimeEvent<?, ?>[]::new))
                 .build();
             
