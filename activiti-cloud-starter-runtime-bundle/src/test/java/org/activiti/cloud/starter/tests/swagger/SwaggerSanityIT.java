@@ -16,6 +16,10 @@
 
 package org.activiti.cloud.starter.tests.swagger;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItemInArray;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -47,6 +51,8 @@ public class SwaggerSanityIT {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.paths").isNotEmpty())
             .andExpect(jsonPath("$.definitions").isNotEmpty())
+            .andExpect(jsonPath("$.definitions").value(hasKey(startsWith("ListResponseContent"))))
+            .andExpect(jsonPath("$.definitions[\"SaveTaskPayload\"].properties").value(hasKey("payloadType")))
             .andExpect(jsonPath("$.info.title").value("Activiti Cloud Starter :: Runtime Bundle ReST API"));
 
     }

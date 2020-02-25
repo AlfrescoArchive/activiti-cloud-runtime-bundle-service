@@ -10,6 +10,6 @@ import org.springframework.context.annotation.Profile;
 public class RBTestConfiguration {
 
     @MockBean
-    private ProcessDeployedEventProducer producer;
+    public ProcessDeployedEventProducer producer;
 
 }

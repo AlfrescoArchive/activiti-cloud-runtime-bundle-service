@@ -17,6 +17,7 @@
 package org.activiti.cloud.starter.rb.configuration;
 
 import java.util.function.Predicate;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,6 +46,12 @@ public class SwaggerConfig {
     @Bean
     public Predicate<RequestHandler> apiSelector() {
         return RequestHandlerSelectors.basePackage("org.activiti.cloud.services")::apply;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public PayloadsDocketCustomizer payloadsDocketCustomizer(){
+        return new PayloadsDocketCustomizer();
     }
 
 }
