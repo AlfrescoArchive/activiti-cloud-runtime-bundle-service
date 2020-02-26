@@ -16,6 +16,8 @@
 
 package org.activiti.cloud.services.events.listeners;
 
+import static org.activiti.cloud.services.events.listeners.MessageProducerCommandContextCloseListener.ROOT_EXECUTION_CONTEXT;
+
 import org.activiti.api.model.shared.model.VariableInstance;
 import org.activiti.api.process.model.BPMNActivity;
 import org.activiti.api.process.model.BPMNSequenceFlow;
@@ -92,6 +94,9 @@ public class ProcessEngineEventsAggregator extends BaseCommandContextEventsAggre
         if(executionId != null && commandContext.getGenericAttribute(executionId) == null) {
             ExecutionEntity executionEntity = commandContext.getExecutionEntityManager()
                                                             .findById(executionId);
+
+            mayBeAddRootExecutionContext(commandContext, 
+                                         executionEntity);
             
             ExecutionContext executionContext = createExecutionContext(executionEntity);
             
@@ -105,6 +110,20 @@ public class ProcessEngineEventsAggregator extends BaseCommandContextEventsAggre
        
     }
     
+    protected void mayBeAddRootExecutionContext(CommandContext commandContext, ExecutionEntity executionEntity) {
+        ExecutionContext rootExecutionContext = commandContext.getGenericAttribute(ROOT_EXECUTION_CONTEXT);
+        
+        if(rootExecutionContext == null && executionEntity.getRootProcessInstanceId() != null) {
+            ExecutionEntity rootProcessInstance = commandContext.getExecutionEntityManager()
+                                                                .findById(executionEntity.getRootProcessInstanceId());
+            
+            rootExecutionContext = createExecutionContext(rootProcessInstance);
+
+            commandContext.addAttribute("rootExecutionContext",
+                                        rootExecutionContext);
+        }
+    }
+
     
     protected ExecutionContextInfoAppender createExecutionContextInfoAppender(ExecutionContext executionContext) {
         return new ExecutionContextInfoAppender(executionContext);
@@ -132,7 +151,7 @@ public class ProcessEngineEventsAggregator extends BaseCommandContextEventsAggre
         } else if(element instanceof CloudTaskCandidateGroupEvent) {
             return ((CloudTaskCandidateGroupEvent) element).getProcessInstanceId();
         } else if(element instanceof CloudBPMNSignalEvent) {
-            return ((CloudBPMNSignalEvent) element).getEntity().getProcessInstanceId();
+            return ((CloudBPMNSignalEvent) element).getEntity().getProcessInstanceId();        
         } else if(element instanceof CloudBPMNTimerEvent) {
             return ((CloudBPMNTimerEvent) element).getEntity().getProcessInstanceId();
         } else if(element instanceof CloudBPMNMessageEvent) {
