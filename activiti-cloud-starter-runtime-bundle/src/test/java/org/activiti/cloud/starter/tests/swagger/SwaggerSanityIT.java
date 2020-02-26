@@ -16,13 +16,13 @@
 
 package org.activiti.cloud.starter.tests.swagger;
 
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import java.io.File;
-import java.nio.file.Files;
 import org.activiti.spring.ProcessDeployedEventProducer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,31 +39,25 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public class SwaggerITSupport {
+public class SwaggerSanityIT {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockBean
     private ProcessDeployedEventProducer producer;
 
-    /**
-     * This is not a test. It's actually generating the swagger.json and yaml definition of the service.
-     * It is used by maven generate-swagger profile build.
-     */
     @Test
-    public void generateSwagger() throws Exception {
+    public void should_swaggerDefinitionHavePathsAndDefinitionsAndInfo() throws Exception {
         mockMvc.perform(get("/v2/api-docs").accept(MediaType.APPLICATION_JSON))
-            .andDo((result) -> {
-                JsonNode jsonNodeTree = objectMapper.readTree(result.getResponse().getContentAsByteArray());
-                Files.write(new File("target/swagger.json").toPath(),
-                    objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(jsonNodeTree));
-                Files.write(new File("target/swagger.yaml").toPath(),
-                    new YAMLMapper().writeValueAsBytes(jsonNodeTree));
-            });
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
+            .andExpect(jsonPath("$.paths").isNotEmpty())
+            .andExpect(jsonPath("$.definitions").isNotEmpty())
+            .andExpect(jsonPath("$.definitions").value(hasKey(startsWith("ListResponseContent"))))
+            .andExpect(jsonPath("$.definitions[\"SaveTaskPayload\"].properties").value(hasKey("payloadType")))
+            .andExpect(jsonPath("$.info.title").value("Activiti Cloud Starter :: Runtime Bundle ReST API"));
+
     }
 
 }
